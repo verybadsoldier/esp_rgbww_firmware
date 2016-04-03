@@ -60,6 +60,7 @@ public:
 	ApplicationSettings cfg;
 	EventServer eventserver;
 	ColorEventPublisher coloreventpublisher;
+	ApplicationMQTTClient mqttclient;
 
 private:
 	void loadbootinfo();

@@ -103,6 +103,10 @@ void Application::startServices() {
 	webserver.start();
 	eventserver.start();
 	coloreventpublisher.start();
+
+	if(cfg.network.mqtt.enabled) {
+		mqttclient.start();
+	}
 }
 
 void Application::restart() {
