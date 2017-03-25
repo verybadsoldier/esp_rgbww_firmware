@@ -1,0 +1,8 @@
+title: ESP rgbww firmware
+description: Firmware for https://github.com/patrickjahns/esp_rgbww_controller
+google_analytics: 
+show_downloads: true
+theme: jekyll-theme-slate
+
+gems:
+  - jekyll-mentions
