@@ -64,6 +64,8 @@ private:
 	void onPing(HttpRequest &request, HttpResponse &response);
 	void sendApiResponse(HttpResponse &response, JsonObjectStream* stream, int code = 200);
 	void sendApiCode(HttpResponse &response, API_CODES code, String msg = "");
+	void onStop(HttpRequest &request, HttpResponse &response);
+	void onSkip(HttpRequest &request, HttpResponse &response);
 };
 
 #endif // APP_WEBSERVER_H_

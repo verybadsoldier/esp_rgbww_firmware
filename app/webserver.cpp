@@ -42,6 +42,8 @@ void ApplicationWebserver::init() {
 	addPath("/connect", HttpPathDelegate(&ApplicationWebserver::onConnect, this));
 	addPath("/generate_204", HttpPathDelegate(&ApplicationWebserver::generate204, this));
 	addPath("/ping", HttpPathDelegate(&ApplicationWebserver::onPing, this));
+	addPath("/stop", HttpPathDelegate(&ApplicationWebserver::onStop, this));
+	addPath("/skip", HttpPathDelegate(&ApplicationWebserver::onSkip, this));
 	_init = true;
 }
 
@@ -1146,6 +1148,29 @@ void ApplicationWebserver::onPing(HttpRequest &request, HttpResponse &response) 
 	JsonObject& json = stream->getRoot();
 	json["ping"] = "pong";
 	sendApiResponse(response, stream);
+}
+
+void ApplicationWebserver::onStop(HttpRequest &request, HttpResponse &response) {
+	if (request.getRequestMethod() != RequestMethod::POST) {
+		sendApiCode(response, API_CODES::API_BAD_REQUEST);
+		return;
+	}
+
+	app.rgbwwctrl.clearAnimationQueue();
+	app.rgbwwctrl.skipAnimation();
+
+	sendApiCode(response, API_CODES::API_SUCCESS);
+}
+
+void ApplicationWebserver::onSkip(HttpRequest &request, HttpResponse &response) {
+	if (request.getRequestMethod() != RequestMethod::POST) {
+		sendApiCode(response, API_CODES::API_BAD_REQUEST);
+		return;
+	}
+
+	app.rgbwwctrl.skipAnimation();
+
+	sendApiCode(response, API_CODES::API_SUCCESS);
 }
 
 void ApplicationWebserver::generate204(HttpRequest &request, HttpResponse &response) {
