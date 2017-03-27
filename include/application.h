@@ -55,6 +55,8 @@ public:
 	APPLedCtrl rgbwwctrl;
 	ApplicationOTA ota;
 	ApplicationSettings cfg;
+	EventServer eventserver;
+	ColorEventPublisher coloreventpublisher;
 
 private:
 	void loadbootinfo();

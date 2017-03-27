@@ -93,6 +93,7 @@ void Application::init() {
 	// initialize webserver
 	app.webserver.init();
 
+	coloreventpublisher.init(eventserver, rgbwwctrl);
 }
 
 // Will be called when system initialization was completed
@@ -100,7 +101,8 @@ void Application::startServices() {
 	debugapp("Application::startServices");
 	rgbwwctrl.start();
 	webserver.start();
-
+	eventserver.start();
+	coloreventpublisher.start();
 }
 
 void Application::restart() {
