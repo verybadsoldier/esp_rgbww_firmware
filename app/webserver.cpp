@@ -716,7 +716,7 @@ void ApplicationWebserver::onColor(HttpRequest &request, HttpResponse &response)
 				c = HSVCT(h, s, v, ct);
 
 				if(!root["hsv"]["from"].success()) {
-					debugapp("ApplicationWebserver::onColor hsv CMD:%s Q:%d  h:%f s:%f v:%f ct:%i ", cmd, q, h, s, v, ct);
+					debugapp("ApplicationWebserver::onColor hsv CMD:%s Q:%d  h:%f s:%f v:%f ct:%i ", cmd.c_str(), q, h, s, v, ct);
 					if (cmd.equals("fade")) {
 						app.rgbwwctrl.fadeHSV(c, t, d, q);
 					} else {
@@ -742,7 +742,7 @@ void ApplicationWebserver::onColor(HttpRequest &request, HttpResponse &response)
 					}
 					from_c = HSVCT(from_h, from_s, from_v, from_ct);
 
-					debugapp("ApplicationWebserver::onColor hsv CMD:%s Q:%d  FROM h:%f s:%f v:%f ct:%i - TO h:%f s :%f v:%f ct:%i ", cmd, q, from_h, from_s, from_v, from_ct, h, s, v, ct);
+					debugapp("ApplicationWebserver::onColor hsv CMD:%s Q:%d  FROM h:%f s:%f v:%f ct:%i - TO h:%f s :%f v:%f ct:%i ", cmd.c_str(), q, from_h, from_s, from_v, from_ct, h, s, v, ct);
 					app.rgbwwctrl.fadeHSV(from_c, c, t, d, q);
 
 				}
@@ -786,7 +786,7 @@ void ApplicationWebserver::onColor(HttpRequest &request, HttpResponse &response)
 
 				output = ChannelOutput(r, g, b, ww, cw);
 				if(!root["raw"]["from"].success()) {
-					debugapp("ApplicationWebserver::onColor raw CMD:%s Q:%d r:%i g:%i b:%i ww:%i cw:%i", cmd, q, r, g, b, ww, cw);
+					debugapp("ApplicationWebserver::onColor raw CMD:%s Q:%d r:%i g:%i b:%i ww:%i cw:%i", cmd.c_str(), q, r, g, b, ww, cw);
 					if (cmd.equals("fade")) {
 						app.rgbwwctrl.fadeRAW(output, t, q);
 					} else {
@@ -812,7 +812,7 @@ void ApplicationWebserver::onColor(HttpRequest &request, HttpResponse &response)
 
 					from_output = ChannelOutput(from_r, from_g, from_b, from_ww, from_cw);
 					debugapp("ApplicationWebserver::onColor raw CMD:%s Q:%d FROM r:%i g:%i b:%i ww:%i cw:%i  TO r:%i g:%i b:%i ww:%i cw:%i",
-									cmd, q, from_r, from_g, from_b, from_ww, from_cw, r, g, b, ww, cw);
+									cmd.c_str(), q, from_r, from_g, from_b, from_ww, from_cw, r, g, b, ww, cw);
 					app.rgbwwctrl.fadeRAW(from_output, output, t, q);
 				}
 
