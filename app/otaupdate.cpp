@@ -88,7 +88,7 @@ void ApplicationOTA::afterOTA() {
 	}
 }
 
-void ApplicationOTA::rBootCallback(bool result) {
+void ApplicationOTA::rBootCallback(rBootHttpUpdate& rbHttpUp, bool result) {
 	debugapp("ApplicationOTA::rBootCallback");
 	if (result == true) {
 

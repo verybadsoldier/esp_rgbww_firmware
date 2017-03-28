@@ -143,7 +143,7 @@ void AppWIFI::connect(String ssid, String pass, bool new_con /* = false */) {
 void AppWIFI::_STADisconnect(String ssid, uint8_t ssid_len, uint8_t bssid[6], uint8_t reason) {
 	debugapp("AppWIFI::_STADisconnect reason - %i - counter %i", reason, _con_ctr);
 	if (_con_ctr >= DEFAULT_CONNECTION_RETRIES || WifiStation.getConnectionStatus() == eSCS_WrongPassword) {
-		_client_status = CONNECTION_STATUS::ERR;
+		_client_status = CONNECTION_STATUS::ERROR;
 		_client_err_msg = WifiStation.getConnectionStatusName();
 		debugapp("AppWIFI::_STADisconnect err %s", _client_err_msg.c_str());
 		if (_new_connection) {

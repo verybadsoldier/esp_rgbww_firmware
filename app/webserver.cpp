@@ -1009,7 +1009,7 @@ void ApplicationWebserver::onConnect(HttpRequest &request, HttpResponse &respons
 
 		CONNECTION_STATUS status = app.network.get_con_status();
 		json["status"] = int(status);
-		if (status == CONNECTION_STATUS::ERR) {
+		if (status == CONNECTION_STATUS::ERROR) {
 			json["error"] = app.network.get_con_err_msg();
 		} else if (status == CONNECTION_STATUS::CONNECTED) {
 			// return connected

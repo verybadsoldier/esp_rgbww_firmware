@@ -47,7 +47,7 @@ protected:
 	OTASTATUS status = OTASTATUS::OTA_NOT_UPDATING;
 
 protected:
-	void rBootCallback(bool result);
+	void rBootCallback(rBootHttpUpdate& rbHttpUp, bool result);
 	void reset();
 	void beforeOTA();
 	void afterOTA();

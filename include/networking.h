@@ -26,7 +26,7 @@ enum CONNECTION_STATUS {
 	IDLE = 0,
 	CONNECTING = 1,
 	CONNECTED = 2,
-	ERR = 3
+	ERROR = 3
 };
 
 class AppWIFI {
