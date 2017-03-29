@@ -148,11 +148,11 @@ void Application::mountfs(int slot) {
 	if (slot == 0) {
 		debugapp("Application::mountfs trying to mount spiffs at %x, length %d",
 				RBOOT_SPIFFS_0, SPIFF_SIZE);
-		spiffs_mount_manual(RBOOT_SPIFFS_0 + 0x40200000, SPIFF_SIZE);
+		spiffs_mount_manual(RBOOT_SPIFFS_0, SPIFF_SIZE);
 	} else {
 		debugapp("Application::mountfs trying to mount spiffs at %x, length %d",
 				RBOOT_SPIFFS_1, SPIFF_SIZE);
-		spiffs_mount_manual(RBOOT_SPIFFS_1 + 0x40200000, SPIFF_SIZE);
+		spiffs_mount_manual(RBOOT_SPIFFS_1, SPIFF_SIZE);
 	}
 	_fs_mounted = true;
 }
