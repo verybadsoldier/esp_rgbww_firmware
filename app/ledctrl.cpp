@@ -109,4 +109,7 @@ void APPLedCtrl::test_channels() {
 void APPLedCtrl::led_callback(RGBWWLed* rgbwwctrl) {
 	debugapp("APPLedCtrl::led_callback");
 	app.rgbwwctrl.color_save();
+
+	app.eventserver.publishTransitionComplete();
+	app.eventserver.publishCurrentColor(app.rgbwwctrl.getCurrentColor());
 }

@@ -1,8 +1,5 @@
 #pragma once
 
-#include <memory>
-#include <set>
-
 #include <SmingCore/SmingCore.h>
 #include <Wiring/WVector.h>
 
@@ -10,7 +7,21 @@
 
 class TcpConnection;
 
-class EventServer: private TcpServer {
+class JsonRpcMessage {
+public:
+    JsonRpcMessage(const String& name);
+    JsonObjectStream& getStream();
+    void setId(int id);
+    JsonObject& getParams();
+
+private:
+    const String _data;
+
+    JsonObjectStream _stream;
+    JsonObject* _pParams;
+};
+
+class EventServer : public TcpServer{
 public:
 	virtual ~EventServer();
 	void start();
@@ -18,19 +29,23 @@ public:
 	inline bool isRunning() { return _running; };
 
 	void publishCurrentColor(const HSVCT& color);
+	void publishTransitionComplete();
+	void publishKeepAlive();
 
 private:
 	virtual void onClient(TcpClient *client) override;
 	virtual void onClientComplete(TcpClient& client, bool succesfull) override;
 
-	void sendToClients(IDataSourceStream* stream);
+	void sendToClients(JsonRpcMessage& rpcMsg);
 
-	bool _running = false;
-	static const int _tcpPort = 9452;
+	static const int _tcpPort = 9090;
+	static const int _keepAliveInterval = 60;
 
+    bool _running = false;
+    Timer _keepAliveTimer;
 	Vector<TcpClient*> _clients;
-
-	TcpClient* _client = nullptr;
+	Vector<int*> _tests;
+	int _nextId = 1;
 };
 
 class ColorEventPublisher {
@@ -43,10 +58,12 @@ public:
 	inline bool isRunning() { return _running; };
 
 private:
+	void publishCurrentColor();
 	Timer _ledTimer;
 
 	RGBWWLed* _rgbCtrl;
 	EventServer* _eventServer;
 
 	HSVCT _lastColor;
+	bool _running = false;
 };
