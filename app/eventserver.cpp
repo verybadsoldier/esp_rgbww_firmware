@@ -5,7 +5,6 @@
  *      Author: Robin
  */
 #include "eventserver.h"
-#include <SmingCore/Debug.h>
 
 
 EventServer::~EventServer() {
@@ -69,8 +68,13 @@ void EventServer::publishKeepAlive() {
     sendToClients(msg);
 }
 
-void EventServer::publishTransitionComplete() {
+void EventServer::publishTransitionComplete(const String& name) {
+    Serial.printf("EventServer::publishTransitionComplete: %s\n", name.c_str());
+
 	JsonRpcMessage msg("transition_finished");
+	JsonObject& root = msg.getParams();
+	root["name"] = name;
+
 	sendToClients(msg);
 }
 
@@ -83,73 +87,4 @@ void EventServer::sendToClients(JsonRpcMessage& rpcMsg) {
 		Serial.printf("\tsendToClients: %x\n", pClient);
 		pClient->write(&rpcMsg.getStream());
 	}
-}
-
-/*
- * JsonRpcMessage
- */
-JsonRpcMessage::JsonRpcMessage(const String& name) {
-    JsonObject& json = _stream.getRoot();
-    json["jsonrpc"] = "2.0";
-    json["method"] = name;
-
-    _pParams = &json.createNestedObject("params");
-}
-
-JsonObjectStream& JsonRpcMessage::getStream() {
-    return _stream;
-}
-
-JsonObject& JsonRpcMessage::getParams() {
-    return *_pParams;
-}
-
-void JsonRpcMessage::setId(int id) {
-    JsonObject& json = _stream.getRoot();
-    json["id"] = id;
-}
-
-/**
- * ColorEventPublisher
- */
-ColorEventPublisher::~ColorEventPublisher() {
-	stop();
-}
-
-void ColorEventPublisher::init(EventServer& evServer, RGBWWLed& rgbctrl) {
-	_eventServer = &evServer;
-	_rgbCtrl = &rgbctrl;
-}
-
-void ColorEventPublisher::start() {
-	if (_running)
-		return;
-
-	Serial.printf("Starting ColorEventPublisher\n");
-
-	_running = true;
-
-	Serial.printf("Starting event timer\n");
-	_ledTimer.initializeMs(2000, TimerDelegate(&ColorEventPublisher::publishCurrentColor, this)).start();
-}
-
-void ColorEventPublisher::stop() {
-	if (not _running)
-		return;
-
-	_ledTimer.stop();
-
-	_running = false;
-}
-
-void ColorEventPublisher::publishCurrentColor() {
-	Serial.printf("ColorEventPublisher::publishCurrentColor\n");
-
-	const HSVCT& curColor = _rgbCtrl->getCurrentColor();
-
-	//if (curColor == _lastColor)
-		//return;
-
-	_eventServer->publishCurrentColor(curColor);
-	_lastColor = curColor;
 }

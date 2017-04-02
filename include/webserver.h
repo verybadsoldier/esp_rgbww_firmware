@@ -66,6 +66,12 @@ private:
 	void sendApiCode(HttpResponse &response, API_CODES code, String msg = "");
 	void onStop(HttpRequest &request, HttpResponse &response);
 	void onSkip(HttpRequest &request, HttpResponse &response);
+	void onPause(HttpRequest &request, HttpResponse &response);
+	void onContinue(HttpRequest &request, HttpResponse &response);
+	void onBlink(HttpRequest &request, HttpResponse &response);
+
+	void colorGet(HttpRequest &request, HttpResponse &response);
+	void colorPost(HttpRequest &request, HttpResponse &response);
 };
 
 #endif // APP_WEBSERVER_H_

@@ -82,7 +82,7 @@ public:
 	void test_channels();
 
 	void show_led();
-	static void led_callback(RGBWWLed* rgbwwctrl);
+	static void led_callback(RGBWWLed* rgbwwctrl, RGBWWLedAnimation* anim);
 
 private:
 	ColorStorage color;

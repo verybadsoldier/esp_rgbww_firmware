@@ -44,6 +44,9 @@ void ApplicationWebserver::init() {
 	addPath("/ping", HttpPathDelegate(&ApplicationWebserver::onPing, this));
 	addPath("/stop", HttpPathDelegate(&ApplicationWebserver::onStop, this));
 	addPath("/skip", HttpPathDelegate(&ApplicationWebserver::onSkip, this));
+	addPath("/pause", HttpPathDelegate(&ApplicationWebserver::onPause, this));
+	addPath("/continue", HttpPathDelegate(&ApplicationWebserver::onContinue, this));
+	addPath("/blink", HttpPathDelegate(&ApplicationWebserver::onBlink, this));
 	_init = true;
 }
 
@@ -174,8 +177,6 @@ void ApplicationWebserver::onIndex(HttpRequest &request, HttpResponse &response)
 		response.sendString("OTA in progress");
 		return;
 	}
-
-
 
 	if (WifiAccessPoint.isEnabled()) {
 		response.redirect("http://" + WifiAccessPoint.getIP().toString() + "/webapp");
@@ -631,8 +632,240 @@ void ApplicationWebserver::onInfo(HttpRequest &request, HttpResponse &response) 
 	sendApiResponse(response, stream);
 }
 
-void ApplicationWebserver::onColor(HttpRequest &request, HttpResponse &response) {
+void ApplicationWebserver::colorGet(HttpRequest &request, HttpResponse &response) {
+	JsonObjectStream* stream = new JsonObjectStream();
+	JsonObject& json = stream->getRoot();
+	String mode = request.getQueryParameter("mode", "hsv");
+	if (mode.equals("raw")) {
+		JsonObject& raw = json.createNestedObject("raw");
+		ChannelOutput output = app.rgbwwctrl.getCurrentOutput();
+		raw["r"] = output.r;
+		raw["g"] = output.g;
+		raw["b"] = output.b;
+		raw["ww"] = output.ww;
+		raw["cw"] = output.cw;
 
+	} else if (mode.equals("temp")) {
+		json["kelvin"] = 0;
+		//TODO get kelvin from controller
+	} else {
+		JsonObject& hsv = json.createNestedObject("hsv");
+
+		float h, s, v;
+		int ct;
+		HSVCT c = app.rgbwwctrl.getCurrentColor();
+		c.asRadian(h, s, v, ct);
+		hsv["h"] = h;
+		hsv["s"] = s;
+		hsv["v"] = v;
+		hsv["ct"] = ct;
+	}
+	sendApiResponse(response, stream);
+}
+
+void ApplicationWebserver::colorPost(HttpRequest &request, HttpResponse &response) {
+	String body = request.getBody();
+	if (body == NULL || body.length() > 128) {
+		sendApiCode(response, API_CODES::API_BAD_REQUEST);
+		return;
+
+	}
+
+	DynamicJsonBuffer jsonBuffer;
+	JsonObject& root = jsonBuffer.parseObject(body);
+	//root.prettyPrintTo(Serial);
+
+	if (root["kelvin"].success()) {
+		int t, k = 0;
+		bool q = false;
+
+		k = root["kelvin"].as<int>();
+		if (root["t"].success()) {
+			t = root["t"].as<int>();
+		}
+		if (root["q"].success()) {
+			q = root["q"];
+		}
+		//TODO: hand to rgbctrl
+	} else if (root["hsv"].success()) {
+		if (!(root["hsv"]["h"].success() && root["hsv"]["s"].success() && root["hsv"]["v"].success())) {
+			sendApiCode(response, API_CODES::API_MISSING_PARAM);
+			return;
+		}
+		float h, s, v;
+		int t, ct = 0;
+		int d = 1;
+		bool r = false;
+		QueuePolicy queuePolicy = QueuePolicy::Single;
+		String cmd = "solid";
+		String name;
+		HSVCT c;
+		h = constrain(root["hsv"]["h"].as<float>(), 0.0, 360.0);
+		s = constrain(root["hsv"]["s"].as<float>(), 0.0, 100.0);
+		v = constrain(root["hsv"]["v"].as<float>(), 0.0, 100.0);
+
+		if (root["hsv"]["ct"].success()) {
+			ct = root["hsv"]["ct"].as<int>();
+			if (ct != 0 && (ct < 100 || ct > 10000 || (ct > 500 && ct < 2000))) {
+				sendApiCode(response, API_CODES::API_BAD_REQUEST, "bad param for ct");
+				return;
+			}
+		}
+		if (root["cmd"].success()) {
+			cmd = root["cmd"].asString();
+		}
+
+		if (root["t"].success()) {
+			t = root["t"].as<int>();
+		}
+		if (root["q"].success()) {
+			if (app.rgbwwctrl.isAnimationQFull()) {
+				sendApiCode(response, API_CODES::API_BAD_REQUEST, "queue is full");
+				return;
+			}
+
+			const String& q = root["q"].asString();
+			if (q == "back")
+				queuePolicy = QueuePolicy::Back;
+			else if (q == "front")
+				queuePolicy = QueuePolicy::Front;
+            else if (q == "front_reset")
+                queuePolicy = QueuePolicy::FrontReset;
+			else if (q == "single")
+				queuePolicy = QueuePolicy::Single;
+			else {
+				sendApiCode(response, API_CODES::API_BAD_REQUEST, "Invalid queue policy");
+				return;
+			}
+		}
+
+		if (root["d"].success()) {
+			d = root["d"].as<int>();
+		}
+		if (root["r"].success()) {
+			r = root["r"];
+		}
+		if (root["name"].success()) {
+			name = root["name"].asString();
+		}
+		c = HSVCT(h, s, v, ct);
+
+		if(!root["hsv"]["from"].success()) {
+			debugapp("ApplicationWebserver::onColor hsv CMD:%s Q:%d  h:%f s:%f v:%f ct:%i ", cmd.c_str(), q, h, s, v, ct);
+			if (cmd.equals("fade")) {
+				app.rgbwwctrl.fadeHSV(c, t, d, queuePolicy, r, name);
+			} else {
+				app.rgbwwctrl.setHSV(c, t, queuePolicy, r, name);
+			}
+		} else {
+			float from_h, from_s, from_v;
+			int from_ct = 0;
+			HSVCT from_c;
+			if (!(root["hsv"]["from"]["h"].success() && root["hsv"]["from"]["s"].success() && root["hsv"]["from"]["v"].success())) {
+				sendApiCode(response, API_CODES::API_MISSING_PARAM);
+				return;
+			}
+			from_h = constrain(root["hsv"]["from"]["h"].as<float>(), 0.0, 360.0);
+			from_s = constrain(root["hsv"]["from"]["s"].as<float>(), 0.0, 100.0);
+			from_v = constrain(root["hsv"]["from"]["v"].as<float>(), 0.0, 100.0);
+			if (root["hsv"]["from"]["ct"].success()) {
+				from_ct = root["hsv"]["from"]["ct"].as<int>();
+				if (from_ct != 0 && (from_ct < 100 || from_ct > 10000 || (from_ct > 500 && from_ct < 2000))) {
+					sendApiCode(response, API_CODES::API_BAD_REQUEST, "bad param for from:ct");
+					return;
+				}
+			}
+			from_c = HSVCT(from_h, from_s, from_v, from_ct);
+
+			debugapp("ApplicationWebserver::onColor hsv CMD:%s Q:%d  FROM h:%f s:%f v:%f ct:%i - TO h:%f s :%f v:%f ct:%i ", cmd.c_str(), q, from_h, from_s, from_v, from_ct, h, s, v, ct);
+			app.rgbwwctrl.fadeHSV(from_c, c, t, d, queuePolicy);
+		}
+	} else if (root["raw"].success()) {
+
+		if (!(root["raw"]["r"].success()
+				&& root["raw"]["g"].success()
+				&& root["raw"]["b"].success()
+				&& root["raw"]["ww"].success()
+				&& root["raw"]["cw"].success())) {
+
+			sendApiCode(response, API_CODES::API_MISSING_PARAM);
+			return;
+		}
+		ChannelOutput output;
+		int t, r, g, b, ww, cw = 0;
+		String cmd = "solid";
+		QueuePolicy queuePolicy = QueuePolicy::Single;
+
+		r = constrain(root["raw"]["r"].as<int>(), 0, 1023);
+		g = constrain(root["raw"]["g"].as<int>(), 0, 1023);
+		b = constrain(root["raw"]["b"].as<int>(), 0, 1023);
+		ww = constrain(root["raw"]["ww"].as<int>(), 0, 1023);
+		cw = constrain(root["raw"]["cw"].as<int>(), 0, 1023);
+		if (root["cmd"].success()) {
+			cmd = root["cmd"].asString();
+		}
+		if (root["t"].success()) {
+			t = root["t"].as<int>();
+		}
+		if (root["q"].success()) {
+			if (app.rgbwwctrl.isAnimationQFull()) {
+				sendApiCode(response, API_CODES::API_BAD_REQUEST, "queue is full");
+				return;
+			}
+
+			const String& q = root["q"].asString();
+			if (q == "back")
+				queuePolicy == QueuePolicy::Back;
+			else if (q == "front")
+				queuePolicy == QueuePolicy::Front;
+			else if (q == "single")
+				queuePolicy == QueuePolicy::Single;
+			else {
+				sendApiCode(response, API_CODES::API_BAD_REQUEST, "Invalid queue policy");
+				return;
+			}
+		}
+
+		output = ChannelOutput(r, g, b, ww, cw);
+		if(!root["raw"]["from"].success()) {
+			debugapp("ApplicationWebserver::onColor raw CMD:%s Q:%d r:%i g:%i b:%i ww:%i cw:%i", cmd.c_str(), q, r, g, b, ww, cw);
+			if (cmd.equals("fade")) {
+				app.rgbwwctrl.fadeRAW(output, t, queuePolicy);
+			} else {
+				app.rgbwwctrl.setRAW(output, t, queuePolicy);
+			}
+		} else {
+			if (!(root["raw"]["from"]["r"].success()
+					&& root["raw"]["from"]["g"].success()
+					&& root["raw"]["from"]["b"].success()
+					&& root["raw"]["from"]["ww"].success()
+					&& root["raw"]["from"]["cw"].success())) {
+
+				sendApiCode(response, API_CODES::API_MISSING_PARAM);
+				return;
+			}
+			int from_r, from_g, from_b, from_ww, from_cw = 0;
+			ChannelOutput from_output;
+			from_r = constrain(root["raw"]["r"].as<int>(), 0, 1023);
+			from_g = constrain(root["raw"]["g"].as<int>(), 0, 1023);
+			from_b = constrain(root["raw"]["b"].as<int>(), 0, 1023);
+			from_ww = constrain(root["raw"]["ww"].as<int>(), 0, 1023);
+			from_cw = constrain(root["raw"]["cw"].as<int>(), 0, 1023);
+
+			from_output = ChannelOutput(from_r, from_g, from_b, from_ww, from_cw);
+			debugapp("ApplicationWebserver::onColor raw CMD:%s Q:%d FROM r:%i g:%i b:%i ww:%i cw:%i  TO r:%i g:%i b:%i ww:%i cw:%i",
+							cmd.c_str(), q, from_r, from_g, from_b, from_ww, from_cw, r, g, b, ww, cw);
+			app.rgbwwctrl.fadeRAW(from_output, output, t, queuePolicy);
+		}
+
+	} else {
+		sendApiCode(response, API_CODES::API_MISSING_PARAM);
+		return;
+	}
+	sendApiCode(response, API_CODES::API_SUCCESS);
+}
+
+void ApplicationWebserver::onColor(HttpRequest &request, HttpResponse &response) {
 	if (!authenticated(request, response)) {
 		return;
 	}
@@ -649,211 +882,9 @@ void ApplicationWebserver::onColor(HttpRequest &request, HttpResponse &response)
 
 	bool error = false;
 	if (request.getRequestMethod() == RequestMethod::POST) {
-		String body = request.getBody();
-		if (body == NULL || body.length() > 128) {
-			sendApiCode(response, API_CODES::API_BAD_REQUEST);
-			return;
-
-		} else {
-
-			DynamicJsonBuffer jsonBuffer;
-			JsonObject& root = jsonBuffer.parseObject(body);
-			//root.prettyPrintTo(Serial);
-
-			if (root["kelvin"].success()) {
-				int t, k = 0;
-				bool q = false;
-
-				k = root["kelvin"].as<int>();
-				if (root["t"].success()) {
-					t = root["t"].as<int>();
-				}
-				if (root["q"].success()) {
-					q = root["q"];
-				}
-				//TODO: hand to rgbctrl
-			} else if (root["hsv"].success()) {
-
-				if (!(root["hsv"]["h"].success() && root["hsv"]["s"].success() && root["hsv"]["v"].success())) {
-					sendApiCode(response, API_CODES::API_MISSING_PARAM);
-					return;
-				}
-				float h, s, v;
-				int t, ct = 0;
-				int d = 1;
-				bool q = false;
-				String cmd = "solid";
-				HSVCT c;
-				h = constrain(root["hsv"]["h"].as<float>(), 0.0, 360.0);
-				s = constrain(root["hsv"]["s"].as<float>(), 0.0, 100.0);
-				v = constrain(root["hsv"]["v"].as<float>(), 0.0, 100.0);
-
-				if (root["hsv"]["ct"].success()) {
-					ct = root["hsv"]["ct"].as<int>();
-					if (ct != 0 && (ct < 100 || ct > 10000 || (ct > 500 && ct < 2000))) {
-						sendApiCode(response, API_CODES::API_BAD_REQUEST, "bad param for ct");
-						return;
-					}
-				}
-				if (root["cmd"].success()) {
-					cmd = root["cmd"].asString();
-				}
-
-				if (root["t"].success()) {
-					t = root["t"].as<int>();
-				}
-				if (root["q"].success()) {
-					q = root["q"];
-					if (q) {
-						if (app.rgbwwctrl.isAnimationQFull()) {
-							sendApiCode(response, API_CODES::API_BAD_REQUEST, "queue is full");
-							return;
-						}
-					}
-				}
-				if (root["d"].success()) {
-					d = root["d"].as<int>();
-				}
-
-				c = HSVCT(h, s, v, ct);
-
-				if(!root["hsv"]["from"].success()) {
-					debugapp("ApplicationWebserver::onColor hsv CMD:%s Q:%d  h:%f s:%f v:%f ct:%i ", cmd.c_str(), q, h, s, v, ct);
-					if (cmd.equals("fade")) {
-						app.rgbwwctrl.fadeHSV(c, t, d, q);
-					} else {
-						app.rgbwwctrl.setHSV(c, t, q);
-					}
-				} else {
-					float from_h, from_s, from_v;
-					int from_ct = 0;
-					HSVCT from_c;
-					if (!(root["hsv"]["from"]["h"].success() && root["hsv"]["from"]["s"].success() && root["hsv"]["from"]["v"].success())) {
-						sendApiCode(response, API_CODES::API_MISSING_PARAM);
-						return;
-					}
-					from_h = constrain(root["hsv"]["from"]["h"].as<float>(), 0.0, 360.0);
-					from_s = constrain(root["hsv"]["from"]["s"].as<float>(), 0.0, 100.0);
-					from_v = constrain(root["hsv"]["from"]["v"].as<float>(), 0.0, 100.0);
-					if (root["hsv"]["from"]["ct"].success()) {
-						from_ct = root["hsv"]["from"]["ct"].as<int>();
-						if (from_ct != 0 && (from_ct < 100 || from_ct > 10000 || (from_ct > 500 && from_ct < 2000))) {
-							sendApiCode(response, API_CODES::API_BAD_REQUEST, "bad param for from:ct");
-							return;
-						}
-					}
-					from_c = HSVCT(from_h, from_s, from_v, from_ct);
-
-					debugapp("ApplicationWebserver::onColor hsv CMD:%s Q:%d  FROM h:%f s:%f v:%f ct:%i - TO h:%f s :%f v:%f ct:%i ", cmd.c_str(), q, from_h, from_s, from_v, from_ct, h, s, v, ct);
-					app.rgbwwctrl.fadeHSV(from_c, c, t, d, q);
-
-				}
-
-			} else if (root["raw"].success()) {
-
-				if (!(root["raw"]["r"].success()
-						&& root["raw"]["g"].success()
-						&& root["raw"]["b"].success()
-						&& root["raw"]["ww"].success()
-						&& root["raw"]["cw"].success())) {
-
-					sendApiCode(response, API_CODES::API_MISSING_PARAM);
-					return;
-				}
-				ChannelOutput output;
-				int t, r, g, b, ww, cw = 0;
-				String cmd = "solid";
-				bool q = false;
-
-				r = constrain(root["raw"]["r"].as<int>(), 0, 1023);
-				g = constrain(root["raw"]["g"].as<int>(), 0, 1023);
-				b = constrain(root["raw"]["b"].as<int>(), 0, 1023);
-				ww = constrain(root["raw"]["ww"].as<int>(), 0, 1023);
-				cw = constrain(root["raw"]["cw"].as<int>(), 0, 1023);
-				if (root["cmd"].success()) {
-					cmd = root["cmd"].asString();
-				}
-				if (root["t"].success()) {
-					t = root["t"].as<int>();
-				}
-				if (root["q"].success()) {
-					q = root["q"];
-					if (q) {
-						if (app.rgbwwctrl.isAnimationQFull()) {
-							sendApiCode(response, API_CODES::API_BAD_REQUEST, "queue is full");
-							return;
-						}
-					}
-				}
-
-				output = ChannelOutput(r, g, b, ww, cw);
-				if(!root["raw"]["from"].success()) {
-					debugapp("ApplicationWebserver::onColor raw CMD:%s Q:%d r:%i g:%i b:%i ww:%i cw:%i", cmd.c_str(), q, r, g, b, ww, cw);
-					if (cmd.equals("fade")) {
-						app.rgbwwctrl.fadeRAW(output, t, q);
-					} else {
-						app.rgbwwctrl.setRAW(output, t, q);
-					}
-				} else {
-					if (!(root["raw"]["from"]["r"].success()
-							&& root["raw"]["from"]["g"].success()
-							&& root["raw"]["from"]["b"].success()
-							&& root["raw"]["from"]["ww"].success()
-							&& root["raw"]["from"]["cw"].success())) {
-
-						sendApiCode(response, API_CODES::API_MISSING_PARAM);
-						return;
-					}
-					int from_r, from_g, from_b, from_ww, from_cw = 0;
-					ChannelOutput from_output;
-					from_r = constrain(root["raw"]["r"].as<int>(), 0, 1023);
-					from_g = constrain(root["raw"]["g"].as<int>(), 0, 1023);
-					from_b = constrain(root["raw"]["b"].as<int>(), 0, 1023);
-					from_ww = constrain(root["raw"]["ww"].as<int>(), 0, 1023);
-					from_cw = constrain(root["raw"]["cw"].as<int>(), 0, 1023);
-
-					from_output = ChannelOutput(from_r, from_g, from_b, from_ww, from_cw);
-					debugapp("ApplicationWebserver::onColor raw CMD:%s Q:%d FROM r:%i g:%i b:%i ww:%i cw:%i  TO r:%i g:%i b:%i ww:%i cw:%i",
-									cmd.c_str(), q, from_r, from_g, from_b, from_ww, from_cw, r, g, b, ww, cw);
-					app.rgbwwctrl.fadeRAW(from_output, output, t, q);
-				}
-
-			} else {
-				sendApiCode(response, API_CODES::API_MISSING_PARAM);
-				return;
-			}
-			sendApiCode(response, API_CODES::API_SUCCESS);
-
-		}
+		ApplicationWebserver::colorPost(request, response);
 	} else {
-		JsonObjectStream* stream = new JsonObjectStream();
-		JsonObject& json = stream->getRoot();
-		String mode = request.getQueryParameter("mode", "hsv");
-		if (mode.equals("raw")) {
-			JsonObject& raw = json.createNestedObject("raw");
-			ChannelOutput output = app.rgbwwctrl.getCurrentOutput();
-			raw["r"] = output.r;
-			raw["g"] = output.g;
-			raw["b"] = output.b;
-			raw["ww"] = output.ww;
-			raw["cw"] = output.cw;
-
-		} else if (mode.equals("temp")) {
-			json["kelvin"] = 0;
-			//TODO get kelvin from controller
-		} else {
-			JsonObject& hsv = json.createNestedObject("hsv");
-
-			float h, s, v;
-			int ct;
-			HSVCT c = app.rgbwwctrl.getCurrentColor();
-			c.asRadian(h, s, v, ct);
-			hsv["h"] = h;
-			hsv["s"] = s;
-			hsv["v"] = v;
-			hsv["ct"] = ct;
-		}
-		sendApiResponse(response, stream);
+		ApplicationWebserver::colorGet(request, response);
 	}
 
 }
@@ -1169,6 +1200,39 @@ void ApplicationWebserver::onSkip(HttpRequest &request, HttpResponse &response) 
 	}
 
 	app.rgbwwctrl.skipAnimation();
+
+	sendApiCode(response, API_CODES::API_SUCCESS);
+}
+
+void ApplicationWebserver::onPause(HttpRequest &request, HttpResponse &response) {
+	if (request.getRequestMethod() != RequestMethod::POST) {
+		sendApiCode(response, API_CODES::API_BAD_REQUEST);
+		return;
+	}
+
+	app.rgbwwctrl.pauseAnimation();
+
+	sendApiCode(response, API_CODES::API_SUCCESS);
+}
+
+void ApplicationWebserver::onContinue(HttpRequest &request, HttpResponse &response) {
+	if (request.getRequestMethod() != RequestMethod::POST) {
+		sendApiCode(response, API_CODES::API_BAD_REQUEST);
+		return;
+	}
+
+	app.rgbwwctrl.continueAnimation();
+
+	sendApiCode(response, API_CODES::API_SUCCESS);
+}
+
+void ApplicationWebserver::onBlink(HttpRequest &request, HttpResponse &response) {
+	if (request.getRequestMethod() != RequestMethod::POST) {
+		sendApiCode(response, API_CODES::API_BAD_REQUEST);
+		return;
+	}
+
+	app.rgbwwctrl.blink();
 
 	sendApiCode(response, API_CODES::API_SUCCESS);
 }

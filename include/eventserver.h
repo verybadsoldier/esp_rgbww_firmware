@@ -5,21 +5,7 @@
 
 #include <RGBWWLed/RGBWWLed.h>
 
-class TcpConnection;
-
-class JsonRpcMessage {
-public:
-    JsonRpcMessage(const String& name);
-    JsonObjectStream& getStream();
-    void setId(int id);
-    JsonObject& getParams();
-
-private:
-    const String _data;
-
-    JsonObjectStream _stream;
-    JsonObject* _pParams;
-};
+#include "jsonrpcmessage.h"
 
 class EventServer : public TcpServer{
 public:
@@ -29,7 +15,7 @@ public:
 	inline bool isRunning() { return _running; };
 
 	void publishCurrentColor(const HSVCT& color);
-	void publishTransitionComplete();
+	void publishTransitionComplete(const String& name);
 	void publishKeepAlive();
 
 private:
@@ -44,26 +30,5 @@ private:
     bool _running = false;
     Timer _keepAliveTimer;
 	Vector<TcpClient*> _clients;
-	Vector<int*> _tests;
 	int _nextId = 1;
-};
-
-class ColorEventPublisher {
-public:
-	virtual ~ColorEventPublisher();
-
-	void start();
-	void stop();
-	void init(EventServer& eventServer, RGBWWLed& rgbctrl);
-	inline bool isRunning() { return _running; };
-
-private:
-	void publishCurrentColor();
-	Timer _ledTimer;
-
-	RGBWWLed* _rgbCtrl;
-	EventServer* _eventServer;
-
-	HSVCT _lastColor;
-	bool _running = false;
 };

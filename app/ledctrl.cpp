@@ -53,7 +53,6 @@ void APPLedCtrl::show_led() {
 	if (!show()) {
 		//debugapp("start %i end: %i, diff %i", curmicros, millis(), millis() - curmicros);
 	}
-
 }
 
 void APPLedCtrl::start() {
@@ -94,22 +93,22 @@ void APPLedCtrl::test_channels() {
 	ChannelOutput cw = ChannelOutput(0, 0, 0, 0, 1023);
 	ChannelOutput black = ChannelOutput(0, 0, 0, 0, 0);
 	setRAW(black);
-	fadeRAW(red, 1000, true);
-	fadeRAW(black, 1000, true);
-	fadeRAW(green, 1000, true);
-	fadeRAW(black, 1000, true);
-	fadeRAW(blue, 1000, true);
-	fadeRAW(black, 1000, true);
-	fadeRAW(ww, 1000, true);
-	fadeRAW(black, 1000, true);
-	fadeRAW(cw, 1000, true);
-	fadeRAW(black, 1000, true);
+	fadeRAW(red, 1000, QueuePolicy::Back);
+	fadeRAW(black, 1000, QueuePolicy::Back);
+	fadeRAW(green, 1000, QueuePolicy::Back);
+	fadeRAW(black, 1000, QueuePolicy::Back);
+	fadeRAW(blue, 1000, QueuePolicy::Back);
+	fadeRAW(black, 1000, QueuePolicy::Back);
+	fadeRAW(ww, 1000, QueuePolicy::Back);
+	fadeRAW(black, 1000, QueuePolicy::Back);
+	fadeRAW(cw, 1000, QueuePolicy::Back);
+	fadeRAW(black, 1000, QueuePolicy::Back);
 }
 
-void APPLedCtrl::led_callback(RGBWWLed* rgbwwctrl) {
+void APPLedCtrl::led_callback(RGBWWLed* rgbwwctrl, RGBWWLedAnimation* anim) {
 	debugapp("APPLedCtrl::led_callback");
 	app.rgbwwctrl.color_save();
 
-	app.eventserver.publishTransitionComplete();
+	//app.eventserver.publishTransitionComplete(anim->getName());
 	app.eventserver.publishCurrentColor(app.rgbwwctrl.getCurrentColor());
 }

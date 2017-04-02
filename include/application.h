@@ -23,6 +23,7 @@
 #define APPLICATION_H_
 
 #include "eventserver.h"
+#include "coloreventpublisher.h"
 
 static const char* fw_version = FWVERSION;
 static const char* fw_git_version = GITVERSION;
