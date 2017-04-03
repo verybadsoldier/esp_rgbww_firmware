@@ -22,6 +22,8 @@
 #ifndef APP_WEBSERVER_H_
 #define APP_WEBSERVER_H_
 
+#include <RGBWWLed/RGBWWLedColor.h>
+
 enum API_CODES {
 	API_SUCCESS = 0,
 	API_BAD_REQUEST = 1,
@@ -43,10 +45,47 @@ public:
 	String getApiCodeMsg(API_CODES code);
 
 private:
+	struct ColorRequestParameters {
+		String target;
+
+		enum class Mode {
+		    Undefined,
+		    Hsv,
+		    Raw,
+		    Kelvin,
+		};
+
+		Mode mode = Mode::Undefined;
+
+		bool hasHsvFrom = false;
+		bool hasRawFrom = false;
+
+		RequestHSVCT hsv;
+		RequestHSVCT hsvFrom;
+
+		RequestChannelOutput raw;
+        RequestChannelOutput rawFrom;
+
+		int kelvin;
+
+		int direction = 1;
+		bool requeue = false;
+		int time = 0;
+		String name;
+
+		String cmd = "solid";
+
+		QueuePolicy queue = QueuePolicy::Single;
+
+		int checkParams(String& errorMsg) const;
+	};
+
+	void parseColorRequestParams(JsonObject& root, ColorRequestParameters& params);
+	RGBWWLed::ChannelList parseChannelRequestParams(HttpRequest &request);
+
 	bool _init = false;
 	bool _running = false;
 
-private:
 	bool authenticated(HttpRequest &request, HttpResponse &response);
 	void onFile(HttpRequest &request, HttpResponse &response);
 	void onIndex(HttpRequest &request, HttpResponse &response);
@@ -70,8 +109,10 @@ private:
 	void onContinue(HttpRequest &request, HttpResponse &response);
 	void onBlink(HttpRequest &request, HttpResponse &response);
 
-	void colorGet(HttpRequest &request, HttpResponse &response);
-	void colorPost(HttpRequest &request, HttpResponse &response);
+	void onColorGet(HttpRequest &request, HttpResponse &response);
+	void onColorPost(HttpRequest &request, HttpResponse &response);
+	bool onColorPostCmd(JsonObject& root, String& errorMsg);
+
 };
 
 #endif // APP_WEBSERVER_H_

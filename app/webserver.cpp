@@ -632,7 +632,174 @@ void ApplicationWebserver::onInfo(HttpRequest &request, HttpResponse &response) 
 	sendApiResponse(response, stream);
 }
 
-void ApplicationWebserver::colorGet(HttpRequest &request, HttpResponse &response) {
+RGBWWLed::ChannelList ApplicationWebserver::parseChannelRequestParams(HttpRequest &request) {
+    String body = request.getBody();
+    DynamicJsonBuffer jsonBuffer;
+    JsonObject& root = jsonBuffer.parseObject(body);
+
+    RGBWWLed::ChannelList channels;
+    if (root["channels"].success()) {
+        const JsonArray& arr = root["channels"].asArray();
+        for(size_t i=0; i < arr.size(); ++i) {
+            const String& str = arr[i].asString();
+            if (str == "h") {
+                channels.add(CtrlChannel::Hue);
+            }
+            else if (str == "s") {
+                channels.add(CtrlChannel::Sat);
+            }
+            else if (str == "v") {
+                channels.add(CtrlChannel::Val);
+            }
+            else if (str == "ct") {
+                channels.add(CtrlChannel::ColorTemp);
+            }
+        }
+    }
+
+    return channels;
+}
+
+void ApplicationWebserver::parseColorRequestParams(JsonObject& root, ColorRequestParameters& params) {
+    debugapp("parse3");
+	if (root["hsv"].success()) {
+	    debugapp("parse4");
+		params.mode = ColorRequestParameters::Mode::Hsv;
+		if (root["hsv"]["h"].success())
+		    params.hsv.h = AbsOrRelValue(root["hsv"]["h"].asString(), AbsOrRelValue::Type::Hue);
+        if (root["hsv"]["s"].success())
+            params.hsv.s = AbsOrRelValue(root["hsv"]["s"].asString());
+        if (root["hsv"]["v"].success())
+            params.hsv.v = AbsOrRelValue(root["hsv"]["v"].asString());
+		if (root["hsv"]["ct"].success())
+		    params.hsv.ct = AbsOrRelValue(root["hsv"]["ct"].asString(), AbsOrRelValue::Type::Ct);
+	    debugapp("parse5");
+
+		if (root["hsv"]["from"].success()) {
+			params.hasHsvFrom = true;
+	        if (root["hsv"]["from"]["h"].success())
+	            params.hsv.h = AbsOrRelValue(root["hsv"]["from"]["h"].asString(), AbsOrRelValue::Type::Hue);
+            if (root["hsv"]["from"]["s"].success())
+                params.hsv.s = AbsOrRelValue(root["hsv"]["from"]["s"].asString());
+            if (root["hsv"]["from"]["v"].success())
+                params.hsv.v = AbsOrRelValue(root["hsv"]["from"]["v"].asString());
+	        if (root["hsv"]["from"]["ct"].success())
+	            params.hsv.ct = AbsOrRelValue(root["hsv"]["from"]["ct"].asString(), AbsOrRelValue::Type::Ct);
+		}
+	}
+	else if (root["raw"].success()) {
+        params.mode = ColorRequestParameters::Mode::Raw;
+		if (root["raw"]["r"].success())
+		    params.raw.r = AbsOrRelValue(root["raw"]["r"].asString(), AbsOrRelValue::Type::Raw);
+        if (root["raw"]["g"].success())
+            params.raw.r = AbsOrRelValue(root["raw"]["g"].asString(), AbsOrRelValue::Type::Raw);
+        if (root["raw"]["b"].success())
+            params.raw.r = AbsOrRelValue(root["raw"]["b"].asString(), AbsOrRelValue::Type::Raw);
+        if (root["raw"]["ww"].success())
+            params.raw.r = AbsOrRelValue(root["raw"]["ww"].asString(), AbsOrRelValue::Type::Raw);
+        if (root["raw"]["cw"].success())
+            params.raw.r = AbsOrRelValue(root["raw"]["cw"].asString(), AbsOrRelValue::Type::Raw);
+
+		if (root["raw"]["from"].success()) {
+			params.hasRawFrom = true;
+	        if (root["raw"]["from"]["r"].success())
+	            params.raw.r = AbsOrRelValue(root["raw"]["from"]["r"].asString(), AbsOrRelValue::Type::Raw);
+	        if (root["raw"]["from"]["g"].success())
+	            params.raw.r = AbsOrRelValue(root["raw"]["from"]["g"].asString(), AbsOrRelValue::Type::Raw);
+	        if (root["raw"]["from"]["b"].success())
+	            params.raw.r = AbsOrRelValue(root["raw"]["from"]["b"].asString(), AbsOrRelValue::Type::Raw);
+	        if (root["raw"]["from"]["ww"].success())
+	            params.raw.r = AbsOrRelValue(root["raw"]["from"]["ww"].asString(), AbsOrRelValue::Type::Raw);
+	        if (root["raw"]["from"]["cw"].success())
+	            params.raw.r = AbsOrRelValue(root["raw"]["from"]["cw"].asString(), AbsOrRelValue::Type::Raw);
+		}
+	}
+
+	if (root["kelvin"].success()) {
+        params.mode = ColorRequestParameters::Mode::Kelvin;
+	}
+
+	if (root["t"].success()) {
+		params.time = root["t"].as<int>();
+	}
+
+	if (root["r"].success()) {
+		params.requeue = root["r"].as<int>() == 1;
+	}
+
+	if (root["kelvin"].success()) {
+		params.kelvin = root["kelvin"].as<int>();
+	}
+
+	if (root["d"].success()) {
+		params.direction = root["d"].as<int>();
+	}
+
+	if (root["name"].success()) {
+		params.name = root["name"].asString();
+	}
+
+	if (root["cmd"].success()) {
+		params.cmd = root["cmd"].asString();
+	}
+
+	if (root["q"].success()) {
+		const String& q = root["q"].asString();
+		if (q == "back")
+			params.queue = QueuePolicy::Back;
+		else if (q == "front")
+			params.queue = QueuePolicy::Front;
+		else if (q == "front_reset")
+			params.queue = QueuePolicy::FrontReset;
+		else if (q == "single")
+			params.queue = QueuePolicy::Single;
+		else {
+		    params.queue = QueuePolicy::Invalid;
+		}
+	}
+}
+
+int ApplicationWebserver::ColorRequestParameters::checkParams(String& errorMsg) const {
+    if (mode == Mode::Hsv) {
+        if (hsv.ct.hasValue()) {
+            if (hsv.ct != 0 && (hsv.ct < 100 || hsv.ct > 10000 || (hsv.ct > 500 && hsv.ct < 2000))) {
+                errorMsg = "bad param for ct";
+                return 1;
+            }
+        }
+
+        if (!hsv.h.hasValue() && !hsv.s.hasValue() && !hsv.v.hasValue() && !hsv.ct.hasValue()) {
+            errorMsg = "Need at least one HSVCT component!";
+            return 1;
+        }
+    }
+    else if (mode == Mode::Raw) {
+        if (!raw.r.hasValue() && !raw.g.hasValue() && !raw.b.hasValue() && !raw.ww.hasValue() && !raw.cw.hasValue()) {
+            errorMsg = "Need at least one RAW component!";
+            return 1;
+        }
+    }
+
+    if (queue == QueuePolicy::Invalid) {
+        errorMsg = "Invalid queue policy";
+        return 1;
+    }
+
+    if (cmd != "fade" && cmd != "solid") {
+        errorMsg = "Invalid cmd";
+        return 1;
+    }
+
+    if (direction < 0 || direction > 1) {
+        errorMsg = "Invalid direction";
+        return 1;
+    }
+
+    return 0;
+}
+
+
+void ApplicationWebserver::onColorGet(HttpRequest &request, HttpResponse &response) {
 	JsonObjectStream* stream = new JsonObjectStream();
 	JsonObject& json = stream->getRoot();
 	String mode = request.getQueryParameter("mode", "hsv");
@@ -663,7 +830,7 @@ void ApplicationWebserver::colorGet(HttpRequest &request, HttpResponse &response
 	sendApiResponse(response, stream);
 }
 
-void ApplicationWebserver::colorPost(HttpRequest &request, HttpResponse &response) {
+void ApplicationWebserver::onColorPost(HttpRequest &request, HttpResponse &response) {
 	String body = request.getBody();
 	if (body == NULL || body.length() > 128) {
 		sendApiCode(response, API_CODES::API_BAD_REQUEST);
@@ -673,196 +840,93 @@ void ApplicationWebserver::colorPost(HttpRequest &request, HttpResponse &respons
 
 	DynamicJsonBuffer jsonBuffer;
 	JsonObject& root = jsonBuffer.parseObject(body);
-	//root.prettyPrintTo(Serial);
-
-	if (root["kelvin"].success()) {
-		int t, k = 0;
-		bool q = false;
-
-		k = root["kelvin"].as<int>();
-		if (root["t"].success()) {
-			t = root["t"].as<int>();
-		}
-		if (root["q"].success()) {
-			q = root["q"];
-		}
-		//TODO: hand to rgbctrl
-	} else if (root["hsv"].success()) {
-		if (!(root["hsv"]["h"].success() && root["hsv"]["s"].success() && root["hsv"]["v"].success())) {
-			sendApiCode(response, API_CODES::API_MISSING_PARAM);
-			return;
-		}
-		float h, s, v;
-		int t, ct = 0;
-		int d = 1;
-		bool r = false;
-		QueuePolicy queuePolicy = QueuePolicy::Single;
-		String cmd = "solid";
-		String name;
-		HSVCT c;
-		h = constrain(root["hsv"]["h"].as<float>(), 0.0, 360.0);
-		s = constrain(root["hsv"]["s"].as<float>(), 0.0, 100.0);
-		v = constrain(root["hsv"]["v"].as<float>(), 0.0, 100.0);
-
-		if (root["hsv"]["ct"].success()) {
-			ct = root["hsv"]["ct"].as<int>();
-			if (ct != 0 && (ct < 100 || ct > 10000 || (ct > 500 && ct < 2000))) {
-				sendApiCode(response, API_CODES::API_BAD_REQUEST, "bad param for ct");
-				return;
-			}
-		}
-		if (root["cmd"].success()) {
-			cmd = root["cmd"].asString();
-		}
-
-		if (root["t"].success()) {
-			t = root["t"].as<int>();
-		}
-		if (root["q"].success()) {
-			if (app.rgbwwctrl.isAnimationQFull()) {
-				sendApiCode(response, API_CODES::API_BAD_REQUEST, "queue is full");
-				return;
-			}
-
-			const String& q = root["q"].asString();
-			if (q == "back")
-				queuePolicy = QueuePolicy::Back;
-			else if (q == "front")
-				queuePolicy = QueuePolicy::Front;
-            else if (q == "front_reset")
-                queuePolicy = QueuePolicy::FrontReset;
-			else if (q == "single")
-				queuePolicy = QueuePolicy::Single;
-			else {
-				sendApiCode(response, API_CODES::API_BAD_REQUEST, "Invalid queue policy");
-				return;
+	if (root["cmds"].success()) {
+		Vector<String> errors;
+		// multi command post (needs testing)
+		const JsonArray& cmds = root["cmds"].asArray();
+		for(int i=0; i < cmds.size(); ++i) {
+			String msg;
+			if (!onColorPostCmd(cmds[i], msg)) {
+				errors.add(msg);
 			}
 		}
 
-		if (root["d"].success()) {
-			d = root["d"].as<int>();
-		}
-		if (root["r"].success()) {
-			r = root["r"];
-		}
-		if (root["name"].success()) {
-			name = root["name"].asString();
-		}
-		c = HSVCT(h, s, v, ct);
-
-		if(!root["hsv"]["from"].success()) {
-			debugapp("ApplicationWebserver::onColor hsv CMD:%s Q:%d  h:%f s:%f v:%f ct:%i ", cmd.c_str(), q, h, s, v, ct);
-			if (cmd.equals("fade")) {
-				app.rgbwwctrl.fadeHSV(c, t, d, queuePolicy, r, name);
-			} else {
-				app.rgbwwctrl.setHSV(c, t, queuePolicy, r, name);
+		if (errors.size() == 0)
+			sendApiCode(response, API_CODES::API_SUCCESS);
+		else {
+			String msg;
+			for (int i=0; i < errors.size(); ++i) {
+				msg += errors[i] + "|";
 			}
-		} else {
-			float from_h, from_s, from_v;
-			int from_ct = 0;
-			HSVCT from_c;
-			if (!(root["hsv"]["from"]["h"].success() && root["hsv"]["from"]["s"].success() && root["hsv"]["from"]["v"].success())) {
-				sendApiCode(response, API_CODES::API_MISSING_PARAM);
-				return;
-			}
-			from_h = constrain(root["hsv"]["from"]["h"].as<float>(), 0.0, 360.0);
-			from_s = constrain(root["hsv"]["from"]["s"].as<float>(), 0.0, 100.0);
-			from_v = constrain(root["hsv"]["from"]["v"].as<float>(), 0.0, 100.0);
-			if (root["hsv"]["from"]["ct"].success()) {
-				from_ct = root["hsv"]["from"]["ct"].as<int>();
-				if (from_ct != 0 && (from_ct < 100 || from_ct > 10000 || (from_ct > 500 && from_ct < 2000))) {
-					sendApiCode(response, API_CODES::API_BAD_REQUEST, "bad param for from:ct");
-					return;
-				}
-			}
-			from_c = HSVCT(from_h, from_s, from_v, from_ct);
-
-			debugapp("ApplicationWebserver::onColor hsv CMD:%s Q:%d  FROM h:%f s:%f v:%f ct:%i - TO h:%f s :%f v:%f ct:%i ", cmd.c_str(), q, from_h, from_s, from_v, from_ct, h, s, v, ct);
-			app.rgbwwctrl.fadeHSV(from_c, c, t, d, queuePolicy);
+			sendApiCode(response, API_CODES::API_BAD_REQUEST, msg);
 		}
-	} else if (root["raw"].success()) {
-
-		if (!(root["raw"]["r"].success()
-				&& root["raw"]["g"].success()
-				&& root["raw"]["b"].success()
-				&& root["raw"]["ww"].success()
-				&& root["raw"]["cw"].success())) {
-
-			sendApiCode(response, API_CODES::API_MISSING_PARAM);
-			return;
-		}
-		ChannelOutput output;
-		int t, r, g, b, ww, cw = 0;
-		String cmd = "solid";
-		QueuePolicy queuePolicy = QueuePolicy::Single;
-
-		r = constrain(root["raw"]["r"].as<int>(), 0, 1023);
-		g = constrain(root["raw"]["g"].as<int>(), 0, 1023);
-		b = constrain(root["raw"]["b"].as<int>(), 0, 1023);
-		ww = constrain(root["raw"]["ww"].as<int>(), 0, 1023);
-		cw = constrain(root["raw"]["cw"].as<int>(), 0, 1023);
-		if (root["cmd"].success()) {
-			cmd = root["cmd"].asString();
-		}
-		if (root["t"].success()) {
-			t = root["t"].as<int>();
-		}
-		if (root["q"].success()) {
-			if (app.rgbwwctrl.isAnimationQFull()) {
-				sendApiCode(response, API_CODES::API_BAD_REQUEST, "queue is full");
-				return;
-			}
-
-			const String& q = root["q"].asString();
-			if (q == "back")
-				queuePolicy == QueuePolicy::Back;
-			else if (q == "front")
-				queuePolicy == QueuePolicy::Front;
-			else if (q == "single")
-				queuePolicy == QueuePolicy::Single;
-			else {
-				sendApiCode(response, API_CODES::API_BAD_REQUEST, "Invalid queue policy");
-				return;
-			}
-		}
-
-		output = ChannelOutput(r, g, b, ww, cw);
-		if(!root["raw"]["from"].success()) {
-			debugapp("ApplicationWebserver::onColor raw CMD:%s Q:%d r:%i g:%i b:%i ww:%i cw:%i", cmd.c_str(), q, r, g, b, ww, cw);
-			if (cmd.equals("fade")) {
-				app.rgbwwctrl.fadeRAW(output, t, queuePolicy);
-			} else {
-				app.rgbwwctrl.setRAW(output, t, queuePolicy);
-			}
-		} else {
-			if (!(root["raw"]["from"]["r"].success()
-					&& root["raw"]["from"]["g"].success()
-					&& root["raw"]["from"]["b"].success()
-					&& root["raw"]["from"]["ww"].success()
-					&& root["raw"]["from"]["cw"].success())) {
-
-				sendApiCode(response, API_CODES::API_MISSING_PARAM);
-				return;
-			}
-			int from_r, from_g, from_b, from_ww, from_cw = 0;
-			ChannelOutput from_output;
-			from_r = constrain(root["raw"]["r"].as<int>(), 0, 1023);
-			from_g = constrain(root["raw"]["g"].as<int>(), 0, 1023);
-			from_b = constrain(root["raw"]["b"].as<int>(), 0, 1023);
-			from_ww = constrain(root["raw"]["ww"].as<int>(), 0, 1023);
-			from_cw = constrain(root["raw"]["cw"].as<int>(), 0, 1023);
-
-			from_output = ChannelOutput(from_r, from_g, from_b, from_ww, from_cw);
-			debugapp("ApplicationWebserver::onColor raw CMD:%s Q:%d FROM r:%i g:%i b:%i ww:%i cw:%i  TO r:%i g:%i b:%i ww:%i cw:%i",
-							cmd.c_str(), q, from_r, from_g, from_b, from_ww, from_cw, r, g, b, ww, cw);
-			app.rgbwwctrl.fadeRAW(from_output, output, t, queuePolicy);
-		}
-
-	} else {
-		sendApiCode(response, API_CODES::API_MISSING_PARAM);
-		return;
 	}
-	sendApiCode(response, API_CODES::API_SUCCESS);
+	else {
+		String msg;
+		if (onColorPostCmd(root, msg)) {
+			sendApiCode(response, API_CODES::API_SUCCESS);
+		}
+		else {
+			sendApiCode(response, API_CODES::API_BAD_REQUEST, msg);
+		}
+	}
+}
+
+bool ApplicationWebserver::onColorPostCmd(JsonObject& root, String& errorMsg) {
+	debugapp("parse1");
+
+	ColorRequestParameters params;
+	parseColorRequestParams(root, params);
+
+    debugapp("parse2");
+
+    {
+        if (params.checkParams(errorMsg) != 0) {
+            debugapp("paERer");
+            return false;
+        }
+    }
+
+	if (params.mode == ColorRequestParameters::Mode::Kelvin) {
+		//TODO: hand to rgbctrl
+	} else if (params.mode == ColorRequestParameters::Mode::Hsv) {
+	    debugapp("parse244");
+        debugapp("parse4-1");
+		debugapp("Exec HSV");
+
+		if(!params.hasHsvFrom) {
+			debugapp("a1");
+
+			debugapp("ApplicationWebserver::onColor hsv CMD:%s t:%d Q:%d  h:%d s:%d v:%d ct:%d ", params.cmd.c_str(), params.time, params.queue, params.hsv.h.getValue().getValue(), params.hsv.s.getValue().getValue(), params.hsv.v.getValue().getValue(), params.hsv.ct.getValue().getValue());
+			debugapp("a2");
+			if (params.cmd == "fade") {
+				app.rgbwwctrl.fadeHSV(params.hsv, params.time, params.direction, params.queue, params.requeue, params.name);
+			} else {
+	            debugapp("setHSV");
+				app.rgbwwctrl.setHSV(params.hsv, params.time, params.queue, params.requeue, params.name);
+			}
+		} else {
+			app.rgbwwctrl.fadeHSV(params.hsvFrom, params.hsv, params.time, params.direction, params.queue);
+		}
+	} else if (params.mode == ColorRequestParameters::Mode::Raw) {
+		if(!params.hasRawFrom) {
+			debugapp("ApplicationWebserver::onColor raw CMD:%s Q:%d r:%i g:%i b:%i ww:%i cw:%i", params.cmd.c_str(), params.queue, params.raw.r.getValue().getValue(), params.raw.g.getValue().getValue(), params.raw.b.getValue().getValue(), params.raw.ww.getValue().getValue(), params.raw.cw.getValue().getValue());
+			if (params.cmd == "fade") {
+				app.rgbwwctrl.fadeRAW(params.raw, params.time, params.queue);
+			} else {
+				app.rgbwwctrl.setRAW(params.raw, params.time, params.queue);
+			}
+		} else {
+//			from_output = ChannelOutput(from_r, from_g, from_b, from_ww, from_cw);
+//			debugapp("ApplicationWebserver::onColor raw CMD:%s Q:%d FROM r:%i g:%i b:%i ww:%i cw:%i  TO r:%i g:%i b:%i ww:%i cw:%i",
+//							cmd.c_str(), queuePolicy, from_r, from_g, from_b, from_ww, from_cw, r, g, b, ww, cw);
+//			app.rgbwwctrl.fadeRAW(from_output, output, t, queuePolicy);
+		}
+	} else {
+		errorMsg = "No color object!";
+		return false;
+	}
+	return true;
 }
 
 void ApplicationWebserver::onColor(HttpRequest &request, HttpResponse &response) {
@@ -882,9 +946,9 @@ void ApplicationWebserver::onColor(HttpRequest &request, HttpResponse &response)
 
 	bool error = false;
 	if (request.getRequestMethod() == RequestMethod::POST) {
-		ApplicationWebserver::colorPost(request, response);
+		ApplicationWebserver::onColorPost(request, response);
 	} else {
-		ApplicationWebserver::colorGet(request, response);
+		ApplicationWebserver::onColorGet(request, response);
 	}
 
 }
@@ -1187,8 +1251,9 @@ void ApplicationWebserver::onStop(HttpRequest &request, HttpResponse &response) 
 		return;
 	}
 
-	app.rgbwwctrl.clearAnimationQueue();
-	app.rgbwwctrl.skipAnimation();
+    RGBWWLed::ChannelList channels = parseChannelRequestParams(request);
+	app.rgbwwctrl.clearAnimationQueue(channels);
+	app.rgbwwctrl.skipAnimation(channels);
 
 	sendApiCode(response, API_CODES::API_SUCCESS);
 }
@@ -1199,7 +1264,8 @@ void ApplicationWebserver::onSkip(HttpRequest &request, HttpResponse &response) 
 		return;
 	}
 
-	app.rgbwwctrl.skipAnimation();
+	RGBWWLed::ChannelList channels = parseChannelRequestParams(request);
+	app.rgbwwctrl.skipAnimation(channels);
 
 	sendApiCode(response, API_CODES::API_SUCCESS);
 }
@@ -1210,7 +1276,8 @@ void ApplicationWebserver::onPause(HttpRequest &request, HttpResponse &response)
 		return;
 	}
 
-	app.rgbwwctrl.pauseAnimation();
+    RGBWWLed::ChannelList channels = parseChannelRequestParams(request);
+	app.rgbwwctrl.pauseAnimation(channels);
 
 	sendApiCode(response, API_CODES::API_SUCCESS);
 }
@@ -1221,7 +1288,8 @@ void ApplicationWebserver::onContinue(HttpRequest &request, HttpResponse &respon
 		return;
 	}
 
-	app.rgbwwctrl.continueAnimation();
+    RGBWWLed::ChannelList channels = parseChannelRequestParams(request);
+	app.rgbwwctrl.continueAnimation(channels);
 
 	sendApiCode(response, API_CODES::API_SUCCESS);
 }
@@ -1232,7 +1300,8 @@ void ApplicationWebserver::onBlink(HttpRequest &request, HttpResponse &response)
 		return;
 	}
 
-	app.rgbwwctrl.blink();
+    RGBWWLed::ChannelList channels = parseChannelRequestParams(request);
+	app.rgbwwctrl.blink(channels);
 
 	sendApiCode(response, API_CODES::API_SUCCESS);
 }

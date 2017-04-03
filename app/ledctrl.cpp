@@ -85,24 +85,24 @@ void APPLedCtrl::color_reset() {
 }
 
 void APPLedCtrl::test_channels() {
-	debugapp("APPLedCtrl::test_channels");
-	ChannelOutput red = ChannelOutput(1023, 0, 0, 0, 0);
-	ChannelOutput green = ChannelOutput(0, 1023, 0, 0, 0);
-	ChannelOutput blue = ChannelOutput(0, 0, 1023, 0, 0);
-	ChannelOutput ww = ChannelOutput(0, 0, 0, 1023, 0);
-	ChannelOutput cw = ChannelOutput(0, 0, 0, 0, 1023);
-	ChannelOutput black = ChannelOutput(0, 0, 0, 0, 0);
-	setRAW(black);
-	fadeRAW(red, 1000, QueuePolicy::Back);
-	fadeRAW(black, 1000, QueuePolicy::Back);
-	fadeRAW(green, 1000, QueuePolicy::Back);
-	fadeRAW(black, 1000, QueuePolicy::Back);
-	fadeRAW(blue, 1000, QueuePolicy::Back);
-	fadeRAW(black, 1000, QueuePolicy::Back);
-	fadeRAW(ww, 1000, QueuePolicy::Back);
-	fadeRAW(black, 1000, QueuePolicy::Back);
-	fadeRAW(cw, 1000, QueuePolicy::Back);
-	fadeRAW(black, 1000, QueuePolicy::Back);
+//	debugapp("APPLedCtrl::test_channels");
+//	ChannelOutput red = ChannelOutput(1023, 0, 0, 0, 0);
+//	ChannelOutput green = ChannelOutput(0, 1023, 0, 0, 0);
+//	ChannelOutput blue = ChannelOutput(0, 0, 1023, 0, 0);
+//	ChannelOutput ww = ChannelOutput(0, 0, 0, 1023, 0);
+//	ChannelOutput cw = ChannelOutput(0, 0, 0, 0, 1023);
+//	ChannelOutput black = ChannelOutput(0, 0, 0, 0, 0);
+//	setRAW(black);
+//	fadeRAW(red, 1000, QueuePolicy::Back);
+//	fadeRAW(black, 1000, QueuePolicy::Back);
+//	fadeRAW(green, 1000, QueuePolicy::Back);
+//	fadeRAW(black, 1000, QueuePolicy::Back);
+//	fadeRAW(blue, 1000, QueuePolicy::Back);
+//	fadeRAW(black, 1000, QueuePolicy::Back);
+//	fadeRAW(ww, 1000, QueuePolicy::Back);
+//	fadeRAW(black, 1000, QueuePolicy::Back);
+//	fadeRAW(cw, 1000, QueuePolicy::Back);
+//	fadeRAW(black, 1000, QueuePolicy::Back);
 }
 
 void APPLedCtrl::led_callback(RGBWWLed* rgbwwctrl, RGBWWLedAnimation* anim) {
