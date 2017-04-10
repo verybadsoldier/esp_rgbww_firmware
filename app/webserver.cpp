@@ -632,10 +632,12 @@ void ApplicationWebserver::onInfo(HttpRequest &request, HttpResponse &response) 
 	sendApiResponse(response, stream);
 }
 
-RGBWWLed::ChannelList ApplicationWebserver::parseChannelRequestParams(HttpRequest &request) {
+void ApplicationWebserver::parseChannelRequestParams(HttpRequest &request, RequestParameters& params) {
     String body = request.getBody();
     DynamicJsonBuffer jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(body);
+
+    params.time = 100;
 
     RGBWWLed::ChannelList channels;
     if (root["channels"].success()) {
@@ -643,28 +645,30 @@ RGBWWLed::ChannelList ApplicationWebserver::parseChannelRequestParams(HttpReques
         for(size_t i=0; i < arr.size(); ++i) {
             const String& str = arr[i].asString();
             if (str == "h") {
-                channels.add(CtrlChannel::Hue);
+                params.channels.add(CtrlChannel::Hue);
             }
             else if (str == "s") {
-                channels.add(CtrlChannel::Sat);
+                params.channels.add(CtrlChannel::Sat);
             }
             else if (str == "v") {
-                channels.add(CtrlChannel::Val);
+                params.channels.add(CtrlChannel::Val);
             }
             else if (str == "ct") {
-                channels.add(CtrlChannel::ColorTemp);
+                params.channels.add(CtrlChannel::ColorTemp);
             }
         }
     }
 
-    return channels;
+    if (root["t"].success()) {
+        params.time = root["t"].as<int>();
+    }
 }
 
-void ApplicationWebserver::parseColorRequestParams(JsonObject& root, ColorRequestParameters& params) {
+void ApplicationWebserver::parseColorRequestParams(JsonObject& root, RequestParameters& params) {
     debugapp("parse3");
 	if (root["hsv"].success()) {
 	    debugapp("parse4");
-		params.mode = ColorRequestParameters::Mode::Hsv;
+		params.mode = RequestParameters::Mode::Hsv;
 		if (root["hsv"]["h"].success())
 		    params.hsv.h = AbsOrRelValue(root["hsv"]["h"].asString(), AbsOrRelValue::Type::Hue);
         if (root["hsv"]["s"].success())
@@ -688,35 +692,35 @@ void ApplicationWebserver::parseColorRequestParams(JsonObject& root, ColorReques
 		}
 	}
 	else if (root["raw"].success()) {
-        params.mode = ColorRequestParameters::Mode::Raw;
+        params.mode = RequestParameters::Mode::Raw;
 		if (root["raw"]["r"].success())
 		    params.raw.r = AbsOrRelValue(root["raw"]["r"].asString(), AbsOrRelValue::Type::Raw);
         if (root["raw"]["g"].success())
-            params.raw.r = AbsOrRelValue(root["raw"]["g"].asString(), AbsOrRelValue::Type::Raw);
+            params.raw.g = AbsOrRelValue(root["raw"]["g"].asString(), AbsOrRelValue::Type::Raw);
         if (root["raw"]["b"].success())
-            params.raw.r = AbsOrRelValue(root["raw"]["b"].asString(), AbsOrRelValue::Type::Raw);
+            params.raw.b = AbsOrRelValue(root["raw"]["b"].asString(), AbsOrRelValue::Type::Raw);
         if (root["raw"]["ww"].success())
-            params.raw.r = AbsOrRelValue(root["raw"]["ww"].asString(), AbsOrRelValue::Type::Raw);
+            params.raw.ww = AbsOrRelValue(root["raw"]["ww"].asString(), AbsOrRelValue::Type::Raw);
         if (root["raw"]["cw"].success())
-            params.raw.r = AbsOrRelValue(root["raw"]["cw"].asString(), AbsOrRelValue::Type::Raw);
+            params.raw.cw = AbsOrRelValue(root["raw"]["cw"].asString(), AbsOrRelValue::Type::Raw);
 
 		if (root["raw"]["from"].success()) {
 			params.hasRawFrom = true;
 	        if (root["raw"]["from"]["r"].success())
-	            params.raw.r = AbsOrRelValue(root["raw"]["from"]["r"].asString(), AbsOrRelValue::Type::Raw);
+	            params.rawFrom.r = AbsOrRelValue(root["raw"]["from"]["r"].asString(), AbsOrRelValue::Type::Raw);
 	        if (root["raw"]["from"]["g"].success())
-	            params.raw.r = AbsOrRelValue(root["raw"]["from"]["g"].asString(), AbsOrRelValue::Type::Raw);
+	            params.rawFrom.g = AbsOrRelValue(root["raw"]["from"]["g"].asString(), AbsOrRelValue::Type::Raw);
 	        if (root["raw"]["from"]["b"].success())
-	            params.raw.r = AbsOrRelValue(root["raw"]["from"]["b"].asString(), AbsOrRelValue::Type::Raw);
+	            params.rawFrom.b = AbsOrRelValue(root["raw"]["from"]["b"].asString(), AbsOrRelValue::Type::Raw);
 	        if (root["raw"]["from"]["ww"].success())
-	            params.raw.r = AbsOrRelValue(root["raw"]["from"]["ww"].asString(), AbsOrRelValue::Type::Raw);
+	            params.rawFrom.ww = AbsOrRelValue(root["raw"]["from"]["ww"].asString(), AbsOrRelValue::Type::Raw);
 	        if (root["raw"]["from"]["cw"].success())
-	            params.raw.r = AbsOrRelValue(root["raw"]["from"]["cw"].asString(), AbsOrRelValue::Type::Raw);
+	            params.rawFrom.cw = AbsOrRelValue(root["raw"]["from"]["cw"].asString(), AbsOrRelValue::Type::Raw);
 		}
 	}
 
 	if (root["kelvin"].success()) {
-        params.mode = ColorRequestParameters::Mode::Kelvin;
+        params.mode = RequestParameters::Mode::Kelvin;
 	}
 
 	if (root["t"].success()) {
@@ -759,7 +763,7 @@ void ApplicationWebserver::parseColorRequestParams(JsonObject& root, ColorReques
 	}
 }
 
-int ApplicationWebserver::ColorRequestParameters::checkParams(String& errorMsg) const {
+int ApplicationWebserver::RequestParameters::checkParams(String& errorMsg) const {
     if (mode == Mode::Hsv) {
         if (hsv.ct.hasValue()) {
             if (hsv.ct != 0 && (hsv.ct < 100 || hsv.ct > 10000 || (hsv.ct > 500 && hsv.ct < 2000))) {
@@ -875,7 +879,7 @@ void ApplicationWebserver::onColorPost(HttpRequest &request, HttpResponse &respo
 bool ApplicationWebserver::onColorPostCmd(JsonObject& root, String& errorMsg) {
 	debugapp("parse1");
 
-	ColorRequestParameters params;
+	RequestParameters params;
 	parseColorRequestParams(root, params);
 
     debugapp("parse2");
@@ -888,9 +892,9 @@ bool ApplicationWebserver::onColorPostCmd(JsonObject& root, String& errorMsg) {
     }
 
 	bool queueOk = false;
-	if (params.mode == ColorRequestParameters::Mode::Kelvin) {
+	if (params.mode == RequestParameters::Mode::Kelvin) {
 		//TODO: hand to rgbctrl
-	} else if (params.mode == ColorRequestParameters::Mode::Hsv) {
+	} else if (params.mode == RequestParameters::Mode::Hsv) {
 	    debugapp("parse244");
         debugapp("parse4-1");
 		debugapp("Exec HSV");
@@ -910,7 +914,7 @@ bool ApplicationWebserver::onColorPostCmd(JsonObject& root, String& errorMsg) {
 		} else {
 			app.rgbwwctrl.fadeHSV(params.hsvFrom, params.hsv, params.time, params.direction, params.queue);
 		}
-	} else if (params.mode == ColorRequestParameters::Mode::Raw) {
+	} else if (params.mode == RequestParameters::Mode::Raw) {
 		if(!params.hasRawFrom) {
 			debugapp("ApplicationWebserver::onColor raw CMD:%s Q:%d r:%i g:%i b:%i ww:%i cw:%i", params.cmd.c_str(), params.queue, params.raw.r.getValue().getValue(), params.raw.g.getValue().getValue(), params.raw.b.getValue().getValue(), params.raw.ww.getValue().getValue(), params.raw.cw.getValue().getValue());
 			if (params.cmd == "fade") {
@@ -1256,9 +1260,10 @@ void ApplicationWebserver::onStop(HttpRequest &request, HttpResponse &response) 
 		return;
 	}
 
-    RGBWWLed::ChannelList channels = parseChannelRequestParams(request);
-	app.rgbwwctrl.clearAnimationQueue(channels);
-	app.rgbwwctrl.skipAnimation(channels);
+	RequestParameters params;
+    parseChannelRequestParams(request, params);
+	app.rgbwwctrl.clearAnimationQueue(params.channels);
+	app.rgbwwctrl.skipAnimation(params.channels);
 
 	sendApiCode(response, API_CODES::API_SUCCESS);
 }
@@ -1269,8 +1274,9 @@ void ApplicationWebserver::onSkip(HttpRequest &request, HttpResponse &response) 
 		return;
 	}
 
-	RGBWWLed::ChannelList channels = parseChannelRequestParams(request);
-	app.rgbwwctrl.skipAnimation(channels);
+	RequestParameters params;
+    parseChannelRequestParams(request, params);
+	app.rgbwwctrl.skipAnimation(params.channels);
 
 	sendApiCode(response, API_CODES::API_SUCCESS);
 }
@@ -1281,8 +1287,9 @@ void ApplicationWebserver::onPause(HttpRequest &request, HttpResponse &response)
 		return;
 	}
 
-    RGBWWLed::ChannelList channels = parseChannelRequestParams(request);
-	app.rgbwwctrl.pauseAnimation(channels);
+	RequestParameters params;
+    parseChannelRequestParams(request, params);
+	app.rgbwwctrl.pauseAnimation(params.channels);
 
 	sendApiCode(response, API_CODES::API_SUCCESS);
 }
@@ -1293,8 +1300,9 @@ void ApplicationWebserver::onContinue(HttpRequest &request, HttpResponse &respon
 		return;
 	}
 
-    RGBWWLed::ChannelList channels = parseChannelRequestParams(request);
-	app.rgbwwctrl.continueAnimation(channels);
+	RequestParameters params;
+    parseChannelRequestParams(request, params);
+	app.rgbwwctrl.continueAnimation(params.channels);
 
 	sendApiCode(response, API_CODES::API_SUCCESS);
 }
@@ -1305,8 +1313,9 @@ void ApplicationWebserver::onBlink(HttpRequest &request, HttpResponse &response)
 		return;
 	}
 
-    RGBWWLed::ChannelList channels = parseChannelRequestParams(request);
-	app.rgbwwctrl.blink(channels);
+	RequestParameters params;
+    parseChannelRequestParams(request, params);
+	app.rgbwwctrl.blink(params.channels, params.time);
 
 	sendApiCode(response, API_CODES::API_SUCCESS);
 }

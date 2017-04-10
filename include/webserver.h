@@ -45,7 +45,7 @@ public:
 	String getApiCodeMsg(API_CODES code);
 
 private:
-	struct ColorRequestParameters {
+	struct RequestParameters {
 		String target;
 
 		enum class Mode {
@@ -75,13 +75,15 @@ private:
 
 		String cmd = "solid";
 
+		RGBWWLed::ChannelList channels;
+
 		QueuePolicy queue = QueuePolicy::Single;
 
 		int checkParams(String& errorMsg) const;
 	};
 
-	void parseColorRequestParams(JsonObject& root, ColorRequestParameters& params);
-	RGBWWLed::ChannelList parseChannelRequestParams(HttpRequest &request);
+	void parseColorRequestParams(JsonObject& root, RequestParameters& params);
+	void parseChannelRequestParams(HttpRequest &request, RequestParameters& params);
 
 	bool _init = false;
 	bool _running = false;
