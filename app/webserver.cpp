@@ -887,6 +887,7 @@ bool ApplicationWebserver::onColorPostCmd(JsonObject& root, String& errorMsg) {
         }
     }
 
+	bool queueOk = false;
 	if (params.mode == ColorRequestParameters::Mode::Kelvin) {
 		//TODO: hand to rgbctrl
 	} else if (params.mode == ColorRequestParameters::Mode::Hsv) {
@@ -894,16 +895,17 @@ bool ApplicationWebserver::onColorPostCmd(JsonObject& root, String& errorMsg) {
         debugapp("parse4-1");
 		debugapp("Exec HSV");
 
+
 		if(!params.hasHsvFrom) {
 			debugapp("a1");
 
 			debugapp("ApplicationWebserver::onColor hsv CMD:%s t:%d Q:%d  h:%d s:%d v:%d ct:%d ", params.cmd.c_str(), params.time, params.queue, params.hsv.h.getValue().getValue(), params.hsv.s.getValue().getValue(), params.hsv.v.getValue().getValue(), params.hsv.ct.getValue().getValue());
 			debugapp("a2");
 			if (params.cmd == "fade") {
-				app.rgbwwctrl.fadeHSV(params.hsv, params.time, params.direction, params.queue, params.requeue, params.name);
+				queueOk = app.rgbwwctrl.fadeHSV(params.hsv, params.time, params.direction, params.queue, params.requeue, params.name);
 			} else {
 	            debugapp("setHSV");
-				app.rgbwwctrl.setHSV(params.hsv, params.time, params.queue, params.requeue, params.name);
+	            queueOk = app.rgbwwctrl.setHSV(params.hsv, params.time, params.queue, params.requeue, params.name);
 			}
 		} else {
 			app.rgbwwctrl.fadeHSV(params.hsvFrom, params.hsv, params.time, params.direction, params.queue);
@@ -912,21 +914,24 @@ bool ApplicationWebserver::onColorPostCmd(JsonObject& root, String& errorMsg) {
 		if(!params.hasRawFrom) {
 			debugapp("ApplicationWebserver::onColor raw CMD:%s Q:%d r:%i g:%i b:%i ww:%i cw:%i", params.cmd.c_str(), params.queue, params.raw.r.getValue().getValue(), params.raw.g.getValue().getValue(), params.raw.b.getValue().getValue(), params.raw.ww.getValue().getValue(), params.raw.cw.getValue().getValue());
 			if (params.cmd == "fade") {
-				app.rgbwwctrl.fadeRAW(params.raw, params.time, params.queue);
+				queueOk = app.rgbwwctrl.fadeRAW(params.raw, params.time, params.queue);
 			} else {
-				app.rgbwwctrl.setRAW(params.raw, params.time, params.queue);
+				queueOk = app.rgbwwctrl.setRAW(params.raw, params.time, params.queue);
 			}
 		} else {
-//			from_output = ChannelOutput(from_r, from_g, from_b, from_ww, from_cw);
-//			debugapp("ApplicationWebserver::onColor raw CMD:%s Q:%d FROM r:%i g:%i b:%i ww:%i cw:%i  TO r:%i g:%i b:%i ww:%i cw:%i",
-//							cmd.c_str(), queuePolicy, from_r, from_g, from_b, from_ww, from_cw, r, g, b, ww, cw);
-//			app.rgbwwctrl.fadeRAW(from_output, output, t, queuePolicy);
+			debugapp("ApplicationWebserver::onColor raw CMD:%s Q:%d FROM r:%i g:%i b:%i ww:%i cw:%i  TO r:%i g:%i b:%i ww:%i cw:%i",
+					params.raw.r.getValue().getValue(), params.raw.g.getValue().getValue(), params.raw.b.getValue().getValue(), params.raw.ww.getValue().getValue(), params.raw.cw.getValue().getValue(),
+					params.rawFrom.r.getValue().getValue(), params.rawFrom.g.getValue().getValue(), params.rawFrom.b.getValue().getValue(), params.rawFrom.ww.getValue().getValue(), params.rawFrom.cw.getValue().getValue());
+			app.rgbwwctrl.fadeRAW(params.rawFrom, params.raw, params.time, params.queue);
 		}
 	} else {
 		errorMsg = "No color object!";
 		return false;
 	}
-	return true;
+
+	if (!queueOk)
+		errorMsg = "Queue full";
+	return queueOk;
 }
 
 void ApplicationWebserver::onColor(HttpRequest &request, HttpResponse &response) {
