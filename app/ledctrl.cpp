@@ -109,6 +109,6 @@ void APPLedCtrl::led_callback(RGBWWLed* rgbwwctrl, RGBWWLedAnimation* anim) {
 	debugapp("APPLedCtrl::led_callback");
 	app.rgbwwctrl.color_save();
 
-	//app.eventserver.publishTransitionComplete(anim->getName());
+	app.eventserver.publishTransitionComplete(anim->getName());
 	app.eventserver.publishCurrentColor(app.rgbwwctrl.getCurrentColor());
 }
