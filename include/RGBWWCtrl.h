@@ -33,7 +33,7 @@
 #define DEFAULT_API_SECURED false
 #define DEFAULT_API_PASSWORD "rgbwwctrl"
 #define DEFAULT_CONNECTION_RETRIES 10
-#define DEFAULT_OTA_URL "https://verybadsoldier.github.io/esp_rgbww_firmware/release/version.json"
+#define DEFAULT_OTA_URL "http://rgbww.dronezone.de/release/version.json"
 
 // RGBWW related
 #define DEFAULT_COLORTEMP_WW 2700
