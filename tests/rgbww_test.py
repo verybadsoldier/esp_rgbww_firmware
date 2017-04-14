@@ -100,6 +100,17 @@ class RgbwwTest(unittest.TestCase):
         
         self.assertAlmostEqual(cur_hue, new_hue, delta=0.5)
 
+    def testRampAccuracy(self):
+        '''Repeats multiple times a 60 seconds fade and checks the reache value'''
+        ramp = 60
+        for _ in range(1, 10):
+            rgbww_set(0, 100, 100)
+            set_hue_fade(120, ramp)
+            time.sleep(ramp)
+            cur_hue = get_hue()
+            self.assertAlmostEqual(cur_hue, 120, delta=0.5)
+        
+
     def testQueueBack(self):
         ramp = 10
         set_hue_fade(120, ramp)
@@ -129,7 +140,7 @@ class RgbwwTest(unittest.TestCase):
         
     def testQueueFront(self):
         ramp = 12
-        delta = 2.0
+        delta = 1.0
         set_hue_fade(120, ramp)
         time.sleep(6)
         hue1 = get_hue() # 60
