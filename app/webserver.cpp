@@ -863,7 +863,6 @@ void ApplicationWebserver::onColorPost(HttpRequest &request, HttpResponse &respo
 		}
 	}
 	else {
-        Serial.printf("SINGLE DETECTED\n");
 		String msg;
 		if (onColorPostCmd(root, msg)) {
 			sendApiCode(response, API_CODES::API_SUCCESS);
