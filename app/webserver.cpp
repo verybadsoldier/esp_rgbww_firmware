@@ -665,9 +665,7 @@ void ApplicationWebserver::parseChannelRequestParams(HttpRequest &request, Reque
 }
 
 void ApplicationWebserver::parseColorRequestParams(JsonObject& root, RequestParameters& params) {
-    debugapp("parse3");
 	if (root["hsv"].success()) {
-	    debugapp("parse4");
 		params.mode = RequestParameters::Mode::Hsv;
 		if (root["hsv"]["h"].success())
 		    params.hsv.h = AbsOrRelValue(root["hsv"]["h"].asString(), AbsOrRelValue::Type::Hue);
@@ -677,7 +675,6 @@ void ApplicationWebserver::parseColorRequestParams(JsonObject& root, RequestPara
             params.hsv.v = AbsOrRelValue(root["hsv"]["v"].asString());
 		if (root["hsv"]["ct"].success())
 		    params.hsv.ct = AbsOrRelValue(root["hsv"]["ct"].asString(), AbsOrRelValue::Type::Ct);
-	    debugapp("parse5");
 
 		if (root["hsv"]["from"].success()) {
 			params.hasHsvFrom = true;
@@ -836,8 +833,8 @@ void ApplicationWebserver::onColorGet(HttpRequest &request, HttpResponse &respon
 
 void ApplicationWebserver::onColorPost(HttpRequest &request, HttpResponse &response) {
 	String body = request.getBody();
-	if (body == NULL || body.length() > 128) {
-		sendApiCode(response, API_CODES::API_BAD_REQUEST);
+	if (body == NULL) {
+		sendApiCode(response, API_CODES::API_BAD_REQUEST, "no body");
 		return;
 
 	}
@@ -866,6 +863,7 @@ void ApplicationWebserver::onColorPost(HttpRequest &request, HttpResponse &respo
 		}
 	}
 	else {
+        Serial.printf("SINGLE DETECTED\n");
 		String msg;
 		if (onColorPostCmd(root, msg)) {
 			sendApiCode(response, API_CODES::API_SUCCESS);
@@ -877,16 +875,11 @@ void ApplicationWebserver::onColorPost(HttpRequest &request, HttpResponse &respo
 }
 
 bool ApplicationWebserver::onColorPostCmd(JsonObject& root, String& errorMsg) {
-	debugapp("parse1");
 
 	RequestParameters params;
 	parseColorRequestParams(root, params);
-
-    debugapp("parse2");
-
     {
         if (params.checkParams(errorMsg) != 0) {
-            debugapp("paERer");
             return false;
         }
     }
@@ -895,20 +888,11 @@ bool ApplicationWebserver::onColorPostCmd(JsonObject& root, String& errorMsg) {
 	if (params.mode == RequestParameters::Mode::Kelvin) {
 		//TODO: hand to rgbctrl
 	} else if (params.mode == RequestParameters::Mode::Hsv) {
-	    debugapp("parse244");
-        debugapp("parse4-1");
-		debugapp("Exec HSV");
-
-
 		if(!params.hasHsvFrom) {
-			debugapp("a1");
-
 			debugapp("ApplicationWebserver::onColor hsv CMD:%s t:%d Q:%d  h:%d s:%d v:%d ct:%d ", params.cmd.c_str(), params.time, params.queue, params.hsv.h.getValue().getValue(), params.hsv.s.getValue().getValue(), params.hsv.v.getValue().getValue(), params.hsv.ct.getValue().getValue());
-			debugapp("a2");
 			if (params.cmd == "fade") {
 				queueOk = app.rgbwwctrl.fadeHSV(params.hsv, params.time, params.direction, params.queue, params.requeue, params.name);
 			} else {
-	            debugapp("setHSV");
 	            queueOk = app.rgbwwctrl.setHSV(params.hsv, params.time, params.queue, params.requeue, params.name);
 			}
 		} else {

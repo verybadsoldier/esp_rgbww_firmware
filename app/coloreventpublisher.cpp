@@ -34,8 +34,8 @@ void ColorEventPublisher::stop() {
 void ColorEventPublisher::publishCurrentColor() {
 	const HSVCT& curColor = _rgbCtrl->getCurrentColor();
 
-	//if (curColor == _lastColor)
-		//return;
+	if (curColor == _lastColor)
+		return;
 
 	_eventServer->publishCurrentColor(curColor);
 	_lastColor = curColor;
