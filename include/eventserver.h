@@ -25,6 +25,7 @@ private:
 	void sendToClients(JsonRpcMessage& rpcMsg);
 
 	static const int _tcpPort = 9090;
+	static const int _connectionTimeout = 120;
 	static const int _keepAliveInterval = 60;
 
     bool _running = false;

@@ -16,7 +16,7 @@ void EventServer::start() {
 		return;
 
 	Serial.printf("Starting event server\n");
-
+	setTimeOut(_connectionTimeout);
 	if (not listen(_tcpPort)) {
 	    Serial.printf("EventServer failed to open listening port!");
 	}
