@@ -43,6 +43,8 @@ struct ApplicationSettings {
 			int port;
 			String username;
 			String password;
+            String topic_prefix;
+            bool slavemode_enabled;
 		};
 
 		struct ap {
@@ -125,6 +127,8 @@ struct ApplicationSettings {
 			network.mqtt.port = root["network"]["mqtt"]["port"];
 			network.mqtt.username = root["network"]["mqtt"]["username"].asString();
 			network.mqtt.password = root["network"]["mqtt"]["password"].asString();
+            network.mqtt.topic_prefix = root["network"]["mqtt"]["topic_prefix"].asString();
+            network.mqtt.slavemode_enabled = root["network"]["mqtt"]["slavemode_enabled"];
 
 			// color
 			color.outputmode = root["color"]["outputmode"];
@@ -184,6 +188,8 @@ struct ApplicationSettings {
 		jmqtt["port"] = network.mqtt.port;
 		jmqtt["username"] = network.mqtt.username.c_str();
 		jmqtt["password"] = network.mqtt.password.c_str();
+        jmqtt["topic_prefix"] = network.mqtt.topic_prefix.c_str();
+        jmqtt["slavemode_enabled"] = network.mqtt.slavemode_enabled;
 
 		JsonObject& c = root.createNestedObject("color");
 		c["outputmode"] = color.outputmode;

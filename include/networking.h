@@ -55,6 +55,10 @@ public:
 
 	void forget_wifi();
 
+	typedef Delegate<void(const String& ssid)> onWifiConnectedDelegate;
+
+	void registerCallbackConnected(onWifiConnectedDelegate fnc);
+
 private:
 	int _con_ctr;
 	bool _scanning;
@@ -75,6 +79,8 @@ private:
 	void _STAConnected(String ssid, uint8_t ssid_len, uint8_t bssid[6], uint8_t reason);
 	void _STAGotIP(IPAddress ip, IPAddress mask, IPAddress gateway);
 	void scanCompleted(bool succeeded, BssList list);
+
+	onWifiConnectedDelegate onConnected = nullptr;
 };
 
 #endif //APP_NETWORKING_H_

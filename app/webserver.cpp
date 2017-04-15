@@ -360,6 +360,16 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
 						app.cfg.network.mqtt.password = root["network"]["mqtt"]["password"].asString();
 					}
 				}
+                if (root["network"]["mqtt"]["topic_prefix"].success()) {
+                    if (root["network"]["mqtt"]["topic_prefix"] != app.cfg.network.mqtt.topic_prefix) {
+                        app.cfg.network.mqtt.topic_prefix = root["network"]["mqtt"]["topic_prefix"].asString();
+                    }
+                }
+                if (root["network"]["mqtt"]["slavemode_enabled"].success()) {
+                    if (root["network"]["mqtt"]["slavemode_enabled"] != app.cfg.network.mqtt.slavemode_enabled) {
+                        app.cfg.network.mqtt.slavemode_enabled = root["network"]["mqtt"]["slavemode_enabled"];
+                    }
+                }
 			}
 		}
 
@@ -556,8 +566,9 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
 		mqtt["server"] = app.cfg.network.mqtt.server.c_str();
 		mqtt["port"] = app.cfg.network.mqtt.port;
 		mqtt["username"] = app.cfg.network.mqtt.username.c_str();
-
 		//mqtt["password"] = app.cfg.network.mqtt.password.c_str();
+        mqtt["topic_prefix"] = app.cfg.network.mqtt.topic_prefix.c_str();
+        mqtt["slavemode_enabled"] = app.cfg.network.mqtt.slavemode_enabled;
 
 		JsonObject& color = json.createNestedObject("color");
 		color["outputmode"] = app.cfg.color.outputmode;

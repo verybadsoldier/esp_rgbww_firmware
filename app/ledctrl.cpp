@@ -21,8 +21,10 @@
  */
 #include <RGBWWCtrl.h>
 
-void APPLedCtrl::init() {
+void APPLedCtrl::init(const ApplicationSettings& cfg, ApplicationMQTTClient& mqtt) {
 	debugapp("APPLedCtrl::init");
+	_cfg = &cfg;
+	_mqtt = &mqtt;
 	RGBWWLed::init(REDPIN, GREENPIN, BLUEPIN, WWPIN, CWPIN, PWM_FREQUENCY);
 	setAnimationCallback(led_callback);
 	setup();
@@ -49,10 +51,47 @@ void APPLedCtrl::setup() {
 }
 
 void APPLedCtrl::show_led() {
-	//int curmicros = millis();
-	if (!show()) {
-		//debugapp("start %i end: %i, diff %i", curmicros, millis(), millis() - curmicros);
+	show();
+
+    ++_stepCounter;
+	if (!_cfg->network.mqtt.slavemode_enabled) {
+        if (_stepCounter % (600000 / RGBWW_MINTIMEDIFF) == 0) {
+        Serial.printf("MQTT Master Clock\n");
+            _mqtt->publishClock(_stepCounter);
+        }
 	}
+	else {
+
+	}
+}
+
+void APPLedCtrl::onMasterClock(uint32_t stepsMaster) {
+    uint32_t diff = _stepCounter - _stepsSyncLast;
+    uint32_t masterDiff = stepsMaster - _stepsSyncMasterLast;
+
+    Serial.printf("Master: %d DiffMaster: %d DiffSelf: %d\n", stepsMaster, masterDiff, diff);
+
+    if (masterDiff != diff) {
+        int correction = 0;
+        if (masterDiff > diff ) {
+            // we are too slow
+            correction -= 10;
+        }
+        else if (masterDiff < diff ) {
+            // we are too fast
+            correction += 10;
+        }
+
+        uint32_t newInt = ledTimer.getIntervalUs() + correction;
+        Serial.printf("Step diff to master: %d New interval: %d us\n", masterDiff, newInt);
+        ledTimer.setIntervalUs(newInt);
+    }
+    else {
+        // we are fine (will this ever happen??)
+    }
+
+    _stepsSyncMasterLast = stepsMaster;
+    _stepsSyncLast = _stepCounter;
 }
 
 void APPLedCtrl::start() {
@@ -111,4 +150,7 @@ void APPLedCtrl::led_callback(RGBWWLed* rgbwwctrl, RGBWWLedAnimation* anim) {
 
 	app.eventserver.publishTransitionComplete(anim->getName());
 	app.eventserver.publishCurrentColor(app.rgbwwctrl.getCurrentColor());
+
+	//if (_cfg.network.mqtt.enabled)
+	app.mqttclient.publishCurrentColor(app.rgbwwctrl.getCurrentColor());
 }

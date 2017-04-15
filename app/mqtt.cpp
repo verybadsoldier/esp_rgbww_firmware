@@ -21,40 +21,126 @@
  */
 #include <RGBWWCtrl.h>
 
-
 ApplicationMQTTClient::ApplicationMQTTClient() {
-	mqtt = NULL;
+    _id = String("rgbww_") + WifiStation.getMAC();
 }
-
 
 ApplicationMQTTClient::~ApplicationMQTTClient() {
-	// cleanup before destroying object
-	if(mqtt != NULL) {
-		delete mqtt;
-	}
+    delete mqtt;
+    mqtt = nullptr;
 }
 
+void ApplicationMQTTClient::onComplete(TcpClient& client, bool success) {
+    if (success == true)
+        Serial.println("MQTT Broker Disconnected!!");
+    else
+        Serial.println("MQTT Broker Unreachable!!");
 
-void ApplicationMQTTClient::start(){
+    // Restart connection attempt after few seconds
+    connectDelayed(2000);
+}
+
+void ApplicationMQTTClient::connectDelayed(int delay) {
+    Serial.println("MQTT::connectDelayed");
+    _procTimer.initializeMs(delay, TimerDelegate(&ApplicationMQTTClient::connect, this)).startOnce();
+}
+
+void ApplicationMQTTClient::connect() {
+    if (!mqtt || mqtt->getConnectionState() == TcpClientState::eTCS_Connected )//|| mqtt->getConnectionState() == TcpClientState::eTCS_Connecting)
+        return;
+
+    Serial.printf("MQTT::connect ID: %s\n", _id.c_str());
+    if(!mqtt->setWill("last/will","The connection from this device is lost:(", 1, true)) {
+        debugf("Unable to set the last will and testament. Most probably there is not enough memory on the device.");
+    }
+    mqtt->connect(_id, "", "", false);
+#ifdef ENABLE_SSL
+    mqtt->addSslOptions(SSL_SERVER_VERIFY_LATER);
+
+    #include <ssl/private_key.h>
+    #include <ssl/cert.h>
+
+    mqtt->setSslClientKeyCert(default_private_key, default_private_key_len,
+                              default_certificate, default_certificate_len, NULL, true);
+
+#endif
+    // Assign a disconnect callback function
+    mqtt->setCompleteDelegate(TcpClientCompleteDelegate(&ApplicationMQTTClient::onComplete, this));
+    mqtt->subscribe("rgbww/master/#");
+}
+
+void ApplicationMQTTClient::start() {
 	Serial.println("Start MQTT");
-	if (mqtt != NULL) {
-		 delete mqtt;
-	}
+
+	delete mqtt;
 	//TODO: add settings from config
-	mqtt = new MqttClient("192.168.1.1", MqttStringSubscriptionCallback(&ApplicationMQTTClient::onMessageReceived, this));
+	mqtt = new MqttClient("192.168.2.33", 1883, MqttStringSubscriptionCallback(&ApplicationMQTTClient::onMessageReceived, this));
+	connectDelayed(10000);
 }
 
 void ApplicationMQTTClient::stop() {
 	 delete mqtt;
-	 mqtt = NULL;
+	 mqtt = nullptr;
 }
 
-bool ApplicationMQTTClient::isRunning() {
-	return (mqtt != NULL);
+bool ApplicationMQTTClient::isRunning() const {
+	return (mqtt != nullptr);
 }
 
 void ApplicationMQTTClient::onMessageReceived(String topic, String message) {
 	Serial.print(topic);
 	Serial.print(":\r\n\t"); // Prettify alignment for printing
 	Serial.println(message);
+
+	if (topic == "rgbww/master/clock") {
+	    if (_masterClockSink) {
+	        uint32_t clock = message.toInt();
+	        _masterClockSink->onMasterClock(clock);
+	    }
+	}
+}
+
+void ApplicationMQTTClient::publish(const String& topic, const String& data, bool retain) {
+    if (!mqtt) {
+        Serial.printf("ApplicationMQTTClient::publish: no MQTT object\n");
+        return;
+    }
+
+    TcpClientState state = mqtt->getConnectionState();
+    if (state == TcpClientState::eTCS_Connected) {
+        mqtt->publish(topic, data, retain);
+    }
+    else {
+        Serial.printf("ApplicationMQTTClient::publish: not connected. Connecting now\n");
+    //    connectDelayed(500);
+    }
+}
+
+void ApplicationMQTTClient::publishCurrentColor(const HSVCT& color) {
+    Serial.printf("ApplicationMQTTClient::publishCurrentColor\n");
+
+    float h, s, v;
+    int ct;
+    color.asRadian(h, s, v, ct);
+
+    String msg;
+    msg += h;
+    msg += ",";
+    msg += s;
+    msg += ",";
+    msg += v;
+    msg += ",";
+    msg += ct;
+
+    publish("rgbww/color", msg, true);
+}
+
+void ApplicationMQTTClient::publishClock(uint32_t steps) {
+    String msg;
+    msg += steps;
+    publish("rgbww/master/clock", msg, false);
+}
+
+void ApplicationMQTTClient::setMasterClockSink(IMasterClockSink* pSink) {
+    _masterClockSink = pSink;
 }

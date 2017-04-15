@@ -85,13 +85,16 @@ void Application::init() {
 	}
 
 	// initialize led ctrl
-	rgbwwctrl.init();
+	rgbwwctrl.init(cfg, mqttclient);
 
 	// initialize networking
 	network.init();
+	network.registerCallbackConnected(AppWIFI::onWifiConnectedDelegate(&Application::onWifiConnected, this));
 
 	// initialize webserver
 	app.webserver.init();
+
+	mqttclient.setMasterClockSink((IMasterClockSink*)&rgbwwctrl);
 
 	coloreventpublisher.init(eventserver, rgbwwctrl);
 }
@@ -103,10 +106,6 @@ void Application::startServices() {
 	webserver.start();
 	eventserver.start();
 	coloreventpublisher.start();
-
-	if(cfg.network.mqtt.enabled) {
-		mqttclient.start();
-	}
 }
 
 void Application::restart() {
@@ -178,4 +177,14 @@ void Application::switchRom() {
 		slot = 0;
 	}
 	rboot_set_current_rom(slot);
+}
+
+void Application::onWifiConnected(const String& ssid) {
+    debugapp("Application::onWifiConnected");
+
+    cfg.network.mqtt.enabled = true;
+
+    if(cfg.network.mqtt.enabled) {
+        mqttclient.start();
+    }
 }

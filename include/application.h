@@ -64,8 +64,7 @@ public:
 
 private:
 	void loadbootinfo();
-
-private:
+	void onWifiConnected(const String& ssid);
 
 	Timer _systimer;
 	int _bootmode = 0;

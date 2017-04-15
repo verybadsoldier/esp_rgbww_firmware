@@ -22,6 +22,8 @@
 #ifndef APP_LEDCTRL_H_
 #define APP_LEDCTRL_H_
 
+#include "mqtt.h"
+
 #define APP_COLOR_FILE ".color"
 
 struct ColorStorage {
@@ -69,10 +71,15 @@ struct ColorStorage {
 
 typedef Delegate<bool(void)> ledctrlDelegate;
 
-class APPLedCtrl: public RGBWWLed {
+class IMasterClockSink {
+public:
+    virtual void onMasterClock(uint32_t steps) = 0;
+};
+
+class APPLedCtrl: public RGBWWLed, IMasterClockSink {
 
 public:
-	void init();
+	void init(const ApplicationSettings& cfg, ApplicationMQTTClient& mqtt);
 	void setup();
 
 	void start();
@@ -82,12 +89,19 @@ public:
 	void test_channels();
 
 	void show_led();
+	virtual void onMasterClock(uint32_t steps);
 	static void led_callback(RGBWWLed* rgbwwctrl, RGBWWLedAnimation* anim);
 
 private:
 	ColorStorage color;
 	Timer ledTimer;
+    ApplicationSettings const * _cfg;
+    ApplicationMQTTClient* _mqtt;
+    uint32_t _stepCounter = 0;
 
+    uint32_t _stepsMasterOffset = 0;
+    uint32_t _stepsSyncMasterLast = 0;
+    uint32_t _stepsSyncLast = 0;
 };
 
 #endif
