@@ -126,8 +126,25 @@ void ApplicationMQTTClient::publish(const String& topic, const String& data, boo
     }
 }
 
-void ApplicationMQTTClient::publishCurrentColor(const HSVCT& color) {
-    Serial.printf("ApplicationMQTTClient::publishCurrentColor\n");
+void ApplicationMQTTClient::publishCurrentRaw(const ChannelOutput& color) {
+    Serial.printf("ApplicationMQTTClient::publishCurrentRaw\n");
+
+    String msg;
+    msg += color.r;
+    msg += ",";
+    msg += color.g;
+    msg += ",";
+    msg += color.b;
+    msg += ",";
+    msg += color.cw;
+    msg += ",";
+    msg += color.ww;
+
+    publish(buildTopic("raw"), msg, true);
+}
+
+void ApplicationMQTTClient::publishCurrentHsv(const HSVCT& color) {
+    Serial.printf("ApplicationMQTTClient::publishCurrentHsv\n");
 
     float h, s, v;
     int ct;
@@ -142,7 +159,7 @@ void ApplicationMQTTClient::publishCurrentColor(const HSVCT& color) {
     msg += ",";
     msg += ct;
 
-    publish("rgbww/color", msg, true);
+    publish(buildTopic("hsv"), msg, true);
 }
 
 String ApplicationMQTTClient::buildTopic(const String& suffix) {

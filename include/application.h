@@ -60,6 +60,7 @@ public:
 	EventServer eventserver;
 	ColorEventPublisher coloreventpublisher;
 	ApplicationMQTTClient mqttclient;
+	JsonProcessor jsonproc;
 
 private:
 	void loadbootinfo();

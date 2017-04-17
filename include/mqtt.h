@@ -16,7 +16,8 @@ public:
 	void stop();
 	bool isRunning() const;
 
-	void publishCurrentColor(const HSVCT& color);
+	void publishCurrentHsv(const HSVCT& color);
+    void publishCurrentRaw(const ChannelOutput& color);
     void publishClock(uint32_t steps);
     void publishColorCommand(String json);
 

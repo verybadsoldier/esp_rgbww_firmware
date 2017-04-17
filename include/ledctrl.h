@@ -71,8 +71,6 @@ struct ColorStorage {
 	}
 };
 
-typedef Delegate<bool(void)> ledctrlDelegate;
-
 class IMasterClockSink {
 public:
     virtual void onMasterClock(uint32_t steps) = 0;
@@ -142,7 +140,10 @@ public:
 
 	void show_led();
 	virtual void onMasterClock(uint32_t steps);
-	static void led_callback(RGBWWLed* rgbwwctrl, RGBWWLedAnimation* anim);
+	void onAnimationFinished(RGBWWLed* rgbwwctrl, RGBWWLedAnimation* anim);
+
+    void onStepHsv(const HSVCT& hsvct);
+    void onStepRaw(const ChannelOutput& raw);
 
 private:
 	ColorStorage color;

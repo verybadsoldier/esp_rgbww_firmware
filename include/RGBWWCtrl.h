@@ -64,6 +64,7 @@
 #include <mqtt.h>
 #include <eventserver.h>
 #include <coloreventpublisher.h>
+#include <jsonprocessor.h>
 #include <application.h>
 
 #endif /* RGBWWCTRL_H_ */

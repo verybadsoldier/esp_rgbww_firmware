@@ -31,7 +31,11 @@ void APPLedCtrl::init(const ApplicationSettings& cfg, ApplicationMQTTClient& mqt
     _stepSync = new ClockCatchUp2();
 	//_stepSync = new ClockAdaption();
 	RGBWWLed::init(REDPIN, GREENPIN, BLUEPIN, WWPIN, CWPIN, PWM_FREQUENCY);
-	setAnimationCallback(led_callback);
+
+    setAnimationFinishedDelegate(AnimationFinishedDelegate(&APPLedCtrl::onAnimationFinished, this));
+	setStepHsvDelegate(StepHsvDelegate(&APPLedCtrl::onStepHsv, this));
+    setStepRawDelegate(StepRawDelegate(&APPLedCtrl::onStepRaw, this));
+
 	setup();
 	color.load();
 	debugapp("H: %i | s: %i | v: %i | ct: %i", color.h, color.s, color.v, color.ct);
@@ -124,15 +128,15 @@ void APPLedCtrl::test_channels() {
 //	fadeRAW(black, 1000, QueuePolicy::Back);
 }
 
-void APPLedCtrl::led_callback(RGBWWLed* rgbwwctrl, RGBWWLedAnimation* anim) {
-	debugapp("APPLedCtrl::led_callback");
+void APPLedCtrl::onAnimationFinished(RGBWWLed* rgbwwctrl, RGBWWLedAnimation* anim) {
+	debugapp("APPLedCtrl::onAnimationFinished");
 	app.rgbwwctrl.color_save();
 
 	app.eventserver.publishTransitionComplete(anim->getName());
 	app.eventserver.publishCurrentColor(app.rgbwwctrl.getCurrentColor());
 
 	//if (_cfg.network.mqtt.enabled)
-	app.mqttclient.publishCurrentColor(app.rgbwwctrl.getCurrentColor());
+	app.mqttclient.publishCurrentHsv(app.rgbwwctrl.getCurrentColor());
 }
 
 void ClockCatchUp::onMasterClock(Timer& timer, uint32_t stepsCurrent, uint32_t stepsMaster) {
@@ -199,4 +203,12 @@ void ClockAdaption::onMasterClock(Timer& timer, uint32_t stepsCurrent, uint32_t 
     _stepsSyncMasterLast = stepsMaster;
     _stepsSyncLast = stepsCurrent;
     _firstMasterSync = false;
+}
+
+void APPLedCtrl::onStepHsv(const HSVCT& hsvct) {
+    app.mqttclient.publishCurrentHsv(hsvct);
+}
+
+void APPLedCtrl::onStepRaw(const ChannelOutput& raw) {
+    app.mqttclient.publishCurrentRaw(raw);
 }

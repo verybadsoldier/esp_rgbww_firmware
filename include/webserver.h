@@ -45,45 +45,6 @@ public:
 	String getApiCodeMsg(API_CODES code);
 
 private:
-	struct RequestParameters {
-		String target;
-
-		enum class Mode {
-		    Undefined,
-		    Hsv,
-		    Raw,
-		    Kelvin,
-		};
-
-		Mode mode = Mode::Undefined;
-
-		bool hasHsvFrom = false;
-		bool hasRawFrom = false;
-
-		RequestHSVCT hsv;
-		RequestHSVCT hsvFrom;
-
-		RequestChannelOutput raw;
-        RequestChannelOutput rawFrom;
-
-		int kelvin;
-
-		int direction = 1;
-		bool requeue = false;
-		int time = 0;
-		String name;
-
-		String cmd = "solid";
-
-		RGBWWLed::ChannelList channels;
-
-		QueuePolicy queue = QueuePolicy::Single;
-
-		int checkParams(String& errorMsg) const;
-	};
-
-	void parseColorRequestParams(JsonObject& root, RequestParameters& params);
-	void parseChannelRequestParams(HttpRequest &request, RequestParameters& params);
 
 	bool _init = false;
 	bool _running = false;
