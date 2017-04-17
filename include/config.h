@@ -38,13 +38,12 @@ struct ApplicationSettings {
 		};
 
 		struct mqtt {
-			bool enabled;
-			String server;
-			int port;
+			bool enabled = true;
+			String server = "minion";
+			int port = 1883;
 			String username;
 			String password;
-            String topic_prefix;
-            bool slavemode_enabled;
+            String topic_base = "home/";
 		};
 
 		struct ap {
@@ -56,8 +55,14 @@ struct ApplicationSettings {
 		connection connection;
 		mqtt mqtt;
 		ap ap;
-
 	};
+
+    struct sync {
+        bool clockSendEnabled = true;
+        int clockSendInterval = 5;
+        bool syncToMaster = false;
+        String syncToMasterTopic;
+    };
 
 	struct color {
 		struct hsv {
@@ -93,12 +98,14 @@ struct ApplicationSettings {
 		bool api_secured = DEFAULT_API_SECURED;
 		String api_password = DEFAULT_API_PASSWORD;
 		String otaurl = DEFAULT_OTA_URL;
+		String device_name;
 	};
 
 	general general;
 	network network;
 	color color;
 	String configversion = CFG_VERSION;
+    sync sync;
 
 	void load(bool print = false) {
 		DynamicJsonBuffer jsonBuffer;
@@ -127,8 +134,6 @@ struct ApplicationSettings {
 			network.mqtt.port = root["network"]["mqtt"]["port"];
 			network.mqtt.username = root["network"]["mqtt"]["username"].asString();
 			network.mqtt.password = root["network"]["mqtt"]["password"].asString();
-            network.mqtt.topic_prefix = root["network"]["mqtt"]["topic_prefix"].asString();
-            network.mqtt.slavemode_enabled = root["network"]["mqtt"]["slavemode_enabled"];
 
 			// color
 			color.outputmode = root["color"]["outputmode"];
@@ -153,6 +158,13 @@ struct ApplicationSettings {
 			general.api_password = root["general"]["api_password"].asString();
 			general.api_secured = root["general"]["api_secured"];
 			general.otaurl = root["general"]["otaurl"].asString();
+			general.device_name = root["general"]["device_name"].asString();
+
+			// sync
+            sync.clockSendEnabled = root["sync"]["clockSendEnabled"];
+            sync.clockSendInterval = root["sync"]["clockSendInterval"];
+            sync.syncToMasterTopic = root["sync"]["syncToMasterTopic"].asString();
+            sync.syncToMaster = root["sync"]["syncToMaster"];
 
 			//TODO check if we can actually load the config
 			configversion = root["general"]["config_version"].asString();
@@ -188,8 +200,7 @@ struct ApplicationSettings {
 		jmqtt["port"] = network.mqtt.port;
 		jmqtt["username"] = network.mqtt.username.c_str();
 		jmqtt["password"] = network.mqtt.password.c_str();
-        jmqtt["topic_prefix"] = network.mqtt.topic_prefix.c_str();
-        jmqtt["slavemode_enabled"] = network.mqtt.slavemode_enabled;
+        jmqtt["topic_base"] = network.mqtt.topic_base.c_str();
 
 		JsonObject& c = root.createNestedObject("color");
 		c["outputmode"] = color.outputmode;
@@ -214,12 +225,20 @@ struct ApplicationSettings {
 		t["ww"] = color.colortemp.ww;
 		t["cw"] = color.colortemp.cw;
 
+		JsonObject& s = jsonBuffer.createObject();
+		root["sync"] = s;
+		s["clockSendEnabled"] = sync.clockSendEnabled;
+		s["clockSendInterval"] = sync.clockSendInterval;
+        s["syncToMasterTopic"] = sync.syncToMasterTopic.c_str();
+        s["syncToMaster"] = sync.syncToMaster;
+
 		JsonObject& g = jsonBuffer.createObject();
 		root["general"] = g;
 		g["api_secured"] = general.api_secured;
 		g["api_password"] = general.api_password;
 		g["otaurl"] = general.otaurl;
 		g["config_version"] = CFG_VERSION;
+        g["device_name"] = general.device_name.c_str();
 
 		String rootString;
 		if (print) {

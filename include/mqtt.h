@@ -9,6 +9,7 @@ public:
 	ApplicationMQTTClient();
 	virtual ~ApplicationMQTTClient();
 
+	void init(const ApplicationSettings& cfg);
 	void start();
 	void stop();
 	bool isRunning() const;
@@ -24,6 +25,7 @@ private:
     void onMessageReceived(String topic, String message);
     void publish(const String& topic, const String& data, bool retain);
 
+    String buildTopic(const String& suffix);
 
 	MqttClient* mqtt = nullptr;
 	bool _running = false;
@@ -31,4 +33,5 @@ private:
 	String _topicPrefix;
 	String _id;
 	IMasterClockSink* _masterClockSink = nullptr;
+	ApplicationSettings const * _cfg;
 };

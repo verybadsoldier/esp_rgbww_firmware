@@ -360,14 +360,9 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
 						app.cfg.network.mqtt.password = root["network"]["mqtt"]["password"].asString();
 					}
 				}
-                if (root["network"]["mqtt"]["topic_prefix"].success()) {
-                    if (root["network"]["mqtt"]["topic_prefix"] != app.cfg.network.mqtt.topic_prefix) {
-                        app.cfg.network.mqtt.topic_prefix = root["network"]["mqtt"]["topic_prefix"].asString();
-                    }
-                }
-                if (root["network"]["mqtt"]["slavemode_enabled"].success()) {
-                    if (root["network"]["mqtt"]["slavemode_enabled"] != app.cfg.network.mqtt.slavemode_enabled) {
-                        app.cfg.network.mqtt.slavemode_enabled = root["network"]["mqtt"]["slavemode_enabled"];
+                if (root["network"]["mqtt"]["topic_base"].success()) {
+                    if (root["network"]["mqtt"]["topic_base"] != app.cfg.network.mqtt.topic_base) {
+                        app.cfg.network.mqtt.topic_base = root["network"]["mqtt"]["topic_base"].asString();
                     }
                 }
 			}
@@ -503,6 +498,27 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
 
 		}
 
+        if (root["general"].success()) {
+            if (root["general"]["device_name"].success()) {
+                app.cfg.general.device_name = root["general"]["device_name"].asString();
+            }
+        }
+
+        if (root["sync"].success()) {
+            if (root["sync"]["clockSendEnabled"].success()) {
+                app.cfg.sync.clockSendEnabled = root["sync"]["clockSendEnabled"];
+            }
+            if (root["sync"]["clockSendInterval"].success()) {
+                app.cfg.sync.clockSendInterval = root["sync"]["clockSendInterval"];
+            }
+            if (root["sync"]["syncToMasterTopic"].success()) {
+                app.cfg.sync.syncToMasterTopic = root["sync"]["syncToMasterTopic"].asString();
+            }
+            if (root["sync"]["syncToMaster"].success()) {
+                app.cfg.sync.syncToMaster = root["sync"]["syncToMaster"];
+            }
+        }
+
 		// update and save settings if we haven`t received any error until now
 		if (!error) {
 			if (ip_updated) {
@@ -567,8 +583,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
 		mqtt["port"] = app.cfg.network.mqtt.port;
 		mqtt["username"] = app.cfg.network.mqtt.username.c_str();
 		//mqtt["password"] = app.cfg.network.mqtt.password.c_str();
-        mqtt["topic_prefix"] = app.cfg.network.mqtt.topic_prefix.c_str();
-        mqtt["slavemode_enabled"] = app.cfg.network.mqtt.slavemode_enabled;
+        mqtt["topic_base"] = app.cfg.network.mqtt.topic_base.c_str();
 
 		JsonObject& color = json.createNestedObject("color");
 		color["outputmode"] = app.cfg.color.outputmode;
@@ -599,6 +614,16 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
 
 		JsonObject& ota = json.createNestedObject("ota");
 		ota["url"] = app.cfg.general.otaurl;
+
+        JsonObject& sync = json.createNestedObject("sync");
+        sync["clockSendEnabled"] = app.cfg.sync.clockSendEnabled;
+        sync["clockSendInterval"] = app.cfg.sync.clockSendInterval;
+        sync["syncToMasterTopic"] = app.cfg.sync.syncToMasterTopic.c_str();
+        sync["syncToMaster"] = app.cfg.sync.syncToMaster;
+
+        JsonObject& general = json.createNestedObject("general");
+        general["device_name"] = app.cfg.general.device_name;
+
 		sendApiResponse(response, stream);
 	}
 }

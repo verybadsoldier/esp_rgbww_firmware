@@ -61,7 +61,7 @@ void APPLedCtrl::show_led() {
     ++_stepCounter;
 
 	if (_cfg->sync.clockSendEnabled) {
-        if (((_stepCounter / RGBWW_UPDATEFREQUENCY) % _cfg->sync.clockSendInterval) == 0) {
+        if ((_stepCounter % (_cfg->sync.clockSendInterval * RGBWW_UPDATEFREQUENCY)) == 0) {
             Serial.printf("Send Master Clock\n");
             _mqtt->publishClock(_stepCounter);
         }

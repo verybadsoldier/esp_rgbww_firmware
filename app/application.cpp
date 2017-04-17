@@ -84,6 +84,8 @@ void Application::init() {
 		cfg.save();
 	}
 
+	mqttclient.init(cfg);
+
 	// initialize led ctrl
 	rgbwwctrl.init(cfg, mqttclient);
 
@@ -181,8 +183,6 @@ void Application::switchRom() {
 
 void Application::onWifiConnected(const String& ssid) {
     debugapp("Application::onWifiConnected");
-
-    cfg.network.mqtt.enabled = true;
 
     if(cfg.network.mqtt.enabled) {
         mqttclient.start();

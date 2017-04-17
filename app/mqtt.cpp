@@ -69,12 +69,20 @@ void ApplicationMQTTClient::connect() {
     mqtt->subscribe("rgbww/master/#");
 }
 
+void ApplicationMQTTClient::init(const ApplicationSettings& cfg) {
+    _cfg = &cfg;
+    if (_cfg->general.device_name.length() > 0) {
+        _id = _cfg->general.device_name;
+    }
+}
+
 void ApplicationMQTTClient::start() {
 	Serial.println("Start MQTT");
 
 	delete mqtt;
-	//TODO: add settings from config
-	mqtt = new MqttClient("192.168.2.33", 1883, MqttStringSubscriptionCallback(&ApplicationMQTTClient::onMessageReceived, this));
+	Serial.printf("MqttClient: Server: %s Port: %d\n", _cfg->network.mqtt.server.c_str(), _cfg->network.mqtt.port);
+	mqtt = new MqttClient(_cfg->network.mqtt.server, _cfg->network.mqtt.port, MqttStringSubscriptionCallback(&ApplicationMQTTClient::onMessageReceived, this));
+    Serial.println("B");
 	connectDelayed(10000);
 }
 
@@ -92,7 +100,7 @@ void ApplicationMQTTClient::onMessageReceived(String topic, String message) {
 	Serial.print(":\r\n\t"); // Prettify alignment for printing
 	Serial.println(message);
 
-	if (topic == "rgbww/master/clock") {
+	if (topic == _cfg->sync.syncToMasterTopic) {
 	    if (_masterClockSink) {
 	        uint32_t clock = message.toInt();
 	        _masterClockSink->onMasterClock(clock);
@@ -135,10 +143,18 @@ void ApplicationMQTTClient::publishCurrentColor(const HSVCT& color) {
     publish("rgbww/color", msg, true);
 }
 
+String ApplicationMQTTClient::buildTopic(const String& suffix) {
+    String topic = _cfg->network.mqtt.topic_base;
+    topic += _id + "/";
+    return topic + suffix;
+}
+
 void ApplicationMQTTClient::publishClock(uint32_t steps) {
     String msg;
     msg += steps;
-    publish("rgbww/master/clock", msg, false);
+
+    String topic = buildTopic("clock");
+    publish(topic, msg, false);
 }
 
 void ApplicationMQTTClient::setMasterClockSink(IMasterClockSink* pSink) {
