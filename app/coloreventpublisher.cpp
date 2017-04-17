@@ -1,13 +1,13 @@
-#include "coloreventpublisher.h"
-
+#include <RGBWWCtrl.h>
 
 ColorEventPublisher::~ColorEventPublisher() {
 	stop();
 }
 
-void ColorEventPublisher::init(EventServer& evServer, RGBWWLed& rgbctrl) {
+void ColorEventPublisher::init(EventServer& evServer, RGBWWLed& rgbctrl, ApplicationSettings& cfg) {
 	_eventServer = &evServer;
 	_rgbCtrl = &rgbctrl;
+	_cfg = &cfg;
 }
 
 void ColorEventPublisher::start() {
@@ -19,7 +19,7 @@ void ColorEventPublisher::start() {
 	_running = true;
 
 	Serial.printf("Starting event timer\n");
-	_ledTimer.initializeMs(2000, TimerDelegate(&ColorEventPublisher::publishCurrentColor, this)).start();
+	_ledTimer.initializeMs(_cfg->events.colorEventIntervalMs, TimerDelegate(&ColorEventPublisher::publishCurrentColor, this)).start();
 }
 
 void ColorEventPublisher::stop() {

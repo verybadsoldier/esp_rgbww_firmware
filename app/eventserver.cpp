@@ -4,7 +4,7 @@
  *  Created on: 26.03.2017
  *      Author: Robin
  */
-#include "eventserver.h"
+#include <RGBWWCtrl.h>
 
 
 EventServer::~EventServer() {

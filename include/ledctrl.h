@@ -116,6 +116,18 @@ private:
     bool _firstMasterSync = true;
 };
 
+class ClockCatchUp2 : public StepSync {
+public:
+    virtual void onMasterClock(Timer& timer, uint32_t stepsCurrent, uint32_t stepsMaster);
+
+private:
+    int _catchupOffset = 0;
+    uint32_t _stepsSyncMasterLast = 0;
+    uint32_t _stepsSyncLast = 0;
+    bool _firstMasterSync = true;
+    uint32_t _baseInt = RGBWW_MINTIMEDIFF * 1000;
+};
+
 class APPLedCtrl: public RGBWWLed, IMasterClockSink {
 
 public:

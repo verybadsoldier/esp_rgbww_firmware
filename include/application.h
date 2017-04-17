@@ -22,9 +22,6 @@
 #ifndef APPLICATION_H_
 #define APPLICATION_H_
 
-#include "eventserver.h"
-#include "coloreventpublisher.h"
-
 static const char* fw_version = FWVERSION;
 static const char* fw_git_version = GITVERSION;
 static const char* fw_git_date = GITDATE;
@@ -51,6 +48,8 @@ public:
 	inline int getRomSlot() { return _romslot; };
 	inline int getBootMode() { return _bootmode; };
 	void switchRom();
+
+	void onColorCommand(String json);
 
 public:
 	AppWIFI network;

@@ -519,6 +519,12 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
             }
         }
 
+        if (root["events"].success()) {
+            if (root["events"]["colorEventIntervalMs"].success()) {
+                app.cfg.events.colorEventIntervalMs = root["events"]["colorEventIntervalMs"];
+            }
+        }
+
 		// update and save settings if we haven`t received any error until now
 		if (!error) {
 			if (ip_updated) {
@@ -620,6 +626,9 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         sync["clockSendInterval"] = app.cfg.sync.clockSendInterval;
         sync["syncToMasterTopic"] = app.cfg.sync.syncToMasterTopic.c_str();
         sync["syncToMaster"] = app.cfg.sync.syncToMaster;
+
+        JsonObject& events = json.createNestedObject("events");
+        events["colorEventIntervalMs"] = app.cfg.events.colorEventIntervalMs;
 
         JsonObject& general = json.createNestedObject("general");
         general["device_name"] = app.cfg.general.device_name;
@@ -907,6 +916,8 @@ void ApplicationWebserver::onColorPost(HttpRequest &request, HttpResponse &respo
 			sendApiCode(response, API_CODES::API_BAD_REQUEST, msg);
 		}
 	}
+
+	app.onColorCommand(body);
 }
 
 bool ApplicationWebserver::onColorPostCmd(JsonObject& root, String& errorMsg) {

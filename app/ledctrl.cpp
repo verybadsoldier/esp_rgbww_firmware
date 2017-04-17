@@ -28,7 +28,7 @@ void APPLedCtrl::init(const ApplicationSettings& cfg, ApplicationMQTTClient& mqt
 	_cfg = &cfg;
 	_mqtt = &mqtt;
 
-    _stepSync = new ClockCatchUp();
+    _stepSync = new ClockCatchUp2();
 	//_stepSync = new ClockAdaption();
 	RGBWWLed::init(REDPIN, GREENPIN, BLUEPIN, WWPIN, CWPIN, PWM_FREQUENCY);
 	setAnimationCallback(led_callback);
@@ -147,6 +147,27 @@ void ClockCatchUp::onMasterClock(Timer& timer, uint32_t stepsCurrent, uint32_t s
         double perc = static_cast<double>(_catchupOffset) / masterDiff;
         uint32_t newInt = (1000 * RGBWW_MINTIMEDIFF) * (1.0 - perc);
         Serial.printf("Step diff to master: %d Perc: %f | Catchup Offset: %d | New interval: %d us\n", masterDiff, perc, _catchupOffset, newInt);
+        timer.setIntervalUs(newInt);
+    }
+
+    _stepsSyncMasterLast = stepsMaster;
+    _stepsSyncLast = stepsCurrent;
+    _firstMasterSync = false;
+}
+
+void ClockCatchUp2::onMasterClock(Timer& timer, uint32_t stepsCurrent, uint32_t stepsMaster) {
+    if (!_firstMasterSync) {
+        int diff = StepSync::calcOverflowVal(_stepsSyncLast, stepsCurrent);
+        int masterDiff = StepSync::calcOverflowVal(_stepsSyncMasterLast, stepsMaster);
+
+        int curDiff = masterDiff - diff;
+        _catchupOffset += curDiff;
+
+        double perc = static_cast<double>(_catchupOffset) / masterDiff;
+        uint32_t curInt = timer.getIntervalUs();
+        uint32_t newInt = (0.9 * curInt) + (0.1 * curInt * (1.0 - perc));
+
+        Serial.printf("Step diff to master: %d Perc: %f | Current Diff: %d | Catchup Offset: %d | New interval: %d us\n", masterDiff, perc, curDiff, _catchupOffset, newInt);
         timer.setIntervalUs(newInt);
     }
 

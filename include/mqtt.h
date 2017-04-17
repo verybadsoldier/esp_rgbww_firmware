@@ -1,5 +1,7 @@
 #pragma once
 
+#include "RGBWWCtrl.h"
+
 class IMasterClockSink;
 
 
@@ -16,6 +18,8 @@ public:
 
 	void publishCurrentColor(const HSVCT& color);
     void publishClock(uint32_t steps);
+    void publishColorCommand(String json);
+
     void setMasterClockSink(IMasterClockSink* pSink);
 
 private:

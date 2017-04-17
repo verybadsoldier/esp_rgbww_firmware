@@ -98,7 +98,7 @@ void Application::init() {
 
 	mqttclient.setMasterClockSink((IMasterClockSink*)&rgbwwctrl);
 
-	coloreventpublisher.init(eventserver, rgbwwctrl);
+	coloreventpublisher.init(eventserver, rgbwwctrl, cfg);
 }
 
 // Will be called when system initialization was completed
@@ -187,4 +187,8 @@ void Application::onWifiConnected(const String& ssid) {
     if(cfg.network.mqtt.enabled) {
         mqttclient.start();
     }
+}
+
+void Application::onColorCommand(String json) {
+    mqttclient.publishColorCommand(json);
 }

@@ -19,10 +19,10 @@
  *
  *
  */
-#include <SmingCore/SmingCore.h>
+#pragma once
 
-#ifndef CONFIG_H_
-#define CONFIG_H_
+#include <SmingCore/SmingCore.h>
+#include <RGBWWCtrl.h>
 
 #define APP_SETTINGS_FILE ".cfg"
 #define CFG_VERSION "1"
@@ -58,10 +58,14 @@ struct ApplicationSettings {
 	};
 
     struct sync {
-        bool clockSendEnabled = true;
+        bool clockSendEnabled = false;
         int clockSendInterval = 5;
-        bool syncToMaster = false;
-        String syncToMasterTopic;
+        bool syncToMaster = true;
+        String syncToMasterTopic = "home/wz_lightLedCouch/clock";
+    };
+
+    struct events {
+        int colorEventIntervalMs = 500;
     };
 
 	struct color {
@@ -106,6 +110,7 @@ struct ApplicationSettings {
 	color color;
 	String configversion = CFG_VERSION;
     sync sync;
+    events events;
 
 	void load(bool print = false) {
 		DynamicJsonBuffer jsonBuffer;
@@ -165,6 +170,9 @@ struct ApplicationSettings {
             sync.clockSendInterval = root["sync"]["clockSendInterval"];
             sync.syncToMasterTopic = root["sync"]["syncToMasterTopic"].asString();
             sync.syncToMaster = root["sync"]["syncToMaster"];
+
+            // events
+            events.colorEventIntervalMs = root["events"]["colorEventIntervalMs"];
 
 			//TODO check if we can actually load the config
 			configversion = root["general"]["config_version"].asString();
@@ -232,6 +240,10 @@ struct ApplicationSettings {
         s["syncToMasterTopic"] = sync.syncToMasterTopic.c_str();
         s["syncToMaster"] = sync.syncToMaster;
 
+        JsonObject& e = jsonBuffer.createObject();
+        root["events"] = e;
+        e["colorEventIntervalMs"] = events.colorEventIntervalMs;
+
 		JsonObject& g = jsonBuffer.createObject();
 		root["general"] = g;
 		g["api_secured"] = general.api_secured;
@@ -246,7 +258,6 @@ struct ApplicationSettings {
 		}
 		root.printTo(rootString);
 		fileSetContent(APP_SETTINGS_FILE, rootString);
-
 	}
 
 	bool exist() {
@@ -259,5 +270,3 @@ struct ApplicationSettings {
 		}
 	}
 };
-
-#endif /* INCLUDE_APPSETTINGS_H_ */

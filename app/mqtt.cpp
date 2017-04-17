@@ -66,7 +66,10 @@ void ApplicationMQTTClient::connect() {
 #endif
     // Assign a disconnect callback function
     mqtt->setCompleteDelegate(TcpClientCompleteDelegate(&ApplicationMQTTClient::onComplete, this));
-    mqtt->subscribe("rgbww/master/#");
+
+    if (_cfg->sync.syncToMaster) {
+        mqtt->subscribe(_cfg->sync.syncToMasterTopic);
+    }
 }
 
 void ApplicationMQTTClient::init(const ApplicationSettings& cfg) {
@@ -82,7 +85,6 @@ void ApplicationMQTTClient::start() {
 	delete mqtt;
 	Serial.printf("MqttClient: Server: %s Port: %d\n", _cfg->network.mqtt.server.c_str(), _cfg->network.mqtt.port);
 	mqtt = new MqttClient(_cfg->network.mqtt.server, _cfg->network.mqtt.port, MqttStringSubscriptionCallback(&ApplicationMQTTClient::onMessageReceived, this));
-    Serial.println("B");
 	connectDelayed(10000);
 }
 
@@ -155,6 +157,11 @@ void ApplicationMQTTClient::publishClock(uint32_t steps) {
 
     String topic = buildTopic("clock");
     publish(topic, msg, false);
+}
+
+void ApplicationMQTTClient::publishColorCommand(String json) {
+    String topic = buildTopic("command");
+    publish(topic, json, false);
 }
 
 void ApplicationMQTTClient::setMasterClockSink(IMasterClockSink* pSink) {

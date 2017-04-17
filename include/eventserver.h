@@ -1,9 +1,6 @@
 #pragma once
 
-#include <SmingCore/SmingCore.h>
 #include <Wiring/WVector.h>
-
-#include <RGBWWLed/RGBWWLed.h>
 
 #include "jsonrpcmessage.h"
 
