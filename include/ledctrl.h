@@ -22,6 +22,8 @@
 #ifndef APP_LEDCTRL_H_
 #define APP_LEDCTRL_H_
 
+#include <limits>
+
 #include "mqtt.h"
 
 #define APP_COLOR_FILE ".color"
@@ -76,6 +78,44 @@ public:
     virtual void onMasterClock(uint32_t steps) = 0;
 };
 
+class StepSync {
+public:
+    virtual void onMasterClock(Timer& timer, uint32_t stepsCurrent, uint32_t stepsMaster) = 0;
+
+protected:
+    template<typename T>
+    static T calcOverflowVal(T prevValue, T curValue) {
+        if (curValue < prevValue) {
+            //overflow
+            return std::numeric_limits<T>::max() - prevValue + curValue;
+        }
+        else {
+            return curValue - prevValue;
+        }
+    }
+};
+
+class ClockAdaption : public StepSync {
+public:
+    virtual void onMasterClock(Timer& timer, uint32_t stepsCurrent, uint32_t stepsMaster);
+
+private:
+    uint32_t _stepsSyncMasterLast = 0;
+    uint32_t _stepsSyncLast = 0;
+    bool _firstMasterSync = true;
+};
+
+class ClockCatchUp : public StepSync {
+public:
+    virtual void onMasterClock(Timer& timer, uint32_t stepsCurrent, uint32_t stepsMaster);
+
+private:
+    int _catchupOffset = 0;
+    uint32_t _stepsSyncMasterLast = 0;
+    uint32_t _stepsSyncLast = 0;
+    bool _firstMasterSync = true;
+};
+
 class APPLedCtrl: public RGBWWLed, IMasterClockSink {
 
 public:
@@ -97,11 +137,9 @@ private:
 	Timer ledTimer;
     ApplicationSettings const * _cfg;
     ApplicationMQTTClient* _mqtt;
-    uint32_t _stepCounter = 0;
+    StepSync* _stepSync = nullptr;
 
-    uint32_t _stepsMasterOffset = 0;
-    uint32_t _stepsSyncMasterLast = 0;
-    uint32_t _stepsSyncLast = 0;
+    uint32_t _stepCounter = 0;
 };
 
 #endif

@@ -20,11 +20,16 @@
  *
  */
 #include <RGBWWCtrl.h>
+#include <cstdlib>
+
 
 void APPLedCtrl::init(const ApplicationSettings& cfg, ApplicationMQTTClient& mqtt) {
 	debugapp("APPLedCtrl::init");
 	_cfg = &cfg;
 	_mqtt = &mqtt;
+
+    _stepSync = new ClockCatchUp();
+	//_stepSync = new ClockAdaption();
 	RGBWWLed::init(REDPIN, GREENPIN, BLUEPIN, WWPIN, CWPIN, PWM_FREQUENCY);
 	setAnimationCallback(led_callback);
 	setup();
@@ -54,44 +59,19 @@ void APPLedCtrl::show_led() {
 	show();
 
     ++_stepCounter;
-	if (!_cfg->network.mqtt.slavemode_enabled) {
-        if (_stepCounter % (600000 / RGBWW_MINTIMEDIFF) == 0) {
-        Serial.printf("MQTT Master Clock\n");
+
+	if (_cfg->sync.clockSendEnabled) {
+        if (((_stepCounter / RGBWW_UPDATEFREQUENCY) % _cfg->sync.clockSendInterval) == 0) {
+            Serial.printf("Send Master Clock\n");
             _mqtt->publishClock(_stepCounter);
         }
-	}
-	else {
-
 	}
 }
 
 void APPLedCtrl::onMasterClock(uint32_t stepsMaster) {
-    uint32_t diff = _stepCounter - _stepsSyncLast;
-    uint32_t masterDiff = stepsMaster - _stepsSyncMasterLast;
-
-    Serial.printf("Master: %d DiffMaster: %d DiffSelf: %d\n", stepsMaster, masterDiff, diff);
-
-    if (masterDiff != diff) {
-        int correction = 0;
-        if (masterDiff > diff ) {
-            // we are too slow
-            correction -= 10;
-        }
-        else if (masterDiff < diff ) {
-            // we are too fast
-            correction += 10;
-        }
-
-        uint32_t newInt = ledTimer.getIntervalUs() + correction;
-        Serial.printf("Step diff to master: %d New interval: %d us\n", masterDiff, newInt);
-        ledTimer.setIntervalUs(newInt);
+    if (_stepSync) {
+        _stepSync->onMasterClock(ledTimer, _stepCounter, stepsMaster);
     }
-    else {
-        // we are fine (will this ever happen??)
-    }
-
-    _stepsSyncMasterLast = stepsMaster;
-    _stepsSyncLast = _stepCounter;
 }
 
 void APPLedCtrl::start() {
@@ -153,4 +133,49 @@ void APPLedCtrl::led_callback(RGBWWLed* rgbwwctrl, RGBWWLedAnimation* anim) {
 
 	//if (_cfg.network.mqtt.enabled)
 	app.mqttclient.publishCurrentColor(app.rgbwwctrl.getCurrentColor());
+}
+
+void ClockCatchUp::onMasterClock(Timer& timer, uint32_t stepsCurrent, uint32_t stepsMaster) {
+    if (!_firstMasterSync) {
+        int diff = StepSync::calcOverflowVal(_stepsSyncLast, stepsCurrent);
+        int masterDiff = StepSync::calcOverflowVal(_stepsSyncMasterLast, stepsMaster);
+
+        _catchupOffset += masterDiff - diff;
+
+        // if _catchupOffset is positive then we are too slow
+
+        double perc = static_cast<double>(_catchupOffset) / masterDiff;
+        uint32_t newInt = (1000 * RGBWW_MINTIMEDIFF) * (1.0 - perc);
+        Serial.printf("Step diff to master: %d Perc: %f | Catchup Offset: %d | New interval: %d us\n", masterDiff, perc, _catchupOffset, newInt);
+        timer.setIntervalUs(newInt);
+    }
+
+    _stepsSyncMasterLast = stepsMaster;
+    _stepsSyncLast = stepsCurrent;
+    _firstMasterSync = false;
+}
+
+void ClockAdaption::onMasterClock(Timer& timer, uint32_t stepsCurrent, uint32_t stepsMaster) {
+    if (!_firstMasterSync) {
+        int diff = StepSync::calcOverflowVal(_stepsSyncLast, stepsCurrent);
+        int masterDiff = StepSync::calcOverflowVal(_stepsSyncMasterLast, stepsMaster);
+
+        if (masterDiff < 60000) {
+            return;
+        }
+
+        int diffDiff = masterDiff - diff;
+        double diffPerc = static_cast<double>(diffDiff) / masterDiff;
+        double absDiffPerc = (static_cast<double>(abs(diffDiff)) / static_cast<double>(masterDiff));
+        Serial.printf("Master: %d MasterPrev: %d DiffMaster: %d DiffSelf: %d | Perc: %f\n", stepsMaster, _stepsSyncMasterLast, masterDiff, diff, diffPerc);
+
+        uint32_t curInt = timer.getIntervalUs();
+        uint32_t newInt = (1.0 - diffPerc/2) * curInt;
+        Serial.printf("Step diff to master: %d Cur Int: %d New interval: %d us\n", masterDiff, curInt, newInt);
+        timer.setIntervalUs(newInt);
+    }
+
+    _stepsSyncMasterLast = stepsMaster;
+    _stepsSyncLast = stepsCurrent;
+    _firstMasterSync = false;
 }
