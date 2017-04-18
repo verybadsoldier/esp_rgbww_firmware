@@ -49,7 +49,7 @@ public:
 	inline int getBootMode() { return _bootmode; };
 	void switchRom();
 
-	void onColorCommand(String json);
+	void onCommand(const String& method, const JsonObject& json);
 
 public:
 	AppWIFI network;
@@ -59,7 +59,7 @@ public:
 	ApplicationSettings cfg;
 	EventServer eventserver;
 	ColorEventPublisher coloreventpublisher;
-	ApplicationMQTTClient mqttclient;
+	AppMqttClient mqttclient;
 	JsonProcessor jsonproc;
 
 private:

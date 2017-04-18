@@ -7,11 +7,24 @@
 class JsonProcessor {
 public:
     bool onColor(const String& json, String& msg);
+    bool onColor(JsonObject& root, String& msg);
+
     bool onStop(const String& json, String& msg);
+    bool onStop(JsonObject& root, String& msg);
+
     bool onSkip(const String& json, String& msg);
+    bool onSkip(JsonObject& root, String& msg);
+
     bool onPause(const String& json, String& msg);
+    bool onPause(JsonObject& root, String& msg);
+
     bool onContinue(const String& json, String& msg);
+    bool onContinue(JsonObject& root, String& msg);
+
     bool onBlink(const String& json, String& msg);
+    bool onBlink(JsonObject& root, String& msg);
+
+    bool onJsonRpc(const String& json);
 
 private:
 
@@ -53,7 +66,7 @@ private:
     };
 
     void parseColorRequestParams(JsonObject& root, RequestParameters& params);
-    void parseChannelRequestParams(const String& json, RequestParameters& params);
+    void parseChannelRequestParams(JsonObject& root, RequestParameters& params);
 
     bool onSingleColorCommand(JsonObject& root, String& errorMsg);
 };

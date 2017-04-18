@@ -21,16 +21,16 @@
  */
 #include <RGBWWCtrl.h>
 
-ApplicationMQTTClient::ApplicationMQTTClient() {
+AppMqttClient::AppMqttClient() {
     _id = String("rgbww_") + WifiStation.getMAC();
 }
 
-ApplicationMQTTClient::~ApplicationMQTTClient() {
+AppMqttClient::~AppMqttClient() {
     delete mqtt;
     mqtt = nullptr;
 }
 
-void ApplicationMQTTClient::onComplete(TcpClient& client, bool success) {
+void AppMqttClient::onComplete(TcpClient& client, bool success) {
     if (success == true)
         Serial.println("MQTT Broker Disconnected!!");
     else
@@ -40,13 +40,13 @@ void ApplicationMQTTClient::onComplete(TcpClient& client, bool success) {
     connectDelayed(2000);
 }
 
-void ApplicationMQTTClient::connectDelayed(int delay) {
+void AppMqttClient::connectDelayed(int delay) {
     Serial.println("MQTT::connectDelayed");
-    _procTimer.initializeMs(delay, TimerDelegate(&ApplicationMQTTClient::connect, this)).startOnce();
+    _procTimer.initializeMs(delay, TimerDelegate(&AppMqttClient::connect, this)).startOnce();
 }
 
-void ApplicationMQTTClient::connect() {
-    if (!mqtt || mqtt->getConnectionState() == TcpClientState::eTCS_Connected )//|| mqtt->getConnectionState() == TcpClientState::eTCS_Connecting)
+void AppMqttClient::connect() {
+    if (!mqtt || mqtt->getConnectionState() == TcpClientState::eTCS_Connected || mqtt->getConnectionState() == TcpClientState::eTCS_Connecting)
         return;
 
     Serial.printf("MQTT::connect ID: %s\n", _id.c_str());
@@ -65,52 +65,55 @@ void ApplicationMQTTClient::connect() {
 
 #endif
     // Assign a disconnect callback function
-    mqtt->setCompleteDelegate(TcpClientCompleteDelegate(&ApplicationMQTTClient::onComplete, this));
+    mqtt->setCompleteDelegate(TcpClientCompleteDelegate(&AppMqttClient::onComplete, this));
 
-    if (_cfg->sync.syncToMaster) {
-        mqtt->subscribe(_cfg->sync.syncToMasterTopic);
+    if (app.cfg.sync.clock_slave_enabled) {
+        mqtt->subscribe(app.cfg.sync.clock_slave_topic);
+    }
+    if (app.cfg.sync.cmd_slave_enabled) {
+        mqtt->subscribe(app.cfg.sync.cmd_slave_topic);
     }
 }
 
-void ApplicationMQTTClient::init(const ApplicationSettings& cfg) {
-    _cfg = &cfg;
-    if (_cfg->general.device_name.length() > 0) {
-        _id = _cfg->general.device_name;
+void AppMqttClient::init() {
+    if (app.cfg.general.device_name.length() > 0) {
+        _id = app.cfg.general.device_name;
     }
 }
 
-void ApplicationMQTTClient::start() {
+void AppMqttClient::start() {
 	Serial.println("Start MQTT");
 
 	delete mqtt;
-	Serial.printf("MqttClient: Server: %s Port: %d\n", _cfg->network.mqtt.server.c_str(), _cfg->network.mqtt.port);
-	mqtt = new MqttClient(_cfg->network.mqtt.server, _cfg->network.mqtt.port, MqttStringSubscriptionCallback(&ApplicationMQTTClient::onMessageReceived, this));
+	Serial.printf("MqttClient: Server: %s Port: %d\n", app.cfg.network.mqtt.server.c_str(), app.cfg.network.mqtt.port);
+	mqtt = new MqttClient(app.cfg.network.mqtt.server, app.cfg.network.mqtt.port, MqttStringSubscriptionCallback(&AppMqttClient::onMessageReceived, this));
 	connectDelayed(10000);
 }
 
-void ApplicationMQTTClient::stop() {
+void AppMqttClient::stop() {
 	 delete mqtt;
 	 mqtt = nullptr;
 }
 
-bool ApplicationMQTTClient::isRunning() const {
+bool AppMqttClient::isRunning() const {
 	return (mqtt != nullptr);
 }
 
-void ApplicationMQTTClient::onMessageReceived(String topic, String message) {
+void AppMqttClient::onMessageReceived(String topic, String message) {
 	Serial.print(topic);
 	Serial.print(":\r\n\t"); // Prettify alignment for printing
 	Serial.println(message);
 
-	if (topic == _cfg->sync.syncToMasterTopic) {
-	    if (_masterClockSink) {
-	        uint32_t clock = message.toInt();
-	        _masterClockSink->onMasterClock(clock);
-	    }
+	if (app.cfg.sync.clock_slave_enabled && (topic == app.cfg.sync.clock_slave_topic)) {
+		uint32_t clock = message.toInt();
+		app.rgbwwctrl.onMasterClock(clock);
+	}
+	else if (app.cfg.sync.cmd_slave_enabled && (topic == app.cfg.sync.cmd_slave_topic)) {
+		app.jsonproc.onJsonRpc(message);
 	}
 }
 
-void ApplicationMQTTClient::publish(const String& topic, const String& data, bool retain) {
+void AppMqttClient::publish(const String& topic, const String& data, bool retain) {
     if (!mqtt) {
         Serial.printf("ApplicationMQTTClient::publish: no MQTT object\n");
         return;
@@ -121,12 +124,11 @@ void ApplicationMQTTClient::publish(const String& topic, const String& data, boo
         mqtt->publish(topic, data, retain);
     }
     else {
-        Serial.printf("ApplicationMQTTClient::publish: not connected. Connecting now\n");
-    //    connectDelayed(500);
+        Serial.printf("ApplicationMQTTClient::publish: not connected.\n");
     }
 }
 
-void ApplicationMQTTClient::publishCurrentRaw(const ChannelOutput& color) {
+void AppMqttClient::publishCurrentRaw(const ChannelOutput& color) {
     Serial.printf("ApplicationMQTTClient::publishCurrentRaw\n");
 
     String msg;
@@ -143,7 +145,7 @@ void ApplicationMQTTClient::publishCurrentRaw(const ChannelOutput& color) {
     publish(buildTopic("raw"), msg, true);
 }
 
-void ApplicationMQTTClient::publishCurrentHsv(const HSVCT& color) {
+void AppMqttClient::publishCurrentHsv(const HSVCT& color) {
     Serial.printf("ApplicationMQTTClient::publishCurrentHsv\n");
 
     float h, s, v;
@@ -162,13 +164,13 @@ void ApplicationMQTTClient::publishCurrentHsv(const HSVCT& color) {
     publish(buildTopic("hsv"), msg, true);
 }
 
-String ApplicationMQTTClient::buildTopic(const String& suffix) {
-    String topic = _cfg->network.mqtt.topic_base;
+String AppMqttClient::buildTopic(const String& suffix) {
+    String topic = app.cfg.network.mqtt.topic_base;
     topic += _id + "/";
     return topic + suffix;
 }
 
-void ApplicationMQTTClient::publishClock(uint32_t steps) {
+void AppMqttClient::publishClock(uint32_t steps) {
     String msg;
     msg += steps;
 
@@ -176,11 +178,14 @@ void ApplicationMQTTClient::publishClock(uint32_t steps) {
     publish(topic, msg, false);
 }
 
-void ApplicationMQTTClient::publishColorCommand(String json) {
-    String topic = buildTopic("command");
-    publish(topic, json, false);
-}
+void AppMqttClient::publishCommand(const String& method, const JsonObject& params) {
+	JsonRpcMessage msg(method);
 
-void ApplicationMQTTClient::setMasterClockSink(IMasterClockSink* pSink) {
-    _masterClockSink = pSink;
+    String topic = buildTopic("command");
+
+    msg.getRoot()["params"] = params;
+
+    String msgStr;
+    msg.getRoot().printTo(msgStr);
+    publish(topic, msgStr, false);
 }

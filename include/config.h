@@ -58,10 +58,15 @@ struct ApplicationSettings {
 	};
 
     struct sync {
-        bool clockSendEnabled = false;
-        int clockSendInterval = 5;
-        bool syncToMaster = true;
-        String syncToMasterTopic = "home/wz_lightLedCouch/clock";
+        bool clock_master_enabled = false;
+        int clock_master_interval = 5;
+
+        bool clock_slave_enabled = true;
+        String clock_slave_topic= "home/wz_lightLedCouch/clock";
+
+        bool cmd_master_enabled = false;
+        bool cmd_slave_enabled = false;
+        String cmd_slave_topic = "home/wz_lightLedCouch/commands";
     };
 
     struct events {
@@ -166,10 +171,14 @@ struct ApplicationSettings {
 			general.device_name = root["general"]["device_name"].asString();
 
 			// sync
-            sync.clockSendEnabled = root["sync"]["clockSendEnabled"];
-            sync.clockSendInterval = root["sync"]["clockSendInterval"];
-            sync.syncToMasterTopic = root["sync"]["syncToMasterTopic"].asString();
-            sync.syncToMaster = root["sync"]["syncToMaster"];
+            sync.clock_master_enabled = root["sync"]["clock_master_enabled"];
+            sync.clock_master_interval = root["sync"]["clock_master_interval"];
+            sync.clock_slave_topic = root["sync"]["clock_slave_topic"].asString();
+            sync.clock_slave_enabled = root["sync"]["clock_slave_enabled"];
+
+            sync.cmd_master_enabled = root["sync"]["cmd_master_enabled"];
+            sync.cmd_slave_enabled = root["sync"]["cmd_slave_enabled"];
+            sync.cmd_slave_topic = root["sync"]["cmd_slave_topic"].asString();
 
             // events
             events.colorEventIntervalMs = root["events"]["colorEventIntervalMs"];
@@ -235,10 +244,14 @@ struct ApplicationSettings {
 
 		JsonObject& s = jsonBuffer.createObject();
 		root["sync"] = s;
-		s["clockSendEnabled"] = sync.clockSendEnabled;
-		s["clockSendInterval"] = sync.clockSendInterval;
-        s["syncToMasterTopic"] = sync.syncToMasterTopic.c_str();
-        s["syncToMaster"] = sync.syncToMaster;
+		s["clock_master_enabled"] = sync.clock_master_enabled;
+		s["clock_master_interval"] = sync.clock_master_interval;
+        s["clock_slave_enabled"] = sync.clock_slave_enabled;
+        s["clock_slave_topic"] = sync.clock_slave_topic.c_str();
+
+        s["cmd_master_enabled"] = sync.cmd_master_enabled;
+        s["cmd_slave_enabled"] = sync.cmd_slave_enabled;
+        s["cmd_slave_topic"] = sync.cmd_slave_topic.c_str();
 
         JsonObject& e = jsonBuffer.createObject();
         root["events"] = e;

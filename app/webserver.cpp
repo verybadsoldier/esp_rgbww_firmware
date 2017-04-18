@@ -505,17 +505,26 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         }
 
         if (root["sync"].success()) {
-            if (root["sync"]["clockSendEnabled"].success()) {
-                app.cfg.sync.clockSendEnabled = root["sync"]["clockSendEnabled"];
+            if (root["sync"]["clock_master_enabled"].success()) {
+                app.cfg.sync.clock_master_enabled = root["sync"]["clock_master_enabled"];
             }
-            if (root["sync"]["clockSendInterval"].success()) {
-                app.cfg.sync.clockSendInterval = root["sync"]["clockSendInterval"];
+            if (root["sync"]["clock_master_interval"].success()) {
+                app.cfg.sync.clock_master_interval = root["sync"]["clock_master_interval"];
             }
-            if (root["sync"]["syncToMasterTopic"].success()) {
-                app.cfg.sync.syncToMasterTopic = root["sync"]["syncToMasterTopic"].asString();
+            if (root["sync"]["clock_slave_enabled"].success()) {
+                app.cfg.sync.clock_slave_enabled = root["sync"]["clock_slave_enabled"];
             }
-            if (root["sync"]["syncToMaster"].success()) {
-                app.cfg.sync.syncToMaster = root["sync"]["syncToMaster"];
+            if (root["sync"]["clock_slave_topic"].success()) {
+                app.cfg.sync.clock_slave_topic = root["sync"]["clock_slave_topic"].asString();
+            }
+            if (root["sync"]["cmd_master_enabled"].success()) {
+                app.cfg.sync.cmd_master_enabled = root["sync"]["cmd_master_enabled"];
+            }
+            if (root["sync"]["cmd_slave_enabled"].success()) {
+                app.cfg.sync.cmd_slave_enabled = root["sync"]["cmd_slave_enabled"];
+            }
+            if (root["sync"]["cmd_slave_topic"].success()) {
+                app.cfg.sync.cmd_slave_topic = root["sync"]["cmd_slave_topic"].asString();
             }
         }
 
@@ -622,10 +631,13 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
 		ota["url"] = app.cfg.general.otaurl;
 
         JsonObject& sync = json.createNestedObject("sync");
-        sync["clockSendEnabled"] = app.cfg.sync.clockSendEnabled;
-        sync["clockSendInterval"] = app.cfg.sync.clockSendInterval;
-        sync["syncToMasterTopic"] = app.cfg.sync.syncToMasterTopic.c_str();
-        sync["syncToMaster"] = app.cfg.sync.syncToMaster;
+        sync["clock_master_enabled"] = app.cfg.sync.clock_master_enabled;
+        sync["clock_master_interval"] = app.cfg.sync.clock_master_interval;
+        sync["clock_slave_enabled"] = app.cfg.sync.clock_slave_enabled;
+        sync["clock_slave_topic"] = app.cfg.sync.clock_slave_topic.c_str();
+        sync["cmd_master_enabled"] = app.cfg.sync.cmd_master_enabled;
+        sync["cmd_slave_enabled"] = app.cfg.sync.cmd_slave_enabled;
+        sync["cmd_slave_topic"] = app.cfg.sync.cmd_slave_topic.c_str();
 
         JsonObject& events = json.createNestedObject("events");
         events["colorEventIntervalMs"] = app.cfg.events.colorEventIntervalMs;
@@ -724,9 +736,6 @@ void ApplicationWebserver::onColorPost(HttpRequest &request, HttpResponse &respo
 	else {
 	    sendApiCode(response, API_CODES::API_SUCCESS);
 	}
-
-	// forward to other channels
-	app.onColorCommand(body);
 }
 
 void ApplicationWebserver::onColor(HttpRequest &request, HttpResponse &response) {

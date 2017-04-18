@@ -23,10 +23,8 @@
 #include <cstdlib>
 
 
-void APPLedCtrl::init(const ApplicationSettings& cfg, ApplicationMQTTClient& mqtt) {
+void APPLedCtrl::init() {
 	debugapp("APPLedCtrl::init");
-	_cfg = &cfg;
-	_mqtt = &mqtt;
 
     _stepSync = new ClockCatchUp2();
 	//_stepSync = new ClockAdaption();
@@ -64,10 +62,10 @@ void APPLedCtrl::show_led() {
 
     ++_stepCounter;
 
-	if (_cfg->sync.clockSendEnabled) {
-        if ((_stepCounter % (_cfg->sync.clockSendInterval * RGBWW_UPDATEFREQUENCY)) == 0) {
+	if (app.cfg.sync.clock_master_enabled) {
+        if ((_stepCounter % (app.cfg.sync.clock_master_interval * RGBWW_UPDATEFREQUENCY)) == 0) {
             Serial.printf("Send Master Clock\n");
-            _mqtt->publishClock(_stepCounter);
+            app.mqttclient.publishClock(_stepCounter);
         }
 	}
 }

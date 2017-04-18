@@ -84,10 +84,10 @@ void Application::init() {
 		cfg.save();
 	}
 
-	mqttclient.init(cfg);
+	mqttclient.init();
 
 	// initialize led ctrl
-	rgbwwctrl.init(cfg, mqttclient);
+	rgbwwctrl.init();
 
 	// initialize networking
 	network.init();
@@ -95,8 +95,6 @@ void Application::init() {
 
 	// initialize webserver
 	app.webserver.init();
-
-	mqttclient.setMasterClockSink((IMasterClockSink*)&rgbwwctrl);
 
 	coloreventpublisher.init(eventserver, rgbwwctrl, cfg);
 }
@@ -189,6 +187,6 @@ void Application::onWifiConnected(const String& ssid) {
     }
 }
 
-void Application::onColorCommand(String json) {
-    mqttclient.publishColorCommand(json);
+void Application::onCommand(const String& method, const JsonObject& params) {
+    mqttclient.publishCommand(method, params);
 }

@@ -5,13 +5,13 @@
 class IMasterClockSink;
 
 
-class ApplicationMQTTClient{
+class AppMqttClient{
 
 public:
-	ApplicationMQTTClient();
-	virtual ~ApplicationMQTTClient();
+	AppMqttClient();
+	virtual ~AppMqttClient();
 
-	void init(const ApplicationSettings& cfg);
+	void init();
 	void start();
 	void stop();
 	bool isRunning() const;
@@ -19,9 +19,7 @@ public:
 	void publishCurrentHsv(const HSVCT& color);
     void publishCurrentRaw(const ChannelOutput& color);
     void publishClock(uint32_t steps);
-    void publishColorCommand(String json);
-
-    void setMasterClockSink(IMasterClockSink* pSink);
+    void publishCommand(const String& method, const JsonObject& params);
 
 private:
 	void connectDelayed(int delay = 2000);
@@ -35,8 +33,5 @@ private:
 	MqttClient* mqtt = nullptr;
 	bool _running = false;
 	Timer _procTimer;
-	String _topicPrefix;
 	String _id;
-	IMasterClockSink* _masterClockSink = nullptr;
-	ApplicationSettings const * _cfg;
 };

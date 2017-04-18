@@ -71,11 +71,6 @@ struct ColorStorage {
 	}
 };
 
-class IMasterClockSink {
-public:
-    virtual void onMasterClock(uint32_t steps) = 0;
-};
-
 class StepSync {
 public:
     virtual void onMasterClock(Timer& timer, uint32_t stepsCurrent, uint32_t stepsMaster) = 0;
@@ -126,10 +121,10 @@ private:
     uint32_t _baseInt = RGBWW_MINTIMEDIFF * 1000;
 };
 
-class APPLedCtrl: public RGBWWLed, IMasterClockSink {
+class APPLedCtrl: public RGBWWLed {
 
 public:
-	void init(const ApplicationSettings& cfg, ApplicationMQTTClient& mqtt);
+	void init();
 	void setup();
 
 	void start();
@@ -139,7 +134,7 @@ public:
 	void test_channels();
 
 	void show_led();
-	virtual void onMasterClock(uint32_t steps);
+	void onMasterClock(uint32_t steps);
 	void onAnimationFinished(RGBWWLed* rgbwwctrl, RGBWWLedAnimation* anim);
 
     void onStepHsv(const HSVCT& hsvct);
@@ -148,8 +143,6 @@ public:
 private:
 	ColorStorage color;
 	Timer ledTimer;
-    ApplicationSettings const * _cfg;
-    ApplicationMQTTClient* _mqtt;
     StepSync* _stepSync = nullptr;
 
     uint32_t _stepCounter = 0;

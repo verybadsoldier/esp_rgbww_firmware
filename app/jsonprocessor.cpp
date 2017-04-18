@@ -4,6 +4,10 @@
 bool JsonProcessor::onColor(const String& json, String& msg) {
     DynamicJsonBuffer jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(json);
+    return onColor(root, msg);
+}
+
+bool JsonProcessor::onColor(JsonObject& root, String& msg) {
     if (root["cmds"].success()) {
         Vector<String> errors;
         // multi command post (needs testing)
@@ -33,31 +37,57 @@ bool JsonProcessor::onColor(const String& json, String& msg) {
             return false;
         }
     }
+
+    app.onCommand("color", root);
 }
 
 bool JsonProcessor::onStop(const String& json, String& msg) {
+    DynamicJsonBuffer jsonBuffer;
+    JsonObject& root = jsonBuffer.parseObject(json);
+    return onStop(root, msg);
+}
+
+bool JsonProcessor::onStop(JsonObject& root, String& msg) {
     RequestParameters params;
-    JsonProcessor::parseChannelRequestParams(json, params);
+    JsonProcessor::parseChannelRequestParams(root, params);
     app.rgbwwctrl.clearAnimationQueue(params.channels);
     app.rgbwwctrl.skipAnimation(params.channels);
     return true;
 }
 
 bool JsonProcessor::onSkip(const String& json, String& msg) {
+    DynamicJsonBuffer jsonBuffer;
+    JsonObject& root = jsonBuffer.parseObject(json);
+    return onSkip(root, msg);
+}
+
+bool JsonProcessor::onSkip(JsonObject& root, String& msg) {
     RequestParameters params;
-    JsonProcessor::parseChannelRequestParams(json, params);
+    JsonProcessor::parseChannelRequestParams(root, params);
     app.rgbwwctrl.skipAnimation(params.channels);
     return true;
 }
 
 bool JsonProcessor::onPause(const String& json, String& msg) {
+    DynamicJsonBuffer jsonBuffer;
+    JsonObject& root = jsonBuffer.parseObject(json);
+    return onPause(root, msg);
+}
+
+bool JsonProcessor::onPause(JsonObject& root, String& msg) {
     RequestParameters params;
-    JsonProcessor::parseChannelRequestParams(json, params);
+    JsonProcessor::parseChannelRequestParams(root, params);
     app.rgbwwctrl.pauseAnimation(params.channels);
     return true;
 }
 
 bool JsonProcessor::onContinue(const String& json, String& msg) {
+    DynamicJsonBuffer jsonBuffer;
+    JsonObject& root = jsonBuffer.parseObject(json);
+    return onContinue(root, msg);
+}
+
+bool JsonProcessor::onContinue(JsonObject& json, String& msg) {
     RequestParameters params;
     JsonProcessor::parseChannelRequestParams(json, params);
     app.rgbwwctrl.continueAnimation(params.channels);
@@ -65,6 +95,12 @@ bool JsonProcessor::onContinue(const String& json, String& msg) {
 }
 
 bool JsonProcessor::onBlink(const String& json, String& msg) {
+    DynamicJsonBuffer jsonBuffer;
+    JsonObject& root = jsonBuffer.parseObject(json);
+    return onBlink(root, msg);
+}
+
+bool JsonProcessor::onBlink(JsonObject& json, String& msg) {
     RequestParameters params;
     JsonProcessor::parseChannelRequestParams(json, params);
     app.rgbwwctrl.blink(params.channels, params.time);
@@ -119,10 +155,7 @@ bool JsonProcessor::onSingleColorCommand(JsonObject& root, String& errorMsg) {
 }
 
 
-void JsonProcessor::parseChannelRequestParams(const String& json, RequestParameters& params) {
-    DynamicJsonBuffer jsonBuffer;
-    JsonObject& root = jsonBuffer.parseObject(json);
-
+void JsonProcessor::parseChannelRequestParams(JsonObject& root, RequestParameters& params) {
     params.time = 100;
 
     RGBWWLed::ChannelList channels;
@@ -283,4 +316,13 @@ int JsonProcessor::RequestParameters::checkParams(String& errorMsg) const {
     }
 
     return 0;
+}
+
+bool JsonProcessor::onJsonRpc(const String& json) {
+	JsonRpcMessageIn rpc(json);
+
+	String msg;
+	if (rpc.getMethod() == "color") {
+		return onColor(rpc.getRoot(), msg);
+	}
 }
