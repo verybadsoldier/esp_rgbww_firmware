@@ -5,8 +5,6 @@ JsonRpcMessage::JsonRpcMessage(const String& name) {
     JsonObject& json = _stream.getRoot();
     json["jsonrpc"] = "2.0";
     json["method"] = name;
-
-    _pParams = &json.createNestedObject("params");
 }
 
 JsonObjectStream& JsonRpcMessage::getStream() {
@@ -14,6 +12,9 @@ JsonObjectStream& JsonRpcMessage::getStream() {
 }
 
 JsonObject& JsonRpcMessage::getParams() {
+    if (!_pParams) {
+        _pParams = &_stream.getRoot().createNestedObject("params");
+    }
     return *_pParams;
 }
 

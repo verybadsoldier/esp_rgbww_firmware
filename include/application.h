@@ -49,7 +49,7 @@ public:
 	inline int getBootMode() { return _bootmode; };
 	void switchRom();
 
-	void onCommand(const String& method, const JsonObject& json);
+	void onCommandRelay(const String& method, const JsonObject& json);
 
 public:
 	AppWIFI network;

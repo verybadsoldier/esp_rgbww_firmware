@@ -87,7 +87,7 @@ void AppMqttClient::start() {
 	delete mqtt;
 	Serial.printf("MqttClient: Server: %s Port: %d\n", app.cfg.network.mqtt.server.c_str(), app.cfg.network.mqtt.port);
 	mqtt = new MqttClient(app.cfg.network.mqtt.server, app.cfg.network.mqtt.port, MqttStringSubscriptionCallback(&AppMqttClient::onMessageReceived, this));
-	connectDelayed(10000);
+	connectDelayed(2000);
 }
 
 void AppMqttClient::stop() {
@@ -114,6 +114,8 @@ void AppMqttClient::onMessageReceived(String topic, String message) {
 }
 
 void AppMqttClient::publish(const String& topic, const String& data, bool retain) {
+    //Serial.printf("AppMqttClient::publish: Topic: %s | Data: %s\n", topic.c_str(), data.c_str());
+
     if (!mqtt) {
         Serial.printf("ApplicationMQTTClient::publish: no MQTT object\n");
         return;
@@ -146,7 +148,7 @@ void AppMqttClient::publishCurrentRaw(const ChannelOutput& color) {
 }
 
 void AppMqttClient::publishCurrentHsv(const HSVCT& color) {
-    Serial.printf("ApplicationMQTTClient::publishCurrentHsv\n");
+    //Serial.printf("ApplicationMQTTClient::publishCurrentHsv\n");
 
     float h, s, v;
     int ct;
@@ -179,13 +181,17 @@ void AppMqttClient::publishClock(uint32_t steps) {
 }
 
 void AppMqttClient::publishCommand(const String& method, const JsonObject& params) {
+    Serial.printf("ApplicationMQTTClient::publishCommand: %s\n", method.c_str());
+
 	JsonRpcMessage msg(method);
 
     String topic = buildTopic("command");
 
-    msg.getRoot()["params"] = params;
+    if (params.size() > 0)
+        msg.getRoot()["params"] = params;
 
     String msgStr;
     msg.getRoot().printTo(msgStr);
+    Serial.printf("ApplicationMQTTClient::publishCommand22: %s\n", method.c_str());
     publish(topic, msgStr, false);
 }

@@ -26,8 +26,8 @@
 void APPLedCtrl::init() {
 	debugapp("APPLedCtrl::init");
 
-    _stepSync = new ClockCatchUp2();
-	//_stepSync = new ClockAdaption();
+    //_stepSync = new ClockCatchUp2();
+	_stepSync = new ClockAdaption();
 	RGBWWLed::init(REDPIN, GREENPIN, BLUEPIN, WWPIN, CWPIN, PWM_FREQUENCY);
 
     setAnimationFinishedDelegate(AnimationFinishedDelegate(&APPLedCtrl::onAnimationFinished, this));
@@ -204,9 +204,9 @@ void ClockAdaption::onMasterClock(Timer& timer, uint32_t stepsCurrent, uint32_t 
 }
 
 void APPLedCtrl::onStepHsv(const HSVCT& hsvct) {
-    app.mqttclient.publishCurrentHsv(hsvct);
+    //app.mqttclient.publishCurrentHsv(hsvct);
 }
 
 void APPLedCtrl::onStepRaw(const ChannelOutput& raw) {
-    app.mqttclient.publishCurrentRaw(raw);
+    //app.mqttclient.publishCurrentRaw(raw);
 }

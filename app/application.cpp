@@ -187,6 +187,9 @@ void Application::onWifiConnected(const String& ssid) {
     }
 }
 
-void Application::onCommand(const String& method, const JsonObject& params) {
+void Application::onCommandRelay(const String& method, const JsonObject& params) {
+    if (!cfg.sync.cmd_master_enabled)
+        return;
+
     mqttclient.publishCommand(method, params);
 }

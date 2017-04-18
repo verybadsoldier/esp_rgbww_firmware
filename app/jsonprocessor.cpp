@@ -1,109 +1,131 @@
 #include <RGBWWCtrl.h>
 
 
-bool JsonProcessor::onColor(const String& json, String& msg) {
+bool JsonProcessor::onColor(const String& json, String& msg, bool relay) {
     DynamicJsonBuffer jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(json);
-    return onColor(root, msg);
+    return onColor(root, msg, relay);
 }
 
-bool JsonProcessor::onColor(JsonObject& root, String& msg) {
+bool JsonProcessor::onColor(JsonObject& root, String& msg, bool relay) {
+    bool result = false;
     if (root["cmds"].success()) {
         Vector<String> errors;
         // multi command post (needs testing)
         const JsonArray& cmds = root["cmds"].asArray();
         for(int i=0; i < cmds.size(); ++i) {
             String msg;
-            if (!onSingleColorCommand(cmds[i], msg)) {
+            if (!onSingleColorCommand(cmds[i], msg))
                 errors.add(msg);
-            }
         }
 
         if (errors.size() == 0)
-            return true;
+            result = true;
         else {
             String msg;
-            for (int i=0; i < errors.size(); ++i) {
+            for (int i=0; i < errors.size(); ++i)
                 msg += errors[i] + "|";
-            }
-            return false;
+            result = false;
         }
     }
     else {
-        if (onSingleColorCommand(root, msg)) {
-            return true;
-        }
-        else {
-            return false;
-        }
+        if (onSingleColorCommand(root, msg))
+            result = true;
+        else
+            result = false;
     }
 
-    app.onCommand("color", root);
+    if (relay)
+        app.onCommandRelay("color", root);
+
+    Serial.printf("onColor: %d | Msg: %s\n", result, msg.c_str());
+
+    return result;
 }
 
-bool JsonProcessor::onStop(const String& json, String& msg) {
+bool JsonProcessor::onStop(const String& json, String& msg, bool relay) {
     DynamicJsonBuffer jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(json);
-    return onStop(root, msg);
+    return onStop(root, msg, relay);
 }
 
-bool JsonProcessor::onStop(JsonObject& root, String& msg) {
+bool JsonProcessor::onStop(JsonObject& root, String& msg, bool relay) {
     RequestParameters params;
     JsonProcessor::parseChannelRequestParams(root, params);
     app.rgbwwctrl.clearAnimationQueue(params.channels);
     app.rgbwwctrl.skipAnimation(params.channels);
+
+    if (relay)
+        app.onCommandRelay("stop", root);
+
     return true;
 }
 
-bool JsonProcessor::onSkip(const String& json, String& msg) {
+bool JsonProcessor::onSkip(const String& json, String& msg, bool relay) {
     DynamicJsonBuffer jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(json);
-    return onSkip(root, msg);
+    return onSkip(root, msg, relay);
 }
 
-bool JsonProcessor::onSkip(JsonObject& root, String& msg) {
+bool JsonProcessor::onSkip(JsonObject& root, String& msg, bool relay) {
     RequestParameters params;
     JsonProcessor::parseChannelRequestParams(root, params);
     app.rgbwwctrl.skipAnimation(params.channels);
+
+    if (relay)
+        app.onCommandRelay("skip", root);
+
     return true;
 }
 
-bool JsonProcessor::onPause(const String& json, String& msg) {
+bool JsonProcessor::onPause(const String& json, String& msg, bool relay) {
     DynamicJsonBuffer jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(json);
-    return onPause(root, msg);
+    return onPause(root, msg, relay);
 }
 
-bool JsonProcessor::onPause(JsonObject& root, String& msg) {
+bool JsonProcessor::onPause(JsonObject& root, String& msg, bool relay) {
     RequestParameters params;
     JsonProcessor::parseChannelRequestParams(root, params);
     app.rgbwwctrl.pauseAnimation(params.channels);
+
+    if (relay)
+        app.onCommandRelay("pause", root);
+
     return true;
 }
 
-bool JsonProcessor::onContinue(const String& json, String& msg) {
+bool JsonProcessor::onContinue(const String& json, String& msg, bool relay) {
     DynamicJsonBuffer jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(json);
-    return onContinue(root, msg);
+    return onContinue(root, msg, relay);
 }
 
-bool JsonProcessor::onContinue(JsonObject& json, String& msg) {
+bool JsonProcessor::onContinue(JsonObject& root, String& msg, bool relay) {
     RequestParameters params;
-    JsonProcessor::parseChannelRequestParams(json, params);
+    JsonProcessor::parseChannelRequestParams(root, params);
     app.rgbwwctrl.continueAnimation(params.channels);
+
+    if (relay)
+        app.onCommandRelay("continue", root);
+
     return true;
 }
 
-bool JsonProcessor::onBlink(const String& json, String& msg) {
+bool JsonProcessor::onBlink(const String& json, String& msg, bool relay) {
     DynamicJsonBuffer jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(json);
-    return onBlink(root, msg);
+    return onBlink(root, msg, relay);
 }
 
-bool JsonProcessor::onBlink(JsonObject& json, String& msg) {
+bool JsonProcessor::onBlink(JsonObject& root, String& msg, bool relay) {
     RequestParameters params;
-    JsonProcessor::parseChannelRequestParams(json, params);
+    JsonProcessor::parseChannelRequestParams(root, params);
     app.rgbwwctrl.blink(params.channels, params.time);
+
+    if (relay)
+        app.onCommandRelay("blink", root);
+
     return true;
 }
 
@@ -319,10 +341,26 @@ int JsonProcessor::RequestParameters::checkParams(String& errorMsg) const {
 }
 
 bool JsonProcessor::onJsonRpc(const String& json) {
+    Serial.printf("JsonProcessor::onJsonRpc: %s\n", json.c_str());
 	JsonRpcMessageIn rpc(json);
 
 	String msg;
 	if (rpc.getMethod() == "color") {
-		return onColor(rpc.getRoot(), msg);
+		return onColor(rpc.getParams(), msg, false);
 	}
+	else if (rpc.getMethod() == "stop") {
+        return onStop(rpc.getParams(), msg, false);
+    }
+    else if (rpc.getMethod() == "blink") {
+        return onBlink(rpc.getParams(), msg, false);
+    }
+    else if (rpc.getMethod() == "skip") {
+        return onSkip(rpc.getParams(), msg, false);
+    }
+    else if (rpc.getMethod() == "pause") {
+        return onPause(rpc.getParams(), msg, false);
+    }
+    else if (rpc.getMethod() == "continue") {
+        return onContinue(rpc.getParams(), msg, false);
+    }
 }

@@ -64,9 +64,9 @@ struct ApplicationSettings {
         bool clock_slave_enabled = true;
         String clock_slave_topic= "home/wz_lightLedCouch/clock";
 
-        bool cmd_master_enabled = false;
+        bool cmd_master_enabled = true;
         bool cmd_slave_enabled = false;
-        String cmd_slave_topic = "home/wz_lightLedCouch/commands";
+        String cmd_slave_topic = "home/wz_lightLedCouch/command";
     };
 
     struct events {

@@ -17,7 +17,7 @@ private:
     const String _data;
 
     JsonObjectStream _stream;
-    JsonObject* _pParams;
+    JsonObject* _pParams = nullptr;
 };
 
 class JsonRpcMessageIn {
