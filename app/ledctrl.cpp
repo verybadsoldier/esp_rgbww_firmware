@@ -21,12 +21,13 @@
  */
 #include <RGBWWCtrl.h>
 #include <cstdlib>
+#include <algorithm>
 
 
 void APPLedCtrl::init() {
 	debugapp("APPLedCtrl::init");
 
-    _stepSync = new ClockCatchUp2();
+    _stepSync = new ClockCatchUp3();
 	//_stepSync = new ClockAdaption();
 	RGBWWLed::init(REDPIN, GREENPIN, BLUEPIN, WWPIN, CWPIN, PWM_FREQUENCY);
 
@@ -55,7 +56,29 @@ void APPLedCtrl::setup() {
 
 }
 
-void APPLedCtrl::show_led() {
+void APPLedCtrl::publishToEventServer() {
+	switch(_mode) {
+	case ColorMode::Hsv:
+        app.eventserver.publishCurrentHsv(getCurrentColor());
+	    break;
+    case ColorMode::Raw:
+        app.eventserver.publishCurrentRaw(getCurrentOutput());
+        break;
+	}
+}
+
+void APPLedCtrl::publishToMqtt() {
+	switch(_mode) {
+	case ColorMode::Hsv:
+        app.mqttclient.publishCurrentHsv(getCurrentColor());
+	    break;
+    case ColorMode::Raw:
+        app.mqttclient.publishCurrentRaw(getCurrentOutput());
+        break;
+	}
+}
+
+void APPLedCtrl::updateLed() {
 	show();
 
     ++_stepCounter;
@@ -67,18 +90,18 @@ void APPLedCtrl::show_led() {
         }
 	}
 
-	switch(_mode) {
-	case ColorMode::Hsv:
-	    if ((app.cfg.events.colorEventIntervalMs == 0) || (_stepCounter % (app.cfg.events.colorEventIntervalMs * 1000 * RGBWW_UPDATEFREQUENCY)) == 0) {
-	        app.eventserver.publishCurrentColor(getCurrentColor());
+	const static uint32_t stepLenMs = 1000 / RGBWW_UPDATEFREQUENCY;
+
+	if (_outputChanged){
+	    if ((app.cfg.events.color_interval_ms == 0) ||
+	    		((stepLenMs * _stepCounter) % app.cfg.events.color_interval_ms) < stepLenMs) {
+	    	publishToEventServer();
 	    }
 
-	    if ((app.cfg.sync.color_master_intervalMs == 0) || (_stepCounter % (app.cfg.sync.color_master_intervalMs * 1000 * RGBWW_UPDATEFREQUENCY)) == 0) {
-	        app.mqttclient.publishCurrentHsv(getCurrentColor());
+	    if ((app.cfg.sync.color_master_interval_ms == 0) ||
+	    		((stepLenMs * _stepCounter) % app.cfg.sync.color_master_interval_ms) < stepLenMs) {
+	    	publishToMqtt();
 	    }
-	    break;
-    case ColorMode::Raw:
-        break;
 	}
 }
 
@@ -90,7 +113,7 @@ void APPLedCtrl::onMasterClock(uint32_t stepsMaster) {
 
 void APPLedCtrl::start() {
 	debugapp("APPLedCtrl::start");
-	ledTimer.initializeMs(RGBWW_MINTIMEDIFF, TimerDelegate(&APPLedCtrl::show_led, this)).start();
+	ledTimer.initializeMs(RGBWW_MINTIMEDIFF, TimerDelegate(&APPLedCtrl::updateLed, this)).start();
 }
 
 void APPLedCtrl::stop() {
@@ -98,8 +121,8 @@ void APPLedCtrl::stop() {
 	ledTimer.stop();
 }
 
-void APPLedCtrl::color_save() {
-	debugapp("APPLedCtrl::save_color");
+void APPLedCtrl::colorSave() {
+	debugapp("APPLedCtrl::colorSave");
 	HSVCT c = getCurrentColor();
 	color.h = c.h;
 	color.s = c.s;
@@ -108,8 +131,8 @@ void APPLedCtrl::color_save() {
 	color.save();
 }
 
-void APPLedCtrl::color_reset() {
-	debugapp("APPLedCtrl::reset_color");
+void APPLedCtrl::colorReset() {
+	debugapp("APPLedCtrl::colorReset");
 	color.h = 0;
 	color.s = 0;
 	color.v = 0;
@@ -117,7 +140,7 @@ void APPLedCtrl::color_reset() {
 	color.save();
 }
 
-void APPLedCtrl::test_channels() {
+void APPLedCtrl::testChannels() {
 //	debugapp("APPLedCtrl::test_channels");
 //	ChannelOutput red = ChannelOutput(1023, 0, 0, 0, 0);
 //	ChannelOutput green = ChannelOutput(0, 1023, 0, 0, 0);
@@ -140,10 +163,10 @@ void APPLedCtrl::test_channels() {
 
 void APPLedCtrl::onAnimationFinished(RGBWWLed* rgbwwctrl, RGBWWLedAnimation* anim) {
 	debugapp("APPLedCtrl::onAnimationFinished");
-	app.rgbwwctrl.color_save();
+	app.rgbwwctrl.colorSave();
 
 	app.eventserver.publishTransitionComplete(anim->getName());
-	app.eventserver.publishCurrentColor(app.rgbwwctrl.getCurrentColor());
+	app.eventserver.publishCurrentHsv(app.rgbwwctrl.getCurrentColor());
 
 	//if (_cfg.network.mqtt.enabled)
 	app.mqttclient.publishCurrentHsv(app.rgbwwctrl.getCurrentColor());
@@ -161,6 +184,59 @@ void ClockCatchUp::onMasterClock(Timer& timer, uint32_t stepsCurrent, uint32_t s
         double perc = static_cast<double>(_catchupOffset) / masterDiff;
         uint32_t newInt = (1000 * RGBWW_MINTIMEDIFF) * (1.0 - perc);
         Serial.printf("Step diff to master: %d Perc: %f | Catchup Offset: %d | New interval: %d us\n", masterDiff, perc, _catchupOffset, newInt);
+        timer.setIntervalUs(newInt);
+    }
+
+    _stepsSyncMasterLast = stepsMaster;
+    _stepsSyncLast = stepsCurrent;
+    _firstMasterSync = false;
+}
+
+void ClockCatchUp3::onMasterClock(Timer& timer, uint32_t stepsCurrent, uint32_t stepsMaster) {
+    if (!_firstMasterSync) {
+        int diff = StepSync::calcOverflowVal(_stepsSyncLast, stepsCurrent);
+        int masterDiff = StepSync::calcOverflowVal(_stepsSyncMasterLast, stepsMaster);
+
+        int curDiff = masterDiff - diff;
+        _catchupOffset += curDiff;
+        Serial.printf("Step Diff: %d | Master Step Diff: %d | Catchup: %d\n", diff, masterDiff, _catchupOffset);
+
+        const uint32_t curInt = timer.getIntervalUs();
+        Serial.printf("Current Interval: %d | Current Base Interval: %d\n", curInt, _baseInt);
+
+        // update base interval
+        const int diffCorrected = ((curInt - _steering)/ static_cast<double>(_constBaseInt)) * diff; // normalize towards current interval
+        const int calcNewBase = curInt * (diffCorrected / static_cast<double>(masterDiff));
+        _baseInt =  (0.9 * _baseInt) + (0.1 * calcNewBase);
+        Serial.printf("New Base Interval: %d | Cal New Base: %d\n", _baseInt, calcNewBase);
+
+        double perc = static_cast<double>(_catchupOffset) / _baseInt;
+        perc = std::max(-0.2, std::min(perc, 0.2));
+        _steering = static_cast<int>((perc / 2.0) * _baseInt + 0.5f);
+        uint32_t newInt = _baseInt + _steering;
+
+        Serial.printf("New Int: %d | Perc: %f | Steering: %d\n", newInt, perc, _steering);
+        timer.setIntervalUs(newInt);
+    }
+
+    _stepsSyncMasterLast = stepsMaster;
+    _stepsSyncLast = stepsCurrent;
+    _firstMasterSync = false;
+}
+
+void ClockCatchUpSteering::onMasterClock(Timer& timer, uint32_t stepsCurrent, uint32_t stepsMaster) {
+    if (!_firstMasterSync) {
+        int diff = StepSync::calcOverflowVal(_stepsSyncLast, stepsCurrent);
+        int masterDiff = StepSync::calcOverflowVal(_stepsSyncMasterLast, stepsMaster);
+
+        int curDiff = masterDiff - diff;
+        _catchupOffset += curDiff;
+        Serial.printf("Step Diff: %d | Master Step Diff: %d | Catchup: %d\n", diff, masterDiff, _catchupOffset);
+
+        double perc = 1 + static_cast<double>(_catchupOffset) / masterDiff;
+        _steering = (_steering * 0.9 + 0.1 * _steering * std::max(1.01, std::min(0.99, perc)));
+        uint32_t newInt = _constBaseInt * _steering;
+        Serial.printf("New Int: %d | Perc: %f | Steering: %d\n", newInt, perc, _steering);
         timer.setIntervalUs(newInt);
     }
 
@@ -213,12 +289,4 @@ void ClockAdaption::onMasterClock(Timer& timer, uint32_t stepsCurrent, uint32_t 
     _stepsSyncMasterLast = stepsMaster;
     _stepsSyncLast = stepsCurrent;
     _firstMasterSync = false;
-}
-
-void APPLedCtrl::onStepHsv(const HSVCT& hsvct) {
-    //app.mqttclient.publishCurrentHsv(hsvct);
-}
-
-void APPLedCtrl::onStepRaw(const ChannelOutput& raw) {
-    //app.mqttclient.publishCurrentRaw(raw);
 }

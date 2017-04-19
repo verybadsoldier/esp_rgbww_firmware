@@ -11,7 +11,8 @@ public:
 	void stop();
 	inline bool isRunning() { return _running; };
 
-	void publishCurrentColor(const HSVCT& color);
+	void publishCurrentHsv(const HSVCT& color);
+	void publishCurrentRaw(const ChannelOutput& raw);
 	void publishTransitionComplete(const String& name);
 	void publishKeepAlive();
 

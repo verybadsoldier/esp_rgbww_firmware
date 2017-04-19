@@ -526,11 +526,24 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
             if (root["sync"]["cmd_slave_topic"].success()) {
                 app.cfg.sync.cmd_slave_topic = root["sync"]["cmd_slave_topic"].asString();
             }
+
+            if (root["sync"]["color_master_enabled"].success()) {
+                app.cfg.sync.color_master_enabled = root["sync"]["color_master_enabled"];
+            }
+            if (root["sync"]["color_master_interval_ms"].success()) {
+                app.cfg.sync.color_master_interval_ms = root["sync"]["color_master_interval_ms"];
+            }
+            if (root["sync"]["color_slave_enabled"].success()) {
+                app.cfg.sync.color_slave_enabled = root["sync"]["color_slave_enabled"];
+            }
+            if (root["sync"]["color_slave_topic"].success()) {
+                app.cfg.sync.color_slave_topic = root["sync"]["color_slave_topic"].asString();
+            }
         }
 
         if (root["events"].success()) {
-            if (root["events"]["colorEventIntervalMs"].success()) {
-                app.cfg.events.colorEventIntervalMs = root["events"]["colorEventIntervalMs"];
+            if (root["events"]["color_interval_ms"].success()) {
+                app.cfg.events.color_interval_ms = root["events"]["color_interval_ms"];
             }
         }
 
@@ -639,8 +652,13 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         sync["cmd_slave_enabled"] = app.cfg.sync.cmd_slave_enabled;
         sync["cmd_slave_topic"] = app.cfg.sync.cmd_slave_topic.c_str();
 
+        sync["color_master_enabled"] = app.cfg.sync.color_master_enabled;
+        sync["color_master_intervalMs"] = app.cfg.sync.color_master_interval_ms;
+        sync["color_slave_enabled"] = app.cfg.sync.color_slave_enabled;
+        sync["color_slave_topic"] = app.cfg.sync.color_slave_topic.c_str();
+
         JsonObject& events = json.createNestedObject("events");
-        events["colorEventIntervalMs"] = app.cfg.events.colorEventIntervalMs;
+        events["colorEventIntervalMs"] = app.cfg.events.color_interval_ms;
 
         JsonObject& general = json.createNestedObject("general");
         general["device_name"] = app.cfg.general.device_name;
@@ -1039,7 +1057,6 @@ void ApplicationWebserver::onUpdate(HttpRequest &request, HttpResponse &response
 	JsonObject& json = stream->getRoot();
 	json["status"] = int(app.ota.getStatus());
 	sendApiResponse(response, stream);
-
 }
 
 //simple call-response to check if we can reach server

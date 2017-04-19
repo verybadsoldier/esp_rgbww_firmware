@@ -50,6 +50,7 @@ public:
 	void switchRom();
 
 	void onCommandRelay(const String& method, const JsonObject& json);
+	void onWifiConnected(const String& ssid);
 
 public:
 	AppWIFI network;
@@ -63,7 +64,6 @@ public:
 
 private:
 	void loadbootinfo();
-	void onWifiConnected(const String& ssid);
 
 	Timer _systimer;
 	int _bootmode = 0;

@@ -17,7 +17,7 @@ public:
 	bool isRunning() const;
 
 	void publishCurrentHsv(const HSVCT& color);
-    void publishCurrentRaw(const ChannelOutput& color);
+    void publishCurrentRaw(const ChannelOutput& raw);
     void publishClock(uint32_t steps);
     void publishCommand(const String& method, const JsonObject& params);
 

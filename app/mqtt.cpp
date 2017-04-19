@@ -111,6 +111,9 @@ void AppMqttClient::onMessageReceived(String topic, String message) {
 	else if (app.cfg.sync.cmd_slave_enabled && (topic == app.cfg.sync.cmd_slave_topic)) {
 		app.jsonproc.onJsonRpc(message);
 	}
+	else if (app.cfg.sync.color_slave_enabled && (topic == app.cfg.sync.color_slave_topic)) {
+		app.jsonproc.onJsonRpc(message);
+	}
 }
 
 void AppMqttClient::publish(const String& topic, const String& data, bool retain) {
@@ -130,40 +133,41 @@ void AppMqttClient::publish(const String& topic, const String& data, bool retain
     }
 }
 
-void AppMqttClient::publishCurrentRaw(const ChannelOutput& color) {
+void AppMqttClient::publishCurrentRaw(const ChannelOutput& raw) {
     Serial.printf("ApplicationMQTTClient::publishCurrentRaw\n");
 
-    String msg;
-    msg += color.r;
-    msg += ",";
-    msg += color.g;
-    msg += ",";
-    msg += color.b;
-    msg += ",";
-    msg += color.cw;
-    msg += ",";
-    msg += color.ww;
+	DynamicJsonBuffer jsonBuffer(200);
+	JsonObject& root = jsonBuffer.createObject();
+	JsonObject& hsv = root.createNestedObject("raw");
+	hsv["r"] = raw.r;
+	hsv["g"] = raw.g;
+	hsv["b"] = raw.b;
+	hsv["cw"] = raw.cw;
+	hsv["ww"] = raw.ww;
 
-    publish(buildTopic("raw"), msg, true);
+	root["t"] = 0;
+	root["cmd"] = "solid";
+
+	String jsonMsg;
+	root.printTo(jsonMsg);
+    publish(buildTopic("raw"), jsonMsg, true);
 }
 
 void AppMqttClient::publishCurrentHsv(const HSVCT& color) {
-    //Serial.printf("ApplicationMQTTClient::publishCurrentHsv\n");
+	DynamicJsonBuffer jsonBuffer(200);
+	JsonObject& root = jsonBuffer.createObject();
+	JsonObject& hsv = root.createNestedObject("hsv");
+	hsv["h"] = color.h;
+	hsv["s"] = color.s;
+	hsv["v"] = color.v;
+	hsv["ct"] = color.ct;
 
-    float h, s, v;
-    int ct;
-    color.asRadian(h, s, v, ct);
+	root["t"] = 0;
+	root["cmd"] = "solid";
 
-    String msg;
-    msg += h;
-    msg += ",";
-    msg += s;
-    msg += ",";
-    msg += v;
-    msg += ",";
-    msg += ct;
-
-    publish(buildTopic("hsv"), msg, true);
+	String jsonMsg;
+	root.printTo(jsonMsg);
+    publish(buildTopic("hsv"), jsonMsg, true);
 }
 
 String AppMqttClient::buildTopic(const String& suffix) {
@@ -192,6 +196,5 @@ void AppMqttClient::publishCommand(const String& method, const JsonObject& param
 
     String msgStr;
     msg.getRoot().printTo(msgStr);
-    Serial.printf("ApplicationMQTTClient::publishCommand22: %s\n", method.c_str());
     publish(topic, msgStr, false);
 }

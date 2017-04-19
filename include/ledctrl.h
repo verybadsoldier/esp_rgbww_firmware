@@ -118,7 +118,34 @@ private:
     uint32_t _stepsSyncMasterLast = 0;
     uint32_t _stepsSyncLast = 0;
     bool _firstMasterSync = true;
+};
+
+class ClockCatchUp3 : public StepSync {
+public:
+    virtual void onMasterClock(Timer& timer, uint32_t stepsCurrent, uint32_t stepsMaster);
+
+private:
+    int _catchupOffset = 0;
+    uint32_t _stepsSyncMasterLast = 0;
+    uint32_t _stepsSyncLast = 0;
+    bool _firstMasterSync = true;
     uint32_t _baseInt = RGBWW_MINTIMEDIFF * 1000;
+    double _steering = 1.0;
+    const uint32_t _constBaseInt = RGBWW_MINTIMEDIFF * 1000;
+};
+
+class ClockCatchUpSteering : public StepSync {
+public:
+    virtual void onMasterClock(Timer& timer, uint32_t stepsCurrent, uint32_t stepsMaster);
+
+private:
+    int _catchupOffset = 0;
+    uint32_t _stepsSyncMasterLast = 0;
+    uint32_t _stepsSyncLast = 0;
+    bool _firstMasterSync = true;
+    uint32_t _baseInt = RGBWW_MINTIMEDIFF * 1000;
+    uint32_t _steering = 1.0;
+    const uint32_t _constBaseInt = RGBWW_MINTIMEDIFF * 1000;
 };
 
 class APPLedCtrl: public RGBWWLed {
@@ -129,23 +156,25 @@ public:
 
 	void start();
 	void stop();
-	void color_save();
-	void color_reset();
-	void test_channels();
+	void colorSave();
+	void colorReset();
+	void testChannels();
 
-	void show_led();
+	void updateLed();
 	void onMasterClock(uint32_t steps);
 	void onAnimationFinished(RGBWWLed* rgbwwctrl, RGBWWLedAnimation* anim);
 
-    void onStepHsv(const HSVCT& hsvct);
-    void onStepRaw(const ChannelOutput& raw);
-
 private:
+    void publishToEventServer();
+    void publishToMqtt();
+
 	ColorStorage color;
 	Timer ledTimer;
     StepSync* _stepSync = nullptr;
 
     uint32_t _stepCounter = 0;
+    HSVCT _prevColor;
+    ChannelOutput _prevOutput;
 };
 
 #endif

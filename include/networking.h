@@ -41,23 +41,19 @@ public:
 
 	void connect(String ssid, String pass, bool new_con = false);
 	void connect(String ssid, bool new_con = false);
-	inline CONNECTION_STATUS get_con_status() { return _client_status; }	;
-	inline String get_con_err_msg() { return _client_err_msg; };
+	CONNECTION_STATUS get_con_status() { return _client_status; }	;
+	String get_con_err_msg() { return _client_err_msg; };
 
 	void startAp();
 	void stopAp();
 	void stopAp(int delay);
-	inline bool isApActive() { return WifiAccessPoint.isEnabled(); };
+	bool isApActive() { return WifiAccessPoint.isEnabled(); };
 
 	void scan();
-	inline bool isScanning() { return _scanning; };
+	bool isScanning() { return _scanning; };
 	BssList getAvailableNetworks();
 
-	void forget_wifi();
-
-	typedef Delegate<void(const String& ssid)> onWifiConnectedDelegate;
-
-	void registerCallbackConnected(onWifiConnectedDelegate fnc);
+	void forgetWifi();
 
 private:
 	int _con_ctr;
@@ -79,8 +75,6 @@ private:
 	void _STAConnected(String ssid, uint8_t ssid_len, uint8_t bssid[6], uint8_t reason);
 	void _STAGotIP(IPAddress ip, IPAddress mask, IPAddress gateway);
 	void scanCompleted(bool succeeded, BssList list);
-
-	onWifiConnectedDelegate onConnected = nullptr;
 };
 
 #endif //APP_NETWORKING_H_

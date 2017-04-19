@@ -69,13 +69,13 @@ struct ApplicationSettings {
         String cmd_slave_topic = "home/wz_lightLedCouch/command";
 
         bool color_master_enabled = true;
-        bool color_master_intervalMs = 500;
+        bool color_master_interval_ms = 500;
         bool color_slave_enabled = false;
         String color_slave_topic = "home/wz_lightLedCouch/color";
     };
 
     struct events {
-        int colorEventIntervalMs = 500;
+        int color_interval_ms = 500;
     };
 
 	struct color {
@@ -185,8 +185,13 @@ struct ApplicationSettings {
             sync.cmd_slave_enabled = root["sync"]["cmd_slave_enabled"];
             sync.cmd_slave_topic = root["sync"]["cmd_slave_topic"].asString();
 
+            sync.color_master_enabled = root["sync"]["color_master_enabled"];
+            sync.color_master_interval_ms = root["sync"]["color_master_interval_ms"];
+            sync.color_slave_enabled = root["sync"]["color_slave_enabled"];
+            sync.color_slave_topic = root["sync"]["color_slave_topic"].asString();
+
             // events
-            events.colorEventIntervalMs = root["events"]["colorEventIntervalMs"];
+            events.color_interval_ms = root["events"]["color_interval_ms"];
 
 			//TODO check if we can actually load the config
 			configversion = root["general"]["config_version"].asString();
@@ -258,9 +263,14 @@ struct ApplicationSettings {
         s["cmd_slave_enabled"] = sync.cmd_slave_enabled;
         s["cmd_slave_topic"] = sync.cmd_slave_topic.c_str();
 
+		s["color_master_enabled"] = sync.color_master_enabled;
+		s["color_master_interval_ms"] = sync.color_master_interval_ms;
+        s["color_slave_enabled"] = sync.color_slave_enabled;
+        s["color_slave_topic"] = sync.color_slave_topic.c_str();
+
         JsonObject& e = jsonBuffer.createObject();
         root["events"] = e;
-        e["colorEventIntervalMs"] = events.colorEventIntervalMs;
+        e["color_interval_ms"] = events.color_interval_ms;
 
 		JsonObject& g = jsonBuffer.createObject();
 		root["general"] = g;

@@ -69,7 +69,7 @@ void Application::init() {
 	if (digitalRead(CLEAR_PIN) < 1) {
 		Serial.println("CLR button low - resetting settings");
 		cfg.reset();
-		network.forget_wifi();
+		network.forgetWifi();
 	}
 
 	// check ota
@@ -91,7 +91,6 @@ void Application::init() {
 
 	// initialize networking
 	network.init();
-	network.registerCallbackConnected(AppWIFI::onWifiConnectedDelegate(&Application::onWifiConnected, this));
 
 	// initialize webserver
 	app.webserver.init();
@@ -118,8 +117,8 @@ void Application::reset() {
 	debugapp("Application::reset");
 	Serial.println("resetting controller");
 	cfg.reset();
-	rgbwwctrl.color_reset();
-	network.forget_wifi();
+	rgbwwctrl.colorReset();
+	network.forgetWifi();
 	delay(500);
 	restart();
 }
@@ -133,9 +132,9 @@ bool Application::delayedCMD(String cmd, int delay) {
 	} else if (cmd.equals("stopap")) {
 		network.stopAp(2000);
 	} else if (cmd.equals("forget_wifi")) {
-		_systimer.initializeMs(delay, TimerDelegate(&AppWIFI::forget_wifi, &network)).startOnce();
+		_systimer.initializeMs(delay, TimerDelegate(&AppWIFI::forgetWifi, &network)).startOnce();
 	} else if (cmd.equals("test_channels")) {
-		rgbwwctrl.test_channels();
+		rgbwwctrl.testChannels();
 	} else if (cmd.equals("switch_rom")) {
 		switchRom();
 		_systimer.initializeMs(delay, TimerDelegate(&Application::restart, this)).startOnce();

@@ -44,19 +44,33 @@ void EventServer::onClientComplete(TcpClient& client, bool succesfull) {
 	_clients.removeElement(&client);
 }
 
-void EventServer::publishCurrentColor(const HSVCT& color) {
+void EventServer::publishCurrentHsv(const HSVCT& color) {
 	float h, s, v;
 	int ct;
 	color.asRadian(h, s, v, ct);
 
-    JsonRpcMessage msg("color_event");
+    JsonRpcMessage msg("hsv_event");
     JsonObject& root = msg.getParams();
     root["h"] = h;
     root["s"] = s;
     root["v"] = v;
     root["ct"] = ct;
 
-	Serial.printf("EventServer::publishCurrentColor\n");
+	Serial.printf("EventServer::publishCurrentHsv\n");
+
+	sendToClients(msg);
+}
+
+void EventServer::publishCurrentRaw(const ChannelOutput& raw) {
+    JsonRpcMessage msg("raw_event");
+    JsonObject& root = msg.getParams();
+    root["r"] = raw.r;
+    root["g"] = raw.g;
+    root["b"] = raw.b;
+    root["ww"] = raw.ww;
+    root["cw"] = raw.cw;
+
+	Serial.printf("EventServer::publishCurrentRaw\n");
 
 	sendToClients(msg);
 }

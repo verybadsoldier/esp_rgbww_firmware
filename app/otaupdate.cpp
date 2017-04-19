@@ -76,7 +76,7 @@ void ApplicationOTA::afterOTA() {
 
 		// save settings / color into new rom space
 		app.cfg.save();
-		app.rgbwwctrl.color_save();
+		app.rgbwwctrl.colorSave();
 
 		// save success to new rom
 		saveStatus(OTASTATUS::OTA_SUCCESS);

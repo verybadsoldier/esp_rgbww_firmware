@@ -54,7 +54,7 @@ void AppWIFI::scanCompleted(bool succeeded, BssList list) {
 	_scanning = false;
 }
 
-void AppWIFI::forget_wifi() {
+void AppWIFI::forgetWifi() {
 	debugapp("AppWIFI::forget_wifi");
 	WifiStation.config("", "");
 	WifiStation.disconnect();
@@ -162,7 +162,7 @@ void AppWIFI::_STADisconnect(String ssid, uint8_t ssid_len, uint8_t bssid[6], ui
 void AppWIFI::_STAConnected(String ssid, uint8_t ssid_len, uint8_t bssid[6], uint8_t reason) {
 	debugapp("AppWIFI::_STAConnected reason - %i", reason);
 
-	onConnected(ssid);
+	app.onWifiConnected(ssid);
 }
 
 void AppWIFI::_STAGotIP(IPAddress ip, IPAddress mask, IPAddress gateway) {
@@ -223,8 +223,4 @@ void AppWIFI::startAp() {
 		_dns.setErrorReplyCode(DNSReplyCode::NoError);
 		_dns.start(DNS_PORT, "*", _ApIP);
 	}
-}
-
-void AppWIFI::registerCallbackConnected(onWifiConnectedDelegate fnc) {
-    onConnected = fnc;
 }
