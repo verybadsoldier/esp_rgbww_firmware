@@ -34,4 +34,7 @@ private:
 	bool _running = false;
 	Timer _procTimer;
 	String _id;
+
+    HSVCT _lastHsv;
+    ChannelOutput _lastRaw;
 };

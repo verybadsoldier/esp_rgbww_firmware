@@ -45,34 +45,40 @@ void EventServer::onClientComplete(TcpClient& client, bool succesfull) {
 }
 
 void EventServer::publishCurrentHsv(const HSVCT& color) {
-	float h, s, v;
-	int ct;
-	color.asRadian(h, s, v, ct);
+    if (color != _lastHsv) {
+        float h, s, v;
+        int ct;
+        color.asRadian(h, s, v, ct);
 
-    JsonRpcMessage msg("hsv_event");
-    JsonObject& root = msg.getParams();
-    root["h"] = h;
-    root["s"] = s;
-    root["v"] = v;
-    root["ct"] = ct;
+        JsonRpcMessage msg("hsv_event");
+        JsonObject& root = msg.getParams();
+        root["h"] = h;
+        root["s"] = s;
+        root["v"] = v;
+        root["ct"] = ct;
 
-	Serial.printf("EventServer::publishCurrentHsv\n");
+        Serial.printf("EventServer::publishCurrentHsv\n");
 
-	sendToClients(msg);
+        sendToClients(msg);
+    }
+    _lastHsv = color;
 }
 
 void EventServer::publishCurrentRaw(const ChannelOutput& raw) {
-    JsonRpcMessage msg("raw_event");
-    JsonObject& root = msg.getParams();
-    root["r"] = raw.r;
-    root["g"] = raw.g;
-    root["b"] = raw.b;
-    root["ww"] = raw.ww;
-    root["cw"] = raw.cw;
+    if (raw != _lastRaw) {
+        JsonRpcMessage msg("raw_event");
+        JsonObject& root = msg.getParams();
+        root["r"] = raw.r;
+        root["g"] = raw.g;
+        root["b"] = raw.b;
+        root["ww"] = raw.ww;
+        root["cw"] = raw.cw;
 
-	Serial.printf("EventServer::publishCurrentRaw\n");
+        Serial.printf("EventServer::publishCurrentRaw\n");
 
-	sendToClients(msg);
+        sendToClients(msg);
+    }
+    _lastRaw = raw;
 }
 
 void EventServer::publishKeepAlive() {

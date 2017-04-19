@@ -31,8 +31,6 @@ void APPLedCtrl::init() {
 	//_stepSync = new ClockAdaption();
 	RGBWWLed::init(REDPIN, GREENPIN, BLUEPIN, WWPIN, CWPIN, PWM_FREQUENCY);
 
-    setAnimationFinishedDelegate(AnimationFinishedDelegate(&APPLedCtrl::onAnimationFinished, this));
-
 	setup();
 	color.load();
 	debugapp("H: %i | s: %i | v: %i | ct: %i", color.h, color.s, color.v, color.ct);
@@ -68,6 +66,9 @@ void APPLedCtrl::publishToEventServer() {
 }
 
 void APPLedCtrl::publishToMqtt() {
+    if (!app.cfg.sync.color_master_enabled)
+        return;
+
 	switch(_mode) {
 	case ColorMode::Hsv:
         app.mqttclient.publishCurrentHsv(getCurrentColor());
@@ -79,7 +80,7 @@ void APPLedCtrl::publishToMqtt() {
 }
 
 void APPLedCtrl::updateLed() {
-	show();
+	const bool animFinished = show();
 
     ++_stepCounter;
 
@@ -92,17 +93,15 @@ void APPLedCtrl::updateLed() {
 
 	const static uint32_t stepLenMs = 1000 / RGBWW_UPDATEFREQUENCY;
 
-	if (_outputChanged){
-	    if ((app.cfg.events.color_interval_ms == 0) ||
-	    		((stepLenMs * _stepCounter) % app.cfg.events.color_interval_ms) < stepLenMs) {
-	    	publishToEventServer();
-	    }
+    if (animFinished || app.cfg.events.color_interval_ms == 0 ||
+            ((stepLenMs * _stepCounter) % app.cfg.events.color_interval_ms) < stepLenMs) {
+        publishToEventServer();
+    }
 
-	    if ((app.cfg.sync.color_master_interval_ms == 0) ||
-	    		((stepLenMs * _stepCounter) % app.cfg.sync.color_master_interval_ms) < stepLenMs) {
-	    	publishToMqtt();
-	    }
-	}
+    if (animFinished || app.cfg.sync.color_master_interval_ms == 0 ||
+            ((stepLenMs * _stepCounter) % app.cfg.sync.color_master_interval_ms) < stepLenMs) {
+        publishToMqtt();
+    }
 }
 
 void APPLedCtrl::onMasterClock(uint32_t stepsMaster) {
@@ -161,15 +160,14 @@ void APPLedCtrl::testChannels() {
 //	fadeRAW(black, 1000, QueuePolicy::Back);
 }
 
-void APPLedCtrl::onAnimationFinished(RGBWWLed* rgbwwctrl, RGBWWLedAnimation* anim) {
+void APPLedCtrl::onAnimationFinished(RGBWWLedAnimation* anim) {
 	debugapp("APPLedCtrl::onAnimationFinished");
 	app.rgbwwctrl.colorSave();
 
 	app.eventserver.publishTransitionComplete(anim->getName());
-	app.eventserver.publishCurrentHsv(app.rgbwwctrl.getCurrentColor());
-
-	//if (_cfg.network.mqtt.enabled)
-	app.mqttclient.publishCurrentHsv(app.rgbwwctrl.getCurrentColor());
+//	app.eventserver.publishCurrentHsv(getCurrentColor());
+//
+//	app.mqttclient.publishCurrentHsv(getCurrentColor());
 }
 
 void ClockCatchUp::onMasterClock(Timer& timer, uint32_t stepsCurrent, uint32_t stepsMaster) {

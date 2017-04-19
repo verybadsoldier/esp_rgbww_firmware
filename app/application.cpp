@@ -101,7 +101,9 @@ void Application::startServices() {
 	debugapp("Application::startServices");
 	rgbwwctrl.start();
 	webserver.start();
-	eventserver.start();
+
+	if (cfg.events.server_enabled)
+	    eventserver.start();
 }
 
 void Application::restart() {

@@ -38,8 +38,6 @@ bool JsonProcessor::onColor(JsonObject& root, String& msg, bool relay) {
     if (relay)
         app.onCommandRelay("color", root);
 
-    Serial.printf("onColor: %d | Msg: %s\n", result, msg.c_str());
-
     return result;
 }
 

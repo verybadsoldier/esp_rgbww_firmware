@@ -162,7 +162,7 @@ public:
 
 	void updateLed();
 	void onMasterClock(uint32_t steps);
-	void onAnimationFinished(RGBWWLed* rgbwwctrl, RGBWWLedAnimation* anim);
+	virtual void onAnimationFinished(RGBWWLedAnimation* anim);
 
 private:
     void publishToEventServer();

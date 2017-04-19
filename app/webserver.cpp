@@ -545,7 +545,11 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
             if (root["events"]["color_interval_ms"].success()) {
                 app.cfg.events.color_interval_ms = root["events"]["color_interval_ms"];
             }
+            if (root["events"]["server_enabled"].success()) {
+                app.cfg.events.server_enabled = root["events"]["server_enabled"];
+            }
         }
+
 
 		// update and save settings if we haven`t received any error until now
 		if (!error) {
@@ -653,12 +657,13 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         sync["cmd_slave_topic"] = app.cfg.sync.cmd_slave_topic.c_str();
 
         sync["color_master_enabled"] = app.cfg.sync.color_master_enabled;
-        sync["color_master_intervalMs"] = app.cfg.sync.color_master_interval_ms;
+        sync["color_master_interval_ms"] = app.cfg.sync.color_master_interval_ms;
         sync["color_slave_enabled"] = app.cfg.sync.color_slave_enabled;
         sync["color_slave_topic"] = app.cfg.sync.color_slave_topic.c_str();
 
         JsonObject& events = json.createNestedObject("events");
-        events["colorEventIntervalMs"] = app.cfg.events.color_interval_ms;
+        events["color_interval_ms"] = app.cfg.events.color_interval_ms;
+        events["server_enabled"] = app.cfg.events.server_enabled;
 
         JsonObject& general = json.createNestedObject("general");
         general["device_name"] = app.cfg.general.device_name;

@@ -30,4 +30,7 @@ private:
     Timer _keepAliveTimer;
 	Vector<TcpClient*> _clients;
 	int _nextId = 1;
+
+	HSVCT _lastHsv;
+	ChannelOutput _lastRaw;
 };

@@ -73,6 +73,10 @@ void AppMqttClient::connect() {
     if (app.cfg.sync.cmd_slave_enabled) {
         mqtt->subscribe(app.cfg.sync.cmd_slave_topic);
     }
+    if (app.cfg.sync.color_slave_enabled) {
+        Serial.printf("Subscribe: %s\n", app.cfg.sync.color_slave_topic.c_str());
+        mqtt->subscribe(app.cfg.sync.color_slave_topic);
+    }
 }
 
 void AppMqttClient::init() {
@@ -112,7 +116,8 @@ void AppMqttClient::onMessageReceived(String topic, String message) {
 		app.jsonproc.onJsonRpc(message);
 	}
 	else if (app.cfg.sync.color_slave_enabled && (topic == app.cfg.sync.color_slave_topic)) {
-		app.jsonproc.onJsonRpc(message);
+	    String error;
+		app.jsonproc.onColor(message, error, false);
 	}
 }
 
@@ -134,40 +139,52 @@ void AppMqttClient::publish(const String& topic, const String& data, bool retain
 }
 
 void AppMqttClient::publishCurrentRaw(const ChannelOutput& raw) {
-    Serial.printf("ApplicationMQTTClient::publishCurrentRaw\n");
+    if (raw != _lastRaw) {
+        Serial.printf("ApplicationMQTTClient::publishCurrentRaw\n");
 
-	DynamicJsonBuffer jsonBuffer(200);
-	JsonObject& root = jsonBuffer.createObject();
-	JsonObject& hsv = root.createNestedObject("raw");
-	hsv["r"] = raw.r;
-	hsv["g"] = raw.g;
-	hsv["b"] = raw.b;
-	hsv["cw"] = raw.cw;
-	hsv["ww"] = raw.ww;
+        DynamicJsonBuffer jsonBuffer(200);
+        JsonObject& root = jsonBuffer.createObject();
+        JsonObject& hsv = root.createNestedObject("raw");
+        hsv["r"] = raw.r;
+        hsv["g"] = raw.g;
+        hsv["b"] = raw.b;
+        hsv["cw"] = raw.cw;
+        hsv["ww"] = raw.ww;
 
-	root["t"] = 0;
-	root["cmd"] = "solid";
+        root["t"] = 0;
+        root["cmd"] = "solid";
 
-	String jsonMsg;
-	root.printTo(jsonMsg);
-    publish(buildTopic("raw"), jsonMsg, true);
+        String jsonMsg;
+        root.printTo(jsonMsg);
+        publish(buildTopic("color"), jsonMsg, true);
+    }
+    _lastRaw = raw;
 }
 
 void AppMqttClient::publishCurrentHsv(const HSVCT& color) {
-	DynamicJsonBuffer jsonBuffer(200);
-	JsonObject& root = jsonBuffer.createObject();
-	JsonObject& hsv = root.createNestedObject("hsv");
-	hsv["h"] = color.h;
-	hsv["s"] = color.s;
-	hsv["v"] = color.v;
-	hsv["ct"] = color.ct;
+    if (color != _lastHsv) {
+        Serial.printf("ApplicationMQTTClient::publishCurrentHsv\n");
 
-	root["t"] = 0;
-	root["cmd"] = "solid";
+        float h, s, v;
+        int ct;
+        color.asRadian(h, s, v, ct);
 
-	String jsonMsg;
-	root.printTo(jsonMsg);
-    publish(buildTopic("hsv"), jsonMsg, true);
+        DynamicJsonBuffer jsonBuffer(200);
+        JsonObject& root = jsonBuffer.createObject();
+        JsonObject& hsv = root.createNestedObject("hsv");
+        hsv["h"] = h;
+        hsv["s"] = s;
+        hsv["v"] = v;
+        hsv["ct"] = ct;
+
+        root["t"] = 0;
+        root["cmd"] = "solid";
+
+        String jsonMsg;
+        root.printTo(jsonMsg);
+        publish(buildTopic("color"), jsonMsg, true);
+    }
+    _lastHsv = color;
 }
 
 String AppMqttClient::buildTopic(const String& suffix) {

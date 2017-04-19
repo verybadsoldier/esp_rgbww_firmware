@@ -69,12 +69,13 @@ struct ApplicationSettings {
         String cmd_slave_topic = "home/wz_lightLedCouch/command";
 
         bool color_master_enabled = true;
-        bool color_master_interval_ms = 500;
+        int color_master_interval_ms = 0;
         bool color_slave_enabled = false;
         String color_slave_topic = "home/wz_lightLedCouch/color";
     };
 
     struct events {
+        bool server_enabled = true;
         int color_interval_ms = 500;
     };
 
@@ -191,6 +192,7 @@ struct ApplicationSettings {
             sync.color_slave_topic = root["sync"]["color_slave_topic"].asString();
 
             // events
+            events.server_enabled = root["events"]["server_enabled"];
             events.color_interval_ms = root["events"]["color_interval_ms"];
 
 			//TODO check if we can actually load the config
@@ -271,6 +273,7 @@ struct ApplicationSettings {
         JsonObject& e = jsonBuffer.createObject();
         root["events"] = e;
         e["color_interval_ms"] = events.color_interval_ms;
+        e["server_enabled"] = events.server_enabled;
 
 		JsonObject& g = jsonBuffer.createObject();
 		root["general"] = g;
