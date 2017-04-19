@@ -63,7 +63,6 @@
 #include <webserver.h>
 #include <mqtt.h>
 #include <eventserver.h>
-#include <coloreventpublisher.h>
 #include <jsonprocessor.h>
 #include <application.h>
 

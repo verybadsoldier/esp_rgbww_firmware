@@ -178,6 +178,9 @@ void AppWIFI::_STAGotIP(IPAddress ip, IPAddress mask, IPAddress gateway) {
 		stopAp(1000);
 	}
 
+    if(app.cfg.network.mqtt.enabled) {
+        app.mqttclient.start();
+    }
 }
 
 void AppWIFI::stopAp(int delay) {

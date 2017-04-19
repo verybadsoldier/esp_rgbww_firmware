@@ -95,8 +95,6 @@ void Application::init() {
 
 	// initialize webserver
 	app.webserver.init();
-
-	coloreventpublisher.init(eventserver, rgbwwctrl, cfg);
 }
 
 // Will be called when system initialization was completed
@@ -105,7 +103,6 @@ void Application::startServices() {
 	rgbwwctrl.start();
 	webserver.start();
 	eventserver.start();
-	coloreventpublisher.start();
 }
 
 void Application::restart() {
@@ -181,10 +178,6 @@ void Application::switchRom() {
 
 void Application::onWifiConnected(const String& ssid) {
     debugapp("Application::onWifiConnected");
-
-    if(cfg.network.mqtt.enabled) {
-        mqttclient.start();
-    }
 }
 
 void Application::onCommandRelay(const String& method, const JsonObject& params) {

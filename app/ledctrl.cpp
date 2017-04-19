@@ -26,13 +26,11 @@
 void APPLedCtrl::init() {
 	debugapp("APPLedCtrl::init");
 
-    //_stepSync = new ClockCatchUp2();
-	_stepSync = new ClockAdaption();
+    _stepSync = new ClockCatchUp2();
+	//_stepSync = new ClockAdaption();
 	RGBWWLed::init(REDPIN, GREENPIN, BLUEPIN, WWPIN, CWPIN, PWM_FREQUENCY);
 
     setAnimationFinishedDelegate(AnimationFinishedDelegate(&APPLedCtrl::onAnimationFinished, this));
-	setStepHsvDelegate(StepHsvDelegate(&APPLedCtrl::onStepHsv, this));
-    setStepRawDelegate(StepRawDelegate(&APPLedCtrl::onStepRaw, this));
 
 	setup();
 	color.load();
@@ -67,6 +65,20 @@ void APPLedCtrl::show_led() {
             Serial.printf("Send Master Clock\n");
             app.mqttclient.publishClock(_stepCounter);
         }
+	}
+
+	switch(_mode) {
+	case ColorMode::Hsv:
+	    if ((app.cfg.events.colorEventIntervalMs == 0) || (_stepCounter % (app.cfg.events.colorEventIntervalMs * 1000 * RGBWW_UPDATEFREQUENCY)) == 0) {
+	        app.eventserver.publishCurrentColor(getCurrentColor());
+	    }
+
+	    if ((app.cfg.sync.color_master_intervalMs == 0) || (_stepCounter % (app.cfg.sync.color_master_intervalMs * 1000 * RGBWW_UPDATEFREQUENCY)) == 0) {
+	        app.mqttclient.publishCurrentHsv(getCurrentColor());
+	    }
+	    break;
+    case ColorMode::Raw:
+        break;
 	}
 }
 
@@ -183,7 +195,7 @@ void ClockAdaption::onMasterClock(Timer& timer, uint32_t stepsCurrent, uint32_t 
         int diff = StepSync::calcOverflowVal(_stepsSyncLast, stepsCurrent);
         int masterDiff = StepSync::calcOverflowVal(_stepsSyncMasterLast, stepsMaster);
 
-        if (masterDiff < 60000) {
+        if (masterDiff < 5000) {
             return;
         }
 

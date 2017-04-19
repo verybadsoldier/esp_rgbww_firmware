@@ -58,7 +58,6 @@ public:
 	ApplicationOTA ota;
 	ApplicationSettings cfg;
 	EventServer eventserver;
-	ColorEventPublisher coloreventpublisher;
 	AppMqttClient mqttclient;
 	JsonProcessor jsonproc;
 

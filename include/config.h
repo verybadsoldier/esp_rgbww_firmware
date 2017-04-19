@@ -67,6 +67,11 @@ struct ApplicationSettings {
         bool cmd_master_enabled = true;
         bool cmd_slave_enabled = false;
         String cmd_slave_topic = "home/wz_lightLedCouch/command";
+
+        bool color_master_enabled = true;
+        bool color_master_intervalMs = 500;
+        bool color_slave_enabled = false;
+        String color_slave_topic = "home/wz_lightLedCouch/color";
     };
 
     struct events {
