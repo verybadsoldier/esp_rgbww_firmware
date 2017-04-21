@@ -164,10 +164,8 @@ void APPLedCtrl::onAnimationFinished(RGBWWLedAnimation* anim) {
 	debugapp("APPLedCtrl::onAnimationFinished");
 	app.rgbwwctrl.colorSave();
 
-	app.eventserver.publishTransitionComplete(anim->getName());
-//	app.eventserver.publishCurrentHsv(getCurrentColor());
-//
-//	app.mqttclient.publishCurrentHsv(getCurrentColor());
+	if (anim->getName().length() > 0)
+	    app.eventserver.publishTransitionComplete(anim->getName());
 }
 
 void ClockCatchUp::onMasterClock(Timer& timer, uint32_t stepsCurrent, uint32_t stepsMaster) {
