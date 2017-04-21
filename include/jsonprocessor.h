@@ -65,8 +65,7 @@ private:
         int checkParams(String& errorMsg) const;
     };
 
-    void parseColorRequestParams(JsonObject& root, RequestParameters& params);
-    void parseChannelRequestParams(JsonObject& root, RequestParameters& params);
+    void parseRequestParams(JsonObject& root, RequestParameters& params);
 
     bool onSingleColorCommand(JsonObject& root, String& errorMsg);
 };

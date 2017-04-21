@@ -49,7 +49,7 @@ bool JsonProcessor::onStop(const String& json, String& msg, bool relay) {
 
 bool JsonProcessor::onStop(JsonObject& root, String& msg, bool relay) {
     RequestParameters params;
-    JsonProcessor::parseChannelRequestParams(root, params);
+    JsonProcessor::parseRequestParams(root, params);
     app.rgbwwctrl.clearAnimationQueue(params.channels);
     app.rgbwwctrl.skipAnimation(params.channels);
 
@@ -67,7 +67,7 @@ bool JsonProcessor::onSkip(const String& json, String& msg, bool relay) {
 
 bool JsonProcessor::onSkip(JsonObject& root, String& msg, bool relay) {
     RequestParameters params;
-    JsonProcessor::parseChannelRequestParams(root, params);
+    JsonProcessor::parseRequestParams(root, params);
     app.rgbwwctrl.skipAnimation(params.channels);
 
     if (relay)
@@ -84,7 +84,7 @@ bool JsonProcessor::onPause(const String& json, String& msg, bool relay) {
 
 bool JsonProcessor::onPause(JsonObject& root, String& msg, bool relay) {
     RequestParameters params;
-    JsonProcessor::parseChannelRequestParams(root, params);
+    JsonProcessor::parseRequestParams(root, params);
     app.rgbwwctrl.pauseAnimation(params.channels);
 
     if (relay)
@@ -101,7 +101,7 @@ bool JsonProcessor::onContinue(const String& json, String& msg, bool relay) {
 
 bool JsonProcessor::onContinue(JsonObject& root, String& msg, bool relay) {
     RequestParameters params;
-    JsonProcessor::parseChannelRequestParams(root, params);
+    JsonProcessor::parseRequestParams(root, params);
     app.rgbwwctrl.continueAnimation(params.channels);
 
     if (relay)
@@ -118,8 +118,11 @@ bool JsonProcessor::onBlink(const String& json, String& msg, bool relay) {
 
 bool JsonProcessor::onBlink(JsonObject& root, String& msg, bool relay) {
     RequestParameters params;
-    JsonProcessor::parseChannelRequestParams(root, params);
-    app.rgbwwctrl.blink(params.channels, params.time);
+    params.time = 500; //default
+
+    JsonProcessor::parseRequestParams(root, params);
+
+    app.rgbwwctrl.blink(params.channels, params.time, params.queue, params.requeue, params.name);
 
     if (relay)
         app.onCommandRelay("blink", root);
@@ -129,7 +132,7 @@ bool JsonProcessor::onBlink(JsonObject& root, String& msg, bool relay) {
 
 bool JsonProcessor::onSingleColorCommand(JsonObject& root, String& errorMsg) {
     RequestParameters params;
-    parseColorRequestParams(root, params);
+    parseRequestParams(root, params);
     {
         if (params.checkParams(errorMsg) != 0) {
             return false;
@@ -175,35 +178,7 @@ bool JsonProcessor::onSingleColorCommand(JsonObject& root, String& errorMsg) {
 }
 
 
-void JsonProcessor::parseChannelRequestParams(JsonObject& root, RequestParameters& params) {
-    params.time = 100;
-
-    RGBWWLed::ChannelList channels;
-    if (root["channels"].success()) {
-        const JsonArray& arr = root["channels"].asArray();
-        for(size_t i=0; i < arr.size(); ++i) {
-            const String& str = arr[i].asString();
-            if (str == "h") {
-                params.channels.add(CtrlChannel::Hue);
-            }
-            else if (str == "s") {
-                params.channels.add(CtrlChannel::Sat);
-            }
-            else if (str == "v") {
-                params.channels.add(CtrlChannel::Val);
-            }
-            else if (str == "ct") {
-                params.channels.add(CtrlChannel::ColorTemp);
-            }
-        }
-    }
-
-    if (root["t"].success()) {
-        params.time = root["t"].as<int>();
-    }
-}
-
-void JsonProcessor::parseColorRequestParams(JsonObject& root, RequestParameters& params) {
+void JsonProcessor::parseRequestParams(JsonObject& root, RequestParameters& params) {
     if (root["hsv"].success()) {
         params.mode = RequestParameters::Mode::Hsv;
         if (root["hsv"]["h"].success())
@@ -295,6 +270,25 @@ void JsonProcessor::parseColorRequestParams(JsonObject& root, RequestParameters&
             params.queue = QueuePolicy::Single;
         else {
             params.queue = QueuePolicy::Invalid;
+        }
+    }
+
+    if (root["channels"].success()) {
+        const JsonArray& arr = root["channels"].asArray();
+        for(size_t i=0; i < arr.size(); ++i) {
+            const String& str = arr[i].asString();
+            if (str == "h") {
+                params.channels.add(CtrlChannel::Hue);
+            }
+            else if (str == "s") {
+                params.channels.add(CtrlChannel::Sat);
+            }
+            else if (str == "v") {
+                params.channels.add(CtrlChannel::Val);
+            }
+            else if (str == "ct") {
+                params.channels.add(CtrlChannel::ColorTemp);
+            }
         }
     }
 }
