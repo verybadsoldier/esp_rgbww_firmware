@@ -716,32 +716,26 @@ void ApplicationWebserver::onInfo(HttpRequest &request, HttpResponse &response) 
 void ApplicationWebserver::onColorGet(HttpRequest &request, HttpResponse &response) {
 	JsonObjectStream* stream = new JsonObjectStream();
 	JsonObject& json = stream->getRoot();
-	String mode = request.getQueryParameter("mode", "hsv");
-	if (mode.equals("raw")) {
-		JsonObject& raw = json.createNestedObject("raw");
-		ChannelOutput output = app.rgbwwctrl.getCurrentOutput();
-		raw["r"] = output.r;
-		raw["g"] = output.g;
-		raw["b"] = output.b;
-		raw["ww"] = output.ww;
-		raw["cw"] = output.cw;
 
-	} else if (mode.equals("temp")) {
-		json["kelvin"] = 0;
-		//TODO get kelvin from controller
-	} else {
-		JsonObject& hsv = json.createNestedObject("hsv");
+	JsonObject& raw = json.createNestedObject("raw");
+    ChannelOutput output = app.rgbwwctrl.getCurrentOutput();
+    raw["r"] = output.r;
+    raw["g"] = output.g;
+    raw["b"] = output.b;
+    raw["ww"] = output.ww;
+    raw["cw"] = output.cw;
 
-		float h, s, v;
-		int ct;
-		HSVCT c = app.rgbwwctrl.getCurrentColor();
-		c.asRadian(h, s, v, ct);
-		hsv["h"] = h;
-		hsv["s"] = s;
-		hsv["v"] = v;
-		hsv["ct"] = ct;
-	}
-	sendApiResponse(response, stream);
+    JsonObject& hsv = json.createNestedObject("hsv");
+    float h, s, v;
+    int ct;
+    HSVCT c = app.rgbwwctrl.getCurrentColor();
+    c.asRadian(h, s, v, ct);
+    hsv["h"] = h;
+    hsv["s"] = s;
+    hsv["v"] = v;
+    hsv["ct"] = ct;
+
+    sendApiResponse(response, stream);
 }
 
 void ApplicationWebserver::onColorPost(HttpRequest &request, HttpResponse &response) {
