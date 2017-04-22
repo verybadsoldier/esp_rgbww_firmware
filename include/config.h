@@ -61,14 +61,14 @@ struct ApplicationSettings {
         bool clock_master_enabled = false;
         int clock_master_interval = 5;
 
-        bool clock_slave_enabled = true;
+        bool clock_slave_enabled = false;
         String clock_slave_topic= "home/wz_lightLedCouch/clock";
 
-        bool cmd_master_enabled = true;
+        bool cmd_master_enabled = false;
         bool cmd_slave_enabled = false;
         String cmd_slave_topic = "home/wz_lightLedCouch/command";
 
-        bool color_master_enabled = true;
+        bool color_master_enabled = false;
         int color_master_interval_ms = 0;
         bool color_slave_enabled = false;
         String color_slave_topic = "home/wz_lightLedCouch/color";
