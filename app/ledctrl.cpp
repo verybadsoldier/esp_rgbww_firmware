@@ -99,7 +99,6 @@ void APPLedCtrl::updateLed() {
 
 	if (app.cfg.sync.clock_master_enabled) {
         if ((_stepCounter % (app.cfg.sync.clock_master_interval * RGBWW_UPDATEFREQUENCY)) == 0) {
-            Serial.printf("Send Master Clock\n");
             app.mqttclient.publishClock(_stepCounter);
         }
 	}
@@ -130,6 +129,9 @@ void APPLedCtrl::publishFinishedStepAnimations() {
 
 void APPLedCtrl::onMasterClock(uint32_t stepsMaster) {
     _timerInterval = _stepSync->onMasterClock(_stepCounter, stepsMaster);
+
+    _timerInterval = std::min(std::max(_timerInterval, 10000u), 30000u);
+
     app.eventserver.publishClockSlaveStatus(_stepSync->getCatchupOffset(), _timerInterval);
     app.mqttclient.publishClockSlaveOffset(_stepSync->getCatchupOffset());
     app.mqttclient.publishClockInteral(_timerInterval);
@@ -207,7 +209,8 @@ uint32_t ClockCatchUp3::onMasterClock(uint32_t stepsCurrent, uint32_t stepsMaste
         _catchupOffset += curOffset;
         Serial.printf("Diff: %d | Master Diff: %d | CurOffset: %d | Catchup Offset: %d\n", diff, masterDiff, curOffset, _catchupOffset);
 
-        const double curSteering = 1.0 - 3 * static_cast<double>(_catchupOffset) / masterDiff;
+        double curSteering = 1.0 - static_cast<double>(_catchupOffset) / masterDiff;
+        curSteering = std::min(std::max(curSteering, 0.5), 1.5);
         _steering = 0.5 *_steering + 0.5 * curSteering;
         nextInt *= _steering;
         Serial.printf("New Int: %d | CurSteering: %f | Steering: %f\n", nextInt, curSteering, _steering);

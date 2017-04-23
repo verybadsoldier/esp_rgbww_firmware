@@ -104,7 +104,7 @@ private:
     ChannelOutput _prevOutput;
 
     ETSTimer _ledTimer;
-    uint32_t _timerInterval = RGBWW_MINTIMEDIFF;
+    uint32_t _timerInterval = RGBWW_MINTIMEDIFF_US;
     HashMap<String, RGBWWLedAnimation*> _stepFinishedAnimations;
 };
 
@@ -138,5 +138,5 @@ private:
     uint32_t _stepsSyncLast = 0;
     bool _firstMasterSync = true;
     double _steering = 1.0;
-    const uint32_t _constBaseInt = RGBWW_MINTIMEDIFF * 1000;
+    const uint32_t _constBaseInt = RGBWW_MINTIMEDIFF_US;
 };
