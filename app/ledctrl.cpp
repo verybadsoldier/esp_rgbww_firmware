@@ -91,6 +91,8 @@ void APPLedCtrl::updateLed() {
     // arm next timer
     ets_timer_arm_new(&_ledTimer, _timerInterval, 0, 0);
 
+    _stepFinishedAnimations.clear();
+
 	const bool animFinished = show();
 
     ++_stepCounter;
@@ -113,11 +115,24 @@ void APPLedCtrl::updateLed() {
             ((stepLenMs * _stepCounter) % app.cfg.sync.color_master_interval_ms) < stepLenMs) {
         publishToMqtt();
     }
+
+    publishFinishedStepAnimations();
+}
+
+void APPLedCtrl::publishFinishedStepAnimations() {
+    for(unsigned int i=0; i < _stepFinishedAnimations.count(); i++) {
+        RGBWWLedAnimation* pAnim = _stepFinishedAnimations.valueAt(i);
+        app.mqttclient.publishTransitionFinihsed(pAnim->getName());
+        app.eventserver.publishTransitionFinished(pAnim->getName());
+    }
+    _stepFinishedAnimations.clear();
 }
 
 void APPLedCtrl::onMasterClock(uint32_t stepsMaster) {
     _timerInterval = _stepSync->onMasterClock(_stepCounter, stepsMaster);
     app.eventserver.publishClockSlaveStatus(_stepSync->getCatchupOffset(), _timerInterval);
+    app.mqttclient.publishClockSlaveOffset(_stepSync->getCatchupOffset());
+    app.mqttclient.publishClockInteral(_timerInterval);
 }
 
 void APPLedCtrl::start() {
@@ -177,8 +192,9 @@ void APPLedCtrl::onAnimationFinished(RGBWWLedAnimation* anim) {
 	debugapp("APPLedCtrl::onAnimationFinished");
 	app.rgbwwctrl.colorSave();
 
-	if (anim->getName().length() > 0)
-	    app.eventserver.publishTransitionComplete(anim->getName());
+	if (anim->getName().length() > 0) {
+	    _stepFinishedAnimations[anim->getName()] = anim;
+	}
 }
 
 uint32_t ClockCatchUp3::onMasterClock(uint32_t stepsCurrent, uint32_t stepsMaster) {

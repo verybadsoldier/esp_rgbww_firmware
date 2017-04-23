@@ -93,6 +93,7 @@ private:
     static void updateLedCb(void* pTimerArg);
     void publishToEventServer();
     void publishToMqtt();
+    void publishFinishedStepAnimations();
 
 	ColorStorage color;
 
@@ -104,6 +105,7 @@ private:
 
     ETSTimer _ledTimer;
     uint32_t _timerInterval = RGBWW_MINTIMEDIFF;
+    HashMap<String, RGBWWLedAnimation*> _stepFinishedAnimations;
 };
 
 

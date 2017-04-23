@@ -201,6 +201,22 @@ void AppMqttClient::publishClock(uint32_t steps) {
     publish(topic, msg, false);
 }
 
+void AppMqttClient::publishClockInteral(uint32_t curInterval) {
+    String msg;
+    msg += curInterval;
+
+    String topic = buildTopic("clock_interval");
+    publish(topic, msg, false);
+}
+
+void AppMqttClient::publishClockSlaveOffset(uint32_t offset) {
+    String msg;
+    msg += offset;
+
+    String topic = buildTopic("clock_slave_offset");
+    publish(topic, msg, false);
+}
+
 void AppMqttClient::publishCommand(const String& method, const JsonObject& params) {
     Serial.printf("ApplicationMQTTClient::publishCommand: %s\n", method.c_str());
 
@@ -214,4 +230,10 @@ void AppMqttClient::publishCommand(const String& method, const JsonObject& param
     String msgStr;
     msg.getRoot().printTo(msgStr);
     publish(topic, msgStr, false);
+}
+
+void AppMqttClient::publishTransitionFinihsed(const String& name) {
+    Serial.printf("ApplicationMQTTClient::publishTransitionFinihsed: %s\n", name.c_str());
+    String topic = buildTopic("transition_finished");
+    publish(topic, name, false);
 }

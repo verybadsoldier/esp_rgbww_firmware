@@ -19,7 +19,10 @@ public:
 	void publishCurrentHsv(const HSVCT& color);
     void publishCurrentRaw(const ChannelOutput& raw);
     void publishClock(uint32_t steps);
+    void publishClockInteral(uint32_t curInterval);
+    void publishClockSlaveOffset(uint32_t offset);
     void publishCommand(const String& method, const JsonObject& params);
+    void publishTransitionFinihsed(const String& name);
 
 private:
 	void connectDelayed(int delay = 2000);

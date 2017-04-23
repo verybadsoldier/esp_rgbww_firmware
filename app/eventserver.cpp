@@ -98,7 +98,7 @@ void EventServer::publishKeepAlive() {
     sendToClients(msg);
 }
 
-void EventServer::publishTransitionComplete(const String& name) {
+void EventServer::publishTransitionFinished(const String& name) {
     Serial.printf("EventServer::publishTransitionComplete: %s\n", name.c_str());
 
 	JsonRpcMessage msg("transition_finished");

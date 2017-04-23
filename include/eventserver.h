@@ -13,7 +13,7 @@ public:
 
 	void publishCurrentHsv(const HSVCT& color);
 	void publishCurrentRaw(const ChannelOutput& raw);
-	void publishTransitionComplete(const String& name);
+	void publishTransitionFinished(const String& name);
 	void publishKeepAlive();
 	void publishClockSlaveStatus(uint32_t offset, uint32_t interval);
 
