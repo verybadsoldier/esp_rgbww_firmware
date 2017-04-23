@@ -64,6 +64,16 @@ void EventServer::publishCurrentHsv(const HSVCT& color) {
     _lastHsv = color;
 }
 
+void EventServer::publishClockSlaveStatus(uint32_t offset, uint32_t interval) {
+    Serial.printf("EventServer::publishClockSlaveStatus: offset: %d | interval :%d\n", offset, interval);
+
+    JsonRpcMessage msg("clock_slave_status");
+    JsonObject& root = msg.getParams();
+    root["offset"] = offset;
+    root["current_interval"] = interval;
+    sendToClients(msg);
+}
+
 void EventServer::publishCurrentRaw(const ChannelOutput& raw) {
     if (raw != _lastRaw) {
         JsonRpcMessage msg("raw_event");

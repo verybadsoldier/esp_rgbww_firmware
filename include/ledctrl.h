@@ -19,8 +19,7 @@
  *
  *
  */
-#ifndef APP_LEDCTRL_H_
-#define APP_LEDCTRL_H_
+#pragma once
 
 #include <limits>
 
@@ -71,10 +70,47 @@ struct ColorStorage {
 	}
 };
 
+class StepSync;
+
+class APPLedCtrl: public RGBWWLed {
+
+public:
+    virtual ~APPLedCtrl();
+
+	void init();
+	void setup();
+
+	void start();
+	void stop();
+	void colorSave();
+	void colorReset();
+	void testChannels();
+
+	void updateLed();
+	void onMasterClock(uint32_t steps);
+	virtual void onAnimationFinished(RGBWWLedAnimation* anim);
+private:
+    static void updateLedCb(void* pTimerArg);
+    void publishToEventServer();
+    void publishToMqtt();
+
+	ColorStorage color;
+
+    StepSync* _stepSync = nullptr;
+
+    uint32_t _stepCounter = 0;
+    HSVCT _prevColor;
+    ChannelOutput _prevOutput;
+
+    ETSTimer _ledTimer;
+    uint32_t _timerInterval = RGBWW_MINTIMEDIFF;
+};
+
+
 class StepSync {
 public:
-    virtual void onMasterClock(Timer& timer, uint32_t stepsCurrent, uint32_t stepsMaster) = 0;
-
+    virtual uint32_t onMasterClock(uint32_t stepsCurrent, uint32_t stepsMaster) = 0;
+    virtual uint32_t getCatchupOffset() const;
 protected:
     template<typename T>
     static T calcOverflowVal(T prevValue, T curValue) {
@@ -88,93 +124,17 @@ protected:
     }
 };
 
-class ClockAdaption : public StepSync {
-public:
-    virtual void onMasterClock(Timer& timer, uint32_t stepsCurrent, uint32_t stepsMaster);
-
-private:
-    uint32_t _stepsSyncMasterLast = 0;
-    uint32_t _stepsSyncLast = 0;
-    bool _firstMasterSync = true;
-};
-
-class ClockCatchUp : public StepSync {
-public:
-    virtual void onMasterClock(Timer& timer, uint32_t stepsCurrent, uint32_t stepsMaster);
-
-private:
-    int _catchupOffset = 0;
-    uint32_t _stepsSyncMasterLast = 0;
-    uint32_t _stepsSyncLast = 0;
-    bool _firstMasterSync = true;
-};
-
-class ClockCatchUp2 : public StepSync {
-public:
-    virtual void onMasterClock(Timer& timer, uint32_t stepsCurrent, uint32_t stepsMaster);
-
-private:
-    int _catchupOffset = 0;
-    uint32_t _stepsSyncMasterLast = 0;
-    uint32_t _stepsSyncLast = 0;
-    bool _firstMasterSync = true;
-};
 
 class ClockCatchUp3 : public StepSync {
 public:
-    virtual void onMasterClock(Timer& timer, uint32_t stepsCurrent, uint32_t stepsMaster);
+    virtual uint32_t onMasterClock(uint32_t stepsCurrent, uint32_t stepsMaster) override;
+    virtual uint32_t getCatchupOffset() const;
 
 private:
     int _catchupOffset = 0;
     uint32_t _stepsSyncMasterLast = 0;
     uint32_t _stepsSyncLast = 0;
     bool _firstMasterSync = true;
-    uint32_t _baseInt = RGBWW_MINTIMEDIFF * 1000;
     double _steering = 1.0;
     const uint32_t _constBaseInt = RGBWW_MINTIMEDIFF * 1000;
 };
-
-class ClockCatchUpSteering : public StepSync {
-public:
-    virtual void onMasterClock(Timer& timer, uint32_t stepsCurrent, uint32_t stepsMaster);
-
-private:
-    int _catchupOffset = 0;
-    uint32_t _stepsSyncMasterLast = 0;
-    uint32_t _stepsSyncLast = 0;
-    bool _firstMasterSync = true;
-    uint32_t _baseInt = RGBWW_MINTIMEDIFF * 1000;
-    uint32_t _steering = 1.0;
-    const uint32_t _constBaseInt = RGBWW_MINTIMEDIFF * 1000;
-};
-
-class APPLedCtrl: public RGBWWLed {
-
-public:
-	void init();
-	void setup();
-
-	void start();
-	void stop();
-	void colorSave();
-	void colorReset();
-	void testChannels();
-
-	void updateLed();
-	void onMasterClock(uint32_t steps);
-	virtual void onAnimationFinished(RGBWWLedAnimation* anim);
-
-private:
-    void publishToEventServer();
-    void publishToMqtt();
-
-	ColorStorage color;
-	Timer ledTimer;
-    StepSync* _stepSync = nullptr;
-
-    uint32_t _stepCounter = 0;
-    HSVCT _prevColor;
-    ChannelOutput _prevOutput;
-};
-
-#endif

@@ -23,12 +23,15 @@
 #include <cstdlib>
 #include <algorithm>
 
-
+APPLedCtrl::~APPLedCtrl() {
+    delete _stepSync;
+    _stepSync = nullptr;
+}
 void APPLedCtrl::init() {
 	debugapp("APPLedCtrl::init");
 
     _stepSync = new ClockCatchUp3();
-	//_stepSync = new ClockAdaption();
+
 	RGBWWLed::init(REDPIN, GREENPIN, BLUEPIN, WWPIN, CWPIN, PWM_FREQUENCY);
 
 	setup();
@@ -79,7 +82,15 @@ void APPLedCtrl::publishToMqtt() {
 	}
 }
 
+void APPLedCtrl::updateLedCb(void* pTimerArg) {
+    APPLedCtrl* pThis = static_cast<APPLedCtrl*>(pTimerArg);
+    pThis->updateLed();
+}
+
 void APPLedCtrl::updateLed() {
+    // arm next timer
+    ets_timer_arm_new(&_ledTimer, _timerInterval, 0, 0);
+
 	const bool animFinished = show();
 
     ++_stepCounter;
@@ -105,19 +116,21 @@ void APPLedCtrl::updateLed() {
 }
 
 void APPLedCtrl::onMasterClock(uint32_t stepsMaster) {
-    if (_stepSync) {
-        _stepSync->onMasterClock(ledTimer, _stepCounter, stepsMaster);
-    }
+    _timerInterval = _stepSync->onMasterClock(_stepCounter, stepsMaster);
+    app.eventserver.publishClockSlaveStatus(_stepSync->getCatchupOffset(), _timerInterval);
 }
 
 void APPLedCtrl::start() {
 	debugapp("APPLedCtrl::start");
-	ledTimer.initializeMs(RGBWW_MINTIMEDIFF, TimerDelegate(&APPLedCtrl::updateLed, this)).start();
+
+  ets_timer_setfn(&_ledTimer, APPLedCtrl::updateLedCb, this);
+  ets_timer_arm_new(&_ledTimer, _timerInterval, 0, 0);
 }
 
 void APPLedCtrl::stop() {
 	debugapp("APPLedCtrl::stop");
-	ledTimer.stop();
+	ets_timer_disarm(&_ledTimer);
+	//ledTimer.stop();
 }
 
 void APPLedCtrl::colorSave() {
@@ -168,121 +181,29 @@ void APPLedCtrl::onAnimationFinished(RGBWWLedAnimation* anim) {
 	    app.eventserver.publishTransitionComplete(anim->getName());
 }
 
-void ClockCatchUp::onMasterClock(Timer& timer, uint32_t stepsCurrent, uint32_t stepsMaster) {
+uint32_t ClockCatchUp3::onMasterClock(uint32_t stepsCurrent, uint32_t stepsMaster) {
+    uint32_t nextInt = _constBaseInt;
     if (!_firstMasterSync) {
         int diff = StepSync::calcOverflowVal(_stepsSyncLast, stepsCurrent);
         int masterDiff = StepSync::calcOverflowVal(_stepsSyncMasterLast, stepsMaster);
 
-        _catchupOffset += masterDiff - diff;
+        int curOffset = masterDiff - diff;
+        _catchupOffset += curOffset;
+        Serial.printf("Diff: %d | Master Diff: %d | CurOffset: %d | Catchup Offset: %d\n", diff, masterDiff, curOffset, _catchupOffset);
 
-        // if _catchupOffset is positive then we are too slow
-
-        double perc = static_cast<double>(_catchupOffset) / masterDiff;
-        uint32_t newInt = (1000 * RGBWW_MINTIMEDIFF) * (1.0 - perc);
-        Serial.printf("Step diff to master: %d Perc: %f | Catchup Offset: %d | New interval: %d us\n", masterDiff, perc, _catchupOffset, newInt);
-        timer.setIntervalUs(newInt);
+        const double curSteering = 1.0 - 3 * static_cast<double>(_catchupOffset) / masterDiff;
+        _steering = 0.5 *_steering + 0.5 * curSteering;
+        nextInt *= _steering;
+        Serial.printf("New Int: %d | CurSteering: %f | Steering: %f\n", nextInt, curSteering, _steering);
     }
 
     _stepsSyncMasterLast = stepsMaster;
     _stepsSyncLast = stepsCurrent;
     _firstMasterSync = false;
+
+    return nextInt;
 }
 
-void ClockCatchUp3::onMasterClock(Timer& timer, uint32_t stepsCurrent, uint32_t stepsMaster) {
-    if (!_firstMasterSync) {
-        int diff = StepSync::calcOverflowVal(_stepsSyncLast, stepsCurrent);
-        int masterDiff = StepSync::calcOverflowVal(_stepsSyncMasterLast, stepsMaster);
-
-        int curDiff = masterDiff - diff;
-        _catchupOffset += curDiff;
-        Serial.printf("Step Diff: %d | Master Step Diff: %d | Catchup: %d\n", diff, masterDiff, _catchupOffset);
-
-        const uint32_t curInt = timer.getIntervalUs();
-        Serial.printf("Current Interval: %d | Current Base Interval: %d\n", curInt, _baseInt);
-
-        // update base interval
-        const int diffCorrected = ((curInt - _steering)/ static_cast<double>(_constBaseInt)) * diff; // normalize towards current interval
-        const int calcNewBase = curInt * (diffCorrected / static_cast<double>(masterDiff));
-        _baseInt =  (0.9 * _baseInt) + (0.1 * calcNewBase);
-        Serial.printf("New Base Interval: %d | Cal New Base: %d\n", _baseInt, calcNewBase);
-
-        double perc = static_cast<double>(_catchupOffset) / _baseInt;
-        perc = std::max(-0.2, std::min(perc, 0.2));
-        _steering = static_cast<int>((perc / 2.0) * _baseInt + 0.5f);
-        uint32_t newInt = _baseInt + _steering;
-
-        Serial.printf("New Int: %d | Perc: %f | Steering: %d\n", newInt, perc, _steering);
-        timer.setIntervalUs(newInt);
-    }
-
-    _stepsSyncMasterLast = stepsMaster;
-    _stepsSyncLast = stepsCurrent;
-    _firstMasterSync = false;
-}
-
-void ClockCatchUpSteering::onMasterClock(Timer& timer, uint32_t stepsCurrent, uint32_t stepsMaster) {
-    if (!_firstMasterSync) {
-        int diff = StepSync::calcOverflowVal(_stepsSyncLast, stepsCurrent);
-        int masterDiff = StepSync::calcOverflowVal(_stepsSyncMasterLast, stepsMaster);
-
-        int curDiff = masterDiff - diff;
-        _catchupOffset += curDiff;
-        Serial.printf("Step Diff: %d | Master Step Diff: %d | Catchup: %d\n", diff, masterDiff, _catchupOffset);
-
-        double perc = 1 + static_cast<double>(_catchupOffset) / masterDiff;
-        _steering = (_steering * 0.9 + 0.1 * _steering * std::max(1.01, std::min(0.99, perc)));
-        uint32_t newInt = _constBaseInt * _steering;
-        Serial.printf("New Int: %d | Perc: %f | Steering: %d\n", newInt, perc, _steering);
-        timer.setIntervalUs(newInt);
-    }
-
-    _stepsSyncMasterLast = stepsMaster;
-    _stepsSyncLast = stepsCurrent;
-    _firstMasterSync = false;
-}
-
-void ClockCatchUp2::onMasterClock(Timer& timer, uint32_t stepsCurrent, uint32_t stepsMaster) {
-    if (!_firstMasterSync) {
-        int diff = StepSync::calcOverflowVal(_stepsSyncLast, stepsCurrent);
-        int masterDiff = StepSync::calcOverflowVal(_stepsSyncMasterLast, stepsMaster);
-
-        int curDiff = masterDiff - diff;
-        _catchupOffset += curDiff;
-
-        double perc = static_cast<double>(_catchupOffset) / masterDiff;
-        uint32_t curInt = timer.getIntervalUs();
-        uint32_t newInt = (0.9 * curInt) + (0.1 * curInt * (1.0 - perc));
-
-        Serial.printf("Step diff to master: %d Perc: %f | Current Diff: %d | Catchup Offset: %d | New interval: %d us\n", masterDiff, perc, curDiff, _catchupOffset, newInt);
-        timer.setIntervalUs(newInt);
-    }
-
-    _stepsSyncMasterLast = stepsMaster;
-    _stepsSyncLast = stepsCurrent;
-    _firstMasterSync = false;
-}
-
-void ClockAdaption::onMasterClock(Timer& timer, uint32_t stepsCurrent, uint32_t stepsMaster) {
-    if (!_firstMasterSync) {
-        int diff = StepSync::calcOverflowVal(_stepsSyncLast, stepsCurrent);
-        int masterDiff = StepSync::calcOverflowVal(_stepsSyncMasterLast, stepsMaster);
-
-        if (masterDiff < 5000) {
-            return;
-        }
-
-        int diffDiff = masterDiff - diff;
-        double diffPerc = static_cast<double>(diffDiff) / masterDiff;
-        double absDiffPerc = (static_cast<double>(abs(diffDiff)) / static_cast<double>(masterDiff));
-        Serial.printf("Master: %d MasterPrev: %d DiffMaster: %d DiffSelf: %d | Perc: %f\n", stepsMaster, _stepsSyncMasterLast, masterDiff, diff, diffPerc);
-
-        uint32_t curInt = timer.getIntervalUs();
-        uint32_t newInt = (1.0 - diffPerc/2) * curInt;
-        Serial.printf("Step diff to master: %d Cur Int: %d New interval: %d us\n", masterDiff, curInt, newInt);
-        timer.setIntervalUs(newInt);
-    }
-
-    _stepsSyncMasterLast = stepsMaster;
-    _stepsSyncLast = stepsCurrent;
-    _firstMasterSync = false;
+uint32_t ClockCatchUp3::getCatchupOffset() const {
+    return _catchupOffset;
 }

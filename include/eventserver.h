@@ -15,6 +15,7 @@ public:
 	void publishCurrentRaw(const ChannelOutput& raw);
 	void publishTransitionComplete(const String& name);
 	void publishKeepAlive();
+	void publishClockSlaveStatus(uint32_t offset, uint32_t interval);
 
 private:
 	virtual void onClient(TcpClient *client) override;
