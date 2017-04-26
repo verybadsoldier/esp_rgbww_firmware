@@ -116,6 +116,9 @@ void APPLedCtrl::updateLed() {
     }
 
     publishFinishedStepAnimations();
+
+    if (app.cfg.sync.cmd_master_enabled && _queuesFinished.count() > 0)
+        app.mqttclient.publishQueueFinished(_queuesFinished);
 }
 
 void APPLedCtrl::publishFinishedStepAnimations() {

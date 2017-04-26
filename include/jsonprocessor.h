@@ -24,6 +24,7 @@ public:
     bool onBlink(const String& json, String& msg, bool relay = true);
     bool onBlink(JsonObject& root, String& msg, bool relay = true);
 
+    bool onQueueFinished(const String& json);
     bool onJsonRpc(const String& json);
 
 private:

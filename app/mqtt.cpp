@@ -72,6 +72,7 @@ void AppMqttClient::connect() {
     }
     if (app.cfg.sync.cmd_slave_enabled) {
         mqtt->subscribe(app.cfg.sync.cmd_slave_topic);
+        mqtt->subscribe(app.cfg.sync.cmd_queue_finished_slave_topic);
     }
     if (app.cfg.sync.color_slave_enabled) {
         Serial.printf("Subscribe: %s\n", app.cfg.sync.color_slave_topic.c_str());
@@ -112,8 +113,11 @@ void AppMqttClient::onMessageReceived(String topic, String message) {
 		uint32_t clock = message.toInt();
 		app.rgbwwctrl.onMasterClock(clock);
 	}
-	else if (app.cfg.sync.cmd_slave_enabled && (topic == app.cfg.sync.cmd_slave_topic)) {
-		app.jsonproc.onJsonRpc(message);
+	else if (app.cfg.sync.cmd_slave_enabled)
+	    if (topic == app.cfg.sync.cmd_slave_topic)
+		    app.jsonproc.onJsonRpc(message);
+        if (topic == app.cfg.sync.cmd_queue_finished_slave_topic)
+            app.jsonproc.onJsonRpc(message);
 	}
 	else if (app.cfg.sync.color_slave_enabled && (topic == app.cfg.sync.color_slave_topic)) {
 	    String error;
@@ -236,4 +240,30 @@ void AppMqttClient::publishTransitionFinihsed(const String& name) {
     Serial.printf("ApplicationMQTTClient::publishTransitionFinihsed: %s\n", name.c_str());
     String topic = buildTopic("transition_finished");
     publish(topic, name, false);
+}
+
+void AppMqttClient::publishQueueFinished(const HashMap<CtrlChannel, int>& finishValues) {
+    DynamicJsonBuffer jsonBuffer;
+    JsonObject& root = jsonBuffer.createObject();
+    for(int i = 0; i < finishValues.count(); ++i) {
+        CtrlChannel ch = finishValues.keyAt(i);
+        const String& chStr = ctrlChannelToString(ch);
+        const int& val = finishValues.valueAt(i);
+        switch(ch) {
+        case CtrlChannel::Hue:
+            root[chStr] = (float(val) / float(RGBWW_CALC_HUEWHEELMAX)) * 360.0;
+            break;
+        case CtrlChannel::Sat:
+        case CtrlChannel::Val:
+            root[chStr] = (float(val) / float(RGBWW_CALC_MAXVAL)) * 100.0;
+            break;
+        case CtrlChannel::ColorTemp:
+            root[chStr] = val;
+            break;
+        }
+    }
+
+    String jsonMsg;
+    root.printTo(jsonMsg);
+    publish(buildTopic("queue_finished"), jsonMsg, false);
 }

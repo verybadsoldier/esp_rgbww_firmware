@@ -38,8 +38,8 @@ struct ApplicationSettings {
 		};
 
 		struct mqtt {
-			bool enabled = false;
-			String server = "mqtt";
+			bool enabled = true;
+			String server = "minion";
 			int port = 1883;
 			String username;
 			String password;
@@ -64,9 +64,10 @@ struct ApplicationSettings {
         bool clock_slave_enabled = false;
         String clock_slave_topic= "home/led1/clock";
 
-        bool cmd_master_enabled = false;
+        bool cmd_master_enabled = true;
         bool cmd_slave_enabled = false;
         String cmd_slave_topic = "home/led1/command";
+        String cmd_queue_finished_slave_topic = "home/led1/queue_finished";
 
         bool color_master_enabled = false;
         int color_master_interval_ms = 0;

@@ -332,6 +332,9 @@ int JsonProcessor::RequestParameters::checkParams(String& errorMsg) const {
     return 0;
 }
 
+bool JsonProcessor::onQueueFinished(const String& json) {
+}
+
 bool JsonProcessor::onJsonRpc(const String& json) {
     Serial.printf("JsonProcessor::onJsonRpc: %s\n", json.c_str());
 	JsonRpcMessageIn rpc(json);
