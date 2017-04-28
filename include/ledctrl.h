@@ -94,6 +94,7 @@ private:
     void publishToEventServer();
     void publishToMqtt();
     void publishFinishedStepAnimations();
+    void publishColorStayedCmds();
 
 	ColorStorage color;
 
@@ -113,6 +114,8 @@ class StepSync {
 public:
     virtual uint32_t onMasterClock(uint32_t stepsCurrent, uint32_t stepsMaster) = 0;
     virtual uint32_t getCatchupOffset() const;
+    void resetCatchupOffset();
+
 protected:
     template<typename T>
     static T calcOverflowVal(T prevValue, T curValue) {
@@ -124,6 +127,8 @@ protected:
             return curValue - prevValue;
         }
     }
+
+    int _catchupOffset = 0;
 };
 
 
@@ -133,7 +138,6 @@ public:
     virtual uint32_t getCatchupOffset() const;
 
 private:
-    int _catchupOffset = 0;
     uint32_t _stepsSyncMasterLast = 0;
     uint32_t _stepsSyncLast = 0;
     bool _firstMasterSync = true;

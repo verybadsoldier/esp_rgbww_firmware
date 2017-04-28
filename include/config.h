@@ -67,7 +67,6 @@ struct ApplicationSettings {
         bool cmd_master_enabled = true;
         bool cmd_slave_enabled = false;
         String cmd_slave_topic = "home/led1/command";
-        String cmd_queue_finished_slave_topic = "home/led1/queue_finished";
 
         bool color_master_enabled = false;
         int color_master_interval_ms = 0;

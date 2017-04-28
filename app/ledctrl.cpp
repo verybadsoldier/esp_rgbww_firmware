@@ -117,40 +117,82 @@ void APPLedCtrl::updateLed() {
 
     publishFinishedStepAnimations();
 
-    if (app.cfg.sync.cmd_master_enabled && _queuesFinished.count() > 0)
-        app.mqttclient.publishQueueFinished(_queuesFinished);
+    if (app.cfg.sync.cmd_master_enabled)
+        publishColorStayedCmds();
 }
 
+void APPLedCtrl::publishColorStayedCmds() {
+    if (_channelsStayed.count() == 0)
+        return;
+
+    DynamicJsonBuffer jsonBuffer;
+    JsonObject& root = jsonBuffer.createObject();
+    root["t"] = 500;
+    root["q"] = "back";
+    root["cmd"] = "fade";
+
+    JsonObject* pColObj = nullptr;
+    switch(_mode) {
+    case ColorMode::Hsv:
+        pColObj = &root.createNestedObject("hsv");
+        break;
+    case ColorMode::Raw:
+        pColObj = &root.createNestedObject("raw");
+        break;
+    }
+
+    for(int i = 0; i < _channelsStayed.count(); ++i) {
+        CtrlChannel ch = _channelsStayed.keyAt(i);
+        const String& chStr = ctrlChannelToString(ch);
+        const int& val = _channelsStayed.valueAt(i);
+        switch(ch) {
+        case CtrlChannel::Hue:
+            (*pColObj)[chStr] = (float(val) / float(RGBWW_CALC_HUEWHEELMAX)) * 360.0;
+            break;
+        case CtrlChannel::Sat:
+        case CtrlChannel::Val:
+            (*pColObj)[chStr] = (float(val) / float(RGBWW_CALC_MAXVAL)) * 100.0;
+            break;
+        case CtrlChannel::ColorTemp:
+            (*pColObj)[chStr] = val;
+            break;
+        }
+    }
+
+    app.mqttclient.publishCommand("color", root);
+}
 void APPLedCtrl::publishFinishedStepAnimations() {
     for(unsigned int i=0; i < _stepFinishedAnimations.count(); i++) {
         RGBWWLedAnimation* pAnim = _stepFinishedAnimations.valueAt(i);
-        app.mqttclient.publishTransitionFinihsed(pAnim->getName());
+        app.mqttclient.publishTransitionFinished(pAnim->getName());
         app.eventserver.publishTransitionFinished(pAnim->getName());
     }
     _stepFinishedAnimations.clear();
 }
 
 void APPLedCtrl::onMasterClock(uint32_t stepsMaster) {
+    if (_stepSync->getCatchupOffset() > 1000)
+        _stepSync->resetCatchupOffset();
+
     _timerInterval = _stepSync->onMasterClock(_stepCounter, stepsMaster);
 
-    _timerInterval = std::min(std::max(_timerInterval, 10000u), 30000u);
+    _timerInterval = std::min(std::max(_timerInterval, RGBWW_MINTIMEDIFF_US / 2u), static_cast<uint32_t>(RGBWW_MINTIMEDIFF_US * 1.5));
 
     app.eventserver.publishClockSlaveStatus(_stepSync->getCatchupOffset(), _timerInterval);
     app.mqttclient.publishClockSlaveOffset(_stepSync->getCatchupOffset());
-    app.mqttclient.publishClockInteral(_timerInterval);
+    app.mqttclient.publishClockInterval(_timerInterval);
 }
 
 void APPLedCtrl::start() {
-	debugapp("APPLedCtrl::start");
+    debugapp("APPLedCtrl::start");
 
-  ets_timer_setfn(&_ledTimer, APPLedCtrl::updateLedCb, this);
-  ets_timer_arm_new(&_ledTimer, _timerInterval, 0, 0);
+    ets_timer_setfn(&_ledTimer, APPLedCtrl::updateLedCb, this);
+    ets_timer_arm_new(&_ledTimer, _timerInterval, 0, 0);
 }
 
 void APPLedCtrl::stop() {
-	debugapp("APPLedCtrl::stop");
-	ets_timer_disarm(&_ledTimer);
-	//ledTimer.stop();
+    debugapp("APPLedCtrl::stop");
+    ets_timer_disarm(&_ledTimer);
 }
 
 void APPLedCtrl::colorSave() {
@@ -228,4 +270,8 @@ uint32_t ClockCatchUp3::onMasterClock(uint32_t stepsCurrent, uint32_t stepsMaste
 
 uint32_t ClockCatchUp3::getCatchupOffset() const {
     return _catchupOffset;
+}
+
+void StepSync::resetCatchupOffset() {
+	_catchupOffset = 0;
 }
