@@ -112,9 +112,8 @@ void AppMqttClient::onMessageReceived(String topic, String message) {
 		uint32_t clock = message.toInt();
 		app.rgbwwctrl.onMasterClock(clock);
 	}
-	else if (app.cfg.sync.cmd_slave_enabled) {
-	    if (topic == app.cfg.sync.cmd_slave_topic)
-		    app.jsonproc.onJsonRpc(message);
+	else if (app.cfg.sync.cmd_slave_enabled && topic == app.cfg.sync.cmd_slave_topic) {
+	    app.jsonproc.onJsonRpc(message);
 	}
 	else if (app.cfg.sync.color_slave_enabled && (topic == app.cfg.sync.color_slave_topic)) {
 	    String error;
@@ -145,12 +144,12 @@ void AppMqttClient::publishCurrentRaw(const ChannelOutput& raw) {
 
         DynamicJsonBuffer jsonBuffer(200);
         JsonObject& root = jsonBuffer.createObject();
-        JsonObject& hsv = root.createNestedObject("raw");
-        hsv["r"] = raw.r;
-        hsv["g"] = raw.g;
-        hsv["b"] = raw.b;
-        hsv["cw"] = raw.cw;
-        hsv["ww"] = raw.ww;
+        JsonObject& rawJson = root.createNestedObject("raw");
+        rawJson["r"] = raw.r;
+        rawJson["g"] = raw.g;
+        rawJson["b"] = raw.b;
+        rawJson["cw"] = raw.cw;
+        rawJson["ww"] = raw.ww;
 
         root["t"] = 0;
         root["cmd"] = "solid";

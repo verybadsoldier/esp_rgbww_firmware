@@ -15,8 +15,8 @@ public:
     bool onSkip(const String& json, String& msg, bool relay = true);
     bool onSkip(JsonObject& root, String& msg, bool relay = true);
 
-    bool onPause(const String& json, String& msg, bool relay = true);
-    bool onPause(JsonObject& root, String& msg, bool relay = true);
+    bool onPause(const String& json, String& msg, bool relay = true, bool relayWithState = true);
+    bool onPause(JsonObject& json, String& msg, bool relay = true, bool relayWithState = true);
 
     bool onContinue(const String& json, String& msg, bool relay = true);
     bool onContinue(JsonObject& root, String& msg, bool relay = true);
@@ -24,7 +24,9 @@ public:
     bool onBlink(const String& json, String& msg, bool relay = true);
     bool onBlink(JsonObject& root, String& msg, bool relay = true);
 
-    bool onQueueFinished(const String& json);
+    bool onDirect(const String& json, String& msg, bool relay);
+    bool onDirect(JsonObject& root, String& msg, bool relay);
+
     bool onJsonRpc(const String& json);
 
 private:

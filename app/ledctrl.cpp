@@ -127,9 +127,9 @@ void APPLedCtrl::publishColorStayedCmds() {
 
     DynamicJsonBuffer jsonBuffer;
     JsonObject& root = jsonBuffer.createObject();
-    root["t"] = 500;
+    root["t"] = 0;
     root["q"] = "back";
-    root["cmd"] = "fade";
+    root["cmd"] = "solid";
 
     JsonObject* pColObj = nullptr;
     switch(_mode) {
@@ -159,7 +159,7 @@ void APPLedCtrl::publishColorStayedCmds() {
         }
     }
 
-    app.mqttclient.publishCommand("color", root);
+    app.mqttclient.publishCommand("direct", root);
 }
 void APPLedCtrl::publishFinishedStepAnimations() {
     for(unsigned int i=0; i < _stepFinishedAnimations.count(); i++) {

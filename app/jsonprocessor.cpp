@@ -2,6 +2,7 @@
 
 
 bool JsonProcessor::onColor(const String& json, String& msg, bool relay) {
+    Serial.printf("JsonProcessor::onColor: %s\n", json.c_str());
     DynamicJsonBuffer jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(json);
     return onColor(root, msg, relay);
@@ -76,19 +77,56 @@ bool JsonProcessor::onSkip(JsonObject& root, String& msg, bool relay) {
     return true;
 }
 
-bool JsonProcessor::onPause(const String& json, String& msg, bool relay) {
+bool JsonProcessor::onPause(const String& json, String& msg, bool relay, bool relayWithState) {
     DynamicJsonBuffer jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(json);
-    return onPause(root, msg, relay);
+    return onPause(root, msg, relay, relayWithState);
 }
 
-bool JsonProcessor::onPause(JsonObject& root, String& msg, bool relay) {
+bool JsonProcessor::onPause(JsonObject& root, String& msg, bool relay, bool relayWithState) {
     RequestParameters params;
     JsonProcessor::parseRequestParams(root, params);
-    app.rgbwwctrl.pauseAnimation(params.channels);
 
-    if (relay)
+//    RGBWWLed::ChannelValueList channels;
+//    for(int i=0; i < params.channels.count(); ++i) {
+//        Optional<AbsOrRelValue> val;
+//        CtrlChannel ch = params.channels[i];
+//        switch(ch) {
+//        case CtrlChannel::Hue:
+//        {
+//            if (params.hsv.h.hasValue())
+//                val = params.hsv.h.getValue();
+//        }
+//        break;
+//        }
+//        channels[ch] = val;
+//    }
+    app.rgbwwctrl.pauseAnimation(params.channels);
+/*
+    switch(params.mode) {
+    case RequestParameters::Mode::Hsv:
+    {
+        HSVCT cc(params.hsv);
+        app.rgbwwctrl.setOutput(cc);
+        break;
+    }
+    case RequestParameters::Mode::Raw:
+        break;
+    default:
+        break;
+    }
+*/
+    if (relay) {
+//        if (relayWithState) {
+//            const HSVCT& c = app.rgbwwctrl.getCurrentColor();
+//            JsonObject& hsv = root.createNestedObject("hsv");
+//            hsv["h"] = (float(c.h) / float(RGBWW_CALC_HUEWHEELMAX)) * 360.0;
+//            hsv["s"] = (float(c.s) / float(RGBWW_CALC_MAXVAL)) * 100.0;
+//            hsv["v"] = (float(c.v) / float(RGBWW_CALC_MAXVAL)) * 100.0;
+//            hsv["ct"] = c.ct;
+//        }
         app.onCommandRelay("pause", root);
+    }
 
     return true;
 }
@@ -131,6 +169,7 @@ bool JsonProcessor::onBlink(JsonObject& root, String& msg, bool relay) {
 }
 
 bool JsonProcessor::onSingleColorCommand(JsonObject& root, String& errorMsg) {
+    Serial.printf("onSingleColorCommand\n");
     RequestParameters params;
     parseRequestParams(root, params);
     {
@@ -144,7 +183,7 @@ bool JsonProcessor::onSingleColorCommand(JsonObject& root, String& errorMsg) {
         //TODO: hand to rgbctrl
     } else if (params.mode == RequestParameters::Mode::Hsv) {
         if(!params.hasHsvFrom) {
-            debugapp("ApplicationWebserver::onColor hsv CMD:%s t:%d Q:%d  h:%d s:%d v:%d ct:%d ", params.cmd.c_str(), params.time, params.queue, params.hsv.h.getValue().getValue(), params.hsv.s.getValue().getValue(), params.hsv.v.getValue().getValue(), params.hsv.ct.getValue().getValue());
+            Serial.printf("ApplicationWebserver::onColor hsv CMD:%s t:%d Q:%d  h:%d s:%d v:%d ct:%d\n", params.cmd.c_str(), params.time, params.queue, params.hsv.h.getValue().getValue(), params.hsv.s.getValue().getValue(), params.hsv.v.getValue().getValue(), params.hsv.ct.getValue().getValue());
             if (params.cmd == "fade") {
                 queueOk = app.rgbwwctrl.fadeHSV(params.hsv, params.time, params.direction, params.queue, params.requeue, params.name);
             } else {
@@ -177,6 +216,31 @@ bool JsonProcessor::onSingleColorCommand(JsonObject& root, String& errorMsg) {
     return queueOk;
 }
 
+bool JsonProcessor::onDirect(const String& json, String& msg, bool relay) {
+    DynamicJsonBuffer jsonBuffer;
+    JsonObject& root = jsonBuffer.parseObject(json);
+    return onDirect(root, msg, relay);
+}
+
+bool JsonProcessor::onDirect(JsonObject& root, String& msg, bool relay) {
+    RequestParameters params;
+    JsonProcessor::parseRequestParams(root, params);
+
+    if (params.mode == RequestParameters::Mode::Kelvin) {
+        //TODO: hand to rgbctrl
+    } else if (params.mode == RequestParameters::Mode::Hsv) {
+        app.rgbwwctrl.colorDirectHSV(params.hsv);
+    } else if (params.mode == RequestParameters::Mode::Raw) {
+        app.rgbwwctrl.colorDirectRAW(params.raw);
+    } else {
+        msg = "No color object!";
+    }
+
+    if (relay)
+        app.onCommandRelay("direct", root);
+
+    return true;
+}
 
 void JsonProcessor::parseRequestParams(JsonObject& root, RequestParameters& params) {
     if (root["hsv"].success()) {
@@ -332,9 +396,6 @@ int JsonProcessor::RequestParameters::checkParams(String& errorMsg) const {
     return 0;
 }
 
-bool JsonProcessor::onQueueFinished(const String& json) {
-}
-
 bool JsonProcessor::onJsonRpc(const String& json) {
     Serial.printf("JsonProcessor::onJsonRpc: %s\n", json.c_str());
 	JsonRpcMessageIn rpc(json);
@@ -357,5 +418,8 @@ bool JsonProcessor::onJsonRpc(const String& json) {
     }
     else if (rpc.getMethod() == "continue") {
         return onContinue(rpc.getParams(), msg, false);
+    }
+    else if (rpc.getMethod() == "direct") {
+        return onDirect(rpc.getParams(), msg, false);
     }
 }
