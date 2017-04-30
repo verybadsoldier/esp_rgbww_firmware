@@ -15,8 +15,8 @@ public:
     bool onSkip(const String& json, String& msg, bool relay = true);
     bool onSkip(JsonObject& root, String& msg, bool relay = true);
 
-    bool onPause(const String& json, String& msg, bool relay = true, bool relayWithState = true);
-    bool onPause(JsonObject& json, String& msg, bool relay = true, bool relayWithState = true);
+    bool onPause(const String& json, String& msg, bool relay = true);
+    bool onPause(JsonObject& json, String& msg, bool relay = true);
 
     bool onContinue(const String& json, String& msg, bool relay = true);
     bool onContinue(JsonObject& root, String& msg, bool relay = true);
@@ -69,6 +69,7 @@ private:
     };
 
     void parseRequestParams(JsonObject& root, RequestParameters& params);
+    void addChannelStatesToCmd(JsonObject& root, const RGBWWLed::ChannelList& channels);
 
     bool onSingleColorCommand(JsonObject& root, String& errorMsg);
 };

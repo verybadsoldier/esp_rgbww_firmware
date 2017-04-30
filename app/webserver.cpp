@@ -1077,7 +1077,7 @@ void ApplicationWebserver::onStop(HttpRequest &request, HttpResponse &response) 
 	}
 
 	String msg;
-	if (app.jsonproc.onStop(request.getBody(), msg)) {
+	if (app.jsonproc.onStop(request.getBody(), msg, true)) {
 	    sendApiCode(response, API_CODES::API_SUCCESS);
 	}
 	else {
@@ -1107,7 +1107,7 @@ void ApplicationWebserver::onPause(HttpRequest &request, HttpResponse &response)
 	}
 
     String msg;
-    if (app.jsonproc.onPause(request.getBody(), msg, true, true)) {
+    if (app.jsonproc.onPause(request.getBody(), msg, true)) {
         sendApiCode(response, API_CODES::API_SUCCESS);
     }
     else {

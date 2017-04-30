@@ -116,51 +116,8 @@ void APPLedCtrl::updateLed() {
     }
 
     publishFinishedStepAnimations();
-
-    if (app.cfg.sync.cmd_master_enabled)
-        publishColorStayedCmds();
 }
 
-void APPLedCtrl::publishColorStayedCmds() {
-    if (_channelsStayed.count() == 0)
-        return;
-
-    DynamicJsonBuffer jsonBuffer;
-    JsonObject& root = jsonBuffer.createObject();
-    root["t"] = 0;
-    root["q"] = "back";
-    root["cmd"] = "solid";
-
-    JsonObject* pColObj = nullptr;
-    switch(_mode) {
-    case ColorMode::Hsv:
-        pColObj = &root.createNestedObject("hsv");
-        break;
-    case ColorMode::Raw:
-        pColObj = &root.createNestedObject("raw");
-        break;
-    }
-
-    for(int i = 0; i < _channelsStayed.count(); ++i) {
-        CtrlChannel ch = _channelsStayed.keyAt(i);
-        const String& chStr = ctrlChannelToString(ch);
-        const int& val = _channelsStayed.valueAt(i);
-        switch(ch) {
-        case CtrlChannel::Hue:
-            (*pColObj)[chStr] = (float(val) / float(RGBWW_CALC_HUEWHEELMAX)) * 360.0;
-            break;
-        case CtrlChannel::Sat:
-        case CtrlChannel::Val:
-            (*pColObj)[chStr] = (float(val) / float(RGBWW_CALC_MAXVAL)) * 100.0;
-            break;
-        case CtrlChannel::ColorTemp:
-            (*pColObj)[chStr] = val;
-            break;
-        }
-    }
-
-    app.mqttclient.publishCommand("direct", root);
-}
 void APPLedCtrl::publishFinishedStepAnimations() {
     for(unsigned int i=0; i < _stepFinishedAnimations.count(); i++) {
         RGBWWLedAnimation* pAnim = _stepFinishedAnimations.valueAt(i);

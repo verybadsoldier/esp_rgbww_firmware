@@ -58,15 +58,15 @@ struct ApplicationSettings {
 	};
 
     struct sync {
-        bool clock_master_enabled = false;
+        bool clock_master_enabled = true;
         int clock_master_interval = 5;
 
-        bool clock_slave_enabled = false;
-        String clock_slave_topic= "home/led1/clock";
+        bool clock_slave_enabled = true;
+        String clock_slave_topic= "home/wz_lightLedTv/clock";
 
-        bool cmd_master_enabled = true;
-        bool cmd_slave_enabled = false;
-        String cmd_slave_topic = "home/led1/command";
+        bool cmd_master_enabled = false;
+        bool cmd_slave_enabled = true;
+        String cmd_slave_topic = "home/wz_lightLedTv/command";
 
         bool color_master_enabled = false;
         int color_master_interval_ms = 0;

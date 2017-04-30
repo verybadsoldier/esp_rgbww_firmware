@@ -54,8 +54,12 @@ bool JsonProcessor::onStop(JsonObject& root, String& msg, bool relay) {
     app.rgbwwctrl.clearAnimationQueue(params.channels);
     app.rgbwwctrl.skipAnimation(params.channels);
 
-    if (relay)
+    onDirect(root, msg, false);
+
+    if (relay) {
+        addChannelStatesToCmd(root, params.channels);
         app.onCommandRelay("stop", root);
+    }
 
     return true;
 }
@@ -71,60 +75,32 @@ bool JsonProcessor::onSkip(JsonObject& root, String& msg, bool relay) {
     JsonProcessor::parseRequestParams(root, params);
     app.rgbwwctrl.skipAnimation(params.channels);
 
-    if (relay)
+    onDirect(root, msg, false);
+
+    if (relay) {
+        addChannelStatesToCmd(root, params.channels);
         app.onCommandRelay("skip", root);
+    }
 
     return true;
 }
 
-bool JsonProcessor::onPause(const String& json, String& msg, bool relay, bool relayWithState) {
+bool JsonProcessor::onPause(const String& json, String& msg, bool relay) {
     DynamicJsonBuffer jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(json);
-    return onPause(root, msg, relay, relayWithState);
+    return onPause(root, msg, relay);
 }
 
-bool JsonProcessor::onPause(JsonObject& root, String& msg, bool relay, bool relayWithState) {
+bool JsonProcessor::onPause(JsonObject& root, String& msg, bool relay) {
     RequestParameters params;
     JsonProcessor::parseRequestParams(root, params);
 
-//    RGBWWLed::ChannelValueList channels;
-//    for(int i=0; i < params.channels.count(); ++i) {
-//        Optional<AbsOrRelValue> val;
-//        CtrlChannel ch = params.channels[i];
-//        switch(ch) {
-//        case CtrlChannel::Hue:
-//        {
-//            if (params.hsv.h.hasValue())
-//                val = params.hsv.h.getValue();
-//        }
-//        break;
-//        }
-//        channels[ch] = val;
-//    }
     app.rgbwwctrl.pauseAnimation(params.channels);
-/*
-    switch(params.mode) {
-    case RequestParameters::Mode::Hsv:
-    {
-        HSVCT cc(params.hsv);
-        app.rgbwwctrl.setOutput(cc);
-        break;
-    }
-    case RequestParameters::Mode::Raw:
-        break;
-    default:
-        break;
-    }
-*/
+
+    onDirect(root, msg, false);
+
     if (relay) {
-//        if (relayWithState) {
-//            const HSVCT& c = app.rgbwwctrl.getCurrentColor();
-//            JsonObject& hsv = root.createNestedObject("hsv");
-//            hsv["h"] = (float(c.h) / float(RGBWW_CALC_HUEWHEELMAX)) * 360.0;
-//            hsv["s"] = (float(c.s) / float(RGBWW_CALC_MAXVAL)) * 100.0;
-//            hsv["v"] = (float(c.v) / float(RGBWW_CALC_MAXVAL)) * 100.0;
-//            hsv["ct"] = c.ct;
-//        }
+        addChannelStatesToCmd(root, params.channels);
         app.onCommandRelay("pause", root);
     }
 
@@ -421,5 +397,40 @@ bool JsonProcessor::onJsonRpc(const String& json) {
     }
     else if (rpc.getMethod() == "direct") {
         return onDirect(rpc.getParams(), msg, false);
+    }
+}
+
+void JsonProcessor::addChannelStatesToCmd(JsonObject& root, const RGBWWLed::ChannelList& channels) {
+    switch(app.rgbwwctrl.getMode()) {
+        case RGBWWLed::ColorMode::Hsv:
+        {
+            const HSVCT& c = app.rgbwwctrl.getCurrentColor();
+            JsonObject& obj = root.createNestedObject("hsv");
+            if (channels.count() == 0 || channels.contains(CtrlChannel::Hue))
+                obj["h"] = (float(c.h) / float(RGBWW_CALC_HUEWHEELMAX)) * 360.0;
+            if (channels.count() == 0 || channels.contains(CtrlChannel::Sat))
+                obj["s"] = (float(c.s) / float(RGBWW_CALC_MAXVAL)) * 100.0;
+            if (channels.count() == 0 || channels.contains(CtrlChannel::Val))
+                obj["v"] = (float(c.v) / float(RGBWW_CALC_MAXVAL)) * 100.0;
+            if (channels.count() == 0 || channels.contains(CtrlChannel::ColorTemp))
+                obj["ct"] = c.ct;
+            break;
+        }
+        case RGBWWLed::ColorMode::Raw:
+        {
+            const ChannelOutput& c = app.rgbwwctrl.getCurrentOutput();
+            JsonObject& obj = root.createNestedObject("raw");
+            if (channels.count() == 0 || channels.contains(CtrlChannel::Red))
+                obj["r"] = c.r;
+            if (channels.count() == 0 || channels.contains(CtrlChannel::Green))
+                obj["g"] = c.g;
+            if (channels.count() == 0 || channels.contains(CtrlChannel::Blue))
+                obj["b"] = c.b;
+            if (channels.count() == 0 || channels.contains(CtrlChannel::WarmWhite))
+                obj["ww"] = c.ww;
+            if (channels.count() == 0 || channels.contains(CtrlChannel::ColdWhite))
+                obj["cw"] = c.cw;
+            break;
+        }
     }
 }
