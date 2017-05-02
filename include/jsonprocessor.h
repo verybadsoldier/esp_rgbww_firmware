@@ -56,7 +56,7 @@ private:
 
         int direction = 1;
         bool requeue = false;
-        int time = 0;
+        RampOrSpeed ramp = 0;
         String name;
 
         String cmd = "solid";

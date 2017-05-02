@@ -132,11 +132,11 @@ bool JsonProcessor::onBlink(const String& json, String& msg, bool relay) {
 
 bool JsonProcessor::onBlink(JsonObject& root, String& msg, bool relay) {
     RequestParameters params;
-    params.time = 500; //default
+    params.ramp.value = 500; //default
 
     JsonProcessor::parseRequestParams(root, params);
 
-    app.rgbwwctrl.blink(params.channels, params.time, params.queue, params.requeue, params.name);
+    app.rgbwwctrl.blink(params.channels, params.ramp.value, params.queue, params.requeue, params.name);
 
     if (relay)
         app.onCommandRelay("blink", root);
@@ -159,28 +159,28 @@ bool JsonProcessor::onSingleColorCommand(JsonObject& root, String& errorMsg) {
         //TODO: hand to rgbctrl
     } else if (params.mode == RequestParameters::Mode::Hsv) {
         if(!params.hasHsvFrom) {
-            Serial.printf("ApplicationWebserver::onColor hsv CMD:%s t:%d Q:%d  h:%d s:%d v:%d ct:%d\n", params.cmd.c_str(), params.time, params.queue, params.hsv.h.getValue().getValue(), params.hsv.s.getValue().getValue(), params.hsv.v.getValue().getValue(), params.hsv.ct.getValue().getValue());
+            Serial.printf("ApplicationWebserver::onColor hsv CMD:%s t:%d Q:%d  h:%d s:%d v:%d ct:%d\n", params.cmd.c_str(), params.ramp.value, params.queue, params.hsv.h.getValue().getValue(), params.hsv.s.getValue().getValue(), params.hsv.v.getValue().getValue(), params.hsv.ct.getValue().getValue());
             if (params.cmd == "fade") {
-                queueOk = app.rgbwwctrl.fadeHSV(params.hsv, params.time, params.direction, params.queue, params.requeue, params.name);
+                queueOk = app.rgbwwctrl.fadeHSV(params.hsv, params.ramp, params.direction, params.queue, params.requeue, params.name);
             } else {
-                queueOk = app.rgbwwctrl.setHSV(params.hsv, params.time, params.queue, params.requeue, params.name);
+                queueOk = app.rgbwwctrl.setHSV(params.hsv, params.ramp.value, params.queue, params.requeue, params.name);
             }
         } else {
-            app.rgbwwctrl.fadeHSV(params.hsvFrom, params.hsv, params.time, params.direction, params.queue);
+            app.rgbwwctrl.fadeHSV(params.hsvFrom, params.hsv, params.ramp, params.direction, params.queue);
         }
     } else if (params.mode == RequestParameters::Mode::Raw) {
         if(!params.hasRawFrom) {
             debugapp("ApplicationWebserver::onColor raw CMD:%s Q:%d r:%i g:%i b:%i ww:%i cw:%i", params.cmd.c_str(), params.queue, params.raw.r.getValue().getValue(), params.raw.g.getValue().getValue(), params.raw.b.getValue().getValue(), params.raw.ww.getValue().getValue(), params.raw.cw.getValue().getValue());
             if (params.cmd == "fade") {
-                queueOk = app.rgbwwctrl.fadeRAW(params.raw, params.time, params.queue);
+                queueOk = app.rgbwwctrl.fadeRAW(params.raw, params.ramp, params.queue);
             } else {
-                queueOk = app.rgbwwctrl.setRAW(params.raw, params.time, params.queue);
+                queueOk = app.rgbwwctrl.setRAW(params.raw, params.ramp.value, params.queue);
             }
         } else {
             debugapp("ApplicationWebserver::onColor raw CMD:%s Q:%d FROM r:%i g:%i b:%i ww:%i cw:%i  TO r:%i g:%i b:%i ww:%i cw:%i",
                     params.raw.r.getValue().getValue(), params.raw.g.getValue().getValue(), params.raw.b.getValue().getValue(), params.raw.ww.getValue().getValue(), params.raw.cw.getValue().getValue(),
                     params.rawFrom.r.getValue().getValue(), params.rawFrom.g.getValue().getValue(), params.rawFrom.b.getValue().getValue(), params.rawFrom.ww.getValue().getValue(), params.rawFrom.cw.getValue().getValue());
-            app.rgbwwctrl.fadeRAW(params.rawFrom, params.raw, params.time, params.queue);
+            app.rgbwwctrl.fadeRAW(params.rawFrom, params.raw, params.ramp, params.queue);
         }
     } else {
         errorMsg = "No color object!";
@@ -275,7 +275,13 @@ void JsonProcessor::parseRequestParams(JsonObject& root, RequestParameters& para
     }
 
     if (root["t"].success()) {
-        params.time = root["t"].as<int>();
+        params.ramp.value = root["t"].as<int>();
+        params.ramp.type = RampOrSpeed::Type::RampTime;
+    }
+
+    if (root["s"].success()) {
+        params.ramp.value = root["s"].as<int>();
+        params.ramp.type = RampOrSpeed::Type::Speed;
     }
 
     if (root["r"].success()) {
@@ -366,6 +372,11 @@ int JsonProcessor::RequestParameters::checkParams(String& errorMsg) const {
 
     if (direction < 0 || direction > 1) {
         errorMsg = "Invalid direction";
+        return 1;
+    }
+
+    if (ramp.type == RampOrSpeed::Type::Speed && ramp.value == 0) {
+        errorMsg = "Speed cannot be 0!";
         return 1;
     }
 
