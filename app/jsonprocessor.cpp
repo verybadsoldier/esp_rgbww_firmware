@@ -275,12 +275,12 @@ void JsonProcessor::parseRequestParams(JsonObject& root, RequestParameters& para
     }
 
     if (root["t"].success()) {
-        params.ramp.value = root["t"].as<int>();
+        params.ramp.value = root["t"].as<double>();
         params.ramp.type = RampOrSpeed::Type::RampTime;
     }
 
     if (root["s"].success()) {
-        params.ramp.value = root["s"].as<int>();
+        params.ramp.value = root["s"].as<double>();
         params.ramp.type = RampOrSpeed::Type::Speed;
     }
 
