@@ -148,10 +148,8 @@ bool JsonProcessor::onSingleColorCommand(JsonObject& root, String& errorMsg) {
     Serial.printf("onSingleColorCommand\n");
     RequestParameters params;
     parseRequestParams(root, params);
-    {
-        if (params.checkParams(errorMsg) != 0) {
-            return false;
-        }
+    if (params.checkParams(errorMsg) != 0) {
+        return false;
     }
 
     bool queueOk = false;
@@ -276,12 +274,12 @@ void JsonProcessor::parseRequestParams(JsonObject& root, RequestParameters& para
 
     if (root["t"].success()) {
         params.ramp.value = root["t"].as<double>();
-        params.ramp.type = RampOrSpeed::Type::RampTime;
+        params.ramp.type = RampTimeOrSpeed::Type::Time;
     }
 
     if (root["s"].success()) {
         params.ramp.value = root["s"].as<double>();
-        params.ramp.type = RampOrSpeed::Type::Speed;
+        params.ramp.type = RampTimeOrSpeed::Type::Speed;
     }
 
     if (root["r"].success()) {
@@ -375,7 +373,7 @@ int JsonProcessor::RequestParameters::checkParams(String& errorMsg) const {
         return 1;
     }
 
-    if (ramp.type == RampOrSpeed::Type::Speed && ramp.value == 0) {
+    if (ramp.type == RampTimeOrSpeed::Type::Speed && ramp.value == 0) {
         errorMsg = "Speed cannot be 0!";
         return 1;
     }
