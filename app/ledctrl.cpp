@@ -36,10 +36,12 @@ void APPLedCtrl::init() {
 
 	setup();
 	color.load();
-	debugapp("H: %i | s: %i | v: %i | ct: %i", color.h, color.s, color.v, color.ct);
-	HSVCT s = HSVCT(color.h, color.s, 0, color.ct);
-	HSVCT c = HSVCT(color.h, color.s, color.v, color.ct);
-	fadeHSV(s, c, 700); //fade to color in 700ms
+	debugapp("H: %i | s: %i | v: %i | ct: %i", color.current.h, color.current.s, color.current.v, color.current.ct);
+
+	// boot from off to current color
+	HSVCT dark = color.current;
+	dark.h = 0;
+	fadeHSV(dark, color.current, 700); //fade to color in 700ms
 }
 
 void APPLedCtrl::setup() {
@@ -154,20 +156,18 @@ void APPLedCtrl::stop() {
 
 void APPLedCtrl::colorSave() {
 	debugapp("APPLedCtrl::colorSave");
-	HSVCT c = getCurrentColor();
-	color.h = c.h;
-	color.s = c.s;
-	color.v = c.v;
-	color.ct = c.ct;
+	if (color.current == getCurrentColor())
+	    return;
+	color.current = getCurrentColor();
 	color.save();
 }
 
 void APPLedCtrl::colorReset() {
 	debugapp("APPLedCtrl::colorReset");
-	color.h = 0;
-	color.s = 0;
-	color.v = 0;
-	color.ct = 0;
+	color.current.h = 0;
+	color.current.s = 0;
+	color.current.v = 0;
+	color.current.ct = 0;
 	color.save();
 }
 

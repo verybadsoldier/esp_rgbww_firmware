@@ -28,10 +28,7 @@
 #define APP_COLOR_FILE ".color"
 
 struct ColorStorage {
-	int h = 0;
-	int s = 0;
-	int v = 0;
-	int ct = 0;
+    HSVCT current;
 
 	void load(bool print = false) {
 		StaticJsonBuffer < 72 > jsonBuffer;
@@ -40,10 +37,10 @@ struct ColorStorage {
 			char* jsonString = new char[size + 1];
 			fileGetContent(APP_COLOR_FILE, jsonString, size + 1);
 			JsonObject& root = jsonBuffer.parseObject(jsonString);
-			h = root["h"];
-			s = root["s"];
-			v = root["v"];
-			ct = root["ct"];
+			current.h = root["h"];
+			current.s = root["s"];
+			current.v = root["v"];
+			current.ct = root["ct"];
 			if (print) {
 				root.prettyPrintTo(Serial);
 			}
@@ -54,10 +51,10 @@ struct ColorStorage {
 	void save(bool print = false) {
 		DynamicJsonBuffer jsonBuffer;
 		JsonObject& root = jsonBuffer.createObject();
-		root["h"] = h;
-		root["s"] = s;
-		root["v"] = v;
-		root["ct"] = ct;
+		root["h"] = current.h;
+		root["s"] = current.s;
+		root["v"] = current.v;
+		root["ct"] = current.ct;
 		String rootString;
 		if (print) {
 			root.prettyPrintTo(Serial);
