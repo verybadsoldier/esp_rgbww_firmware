@@ -120,18 +120,20 @@ void APPLedCtrl::updateLed() {
     checkStableColorState();
 
     publishFinishedStepAnimations();
-
 }
 
 void APPLedCtrl::checkStableColorState() {
     if (_prevColor == getCurrentColor())
+    {
         ++_numStableColorSteps;
+    }
     else {
         _prevColor = getCurrentColor();
         _numStableColorSteps = 0;
     }
 
-    if (_numStableColorSteps * RGBWW_MINTIMEDIFF > _saveAfterStableColorMs)
+    // save if color was stable for _saveAfterStableColorMs
+    if (abs(_saveAfterStableColorMs - (_numStableColorSteps * RGBWW_MINTIMEDIFF)) <= (RGBWW_MINTIMEDIFF / 2))
         colorSave();
 }
 
@@ -170,9 +172,6 @@ void APPLedCtrl::stop() {
 }
 
 void APPLedCtrl::colorSave() {
-	debugapp("APPLedCtrl::colorSave");
-	if (colorStorage.current == getCurrentColor())
-	    return;
 	colorStorage.current = getCurrentColor();
 	colorStorage.save();
 }
