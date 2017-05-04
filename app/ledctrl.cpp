@@ -35,13 +35,13 @@ void APPLedCtrl::init() {
 	RGBWWLed::init(REDPIN, GREENPIN, BLUEPIN, WWPIN, CWPIN, PWM_FREQUENCY);
 
 	setup();
-	color.load();
-	debugapp("H: %i | s: %i | v: %i | ct: %i", color.current.h, color.current.s, color.current.v, color.current.ct);
+	colorStorage.load();
+	debugapp("H: %i | s: %i | v: %i | ct: %i", colorStorage.current.h, colorStorage.current.s, colorStorage.current.v, colorStorage.current.ct);
 
 	// boot from off to current color
-	HSVCT dark = color.current;
+	HSVCT dark = colorStorage.current;
 	dark.h = 0;
-	fadeHSV(dark, color.current, 700); //fade to color in 700ms
+	fadeHSV(dark, colorStorage.current, 700); //fade to color in 700ms
 }
 
 void APPLedCtrl::setup() {
@@ -117,7 +117,22 @@ void APPLedCtrl::updateLed() {
         publishToMqtt();
     }
 
+    checkStableColorState();
+
     publishFinishedStepAnimations();
+
+}
+
+void APPLedCtrl::checkStableColorState() {
+    if (_prevColor == getCurrentColor())
+        ++_numStableColorSteps;
+    else {
+        _prevColor = getCurrentColor();
+        _numStableColorSteps = 0;
+    }
+
+    if (_numStableColorSteps * RGBWW_MINTIMEDIFF > _saveAfterStableColorMs)
+        colorSave();
 }
 
 void APPLedCtrl::publishFinishedStepAnimations() {
@@ -156,19 +171,19 @@ void APPLedCtrl::stop() {
 
 void APPLedCtrl::colorSave() {
 	debugapp("APPLedCtrl::colorSave");
-	if (color.current == getCurrentColor())
+	if (colorStorage.current == getCurrentColor())
 	    return;
-	color.current = getCurrentColor();
-	color.save();
+	colorStorage.current = getCurrentColor();
+	colorStorage.save();
 }
 
 void APPLedCtrl::colorReset() {
 	debugapp("APPLedCtrl::colorReset");
-	color.current.h = 0;
-	color.current.s = 0;
-	color.current.v = 0;
-	color.current.ct = 0;
-	color.save();
+	colorStorage.current.h = 0;
+	colorStorage.current.s = 0;
+	colorStorage.current.v = 0;
+	colorStorage.current.ct = 0;
+	colorStorage.save();
 }
 
 void APPLedCtrl::testChannels() {
@@ -194,7 +209,6 @@ void APPLedCtrl::testChannels() {
 
 void APPLedCtrl::onAnimationFinished(RGBWWLedAnimation* anim) {
 	debugapp("APPLedCtrl::onAnimationFinished");
-	app.rgbwwctrl.colorSave();
 
 	if (anim->getName().length() > 0) {
 	    _stepFinishedAnimations[anim->getName()] = anim;

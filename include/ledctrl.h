@@ -92,14 +92,18 @@ private:
     void publishToMqtt();
     void publishFinishedStepAnimations();
     void publishColorStayedCmds();
+    void checkStableColorState();
 
-	ColorStorage color;
+	ColorStorage colorStorage;
 
     StepSync* _stepSync = nullptr;
 
     uint32_t _stepCounter = 0;
     HSVCT _prevColor;
+    uint32_t _numStableColorSteps = 0;
     ChannelOutput _prevOutput;
+
+    static const uint32_t _saveAfterStableColorMs = 2000;
 
     ETSTimer _ledTimer;
     uint32_t _timerInterval = RGBWW_MINTIMEDIFF_US;
