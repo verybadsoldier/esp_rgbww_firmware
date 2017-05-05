@@ -25,7 +25,6 @@
 #include <RGBWWCtrl.h>
 
 #define APP_SETTINGS_FILE ".cfg"
-#define CFG_VERSION "1"
 
 struct ApplicationSettings {
 	struct network {
@@ -38,8 +37,8 @@ struct ApplicationSettings {
 		};
 
 		struct mqtt {
-			bool enabled = true;
-			String server = "minion";
+			bool enabled = false;
+			String server = "mqtt.local";
 			int port = 1883;
 			String username;
 			String password;
@@ -58,15 +57,15 @@ struct ApplicationSettings {
 	};
 
     struct sync {
-        bool clock_master_enabled = true;
-        int clock_master_interval = 5;
+        bool clock_master_enabled = false;
+        int clock_master_interval = 30;
 
-        bool clock_slave_enabled = true;
-        String clock_slave_topic= "home/wz_lightLedTv/clock";
+        bool clock_slave_enabled = false;
+        String clock_slave_topic= "home/led1/clock";
 
         bool cmd_master_enabled = false;
-        bool cmd_slave_enabled = true;
-        String cmd_slave_topic = "home/wz_lightLedTv/command";
+        bool cmd_slave_enabled = false;
+        String cmd_slave_topic = "home/led1/command";
 
         bool color_master_enabled = false;
         int color_master_interval_ms = 0;
@@ -119,7 +118,6 @@ struct ApplicationSettings {
 	general general;
 	network network;
 	color color;
-	String configversion = CFG_VERSION;
     sync sync;
     events events;
 
@@ -145,11 +143,18 @@ struct ApplicationSettings {
 			network.ap.password = root["network"]["ap"]["password"].asString();
 
 			// mqtt
-			network.mqtt.enabled = root["network"]["mqtt"]["enabled"];
-			network.mqtt.server = root["network"]["mqtt"]["server"].asString();
-			network.mqtt.port = root["network"]["mqtt"]["port"];
-			network.mqtt.username = root["network"]["mqtt"]["username"].asString();
-			network.mqtt.password = root["network"]["mqtt"]["password"].asString();
+			if (root["network"]["mqtt"].success()) {
+                if (root["network"]["mqtt"]["enabled"].success())
+                    network.mqtt.enabled = root["network"]["mqtt"]["enabled"];
+                if (root["network"]["mqtt"]["server"].success())
+                    network.mqtt.server = root["network"]["mqtt"]["server"].asString();
+                if (root["network"]["mqtt"]["port"].success())
+                    network.mqtt.port = root["network"]["mqtt"]["port"];
+                if (root["network"]["mqtt"]["username"].success())
+                    network.mqtt.username = root["network"]["mqtt"]["username"].asString();
+                if (root["network"]["mqtt"]["password"].success())
+                    network.mqtt.password = root["network"]["mqtt"]["password"].asString();
+			}
 
 			// color
 			color.outputmode = root["color"]["outputmode"];
@@ -171,32 +176,54 @@ struct ApplicationSettings {
 			color.brightness.cw = root["color"]["brightness"]["cw"];
 
 			// general
-			general.api_password = root["general"]["api_password"].asString();
-			general.api_secured = root["general"]["api_secured"];
-			general.otaurl = root["general"]["otaurl"].asString();
-			general.device_name = root["general"]["device_name"].asString();
+			if (root["general"].success()) {
+                if (root["general"]["api_password"].success())
+                    general.api_password = root["general"]["api_password"].asString();
+                if (root["general"]["api_secured"].success())
+                    general.api_secured = root["general"]["api_secured"];
+                if (root["general"]["otaurl"].success())
+                    general.otaurl = root["general"]["otaurl"].asString();
+	            if (root["general"]["device_name"].success())
+	                general.device_name = root["general"]["device_name"].asString();
+			}
 
 			// sync
-            sync.clock_master_enabled = root["sync"]["clock_master_enabled"];
-            sync.clock_master_interval = root["sync"]["clock_master_interval"];
-            sync.clock_slave_topic = root["sync"]["clock_slave_topic"].asString();
-            sync.clock_slave_enabled = root["sync"]["clock_slave_enabled"];
+			if (root["sync"].success()) {
+			    if (root["sync"]["clock_master_enabled"].success())
+			        sync.clock_master_enabled = root["sync"]["clock_master_enabled"];
+                if (root["sync"]["clock_master_interval"].success())
+                    sync.clock_master_interval = root["sync"]["clock_master_interval"];
+                if (root["sync"]["clock_slave_topic"].success())
+                    sync.clock_slave_topic = root["sync"]["clock_slave_topic"].asString();
+                if (root["sync"]["clock_slave_enabled"].success())
+                    sync.clock_slave_enabled = root["sync"]["clock_slave_enabled"];
 
-            sync.cmd_master_enabled = root["sync"]["cmd_master_enabled"];
-            sync.cmd_slave_enabled = root["sync"]["cmd_slave_enabled"];
-            sync.cmd_slave_topic = root["sync"]["cmd_slave_topic"].asString();
+                if (root["sync"]["cmd_master_enabled"].success())
+                    sync.cmd_master_enabled = root["sync"]["cmd_master_enabled"];
+                if (root["sync"]["cmd_slave_enabled"].success())
+                    sync.cmd_slave_enabled = root["sync"]["cmd_slave_enabled"];
+                if (root["sync"]["cmd_slave_topic"].success())
+                    sync.cmd_slave_topic = root["sync"]["cmd_slave_topic"].asString();
 
-            sync.color_master_enabled = root["sync"]["color_master_enabled"];
-            sync.color_master_interval_ms = root["sync"]["color_master_interval_ms"];
-            sync.color_slave_enabled = root["sync"]["color_slave_enabled"];
-            sync.color_slave_topic = root["sync"]["color_slave_topic"].asString();
+                if (root["sync"]["color_master_enabled"].success())
+                    sync.color_master_enabled = root["sync"]["color_master_enabled"];
+                if (root["sync"]["color_master_interval_ms"].success())
+                    sync.color_master_interval_ms = root["sync"]["color_master_interval_ms"];
+                if (root["sync"]["color_slave_enabled"].success())
+                    sync.color_slave_enabled = root["sync"]["color_slave_enabled"];
+                if (root["sync"]["color_slave_topic"].success())
+                    sync.color_slave_topic = root["sync"]["color_slave_topic"].asString();
+			}
+
 
             // events
-            events.server_enabled = root["events"]["server_enabled"];
-            events.color_interval_ms = root["events"]["color_interval_ms"];
+			if (root["events"].success()) {
+			    if (root["events"]["server_enabled"].success())
+			        events.server_enabled = root["events"]["server_enabled"];
+			    if (root["events"]["color_interval_ms"].success())
+			        events.color_interval_ms = root["events"]["color_interval_ms"];
+			}
 
-			//TODO check if we can actually load the config
-			configversion = root["general"]["config_version"].asString();
 			if (print) {
 				root.prettyPrintTo(Serial);
 			}
@@ -204,6 +231,7 @@ struct ApplicationSettings {
 			delete[] jsonString;
 		}
 
+		sanitizeValues();
 	}
 
 	void save(bool print = false) {
@@ -280,7 +308,6 @@ struct ApplicationSettings {
 		g["api_secured"] = general.api_secured;
 		g["api_password"] = general.api_password;
 		g["otaurl"] = general.otaurl;
-		g["config_version"] = CFG_VERSION;
         g["device_name"] = general.device_name.c_str();
 
 		String rootString;
@@ -299,5 +326,9 @@ struct ApplicationSettings {
 		if (exist()) {
 			fileDelete(APP_SETTINGS_FILE);
 		}
+	}
+
+	void sanitizeValues() {
+	    sync.clock_master_interval = max(sync.clock_master_interval, 1);
 	}
 };

@@ -550,6 +550,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
             }
         }
 
+        app.cfg.sanitizeValues();
 
 		// update and save settings if we haven`t received any error until now
 		if (!error) {
@@ -695,7 +696,6 @@ void ApplicationWebserver::onInfo(HttpRequest &request, HttpResponse &response) 
 	data["firmware"] = fw_version;
 	data["git_version"] = fw_git_version;
 	data["git_date"] = fw_git_date;
-	data["config_version"] = app.cfg.configversion;
 	data["sming"] = SMING_VERSION;
 	JsonObject& rgbww = data.createNestedObject("rgbww");
 	rgbww["version"] = RGBWW_VERSION;
