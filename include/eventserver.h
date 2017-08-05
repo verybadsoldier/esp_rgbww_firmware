@@ -11,8 +11,7 @@ public:
 	void stop();
 	inline bool isRunning() { return _running; };
 
-	void publishCurrentHsv(const HSVCT& color);
-	void publishCurrentRaw(const ChannelOutput& raw);
+	void publishCurrentState(const ChannelOutput& raw, const HSVCT* pColor = NULL);
 	void publishTransitionFinished(const String& name);
 	void publishKeepAlive();
 	void publishClockSlaveStatus(uint32_t offset, uint32_t interval);
@@ -32,6 +31,5 @@ private:
 	Vector<TcpClient*> _clients;
 	int _nextId = 1;
 
-	HSVCT _lastHsv;
 	ChannelOutput _lastRaw;
 };

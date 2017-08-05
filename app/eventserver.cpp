@@ -44,24 +44,38 @@ void EventServer::onClientComplete(TcpClient& client, bool succesfull) {
 	_clients.removeElement(&client);
 }
 
-void EventServer::publishCurrentHsv(const HSVCT& color) {
-    if (color != _lastHsv) {
+void EventServer::publishCurrentState(const ChannelOutput& raw, const HSVCT* pHsv) {
+    if (raw == _lastRaw)
+        return;
+    _lastRaw = raw;
+
+    JsonRpcMessage msg("color_event");
+    JsonObject& root = msg.getParams();
+
+    root["mode"] = pHsv ? "hsv" : "raw";
+
+    JsonObject& rawJson = root.createNestedObject("raw");
+    rawJson["r"] = raw.r;
+    rawJson["g"] = raw.g;
+    rawJson["b"] = raw.b;
+    rawJson["ww"] = raw.ww;
+    rawJson["cw"] = raw.cw;
+
+    if (pHsv) {
         float h, s, v;
         int ct;
-        color.asRadian(h, s, v, ct);
+        pHsv->asRadian(h, s, v, ct);
 
-        JsonRpcMessage msg("hsv_event");
-        JsonObject& root = msg.getParams();
-        root["h"] = h;
-        root["s"] = s;
-        root["v"] = v;
-        root["ct"] = ct;
-
-        Serial.printf("EventServer::publishCurrentHsv\n");
-
-        sendToClients(msg);
+        JsonObject& hsvJson = root.createNestedObject("hsv");
+        hsvJson["h"] = h;
+        hsvJson["s"] = s;
+        hsvJson["v"] = v;
+        hsvJson["ct"] = ct;
     }
-    _lastHsv = color;
+
+    Serial.printf("EventServer::publishCurrentHsv\n");
+
+    sendToClients(msg);
 }
 
 void EventServer::publishClockSlaveStatus(uint32_t offset, uint32_t interval) {
@@ -72,23 +86,6 @@ void EventServer::publishClockSlaveStatus(uint32_t offset, uint32_t interval) {
     root["offset"] = offset;
     root["current_interval"] = interval;
     sendToClients(msg);
-}
-
-void EventServer::publishCurrentRaw(const ChannelOutput& raw) {
-    if (raw != _lastRaw) {
-        JsonRpcMessage msg("raw_event");
-        JsonObject& root = msg.getParams();
-        root["r"] = raw.r;
-        root["g"] = raw.g;
-        root["b"] = raw.b;
-        root["ww"] = raw.ww;
-        root["cw"] = raw.cw;
-
-        Serial.printf("EventServer::publishCurrentRaw\n");
-
-        sendToClients(msg);
-    }
-    _lastRaw = raw;
 }
 
 void EventServer::publishKeepAlive() {

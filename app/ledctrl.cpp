@@ -60,14 +60,11 @@ void APPLedCtrl::setup() {
 }
 
 void APPLedCtrl::publishToEventServer() {
-	switch(_mode) {
-	case ColorMode::Hsv:
-        app.eventserver.publishCurrentHsv(getCurrentColor());
-	    break;
-    case ColorMode::Raw:
-        app.eventserver.publishCurrentRaw(getCurrentOutput());
-        break;
-	}
+	HSVCT const * pHsv = NULL;
+	if (_mode == ColorMode::Hsv)
+		pHsv = &getCurrentColor();
+
+	app.eventserver.publishCurrentState(getCurrentOutput(), pHsv);
 }
 
 void APPLedCtrl::publishToMqtt() {
