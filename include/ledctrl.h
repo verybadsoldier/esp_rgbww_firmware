@@ -86,7 +86,7 @@ public:
 
 	void updateLed();
 	void onMasterClock(uint32_t steps);
-	virtual void onAnimationFinished(RGBWWLedAnimation* anim);
+	virtual void onAnimationFinished(const String& name);
 private:
     static void updateLedCb(void* pTimerArg);
     void publishToEventServer();
@@ -108,7 +108,7 @@ private:
 
     ETSTimer _ledTimer;
     uint32_t _timerInterval = RGBWW_MINTIMEDIFF_US;
-    HashMap<String, RGBWWLedAnimation*> _stepFinishedAnimations;
+    Vector<String> _stepFinishedAnimations;
 };
 
 

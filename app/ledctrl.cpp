@@ -136,9 +136,9 @@ void APPLedCtrl::checkStableColorState() {
 
 void APPLedCtrl::publishFinishedStepAnimations() {
     for(unsigned int i=0; i < _stepFinishedAnimations.count(); i++) {
-        RGBWWLedAnimation* pAnim = _stepFinishedAnimations.valueAt(i);
-        app.mqttclient.publishTransitionFinished(pAnim->getName());
-        app.eventserver.publishTransitionFinished(pAnim->getName());
+        const String& name = _stepFinishedAnimations[i];
+        app.mqttclient.publishTransitionFinished(name);
+        app.eventserver.publishTransitionFinished(name, false);
     }
     _stepFinishedAnimations.clear();
 }
@@ -203,11 +203,11 @@ void APPLedCtrl::testChannels() {
 //	fadeRAW(black, 1000, QueuePolicy::Back);
 }
 
-void APPLedCtrl::onAnimationFinished(RGBWWLedAnimation* anim) {
-	debugapp("APPLedCtrl::onAnimationFinished");
+void APPLedCtrl::onAnimationFinished(const String& name) {
+	debugapp("APPLedCtrl::onAnimationFinished: %s", name.c_str());
 
-	if (anim->getName().length() > 0) {
-	    _stepFinishedAnimations[anim->getName()] = anim;
+	if (name.length() > 0) {
+	    _stepFinishedAnimations.add(name);
 	}
 }
 
