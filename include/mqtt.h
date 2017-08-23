@@ -22,8 +22,7 @@ public:
     void publishClockInterval(uint32_t curInterval);
     void publishClockSlaveOffset(uint32_t offset);
     void publishCommand(const String& method, const JsonObject& params);
-    void publishTransitionFinished(const String& name);
-    void publishQueueFinished(const HashMap<CtrlChannel, int>& finishValues);
+    void publishTransitionFinished(const String& name, bool requeued);
 
 private:
 	void connectDelayed(int delay = 2000);

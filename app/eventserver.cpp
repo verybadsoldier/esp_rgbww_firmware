@@ -95,12 +95,13 @@ void EventServer::publishKeepAlive() {
     sendToClients(msg);
 }
 
-void EventServer::publishTransitionFinished(const String& name) {
+void EventServer::publishTransitionFinished(const String& name, bool requeued) {
     Serial.printf("EventServer::publishTransitionComplete: %s\n", name.c_str());
 
 	JsonRpcMessage msg("transition_finished");
 	JsonObject& root = msg.getParams();
 	root["name"] = name;
+	root["requeued"] = requeued;
 
 	sendToClients(msg);
 }

@@ -139,52 +139,50 @@ void AppMqttClient::publish(const String& topic, const String& data, bool retain
 }
 
 void AppMqttClient::publishCurrentRaw(const ChannelOutput& raw) {
-    if (raw != _lastRaw) {
-        Serial.printf("ApplicationMQTTClient::publishCurrentRaw\n");
+    if (raw == _lastRaw)
+        return;
+	Serial.printf("ApplicationMQTTClient::publishCurrentRaw\n");
 
-        DynamicJsonBuffer jsonBuffer(200);
-        JsonObject& root = jsonBuffer.createObject();
-        JsonObject& rawJson = root.createNestedObject("raw");
-        rawJson["r"] = raw.r;
-        rawJson["g"] = raw.g;
-        rawJson["b"] = raw.b;
-        rawJson["cw"] = raw.cw;
-        rawJson["ww"] = raw.ww;
+	DynamicJsonBuffer jsonBuffer(200);
+	JsonObject& root = jsonBuffer.createObject();
+	JsonObject& rawJson = root.createNestedObject("raw");
+	rawJson["r"] = raw.r;
+	rawJson["g"] = raw.g;
+	rawJson["b"] = raw.b;
+	rawJson["cw"] = raw.cw;
+	rawJson["ww"] = raw.ww;
 
-        root["t"] = 0;
-        root["cmd"] = "solid";
+	root["t"] = 0;
+	root["cmd"] = "solid";
 
-        String jsonMsg;
-        root.printTo(jsonMsg);
-        publish(buildTopic("color"), jsonMsg, true);
-    }
-    _lastRaw = raw;
+	String jsonMsg;
+	root.printTo(jsonMsg);
+	publish(buildTopic("color"), jsonMsg, true);
 }
 
 void AppMqttClient::publishCurrentHsv(const HSVCT& color) {
-    if (color != _lastHsv) {
-        Serial.printf("ApplicationMQTTClient::publishCurrentHsv\n");
+    if (color == _lastHsv)
+        return;
+	Serial.printf("ApplicationMQTTClient::publishCurrentHsv\n");
 
-        float h, s, v;
-        int ct;
-        color.asRadian(h, s, v, ct);
+	float h, s, v;
+	int ct;
+	color.asRadian(h, s, v, ct);
 
-        DynamicJsonBuffer jsonBuffer(200);
-        JsonObject& root = jsonBuffer.createObject();
-        JsonObject& hsv = root.createNestedObject("hsv");
-        hsv["h"] = h;
-        hsv["s"] = s;
-        hsv["v"] = v;
-        hsv["ct"] = ct;
+	DynamicJsonBuffer jsonBuffer(200);
+	JsonObject& root = jsonBuffer.createObject();
+	JsonObject& hsv = root.createNestedObject("hsv");
+	hsv["h"] = h;
+	hsv["s"] = s;
+	hsv["v"] = v;
+	hsv["ct"] = ct;
 
-        root["t"] = 0;
-        root["cmd"] = "solid";
+	root["t"] = 0;
+	root["cmd"] = "solid";
 
-        String jsonMsg;
-        root.printTo(jsonMsg);
-        publish(buildTopic("color"), jsonMsg, true);
-    }
-    _lastHsv = color;
+	String jsonMsg;
+	root.printTo(jsonMsg);
+	publish(buildTopic("color"), jsonMsg, true);
 }
 
 String AppMqttClient::buildTopic(const String& suffix) {
@@ -232,34 +230,15 @@ void AppMqttClient::publishCommand(const String& method, const JsonObject& param
     publish(topic, msgStr, false);
 }
 
-void AppMqttClient::publishTransitionFinished(const String& name) {
+void AppMqttClient::publishTransitionFinished(const String& name, bool requeued) {
     Serial.printf("ApplicationMQTTClient::publishTransitionFinished: %s\n", name.c_str());
-    String topic = buildTopic("transition_finished");
-    publish(topic, name, false);
-}
 
-void AppMqttClient::publishQueueFinished(const HashMap<CtrlChannel, int>& finishValues) {
-    DynamicJsonBuffer jsonBuffer;
-    JsonObject& root = jsonBuffer.createObject();
-    for(int i = 0; i < finishValues.count(); ++i) {
-        CtrlChannel ch = finishValues.keyAt(i);
-        const String& chStr = ctrlChannelToString(ch);
-        const int& val = finishValues.valueAt(i);
-        switch(ch) {
-        case CtrlChannel::Hue:
-            root[chStr] = (float(val) / float(RGBWW_CALC_HUEWHEELMAX)) * 360.0;
-            break;
-        case CtrlChannel::Sat:
-        case CtrlChannel::Val:
-            root[chStr] = (float(val) / float(RGBWW_CALC_MAXVAL)) * 100.0;
-            break;
-        case CtrlChannel::ColorTemp:
-            root[chStr] = val;
-            break;
-        }
-    }
+    DynamicJsonBuffer jsonBuffer(200);
+	JsonObject& root = jsonBuffer.createObject();
+	root["name"] = name;
+	root["requequed"] = requeued;
 
-    String jsonMsg;
-    root.printTo(jsonMsg);
-    publish(buildTopic("queue_finished"), jsonMsg, false);
+	String jsonMsg;
+	root.printTo(jsonMsg);
+	publish(buildTopic("transition_finished"), jsonMsg, true);
 }

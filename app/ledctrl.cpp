@@ -90,8 +90,6 @@ void APPLedCtrl::updateLed() {
     // arm next timer
     ets_timer_arm_new(&_ledTimer, _timerInterval, 0, 0);
 
-    _stepFinishedAnimations.clear();
-
 	const bool animFinished = show();
 
     ++_stepCounter;
@@ -136,9 +134,10 @@ void APPLedCtrl::checkStableColorState() {
 
 void APPLedCtrl::publishFinishedStepAnimations() {
     for(unsigned int i=0; i < _stepFinishedAnimations.count(); i++) {
-        const String& name = _stepFinishedAnimations[i];
-        app.mqttclient.publishTransitionFinished(name);
-        app.eventserver.publishTransitionFinished(name, false);
+        const String& name = _stepFinishedAnimations.keyAt(i);
+        const bool requeued = _stepFinishedAnimations.valueAt(i);
+        app.mqttclient.publishTransitionFinished(name, requeued);
+        app.eventserver.publishTransitionFinished(name, requeued);
     }
     _stepFinishedAnimations.clear();
 }
@@ -203,11 +202,11 @@ void APPLedCtrl::testChannels() {
 //	fadeRAW(black, 1000, QueuePolicy::Back);
 }
 
-void APPLedCtrl::onAnimationFinished(const String& name) {
+void APPLedCtrl::onAnimationFinished(const String& name, bool requeued) {
 	debugapp("APPLedCtrl::onAnimationFinished: %s", name.c_str());
 
 	if (name.length() > 0) {
-	    _stepFinishedAnimations.add(name);
+	    _stepFinishedAnimations[name] = requeued;
 	}
 }
 
