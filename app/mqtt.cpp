@@ -53,7 +53,7 @@ void AppMqttClient::connect() {
     if(!mqtt->setWill("last/will","The connection from this device is lost:(", 1, true)) {
         debugf("Unable to set the last will and testament. Most probably there is not enough memory on the device.");
     }
-    mqtt->connect(_id, "", "", false);
+    mqtt->connect(_id, app.cfg.network.mqtt.username, app.cfg.network.mqtt.password, false);
 #ifdef ENABLE_SSL
     mqtt->addSslOptions(SSL_SERVER_VERIFY_LATER);
 

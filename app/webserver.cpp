@@ -615,7 +615,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
 		mqtt["server"] = app.cfg.network.mqtt.server.c_str();
 		mqtt["port"] = app.cfg.network.mqtt.port;
 		mqtt["username"] = app.cfg.network.mqtt.username.c_str();
-		//mqtt["password"] = app.cfg.network.mqtt.password.c_str();
+		mqtt["password"] = app.cfg.network.mqtt.password.c_str();
         mqtt["topic_base"] = app.cfg.network.mqtt.topic_base.c_str();
 
 		JsonObject& color = json.createNestedObject("color");
