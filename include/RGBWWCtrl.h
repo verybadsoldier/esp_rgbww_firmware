@@ -39,12 +39,6 @@
 #define DEFAULT_COLORTEMP_WW 2700
 #define DEFAULT_COLORTEMP_CW 6000
 
-#define BLUEPIN 14
-#define GREENPIN 12
-#define REDPIN 13
-#define WWPIN 5
-#define CWPIN 4
-
 #define PWM_FREQUENCY 339
 #define RGBWW_USE_ESP_HWPWM
 

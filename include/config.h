@@ -108,11 +108,17 @@ struct ApplicationSettings {
 		int outputmode = 0;
 	};
 
+	enum chipType {
+		ChipDefault,
+		ChipEsp12e,
+	};
+
 	struct general {
 		bool api_secured = DEFAULT_API_SECURED;
 		String api_password = DEFAULT_API_PASSWORD;
 		String otaurl = DEFAULT_OTA_URL;
 		String device_name;
+		chipType chip_type = ApplicationSettings::ChipDefault;
 	};
 
 	general general;
@@ -185,6 +191,8 @@ struct ApplicationSettings {
                     general.otaurl = root["general"]["otaurl"].asString();
 	            if (root["general"]["device_name"].success())
 	                general.device_name = root["general"]["device_name"].asString();
+	            if (root["general"]["chip_type"].success())
+	                general.chip_type = static_cast<ApplicationSettings::chipType>(static_cast<int>(root["general"]["chip_type"]));
 			}
 
 			// sync
@@ -309,6 +317,7 @@ struct ApplicationSettings {
 		g["api_password"] = general.api_password;
 		g["otaurl"] = general.otaurl;
         g["device_name"] = general.device_name.c_str();
+        g["chip_type"] = (int)general.chip_type;
 
 		String rootString;
 		if (print) {

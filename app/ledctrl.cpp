@@ -32,7 +32,23 @@ void APPLedCtrl::init() {
 
     _stepSync = new ClockCatchUp3();
 
-	RGBWWLed::init(REDPIN, GREENPIN, BLUEPIN, WWPIN, CWPIN, PWM_FREQUENCY);
+    // default pin layout
+    int pinRed = 13;
+    int pinGreen = 12;
+    int pinBlue = 14;
+    int pinWw = 5;
+    int pinCw = 4;
+
+    switch(app.cfg.general.chip_type) {
+    case ApplicationSettings::ChipEsp12e:
+        pinWw = 4;
+        pinCw = 5;
+        break;
+    default:
+        break;
+    }
+
+	RGBWWLed::init(pinRed, pinGreen, pinBlue, pinWw, pinCw, PWM_FREQUENCY);
 
 	setup();
 	colorStorage.load();
