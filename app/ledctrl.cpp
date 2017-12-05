@@ -32,7 +32,7 @@ APPLedCtrl::~APPLedCtrl() {
     _stepSync = nullptr;
 }
 
-PinConfig APPLedCtrl::parsePinConfigString(const String& pinStr) {
+PinConfig APPLedCtrl::parsePinConfigString(String& pinStr) {
 	Vector<long> pins;
 	splitString(pinStr, ',', pins);
 

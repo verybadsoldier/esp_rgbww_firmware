@@ -98,7 +98,7 @@ public:
 	void onMasterClock(uint32_t steps);
 	virtual void onAnimationFinished(const String& name, bool requeued);
 private:
-	static PinConfig parsePinConfigString(const String& pinStr);
+	static PinConfig parsePinConfigString(String& pinStr);
     static void updateLedCb(void* pTimerArg);
     void publishToEventServer();
     void publishToMqtt();

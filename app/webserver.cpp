@@ -502,6 +502,9 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
             if (root["general"]["device_name"].success()) {
                 app.cfg.general.device_name = root["general"]["device_name"].asString();
             }
+            if (root["general"]["pin_config"].success()) {
+                app.cfg.general.pin_config = root["general"]["pin_config"].asString();
+            }
         }
 
         if (root["sync"].success()) {
@@ -668,6 +671,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
 
         JsonObject& general = json.createNestedObject("general");
         general["device_name"] = app.cfg.general.device_name;
+        general["pin_config"] = app.cfg.general.pin_config;
 
 		sendApiResponse(response, stream);
 	}
