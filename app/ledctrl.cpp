@@ -20,6 +20,10 @@
  *
  */
 #include <RGBWWCtrl.h>
+
+#include <Wiring/WVector.h>
+#include <Wiring/SplitString.h>
+
 #include <cstdlib>
 #include <algorithm>
 
@@ -27,28 +31,44 @@ APPLedCtrl::~APPLedCtrl() {
     delete _stepSync;
     _stepSync = nullptr;
 }
+
+PinConfig APPLedCtrl::parsePinConfigString(const String& pinStr) {
+	Vector<long> pins;
+	splitString(pinStr, ',', pins);
+
+	bool isCorrect = true;
+	// sanity check
+	for(int i=0; i < 5; ++i) {
+		if (pins[i] == 0l) {
+			isCorrect = false;
+		}
+	}
+
+	if (pins.size() != 5)
+		isCorrect = false;
+
+	if (!isCorrect) {
+		debugapp("APPLedCtrl::parsePinConfigString - Error in pin configuration - Using default pin values");
+		return PinConfig();
+	}
+
+	PinConfig cfg;
+	cfg.red       = static_cast<int>(pins[0]);
+	cfg.green     = static_cast<int>(pins[1]);
+	cfg.blue      = static_cast<int>(pins[2]);
+	cfg.warmwhite = static_cast<int>(pins[3]);
+	cfg.coldwhite = static_cast<int>(pins[4]);
+	return cfg;
+}
+
 void APPLedCtrl::init() {
 	debugapp("APPLedCtrl::init");
 
     _stepSync = new ClockCatchUp3();
 
-    // default pin layout
-    int pinRed = 13;
-    int pinGreen = 12;
-    int pinBlue = 14;
-    int pinWw = 5;
-    int pinCw = 4;
+    const PinConfig pins = APPLedCtrl::parsePinConfigString(app.cfg.general.pin_config);
 
-    switch(app.cfg.general.chip_type) {
-    case ApplicationSettings::ChipEsp12e:
-        pinWw = 4;
-        pinCw = 5;
-        break;
-    default:
-        break;
-    }
-
-	RGBWWLed::init(pinRed, pinGreen, pinBlue, pinWw, pinCw, PWM_FREQUENCY);
+	RGBWWLed::init(pins.red, pins.green, pins.blue, pins.warmwhite, pins.coldwhite, PWM_FREQUENCY);
 
 	setup();
 	colorStorage.load();

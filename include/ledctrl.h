@@ -27,6 +27,16 @@
 
 #define APP_COLOR_FILE ".color"
 
+struct PinConfig {
+	PinConfig() : red(13), green(12), blue(14), warmwhite(5), coldwhite(4) {}
+
+	int red;
+	int green;
+	int blue;
+	int warmwhite;
+	int coldwhite;
+};
+
 struct ColorStorage {
     HSVCT current;
 
@@ -88,6 +98,7 @@ public:
 	void onMasterClock(uint32_t steps);
 	virtual void onAnimationFinished(const String& name, bool requeued);
 private:
+	static PinConfig parsePinConfigString(const String& pinStr);
     static void updateLedCb(void* pTimerArg);
     void publishToEventServer();
     void publishToMqtt();
