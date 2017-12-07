@@ -611,6 +611,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
 
 		JsonObject& ap = net.createNestedObject("ap");
 		ap["secured"] = app.cfg.network.ap.secured;
+		ap["password"] = app.cfg.network.ap.password.c_str();
 		ap["ssid"] = app.cfg.network.ap.ssid.c_str();
 
 		JsonObject& mqtt = net.createNestedObject("mqtt");
