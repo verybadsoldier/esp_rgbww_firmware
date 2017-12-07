@@ -155,6 +155,8 @@ struct ApplicationSettings {
                     network.mqtt.username = root["network"]["mqtt"]["username"].asString();
                 if (root["network"]["mqtt"]["password"].success())
                     network.mqtt.password = root["network"]["mqtt"]["password"].asString();
+                if (root["network"]["mqtt"]["topic_base"].success())
+                    network.mqtt.topic_base = root["network"]["mqtt"]["topic_base"].asString();
 			}
 
 			// color
