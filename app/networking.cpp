@@ -88,9 +88,9 @@ void AppWIFI::init() {
 	}
 
 	// register callbacks
-	WifiEvents.onStationDisconnect(onStationDisconnectDelegate(&AppWIFI::_STADisconnect, this));
-	WifiEvents.onStationConnect(onStationConnectDelegate(&AppWIFI::_STAConnected, this));
-	WifiEvents.onStationGotIP(onStationGotIPDelegate(&AppWIFI::_STAGotIP, this));
+	WifiEvents.onStationDisconnect(StationDisconnectDelegate(&AppWIFI::_STADisconnect, this));
+	WifiEvents.onStationConnect(StationConnectDelegate(&AppWIFI::_STAConnected, this));
+	WifiEvents.onStationGotIP(StationGotIPDelegate(&AppWIFI::_STAGotIP, this));
 
 
 	if (WifiStation.getSSID() == "") {

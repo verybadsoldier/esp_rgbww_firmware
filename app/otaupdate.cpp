@@ -47,7 +47,7 @@ void ApplicationOTA::start(String romurl, String spiffsurl) {
 	} else {
 		otaUpdater->addItem(RBOOT_SPIFFS_1, spiffsurl);
 	}
-	otaUpdater->setCallback(otaUpdateDelegate(&ApplicationOTA::rBootCallback, this));
+	otaUpdater->setCallback(OtaUpdateDelegate(&ApplicationOTA::rBootCallback, this));
 	beforeOTA();
 	otaUpdater->start();
 }

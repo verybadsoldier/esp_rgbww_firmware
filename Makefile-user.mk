@@ -62,6 +62,7 @@ RBOOT_TWO_ROMS  = 0
 RBOOT_SPIFFS_0  = 0x100000
 RBOOT_SPIFFS_1  = 0x300000 
 
+ENABLE_CUSTOM_PWM = 0
 ## output file for first rom (.bin will be appended)
 #RBOOT_ROM_0     ?= rom0
 ## input linker file for first rom

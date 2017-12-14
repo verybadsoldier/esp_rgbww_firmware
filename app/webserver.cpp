@@ -24,11 +24,14 @@
 
 ApplicationWebserver::ApplicationWebserver() {
 	_running = false;
+
+	// workaround for bug in Sming 3.5.0
+	// https://github.com/SmingHub/Sming/issues/1236
+	setBodyParser("*", bodyToStringParser);
 }
 
 void ApplicationWebserver::init() {
 	setDefaultHandler(HttpPathDelegate(&ApplicationWebserver::onFile, this));
-	enableHeaderProcessing("Authorization");
 	addPath("/", HttpPathDelegate(&ApplicationWebserver::onIndex, this));
 	addPath("/webapp", HttpPathDelegate(&ApplicationWebserver::onWebapp, this));
 	addPath("/config", HttpPathDelegate(&ApplicationWebserver::onConfig, this));
@@ -81,7 +84,7 @@ bool ICACHE_FLASH_ATTR ApplicationWebserver::authenticated(HttpRequest &request,
 		return true;
 	}
 
-	response.authorizationRequired();
+	response.setStatusCode(401);
 	response.setHeader("WWW-Authenticate", "Basic realm=\"RGBWW Server\"");
 	response.setHeader("401 wrong credentials", "wrong credentials");
 	response.setHeader("Connection", "close");
@@ -105,7 +108,7 @@ String ApplicationWebserver::getApiCodeMsg(API_CODES code) {
 void ApplicationWebserver::sendApiResponse(HttpResponse &response, JsonObjectStream* stream, int code /* = 200 */) {
 	response.setAllowCrossDomainOrigin("*");
 	if (code != 200) {
-		response.badRequest();
+		response.setStatusCode(400);
 	}
 	response.sendJsonObject(stream);
 }
@@ -123,7 +126,6 @@ void ApplicationWebserver::sendApiCode(HttpResponse &response, API_CODES code, S
 		json["error"] = msg;
 		sendApiResponse(response, stream, 400);
 	}
-
 }
 
 void ApplicationWebserver::onFile(HttpRequest &request, HttpResponse &response) {
@@ -134,14 +136,14 @@ void ApplicationWebserver::onFile(HttpRequest &request, HttpResponse &response) 
 
 	if (app.ota.isProccessing()) {
 		response.setContentType("text/plain");
-		response.setStatusCode(503, "SERVICE UNAVAILABLE");
+		response.setStatusCode(503);
 		response.sendString("OTA in progress");
 		return;
 	}
 
 	if (!app.isFilesystemMounted()) {
 		response.setContentType("text/plain");
-		response.setStatusCode(500, "INTERNAL SERVER ERROR");
+		response.setStatusCode(500);
 		response.sendString("No filesystem mounted");
 		return;
 	}
@@ -173,7 +175,7 @@ void ApplicationWebserver::onIndex(HttpRequest &request, HttpResponse &response)
 
 	if (app.ota.isProccessing()) {
 		response.setContentType("text/plain");
-		response.setStatusCode(503, "SERVICE UNAVAILABLE");
+		response.setStatusCode(503);
 		response.sendString("OTA in progress");
 		return;
 	}
@@ -194,19 +196,19 @@ void ApplicationWebserver::onWebapp(HttpRequest &request, HttpResponse &response
 
 	if (app.ota.isProccessing()) {
 		response.setContentType("text/plain");
-		response.setStatusCode(503, "SERVICE UNAVAILABLE");
+		response.setStatusCode(503);
 		response.sendString("OTA in progress");
 		return;
 	}
 
-	if (request.getRequestMethod() != RequestMethod::GET) {
-		response.badRequest();
+	if (request.method != HTTP_GET) {
+	    response.setStatusCode(400);
 		return;
 	}
 
 	if (!app.isFilesystemMounted()) {
 		response.setContentType("text/plain");
-		response.setStatusCode(500, "INTERNAL SERVER ERROR");
+		response.setStatusCode(500);
 		response.sendString("No filesystem mounted");
 		return;
 	}
@@ -230,13 +232,14 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
 		return;
 	}
 
-	if (request.getRequestMethod() != RequestMethod::POST && request.getRequestMethod() != RequestMethod::GET) {
+	if (request.method != HTTP_POST && request.method != HTTP_GET) {
 		sendApiCode(response, API_CODES::API_BAD_REQUEST);
 		return;
 	}
 
-	if (request.getRequestMethod() == RequestMethod::POST) {
-		if (request.getBody() == NULL) {
+	if (request.method == HTTP_POST) {
+		String body = request.getBody();
+		if (body == NULL) {
 
 			sendApiCode(response, API_CODES::API_BAD_REQUEST);
 			return;
@@ -246,7 +249,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
 		bool error = false;
 		String error_msg = getApiCodeMsg(API_CODES::API_BAD_REQUEST);
 		DynamicJsonBuffer jsonBuffer;
-		JsonObject& root = jsonBuffer.parseObject(request.getBody());
+		JsonObject& root = jsonBuffer.parseObject(body);
 
 		// remove comment for debugging
 		//root.prettyPrintTo(Serial);
@@ -689,7 +692,7 @@ void ApplicationWebserver::onInfo(HttpRequest &request, HttpResponse &response) 
 		return;
 	}
 
-	if (request.getRequestMethod() != RequestMethod::GET) {
+	if (request.method != HTTP_GET) {
 		sendApiCode(response, API_CODES::API_BAD_REQUEST);
 		return;
 	}
@@ -756,6 +759,7 @@ void ApplicationWebserver::onColorPost(HttpRequest &request, HttpResponse &respo
 	    sendApiCode(response, API_CODES::API_BAD_REQUEST, msg);
 	}
 	else {
+
 	    sendApiCode(response, API_CODES::API_SUCCESS);
 	}
 }
@@ -770,13 +774,13 @@ void ApplicationWebserver::onColor(HttpRequest &request, HttpResponse &response)
 		return;
 	}
 
-	if (request.getRequestMethod() != RequestMethod::POST && request.getRequestMethod() != RequestMethod::GET) {
+	if (request.method != HTTP_POST && request.method != HTTP_GET) {
 		sendApiCode(response, API_CODES::API_BAD_REQUEST);
 		return;
 	}
 
 	bool error = false;
-	if (request.getRequestMethod() == RequestMethod::POST) {
+	if (request.method == HTTP_POST) {
 		ApplicationWebserver::onColorPost(request, response);
 	} else {
 		ApplicationWebserver::onColorGet(request, response);
@@ -795,13 +799,13 @@ void ApplicationWebserver::onAnimation(HttpRequest &request, HttpResponse &respo
 		return;
 	}
 
-	if (request.getRequestMethod() != RequestMethod::POST && request.getRequestMethod() != RequestMethod::GET) {
+	if (request.method != HTTP_POST && request.method != HTTP_GET) {
 		sendApiCode(response, API_CODES::API_BAD_REQUEST);
 		return;
 	}
 
 	bool error = false;
-	if (request.getRequestMethod() == RequestMethod::POST) {
+	if (request.method == HTTP_POST) {
 		String body = request.getBody();
 		if (body == NULL || body.length() > 128) {
 			sendApiCode(response, API_CODES::API_BAD_REQUEST);
@@ -834,7 +838,7 @@ void ApplicationWebserver::onNetworks(HttpRequest &request, HttpResponse &respon
 		return;
 	}
 
-	if (request.getRequestMethod() != RequestMethod::GET) {
+	if (request.method != HTTP_GET) {
 		sendApiCode(response, API_CODES::API_BAD_REQUEST);
 		return;
 	}
@@ -877,7 +881,7 @@ void ApplicationWebserver::onScanNetworks(HttpRequest &request, HttpResponse &re
 		return;
 	}
 
-	if (request.getRequestMethod() != RequestMethod::POST) {
+	if (request.method != HTTP_POST) {
 		sendApiCode(response, API_CODES::API_BAD_REQUEST);
 		return;
 	}
@@ -899,12 +903,12 @@ void ApplicationWebserver::onConnect(HttpRequest &request, HttpResponse &respons
 		return;
 	}
 
-	if (request.getRequestMethod() != RequestMethod::POST && request.getRequestMethod() != RequestMethod::GET) {
+	if (request.method != HTTP_POST && request.method != HTTP_GET) {
 		sendApiCode(response, API_CODES::API_BAD_REQUEST);
 		return;
 	}
 
-	if (request.getRequestMethod() == RequestMethod::POST) {
+	if (request.method == HTTP_POST) {
 
 		String body = request.getBody();
 		if (body == NULL) {
@@ -965,7 +969,7 @@ void ApplicationWebserver::onSystemReq(HttpRequest &request, HttpResponse &respo
 		return;
 	}
 
-	if (request.getRequestMethod() != RequestMethod::POST) {
+	if (request.method != HTTP_POST) {
 		sendApiCode(response, API_CODES::API_BAD_REQUEST);
 		return;
 	}
@@ -1009,29 +1013,29 @@ void ApplicationWebserver::onSystemReq(HttpRequest &request, HttpResponse &respo
 }
 
 void ApplicationWebserver::onUpdate(HttpRequest &request, HttpResponse &response) {
-
 	if (!authenticated(request, response)) {
 		return;
 	}
 
-	if (request.getRequestMethod() != RequestMethod::POST
-			&& request.getRequestMethod() != RequestMethod::GET) {
+	if (request.method != HTTP_POST
+			&& request.method != HTTP_GET) {
 		sendApiCode(response, API_CODES::API_BAD_REQUEST);
 		return;
 	}
 
-	if (request.getRequestMethod() == RequestMethod::POST) {
+	if (request.method == HTTP_POST) {
 		if (app.ota.isProccessing()) {
 			sendApiCode(response, API_CODES::API_UPDATE_IN_PROGRESS);
 			return;
 		}
 
-		if (request.getBody() == NULL) {
+		String body = request.getBody();
+		if (body == NULL) {
 			sendApiCode(response, API_CODES::API_BAD_REQUEST);
 			return;
 		}
 		DynamicJsonBuffer jsonBuffer;
-		JsonObject& root = jsonBuffer.parseObject(request.getBody());
+		JsonObject& root = jsonBuffer.parseObject(body);
 		String romurl, spiffsurl;
 		bool error = false;
 
@@ -1065,7 +1069,7 @@ void ApplicationWebserver::onUpdate(HttpRequest &request, HttpResponse &response
 
 //simple call-response to check if we can reach server
 void ApplicationWebserver::onPing(HttpRequest &request, HttpResponse &response) {
-	if (request.getRequestMethod() != RequestMethod::GET) {
+	if (request.method != HTTP_GET) {
 		sendApiCode(response, API_CODES::API_BAD_REQUEST);
 		return;
 	}
@@ -1076,7 +1080,7 @@ void ApplicationWebserver::onPing(HttpRequest &request, HttpResponse &response) 
 }
 
 void ApplicationWebserver::onStop(HttpRequest &request, HttpResponse &response) {
-	if (request.getRequestMethod() != RequestMethod::POST) {
+	if (request.method != HTTP_POST) {
 		sendApiCode(response, API_CODES::API_BAD_REQUEST);
 		return;
 	}
@@ -1091,7 +1095,7 @@ void ApplicationWebserver::onStop(HttpRequest &request, HttpResponse &response) 
 }
 
 void ApplicationWebserver::onSkip(HttpRequest &request, HttpResponse &response) {
-	if (request.getRequestMethod() != RequestMethod::POST) {
+	if (request.method != HTTP_POST) {
 		sendApiCode(response, API_CODES::API_BAD_REQUEST);
 		return;
 	}
@@ -1106,7 +1110,7 @@ void ApplicationWebserver::onSkip(HttpRequest &request, HttpResponse &response) 
 }
 
 void ApplicationWebserver::onPause(HttpRequest &request, HttpResponse &response) {
-	if (request.getRequestMethod() != RequestMethod::POST) {
+	if (request.method != HTTP_POST) {
 		sendApiCode(response, API_CODES::API_BAD_REQUEST);
 		return;
 	}
@@ -1121,7 +1125,7 @@ void ApplicationWebserver::onPause(HttpRequest &request, HttpResponse &response)
 }
 
 void ApplicationWebserver::onContinue(HttpRequest &request, HttpResponse &response) {
-	if (request.getRequestMethod() != RequestMethod::POST) {
+	if (request.method != HTTP_POST) {
 		sendApiCode(response, API_CODES::API_BAD_REQUEST);
 		return;
 	}
@@ -1136,7 +1140,7 @@ void ApplicationWebserver::onContinue(HttpRequest &request, HttpResponse &respon
 }
 
 void ApplicationWebserver::onBlink(HttpRequest &request, HttpResponse &response) {
-	if (request.getRequestMethod() != RequestMethod::POST) {
+	if (request.method != HTTP_POST) {
 		sendApiCode(response, API_CODES::API_BAD_REQUEST);
 		return;
 	}
@@ -1156,6 +1160,6 @@ void ApplicationWebserver::generate204(HttpRequest &request, HttpResponse &respo
 	response.setHeader("Expires", "-1");
 	response.setHeader("Content-Lenght", "0");
 	response.setContentType("text/plain");
-	response.setStatusCode(204, "NO CONTENT");
+	response.setStatusCode(204);
 }
 
