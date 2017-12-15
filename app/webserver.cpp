@@ -84,7 +84,7 @@ bool ICACHE_FLASH_ATTR ApplicationWebserver::authenticated(HttpRequest &request,
 		return true;
 	}
 
-	response.setStatusCode(401);
+	response.code = 401;
 	response.setHeader("WWW-Authenticate", "Basic realm=\"RGBWW Server\"");
 	response.setHeader("401 wrong credentials", "wrong credentials");
 	response.setHeader("Connection", "close");
@@ -108,7 +108,7 @@ String ApplicationWebserver::getApiCodeMsg(API_CODES code) {
 void ApplicationWebserver::sendApiResponse(HttpResponse &response, JsonObjectStream* stream, int code /* = 200 */) {
 	response.setAllowCrossDomainOrigin("*");
 	if (code != 200) {
-		response.setStatusCode(400);
+		response.code = 400;
 	}
 	response.sendJsonObject(stream);
 }
@@ -136,14 +136,14 @@ void ApplicationWebserver::onFile(HttpRequest &request, HttpResponse &response) 
 
 	if (app.ota.isProccessing()) {
 		response.setContentType("text/plain");
-		response.setStatusCode(503);
+		response.code = 503;
 		response.sendString("OTA in progress");
 		return;
 	}
 
 	if (!app.isFilesystemMounted()) {
 		response.setContentType("text/plain");
-		response.setStatusCode(500);
+		response.code = 500;
 		response.sendString("No filesystem mounted");
 		return;
 	}
@@ -175,7 +175,7 @@ void ApplicationWebserver::onIndex(HttpRequest &request, HttpResponse &response)
 
 	if (app.ota.isProccessing()) {
 		response.setContentType("text/plain");
-		response.setStatusCode(503);
+		response.code = 503;
 		response.sendString("OTA in progress");
 		return;
 	}
@@ -196,19 +196,19 @@ void ApplicationWebserver::onWebapp(HttpRequest &request, HttpResponse &response
 
 	if (app.ota.isProccessing()) {
 		response.setContentType("text/plain");
-		response.setStatusCode(503);
+		response.code = 503;
 		response.sendString("OTA in progress");
 		return;
 	}
 
 	if (request.method != HTTP_GET) {
-	    response.setStatusCode(400);
+		response.code = 400;
 		return;
 	}
 
 	if (!app.isFilesystemMounted()) {
 		response.setContentType("text/plain");
-		response.setStatusCode(500);
+		response.code = 500;
 		response.sendString("No filesystem mounted");
 		return;
 	}
@@ -1160,6 +1160,6 @@ void ApplicationWebserver::generate204(HttpRequest &request, HttpResponse &respo
 	response.setHeader("Expires", "-1");
 	response.setHeader("Content-Lenght", "0");
 	response.setContentType("text/plain");
-	response.setStatusCode(204);
+	response.code = 204;
 }
 
