@@ -1,0 +1,3 @@
+[submodule "Sming"]
+	path = Sming
+	url = https://github.com/verybadsoldier/Sming.git
