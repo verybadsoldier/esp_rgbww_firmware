@@ -9,7 +9,6 @@ public:
 	virtual ~EventServer();
 	void start();
 	void stop();
-	inline bool isRunning() { return _running; };
 
 	void publishCurrentState(const ChannelOutput& raw, const HSVCT* pColor = NULL);
 	void publishTransitionFinished(const String& name, bool requeued = false);
@@ -26,9 +25,7 @@ private:
 	static const int _connectionTimeout = 120;
 	static const int _keepAliveInterval = 60;
 
-    bool _running = false;
     Timer _keepAliveTimer;
-	Vector<TcpClient*> _clients;
 	int _nextId = 1;
 
 	ChannelOutput _lastRaw;

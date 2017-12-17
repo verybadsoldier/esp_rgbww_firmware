@@ -12,9 +12,6 @@ EventServer::~EventServer() {
 }
 
 void EventServer::start() {
-	if (_running)
-		return;
-
 	Serial.printf("Starting event server\n");
 	setTimeOut(_connectionTimeout);
 	if (not listen(_tcpPort)) {
@@ -22,26 +19,21 @@ void EventServer::start() {
 	}
 
 	_keepAliveTimer.initializeMs(_keepAliveInterval * 1000, TimerDelegate(&EventServer::publishKeepAlive, this)).start();
-
-	_running = true;
 }
 
 void EventServer::stop() {
-	if (not _running)
+	if (not active)
 		return;
 
-	close();
-	_running = false;
+	shutdown();
 }
 
 void EventServer::onClient(TcpClient *client) {
 	Serial.printf("Client connected from: %s\n", client->getRemoteIp().toString().c_str());
-	_clients.addElement(client);
 }
 
 void EventServer::onClientComplete(TcpClient& client, bool succesfull) {
 	Serial.printf("Client removed: %x\n", &client);
-	_clients.removeElement(&client);
 }
 
 void EventServer::publishCurrentState(const ChannelOutput& raw, const HSVCT* pHsv) {
@@ -110,9 +102,12 @@ void EventServer::sendToClients(JsonRpcMessage& rpcMsg) {
 	//Serial.printf("EventServer: sendToClient: %x, Vector: %x Tests: %d\n", _client, _clients.elementAt(0), _tests[0]);
     rpcMsg.setId(_nextId++);
 
-	for(int i=0; i < _clients.size(); ++i) {
-		TcpClient* pClient = (TcpClient*)_clients[i];
+	String jsonStr;
+	rpcMsg.getRoot().printTo(jsonStr);
+
+	for(int i=0; i < connections.size(); ++i) {
+		TcpClient* pClient = (TcpClient*)connections[i];
 		Serial.printf("\tsendToClients: %x\n", pClient);
-		pClient->write(&rpcMsg.getStream());
+		pClient->sendString(jsonStr);
 	}
 }

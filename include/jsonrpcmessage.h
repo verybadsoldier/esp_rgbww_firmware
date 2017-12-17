@@ -14,8 +14,6 @@ public:
     JsonObject& getRoot();
 
 private:
-    const String _data;
-
     JsonObjectStream _stream;
     JsonObject* _pParams = nullptr;
 };
