@@ -185,7 +185,7 @@ void ApplicationWebserver::onIndex(HttpRequest &request, HttpResponse &response)
 	} else {
 		response.redirect("http://" + WifiStation.getIP().toString() + "/webapp");
 	}
-
+	response.code = 308;
 }
 
 void ApplicationWebserver::onWebapp(HttpRequest &request, HttpResponse &response) {
