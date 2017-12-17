@@ -29,10 +29,12 @@ void EventServer::stop() {
 }
 
 void EventServer::onClient(TcpClient *client) {
+	TcpServer::onClient(client);
 	Serial.printf("Client connected from: %s\n", client->getRemoteIp().toString().c_str());
 }
 
 void EventServer::onClientComplete(TcpClient& client, bool succesfull) {
+	TcpServer::onClientComplete(client, succesfull);
 	Serial.printf("Client removed: %x\n", &client);
 }
 

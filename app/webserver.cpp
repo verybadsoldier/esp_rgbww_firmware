@@ -705,9 +705,12 @@ void ApplicationWebserver::onInfo(HttpRequest &request, HttpResponse &response) 
 	data["git_version"] = fw_git_version;
 	data["git_date"] = fw_git_date;
 	data["sming"] = SMING_VERSION;
+	data["event_num_clients"] = app.eventserver.activeClients;
+
 	JsonObject& rgbww = data.createNestedObject("rgbww");
 	rgbww["version"] = RGBWW_VERSION;
 	rgbww["queuesize"] = RGBWW_ANIMATIONQSIZE;
+
 	JsonObject& con = data.createNestedObject("connection");
 	con["connected"] = WifiStation.isConnected();
 	con["ssid"] = WifiStation.getSSID();
