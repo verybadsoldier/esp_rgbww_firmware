@@ -25,6 +25,7 @@
 #include <RGBWWCtrl.h>
 
 #define APP_SETTINGS_FILE ".cfg"
+#define APP_SETTINGS_VERSION 1
 
 struct ApplicationSettings {
 	struct network {
@@ -315,6 +316,7 @@ struct ApplicationSettings {
 		g["otaurl"] = general.otaurl;
         g["device_name"] = general.device_name.c_str();
         g["pin_config"] = general.pin_config.c_str();
+        g["settings_ver"] = APP_SETTINGS_VERSION;
 
 		String rootString;
 		if (print) {
