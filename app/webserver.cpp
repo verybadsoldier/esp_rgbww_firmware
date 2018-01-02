@@ -25,6 +25,12 @@
 ApplicationWebserver::ApplicationWebserver() {
 	_running = false;
 
+	// keep some heap space free
+	// value is a good guess and tested to not crash when issuing multiple parallel requests
+	HttpServerSettings settings;
+	settings.minHeapSize = 10000;
+	configure(settings);
+
 	// workaround for bug in Sming 3.5.0
 	// https://github.com/SmingHub/Sming/issues/1236
 	setBodyParser("*", bodyToStringParser);
