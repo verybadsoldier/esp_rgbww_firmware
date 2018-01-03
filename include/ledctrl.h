@@ -59,7 +59,7 @@ struct ColorStorage {
     }
 
     void save(bool print = false) {
-        debugapp("Saving ColorStorage to file...");
+        debug_d("Saving ColorStorage to file...");
         DynamicJsonBuffer jsonBuffer;
         JsonObject& root = jsonBuffer.createObject();
         root["h"] = current.h;
