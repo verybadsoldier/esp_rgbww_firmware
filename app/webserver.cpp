@@ -164,7 +164,7 @@ void ApplicationWebserver::onFile(HttpRequest &request, HttpResponse &response) 
 
 	if (!fileExist(file) && !fileExist(file + ".gz") && WifiAccessPoint.isEnabled()) {
 		//if accesspoint is active and we couldn`t find the file - redirect to index
-		debugapp("ApplicationWebserver::onFile redirecting");
+		debug_d("ApplicationWebserver::onFile redirecting");
 		response.redirect("http://" + WifiAccessPoint.getIP().toString() + "/webapp");
 	} else {
 		response.setCache(86400, true); // It's important to use cache for better performance.
@@ -569,7 +569,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
 			if (ip_updated) {
 				if (root["restart"].success()) {
 					if (root["restart"] == true) {
-						debugapp("ApplicationWebserver::onConfig ip settings changed - rebooting");
+						debug_i("ApplicationWebserver::onConfig ip settings changed - rebooting");
 						app.delayedCMD("restart", 3000); // wait 3s to first send response
 						//json["data"] = "restart";
 
@@ -579,7 +579,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
 			if (ap_updated) {
 				if (root["restart"].success()) {
 					if (root["restart"] == true && WifiAccessPoint.isEnabled()) {
-						debugapp("ApplicationWebserver::onConfig wifiap settings changed - rebooting");
+						debug_i("ApplicationWebserver::onConfig wifiap settings changed - rebooting");
 						app.delayedCMD("restart", 3000); // wait 3s to first send response
 						//json["data"] = "restart";
 
@@ -587,7 +587,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
 				}
 			}
 			if (color_updated) {
-				debugapp("ApplicationWebserver::onConfig color settings changed - refreshing");
+				debug_d("ApplicationWebserver::onConfig color settings changed - refreshing");
 
 				//refresh settings
 				app.rgbwwctrl.setup();
@@ -935,7 +935,7 @@ void ApplicationWebserver::onConnect(HttpRequest &request, HttpResponse &respons
 			if (root["password"].success()) {
 				password = root["password"].asString();
 			}
-			debugapp("ssid %s - pass %s", ssid.c_str(), password.c_str());
+			debug_d("ssid %s - pass %s", ssid.c_str(), password.c_str());
 			app.network.connect(ssid, password, true);
 			sendApiCode(response, API_CODES::API_SUCCESS);
 			return;

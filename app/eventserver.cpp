@@ -12,10 +12,10 @@ EventServer::~EventServer() {
 }
 
 void EventServer::start() {
-	Serial.printf("Starting event server\n");
+	debug_i("Starting event server\n");
 	setTimeOut(_connectionTimeout);
 	if (not listen(_tcpPort)) {
-	    Serial.printf("EventServer failed to open listening port!");
+		debug_e("EventServer failed to open listening port!");
 	}
 
 	_keepAliveTimer.initializeMs(_keepAliveInterval * 1000, TimerDelegate(&EventServer::publishKeepAlive, this)).start();
@@ -30,12 +30,12 @@ void EventServer::stop() {
 
 void EventServer::onClient(TcpClient *client) {
 	TcpServer::onClient(client);
-	Serial.printf("Client connected from: %s\n", client->getRemoteIp().toString().c_str());
+	debug_d("Client connected from: %s\n", client->getRemoteIp().toString().c_str());
 }
 
 void EventServer::onClientComplete(TcpClient& client, bool succesfull) {
 	TcpServer::onClientComplete(client, succesfull);
-	Serial.printf("Client removed: %x\n", &client);
+	debug_d("Client removed: %x\n", &client);
 }
 
 void EventServer::publishCurrentState(const ChannelOutput& raw, const HSVCT* pHsv) {
@@ -67,13 +67,13 @@ void EventServer::publishCurrentState(const ChannelOutput& raw, const HSVCT* pHs
         hsvJson["ct"] = ct;
     }
 
-    Serial.printf("EventServer::publishCurrentHsv\n");
+    debug_d("EventServer::publishCurrentHsv\n");
 
     sendToClients(msg);
 }
 
 void EventServer::publishClockSlaveStatus(uint32_t offset, uint32_t interval) {
-    Serial.printf("EventServer::publishClockSlaveStatus: offset: %d | interval :%d\n", offset, interval);
+    debug_d("EventServer::publishClockSlaveStatus: offset: %d | interval :%d\n", offset, interval);
 
     JsonRpcMessage msg("clock_slave_status");
     JsonObject& root = msg.getParams();
@@ -83,14 +83,14 @@ void EventServer::publishClockSlaveStatus(uint32_t offset, uint32_t interval) {
 }
 
 void EventServer::publishKeepAlive() {
-    Serial.printf("EventServer::publishKeepAlive\n");
+	debug_d("EventServer::publishKeepAlive\n");
 
     JsonRpcMessage msg("keep_alive");
     sendToClients(msg);
 }
 
 void EventServer::publishTransitionFinished(const String& name, bool requeued) {
-    Serial.printf("EventServer::publishTransitionComplete: %s\n", name.c_str());
+	debug_d("EventServer::publishTransitionComplete: %s\n", name.c_str());
 
 	JsonRpcMessage msg("transition_finished");
 	JsonObject& root = msg.getParams();
@@ -109,7 +109,6 @@ void EventServer::sendToClients(JsonRpcMessage& rpcMsg) {
 
 	for(int i=0; i < connections.size(); ++i) {
 		TcpClient* pClient = (TcpClient*)connections[i];
-		Serial.printf("\tsendToClients: %x\n", pClient);
 		pClient->sendString(jsonStr);
 	}
 }

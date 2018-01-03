@@ -22,8 +22,8 @@
 #include <RGBWWCtrl.h>
 
 void ApplicationOTA::start(String romurl, String spiffsurl) {
-	debugapp("ApplicationOTA::start");
-	Serial.println("Starting OTA ...");
+	debug_i("ApplicationOTA::start");
+	debug_i("Starting OTA ...");
 	reset();
 	status = OTASTATUS::OTA_PROCESSING;
 	if (otaUpdater) {
@@ -53,21 +53,21 @@ void ApplicationOTA::start(String romurl, String spiffsurl) {
 }
 
 void ApplicationOTA::reset() {
-	debugapp("ApplicationOTA::reset");
+	debug_i("ApplicationOTA::reset");
 	status = OTASTATUS::OTA_NOT_UPDATING;
 	if (otaUpdater)
 		delete otaUpdater;
 }
 
 void ApplicationOTA::beforeOTA() {
-	debugapp("ApplicationOTA::beforeOTA");
+	debug_i("ApplicationOTA::beforeOTA");
 
 	// save failed to old rom
 	saveStatus(OTASTATUS::OTA_FAILED);
 }
 
 void ApplicationOTA::afterOTA() {
-	debugapp("ApplicationOTA::afterOTA");
+	debug_i("ApplicationOTA::afterOTA");
 	if (status == OTASTATUS::OTA_SUCCESS_REBOOT) {
 
 		// unmount old Filesystem - mount new filesystem
@@ -89,17 +89,17 @@ void ApplicationOTA::afterOTA() {
 }
 
 void ApplicationOTA::rBootCallback(rBootHttpUpdate& rbHttpUp, bool result) {
-	debugapp("ApplicationOTA::rBootCallback");
+	debug_i("ApplicationOTA::rBootCallback");
 	if (result == true) {
 
 		// set new temporary boot rom
-		debugapp("ApplicationOTA::rBootCallback temp boot %i", rom_slot);
+		debug_i("ApplicationOTA::rBootCallback temp boot %i", rom_slot);
 		if (rboot_set_temp_rom(rom_slot)) {
 			status = OTASTATUS::OTA_SUCCESS_REBOOT;
-			Serial.println("OTA successful");
+			debug_i("OTA successful");
 		} else {
 			status = OTASTATUS::OTA_FAILED;
-			Serial.println("OTA failed - could not change the rom");
+			debug_i("OTA failed - could not change the rom");
 		}
 		// restart after 10s - gives clients enough time
 		// to fetch status and init restart themselves
@@ -107,24 +107,24 @@ void ApplicationOTA::rBootCallback(rBootHttpUpdate& rbHttpUp, bool result) {
 		// app.delayedCMD("restart", 10000);
 	} else {
 		status = OTASTATUS::OTA_FAILED;
-		Serial.println("OTA failed");
+		debug_i("OTA failed");
 	}
 	afterOTA();
 
 }
 
 void ApplicationOTA::checkAtBoot() {
-	debugapp("ApplicationOTA::checkAtBoot");
+	debug_i("ApplicationOTA::checkAtBoot");
 	status = loadStatus();
 	if (app.isTempBoot()) {
-		debugapp("ApplicationOTA::checkAtBoot permanently enabling rom %i", app.getRomSlot());
+		debug_i("ApplicationOTA::checkAtBoot permanently enabling rom %i", app.getRomSlot());
 		rboot_set_current_rom(app.getRomSlot());
 		saveStatus(OTASTATUS::OTA_NOT_UPDATING);
 	}
 }
 
 void ApplicationOTA::saveStatus(OTASTATUS status) {
-	debugapp("ApplicationOTA::saveStatus");
+	debug_i("ApplicationOTA::saveStatus");
 	DynamicJsonBuffer jsonBuffer;
 	JsonObject& root = jsonBuffer.createObject();
 	root["status"] = int(status);
@@ -134,7 +134,7 @@ void ApplicationOTA::saveStatus(OTASTATUS status) {
 }
 
 OTASTATUS ApplicationOTA::loadStatus() {
-	debugapp("ApplicationOTA::loadStatus");
+	debug_i("ApplicationOTA::loadStatus");
 	if (fileExist(OTA_STATUS_FILE)) {
 		DynamicJsonBuffer jsonBuffer;
 		int size = fileGetSize(OTA_STATUS_FILE);

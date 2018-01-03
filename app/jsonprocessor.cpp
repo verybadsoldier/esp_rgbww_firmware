@@ -2,7 +2,7 @@
 
 
 bool JsonProcessor::onColor(const String& json, String& msg, bool relay) {
-    Serial.printf("JsonProcessor::onColor: %s\n", json.c_str());
+    debug_e("JsonProcessor::onColor: %s\n", json.c_str());
     DynamicJsonBuffer jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(json);
     return onColor(root, msg, relay);
@@ -145,7 +145,6 @@ bool JsonProcessor::onBlink(JsonObject& root, String& msg, bool relay) {
 }
 
 bool JsonProcessor::onSingleColorCommand(JsonObject& root, String& errorMsg) {
-    Serial.printf("onSingleColorCommand\n");
     RequestParameters params;
     parseRequestParams(root, params);
     if (params.checkParams(errorMsg) != 0) {
@@ -157,7 +156,6 @@ bool JsonProcessor::onSingleColorCommand(JsonObject& root, String& errorMsg) {
         //TODO: hand to rgbctrl
     } else if (params.mode == RequestParameters::Mode::Hsv) {
         if(!params.hasHsvFrom) {
-            Serial.printf("ApplicationWebserver::onColor hsv CMD:%s t:%d Q:%d  h:%d s:%d v:%d ct:%d\n", params.cmd.c_str(), params.ramp.value, params.queue, params.hsv.h.getValue().getValue(), params.hsv.s.getValue().getValue(), params.hsv.v.getValue().getValue(), params.hsv.ct.getValue().getValue());
             if (params.cmd == "fade") {
                 queueOk = app.rgbwwctrl.fadeHSV(params.hsv, params.ramp, params.direction, params.queue, params.requeue, params.name);
             } else {
@@ -168,16 +166,12 @@ bool JsonProcessor::onSingleColorCommand(JsonObject& root, String& errorMsg) {
         }
     } else if (params.mode == RequestParameters::Mode::Raw) {
         if(!params.hasRawFrom) {
-            debugapp("ApplicationWebserver::onColor raw CMD:%s Q:%d r:%i g:%i b:%i ww:%i cw:%i", params.cmd.c_str(), params.queue, params.raw.r.getValue().getValue(), params.raw.g.getValue().getValue(), params.raw.b.getValue().getValue(), params.raw.ww.getValue().getValue(), params.raw.cw.getValue().getValue());
             if (params.cmd == "fade") {
                 queueOk = app.rgbwwctrl.fadeRAW(params.raw, params.ramp, params.queue);
             } else {
                 queueOk = app.rgbwwctrl.setRAW(params.raw, params.ramp.value, params.queue);
             }
         } else {
-            debugapp("ApplicationWebserver::onColor raw CMD:%s Q:%d FROM r:%i g:%i b:%i ww:%i cw:%i  TO r:%i g:%i b:%i ww:%i cw:%i",
-                    params.raw.r.getValue().getValue(), params.raw.g.getValue().getValue(), params.raw.b.getValue().getValue(), params.raw.ww.getValue().getValue(), params.raw.cw.getValue().getValue(),
-                    params.rawFrom.r.getValue().getValue(), params.rawFrom.g.getValue().getValue(), params.rawFrom.b.getValue().getValue(), params.rawFrom.ww.getValue().getValue(), params.rawFrom.cw.getValue().getValue());
             app.rgbwwctrl.fadeRAW(params.rawFrom, params.raw, params.ramp, params.queue);
         }
     } else {

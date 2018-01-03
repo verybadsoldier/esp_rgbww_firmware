@@ -48,7 +48,7 @@ PinConfig APPLedCtrl::parsePinConfigString(String& pinStr) {
 		isCorrect = false;
 
 	if (!isCorrect) {
-		debugapp("APPLedCtrl::parsePinConfigString - Error in pin configuration - Using default pin values");
+		debug_e("APPLedCtrl::parsePinConfigString - Error in pin configuration - Using default pin values");
 		return PinConfig();
 	}
 
@@ -62,7 +62,7 @@ PinConfig APPLedCtrl::parsePinConfigString(String& pinStr) {
 }
 
 void APPLedCtrl::init() {
-	debugapp("APPLedCtrl::init");
+	debug_i("APPLedCtrl::init");
 
     _stepSync = new ClockCatchUp3();
 
@@ -72,7 +72,7 @@ void APPLedCtrl::init() {
 
 	setup();
 	colorStorage.load();
-	debugapp("H: %i | s: %i | v: %i | ct: %i", colorStorage.current.h, colorStorage.current.s, colorStorage.current.v, colorStorage.current.ct);
+	debug_i("H: %i | s: %i | v: %i | ct: %i", colorStorage.current.h, colorStorage.current.s, colorStorage.current.v, colorStorage.current.ct);
 
 	// boot from off to current color
 	HSVCT dark = colorStorage.current;
@@ -81,7 +81,7 @@ void APPLedCtrl::init() {
 }
 
 void APPLedCtrl::setup() {
-	debugapp("APPLedCtrl::setup");
+	debug_i("APPLedCtrl::setup");
 
 	colorutils.setBrightnessCorrection(app.cfg.color.brightness.red,
 			app.cfg.color.brightness.green, app.cfg.color.brightness.blue,
@@ -192,14 +192,14 @@ void APPLedCtrl::onMasterClock(uint32_t stepsMaster) {
 }
 
 void APPLedCtrl::start() {
-    debugapp("APPLedCtrl::start");
+	debug_i("APPLedCtrl::start");
 
     ets_timer_setfn(&_ledTimer, APPLedCtrl::updateLedCb, this);
     ets_timer_arm_new(&_ledTimer, _timerInterval, 0, 0);
 }
 
 void APPLedCtrl::stop() {
-    debugapp("APPLedCtrl::stop");
+	debug_i("APPLedCtrl::stop");
     ets_timer_disarm(&_ledTimer);
 }
 
@@ -209,7 +209,7 @@ void APPLedCtrl::colorSave() {
 }
 
 void APPLedCtrl::colorReset() {
-	debugapp("APPLedCtrl::colorReset");
+	debug_i("APPLedCtrl::colorReset");
 	colorStorage.current.h = 0;
 	colorStorage.current.s = 0;
 	colorStorage.current.v = 0;
@@ -239,7 +239,7 @@ void APPLedCtrl::testChannels() {
 }
 
 void APPLedCtrl::onAnimationFinished(const String& name, bool requeued) {
-	debugapp("APPLedCtrl::onAnimationFinished: %s", name.c_str());
+	debug_d("APPLedCtrl::onAnimationFinished: %s", name.c_str());
 
 	if (name.length() > 0) {
 	    _stepFinishedAnimations[name] = requeued;
@@ -254,13 +254,13 @@ uint32_t ClockCatchUp3::onMasterClock(uint32_t stepsCurrent, uint32_t stepsMaste
 
         int curOffset = masterDiff - diff;
         _catchupOffset += curOffset;
-        Serial.printf("Diff: %d | Master Diff: %d | CurOffset: %d | Catchup Offset: %d\n", diff, masterDiff, curOffset, _catchupOffset);
+        debug_d("Diff: %d | Master Diff: %d | CurOffset: %d | Catchup Offset: %d\n", diff, masterDiff, curOffset, _catchupOffset);
 
-        double curSteering = 1.0 - static_cast<double>(_catchupOffset) / masterDiff;
-        curSteering = std::min(std::max(curSteering, 0.5), 1.5);
-        _steering = 0.5 *_steering + 0.5 * curSteering;
+        float curSteering = 1.0 - static_cast<float>(_catchupOffset) / masterDiff;
+        curSteering = std::min(std::max(curSteering, 0.5f), 1.5f);
+        _steering = 0.5f *_steering + 0.5f * curSteering;
         nextInt *= _steering;
-        Serial.printf("New Int: %d | CurSteering: %f | Steering: %f\n", nextInt, curSteering, _steering);
+        debug_d("New Int: %d | CurSteering: %f | Steering: %f\n", nextInt, curSteering, _steering);
     }
 
     _stepsSyncMasterLast = stepsMaster;

@@ -32,16 +32,16 @@ AppMqttClient::~AppMqttClient() {
 
 void AppMqttClient::onComplete(TcpClient& client, bool success) {
     if (success == true)
-        Serial.println("MQTT Broker Disconnected!!");
+        debug_i("MQTT Broker Disconnected!!");
     else
-        Serial.println("MQTT Broker Unreachable!!");
+        debug_e("MQTT Broker Unreachable!!");
 
     // Restart connection attempt after few seconds
     connectDelayed(2000);
 }
 
 void AppMqttClient::connectDelayed(int delay) {
-    Serial.println("MQTT::connectDelayed");
+	debug_d("MQTT::connectDelayed");
     _procTimer.initializeMs(delay, TimerDelegate(&AppMqttClient::connect, this)).startOnce();
 }
 
@@ -49,7 +49,7 @@ void AppMqttClient::connect() {
     if (!mqtt || mqtt->getConnectionState() == TcpClientState::eTCS_Connected || mqtt->getConnectionState() == TcpClientState::eTCS_Connecting)
         return;
 
-    Serial.printf("MQTT::connect ID: %s\n", _id.c_str());
+    debug_d("MQTT::connect ID: %s\n", _id.c_str());
     if(!mqtt->setWill("last/will","The connection from this device is lost:(", 1, true)) {
         debugf("Unable to set the last will and testament. Most probably there is not enough memory on the device.");
     }
@@ -86,10 +86,10 @@ void AppMqttClient::init() {
 }
 
 void AppMqttClient::start() {
-	Serial.println("Start MQTT");
+	debug_i("Start MQTT");
 
 	delete mqtt;
-	Serial.printf("MqttClient: Server: %s Port: %d\n", app.cfg.network.mqtt.server.c_str(), app.cfg.network.mqtt.port);
+	debug_i("MqttClient: Server: %s Port: %d\n", app.cfg.network.mqtt.server.c_str(), app.cfg.network.mqtt.port);
 	mqtt = new MqttClient(app.cfg.network.mqtt.server, app.cfg.network.mqtt.port, MqttStringSubscriptionCallback(&AppMqttClient::onMessageReceived, this));
 	connectDelayed(2000);
 }
@@ -104,10 +104,6 @@ bool AppMqttClient::isRunning() const {
 }
 
 void AppMqttClient::onMessageReceived(String topic, String message) {
-	Serial.print(topic);
-	Serial.print(":\r\n\t"); // Prettify alignment for printing
-	Serial.println(message);
-
 	if (app.cfg.sync.clock_slave_enabled && (topic == app.cfg.sync.clock_slave_topic)) {
 		uint32_t clock = message.toInt();
 		app.rgbwwctrl.onMasterClock(clock);
@@ -125,7 +121,7 @@ void AppMqttClient::publish(const String& topic, const String& data, bool retain
     //Serial.printf("AppMqttClient::publish: Topic: %s | Data: %s\n", topic.c_str(), data.c_str());
 
     if (!mqtt) {
-        Serial.printf("ApplicationMQTTClient::publish: no MQTT object\n");
+        debug_w("ApplicationMQTTClient::publish: no MQTT object\n");
         return;
     }
 
@@ -134,14 +130,14 @@ void AppMqttClient::publish(const String& topic, const String& data, bool retain
         mqtt->publish(topic, data, retain);
     }
     else {
-        Serial.printf("ApplicationMQTTClient::publish: not connected.\n");
+        debug_w("ApplicationMQTTClient::publish: not connected.\n");
     }
 }
 
 void AppMqttClient::publishCurrentRaw(const ChannelOutput& raw) {
     if (raw == _lastRaw)
         return;
-	Serial.printf("ApplicationMQTTClient::publishCurrentRaw\n");
+    debug_d("ApplicationMQTTClient::publishCurrentRaw\n");
 
 	DynamicJsonBuffer jsonBuffer(200);
 	JsonObject& root = jsonBuffer.createObject();
@@ -163,7 +159,7 @@ void AppMqttClient::publishCurrentRaw(const ChannelOutput& raw) {
 void AppMqttClient::publishCurrentHsv(const HSVCT& color) {
     if (color == _lastHsv)
         return;
-	Serial.printf("ApplicationMQTTClient::publishCurrentHsv\n");
+    debug_d("ApplicationMQTTClient::publishCurrentHsv\n");
 
 	float h, s, v;
 	int ct;
@@ -216,7 +212,7 @@ void AppMqttClient::publishClockSlaveOffset(uint32_t offset) {
 }
 
 void AppMqttClient::publishCommand(const String& method, const JsonObject& params) {
-    Serial.printf("ApplicationMQTTClient::publishCommand: %s\n", method.c_str());
+    debug_d("ApplicationMQTTClient::publishCommand: %s\n", method.c_str());
 
 	JsonRpcMessage msg(method);
 
@@ -231,7 +227,7 @@ void AppMqttClient::publishCommand(const String& method, const JsonObject& param
 }
 
 void AppMqttClient::publishTransitionFinished(const String& name, bool requeued) {
-    Serial.printf("ApplicationMQTTClient::publishTransitionFinished: %s\n", name.c_str());
+	debug_d("ApplicationMQTTClient::publishTransitionFinished: %s\n", name.c_str());
 
     DynamicJsonBuffer jsonBuffer(200);
 	JsonObject& root = jsonBuffer.createObject();

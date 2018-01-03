@@ -41,7 +41,7 @@ void AppWIFI::scan() {
 }
 
 void AppWIFI::scanCompleted(bool succeeded, BssList list) {
-	debugapp("AppWIFI::scanCompleted");
+	debug_i("AppWIFI::scanCompleted");
 	if (succeeded) {
 		_networks.clear();
 		for (int i = 0; i < list.count(); i++) {
@@ -55,7 +55,7 @@ void AppWIFI::scanCompleted(bool succeeded, BssList list) {
 }
 
 void AppWIFI::forgetWifi() {
-	debugapp("AppWIFI::forget_wifi");
+	debug_i("AppWIFI::forget_wifi");
 	WifiStation.config("", "");
 	WifiStation.disconnect();
 	_client_status = CONNECTION_STATUS::IDLE;
@@ -68,19 +68,19 @@ void AppWIFI::init() {
 
 	//don`t enable/disable again to save eeprom cycles
 	if (!WifiStation.isEnabled()) {
-		debugapp("AppWIFI::init enable WifiStation");
+		debug_i("AppWIFI::init enable WifiStation");
 		WifiStation.enable(true, true);
 	}
 
 	if (WifiAccessPoint.isEnabled()) {
-		debugapp("AppWIFI::init WifiAccessPoint disablw");
+		debug_i("AppWIFI::init WifiAccessPoint disabled");
 		WifiAccessPoint.enable(false, true);
 	}
 
 	_con_ctr = 0;
 
 	if (app.isFirstRun()) {
-		debugapp("AppWIFI::init initial run - setting up AP");
+		debug_i("AppWIFI::init initial run - setting up AP");
 		app.cfg.network.connection.mdnshostname = String(DEFAULT_AP_SSIDPREFIX) + String(system_get_chip_id());
 		app.cfg.network.ap.ssid = String(DEFAULT_AP_SSIDPREFIX) + String(system_get_chip_id());
 		app.cfg.save();
@@ -95,7 +95,7 @@ void AppWIFI::init() {
 
 	if (WifiStation.getSSID() == "") {
 
-		debugapp("AppWIFI::init no AP to connect to - start own AP");
+		debug_i("AppWIFI::init no AP to connect to - start own AP");
 		// No wifi to connect to - initialize AP
 		startAp();
 
@@ -106,21 +106,21 @@ void AppWIFI::init() {
 
 		//configure WifiClient
 		if (!app.cfg.network.connection.dhcp && !app.cfg.network.connection.ip.isNull()) {
-			debugapp("AppWIFI::init setting static ip");
+			debug_i("AppWIFI::init setting static ip");
 			if (WifiStation.isEnabledDHCP()) {
-				debugapp("AppWIFI::init disabled dhcp");
+				debug_i("AppWIFI::init disabled dhcp");
 				WifiStation.enableDHCP(false);
 			}
 			if (!(WifiStation.getIP() == app.cfg.network.connection.ip)
 					|| !(WifiStation.getNetworkGateway() == app.cfg.network.connection.gateway)
 					|| !(WifiStation.getNetworkMask() == app.cfg.network.connection.netmask)) {
-				debugapp("AppWIFI::init updating ip configuration");
+				debug_i("AppWIFI::init updating ip configuration");
 				WifiStation.setIP(app.cfg.network.connection.ip,app.cfg.network.connection.netmask,app.cfg.network.connection.gateway);
 			}
 		} else {
-			debugapp("AppWIFI::init dhcp");
+			debug_i("AppWIFI::init dhcp");
 			if (!WifiStation.isEnabledDHCP()) {
-				debugapp("AppWIFI::init enabling dhcp");
+				debug_i("AppWIFI::init enabling dhcp");
 				WifiStation.enableDHCP(true);
 			}
 		}
@@ -132,7 +132,7 @@ void AppWIFI::connect(String ssid, bool new_con /* = false */) {
 }
 
 void AppWIFI::connect(String ssid, String pass, bool new_con /* = false */) {
-	debugapp("AppWIFI::connect ssid %s newcon %d", ssid.c_str(), new_con);
+	debug_i("AppWIFI::connect ssid %s newcon %d", ssid.c_str(), new_con);
 	_con_ctr = 0;
 	_new_connection = new_con;
 	_client_status = CONNECTION_STATUS::CONNECTING;
@@ -141,11 +141,11 @@ void AppWIFI::connect(String ssid, String pass, bool new_con /* = false */) {
 }
 
 void AppWIFI::_STADisconnect(String ssid, uint8_t ssid_len, uint8_t bssid[6], uint8_t reason) {
-	debugapp("AppWIFI::_STADisconnect reason - %i - counter %i", reason, _con_ctr);
+	debug_i("AppWIFI::_STADisconnect reason - %i - counter %i", reason, _con_ctr);
 	if (_con_ctr >= DEFAULT_CONNECTION_RETRIES || WifiStation.getConnectionStatus() == eSCS_WrongPassword) {
 		_client_status = CONNECTION_STATUS::ERROR;
 		_client_err_msg = WifiStation.getConnectionStatusName();
-		debugapp("AppWIFI::_STADisconnect err %s", _client_err_msg.c_str());
+		debug_i("AppWIFI::_STADisconnect err %s", _client_err_msg.c_str());
 		if (_new_connection) {
 			WifiStation.disconnect();
 			WifiStation.config("", "");
@@ -160,13 +160,13 @@ void AppWIFI::_STADisconnect(String ssid, uint8_t ssid_len, uint8_t bssid[6], ui
 }
 
 void AppWIFI::_STAConnected(String ssid, uint8_t ssid_len, uint8_t bssid[6], uint8_t reason) {
-	debugapp("AppWIFI::_STAConnected reason - %i", reason);
+	debug_i("AppWIFI::_STAConnected reason - %i", reason);
 
 	app.onWifiConnected(ssid);
 }
 
 void AppWIFI::_STAGotIP(IPAddress ip, IPAddress mask, IPAddress gateway) {
-	debugapp("AppWIFI::_STAGotIP");
+	debug_i("AppWIFI::_STAGotIP");
 	_con_ctr = 0;
 	_client_status = CONNECTION_STATUS::CONNECTED;
 
@@ -185,31 +185,31 @@ void AppWIFI::_STAGotIP(IPAddress ip, IPAddress mask, IPAddress gateway) {
 
 void AppWIFI::stopAp(int delay) {
 	if (WifiAccessPoint.isEnabled()) {
-		debugapp("AppWIFI::stopAp delay %i", delay);
+		debug_i("AppWIFI::stopAp delay %i", delay);
 		_timer.initializeMs(delay, TimerDelegate(&AppWIFI::stopAp, this)).startOnce();
 	}
 }
 
 void AppWIFI::stopAp() {
-	debugapp("AppWIFI::stopAp");
-	Serial.println("Disabling AP and DNS server");
+	debug_i("AppWIFI::stopAp");
+	debug_i("Disabling AP and DNS server");
 	_timer.stop();
 	if (WifiAccessPoint.isEnabled()) {
-		debugapp("AppWIFI::stopAp WifiAP disable");
+		debug_i("AppWIFI::stopAp WifiAP disable");
 		WifiAccessPoint.enable(false, false);
 	}
 	if (_dns_active) {
-		debugapp("AppWIFI::stopAp DNS disable");
+		debug_i("AppWIFI::stopAp DNS disable");
 		_dns.close();
 	}
 }
 
 void AppWIFI::startAp() {
 	byte DNS_PORT = 53;
-	debugapp("AppWIFI::startAp");
-	Serial.println("Enabling AP and DNS server");
+	debug_i("AppWIFI::startAp");
+	debug_i("Enabling AP and DNS server");
 	if (!WifiAccessPoint.isEnabled()) {
-		debugapp("AppWIFI:: WifiAP enable");
+		debug_i("AppWIFI:: WifiAP enable");
 		WifiAccessPoint.enable(true, false);
 		if (app.cfg.network.ap.secured) {
 			WifiAccessPoint.config(app.cfg.network.ap.ssid, app.cfg.network.ap.password, AUTH_WPA2_PSK);
@@ -218,7 +218,7 @@ void AppWIFI::startAp() {
 		}
 	}
 	if (!_dns_active) {
-		debugapp("AppWIFI:: DNS enable");
+		debug_i("AppWIFI:: DNS enable");
 		_dns_active = true;
 		_dns.setErrorReplyCode(DNSReplyCode::NoError);
 		_dns.start(DNS_PORT, "*", _ApIP);

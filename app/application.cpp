@@ -42,18 +42,19 @@ void GDB_IRAM_ATTR init() {
 }
 
 void Application::init() {
+	Serial.systemDebugOutput(false);
 
-	Serial.printf("RGBWW Controller v %s\r\n", fw_version);
+	debug_i("RGBWW Controller v %s\r\n", fw_version);
+
 	//load settings
-	Serial.println();
 
 	// load boot information
 	uint8 bootmode, bootslot;
 	if (rboot_get_last_boot_mode(&bootmode)) {
 		if (bootmode == MODE_TEMP_ROM) {
-			debugapp("Application::init - booting after OTA");
+			debug_i("Application::init - booting after OTA");
 		} else {
-			debugapp("Application::init - normal boot");
+			debug_i("Application::init - normal boot");
 		}
 		_bootmode = bootmode;
 	}
@@ -67,7 +68,7 @@ void Application::init() {
 
 	// check if we need to reset settings
 	if (digitalRead(CLEAR_PIN) < 1) {
-		Serial.println("CLR button low - resetting settings");
+		debug_i("CLR button low - resetting settings");
 		cfg.reset();
 		network.forgetWifi();
 	}
@@ -79,7 +80,7 @@ void Application::init() {
 	if (cfg.exist()) {
 		cfg.load();
 	} else {
-		debugapp("Application::init - first run");
+		debug_i("Application::init - first run");
 		_first_run = true;
 		cfg.save();
 	}
@@ -98,7 +99,7 @@ void Application::init() {
 
 // Will be called when system initialization was completed
 void Application::startServices() {
-	debugapp("Application::startServices");
+	debug_i("Application::startServices");
 	rgbwwctrl.start();
 	webserver.start();
 
@@ -107,7 +108,7 @@ void Application::startServices() {
 }
 
 void Application::restart() {
-	Serial.println("Restarting");
+	debug_i("Restarting");
 	if (network.isApActive()) {
 		network.stopAp();
 		_systimer.initializeMs(500, TimerDelegate(&Application::restart, this)).startOnce();
@@ -116,8 +117,8 @@ void Application::restart() {
 }
 
 void Application::reset() {
-	debugapp("Application::reset");
-	Serial.println("resetting controller");
+	debug_i("Application::reset");
+	debug_i("resetting controller");
 	cfg.reset();
 	rgbwwctrl.colorReset();
 	network.forgetWifi();
@@ -126,7 +127,7 @@ void Application::reset() {
 }
 
 bool Application::delayedCMD(String cmd, int delay) {
-	debugapp("Application::delayedCMD cmd: %s - delay: %i", cmd.c_str(), delay);
+	debug_i("Application::delayedCMD cmd: %s - delay: %i", cmd.c_str(), delay);
 	if (cmd.equals("reset")) {
 		_systimer.initializeMs(delay, TimerDelegate(&Application::reset, this)).startOnce();
 	} else if (cmd.equals("restart")) {
@@ -147,13 +148,13 @@ bool Application::delayedCMD(String cmd, int delay) {
 }
 
 void Application::mountfs(int slot) {
-	debugapp("Application::mountfs rom slot: %i", slot);
+	debug_i("Application::mountfs rom slot: %i", slot);
 	if (slot == 0) {
-		debugapp("Application::mountfs trying to mount spiffs at %x, length %d",
+		debug_i("Application::mountfs trying to mount spiffs at %x, length %d",
 				RBOOT_SPIFFS_0, SPIFF_SIZE);
 		spiffs_mount_manual(RBOOT_SPIFFS_0, SPIFF_SIZE);
 	} else {
-		debugapp("Application::mountfs trying to mount spiffs at %x, length %d",
+		debug_i("Application::mountfs trying to mount spiffs at %x, length %d",
 				RBOOT_SPIFFS_1, SPIFF_SIZE);
 		spiffs_mount_manual(RBOOT_SPIFFS_1, SPIFF_SIZE);
 	}
@@ -161,13 +162,13 @@ void Application::mountfs(int slot) {
 }
 
 void Application::umountfs() {
-	debugapp("Application::umountfs");
+	debug_i("Application::umountfs");
 	spiffs_unmount();
 	_fs_mounted = false;
 }
 
 void Application::switchRom() {
-	debugapp("Application::switchRom");
+	debug_i("Application::switchRom");
 	int slot = getRomSlot();
 	if (slot == 0) {
 		slot = 1;
@@ -178,7 +179,7 @@ void Application::switchRom() {
 }
 
 void Application::onWifiConnected(const String& ssid) {
-    debugapp("Application::onWifiConnected");
+	debug_i("Application::onWifiConnected");
 }
 
 void Application::onCommandRelay(const String& method, const JsonObject& params) {
