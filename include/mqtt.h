@@ -8,15 +8,15 @@ class IMasterClockSink;
 class AppMqttClient{
 
 public:
-	AppMqttClient();
-	virtual ~AppMqttClient();
+    AppMqttClient();
+    virtual ~AppMqttClient();
 
-	void init();
-	void start();
-	void stop();
-	bool isRunning() const;
+    void init();
+    void start();
+    void stop();
+    bool isRunning() const;
 
-	void publishCurrentHsv(const HSVCT& color);
+    void publishCurrentHsv(const HSVCT& color);
     void publishCurrentRaw(const ChannelOutput& raw);
     void publishClock(uint32_t steps);
     void publishClockInterval(uint32_t curInterval);
@@ -25,7 +25,7 @@ public:
     void publishTransitionFinished(const String& name, bool requeued);
 
 private:
-	void connectDelayed(int delay = 2000);
+    void connectDelayed(int delay = 2000);
     void connect();
     void onComplete(TcpClient& client, bool success);
     void onMessageReceived(String topic, String message);
@@ -33,10 +33,10 @@ private:
 
     String buildTopic(const String& suffix);
 
-	MqttClient* mqtt = nullptr;
-	bool _running = false;
-	Timer _procTimer;
-	String _id;
+    MqttClient* mqtt = nullptr;
+    bool _running = false;
+    Timer _procTimer;
+    String _id;
 
     HSVCT _lastHsv;
     ChannelOutput _lastRaw;

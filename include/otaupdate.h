@@ -24,11 +24,11 @@
 #define OTA_STATUS_FILE ".ota"
 
 enum OTASTATUS {
-	OTA_NOT_UPDATING = 0,
-	OTA_PROCESSING = 1,
-	OTA_SUCCESS_REBOOT = 2,
-	OTA_SUCCESS = 3,
-	OTA_FAILED = 4
+    OTA_NOT_UPDATING = 0,
+    OTA_PROCESSING = 1,
+    OTA_SUCCESS_REBOOT = 2,
+    OTA_SUCCESS = 3,
+    OTA_FAILED = 4
 };
 
 class Application;
@@ -36,25 +36,25 @@ class Application;
 class ApplicationOTA {
 public:
 
-	void start(String romurl, String spiffsurl);
-	void checkAtBoot();
-	inline OTASTATUS getStatus() { return status; };
-	inline bool isProccessing() { return status == OTASTATUS::OTA_PROCESSING; };
+    void start(String romurl, String spiffsurl);
+    void checkAtBoot();
+    inline OTASTATUS getStatus() { return status; };
+    inline bool isProccessing() { return status == OTASTATUS::OTA_PROCESSING; };
 
 protected:
-	rBootHttpUpdate* otaUpdater;
-	uint8 rom_slot;
-	OTASTATUS status = OTASTATUS::OTA_NOT_UPDATING;
+    rBootHttpUpdate* otaUpdater;
+    uint8 rom_slot;
+    OTASTATUS status = OTASTATUS::OTA_NOT_UPDATING;
 
 protected:
-	void rBootCallback(rBootHttpUpdate& rbHttpUp, bool result);
-	void reset();
-	void beforeOTA();
-	void afterOTA();
-	void saveStatus(OTASTATUS status);
-	OTASTATUS loadStatus();
+    void rBootCallback(rBootHttpUpdate& rbHttpUp, bool result);
+    void reset();
+    void beforeOTA();
+    void afterOTA();
+    void saveStatus(OTASTATUS status);
+    OTASTATUS loadStatus();
 
-	friend Application;
+    friend Application;
 };
 
 #endif // OTAUPDATE_H_

@@ -377,13 +377,13 @@ int JsonProcessor::RequestParameters::checkParams(String& errorMsg) const {
 
 bool JsonProcessor::onJsonRpc(const String& json) {
     Serial.printf("JsonProcessor::onJsonRpc: %s\n", json.c_str());
-	JsonRpcMessageIn rpc(json);
+    JsonRpcMessageIn rpc(json);
 
-	String msg;
-	if (rpc.getMethod() == "color") {
-		return onColor(rpc.getParams(), msg, false);
-	}
-	else if (rpc.getMethod() == "stop") {
+    String msg;
+    if (rpc.getMethod() == "color") {
+        return onColor(rpc.getParams(), msg, false);
+    }
+    else if (rpc.getMethod() == "stop") {
         return onStop(rpc.getParams(), msg, false);
     }
     else if (rpc.getMethod() == "blink") {
@@ -405,35 +405,35 @@ bool JsonProcessor::onJsonRpc(const String& json) {
 
 void JsonProcessor::addChannelStatesToCmd(JsonObject& root, const RGBWWLed::ChannelList& channels) {
     switch(app.rgbwwctrl.getMode()) {
-        case RGBWWLed::ColorMode::Hsv:
-        {
-            const HSVCT& c = app.rgbwwctrl.getCurrentColor();
-            JsonObject& obj = root.createNestedObject("hsv");
-            if (channels.count() == 0 || channels.contains(CtrlChannel::Hue))
-                obj["h"] = (float(c.h) / float(RGBWW_CALC_HUEWHEELMAX)) * 360.0;
-            if (channels.count() == 0 || channels.contains(CtrlChannel::Sat))
-                obj["s"] = (float(c.s) / float(RGBWW_CALC_MAXVAL)) * 100.0;
-            if (channels.count() == 0 || channels.contains(CtrlChannel::Val))
-                obj["v"] = (float(c.v) / float(RGBWW_CALC_MAXVAL)) * 100.0;
-            if (channels.count() == 0 || channels.contains(CtrlChannel::ColorTemp))
-                obj["ct"] = c.ct;
-            break;
-        }
-        case RGBWWLed::ColorMode::Raw:
-        {
-            const ChannelOutput& c = app.rgbwwctrl.getCurrentOutput();
-            JsonObject& obj = root.createNestedObject("raw");
-            if (channels.count() == 0 || channels.contains(CtrlChannel::Red))
-                obj["r"] = c.r;
-            if (channels.count() == 0 || channels.contains(CtrlChannel::Green))
-                obj["g"] = c.g;
-            if (channels.count() == 0 || channels.contains(CtrlChannel::Blue))
-                obj["b"] = c.b;
-            if (channels.count() == 0 || channels.contains(CtrlChannel::WarmWhite))
-                obj["ww"] = c.ww;
-            if (channels.count() == 0 || channels.contains(CtrlChannel::ColdWhite))
-                obj["cw"] = c.cw;
-            break;
-        }
+    case RGBWWLed::ColorMode::Hsv:
+    {
+        const HSVCT& c = app.rgbwwctrl.getCurrentColor();
+        JsonObject& obj = root.createNestedObject("hsv");
+        if (channels.count() == 0 || channels.contains(CtrlChannel::Hue))
+            obj["h"] = (float(c.h) / float(RGBWW_CALC_HUEWHEELMAX)) * 360.0;
+        if (channels.count() == 0 || channels.contains(CtrlChannel::Sat))
+            obj["s"] = (float(c.s) / float(RGBWW_CALC_MAXVAL)) * 100.0;
+        if (channels.count() == 0 || channels.contains(CtrlChannel::Val))
+            obj["v"] = (float(c.v) / float(RGBWW_CALC_MAXVAL)) * 100.0;
+        if (channels.count() == 0 || channels.contains(CtrlChannel::ColorTemp))
+            obj["ct"] = c.ct;
+        break;
+    }
+    case RGBWWLed::ColorMode::Raw:
+    {
+        const ChannelOutput& c = app.rgbwwctrl.getCurrentOutput();
+        JsonObject& obj = root.createNestedObject("raw");
+        if (channels.count() == 0 || channels.contains(CtrlChannel::Red))
+            obj["r"] = c.r;
+        if (channels.count() == 0 || channels.contains(CtrlChannel::Green))
+            obj["g"] = c.g;
+        if (channels.count() == 0 || channels.contains(CtrlChannel::Blue))
+            obj["b"] = c.b;
+        if (channels.count() == 0 || channels.contains(CtrlChannel::WarmWhite))
+            obj["ww"] = c.ww;
+        if (channels.count() == 0 || channels.contains(CtrlChannel::ColdWhite))
+            obj["cw"] = c.cw;
+        break;
+    }
     }
 }

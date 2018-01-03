@@ -19,7 +19,7 @@ JsonObject& JsonRpcMessage::getParams() {
 }
 
 JsonObject& JsonRpcMessage::getRoot() {
-	return _stream.getRoot();
+    return _stream.getRoot();
 }
 
 void JsonRpcMessage::setId(int id) {
@@ -30,7 +30,7 @@ void JsonRpcMessage::setId(int id) {
 ////////////////////////////////////////
 
 JsonRpcMessageIn::JsonRpcMessageIn(const String& json) {
-	_root = &_jsonBuffer.parseObject(json);
+    _root = &_jsonBuffer.parseObject(json);
 }
 
 JsonObject& JsonRpcMessageIn::getParams() {
@@ -38,9 +38,9 @@ JsonObject& JsonRpcMessageIn::getParams() {
 }
 
 JsonObject& JsonRpcMessageIn::getRoot() {
-	return *_root;
+    return *_root;
 }
 
 String JsonRpcMessageIn::getMethod() {
-	return getRoot()["method"];
+    return getRoot()["method"];
 }

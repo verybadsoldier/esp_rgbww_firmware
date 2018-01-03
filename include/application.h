@@ -30,47 +30,47 @@ static const char* fw_git_date = GITDATE;
 class Application {
 
 public:
-	void init();
+    void init();
 
-	void startServices();
-	void stopServices();
+    void startServices();
+    void stopServices();
 
-	void reset();
-	void restart();
-	bool delayedCMD(String cmd, int delay);
+    void reset();
+    void restart();
+    bool delayedCMD(String cmd, int delay);
 
-	void mountfs(int slot);
-	void umountfs();
+    void mountfs(int slot);
+    void umountfs();
 
-	inline bool isFilesystemMounted() { return _fs_mounted; };
-	inline bool isFirstRun() { return _first_run; };
-	inline bool isTempBoot() { return _bootmode == MODE_TEMP_ROM; };
-	inline int getRomSlot() { return _romslot; };
-	inline int getBootMode() { return _bootmode; };
-	void switchRom();
+    inline bool isFilesystemMounted() { return _fs_mounted; };
+    inline bool isFirstRun() { return _first_run; };
+    inline bool isTempBoot() { return _bootmode == MODE_TEMP_ROM; };
+    inline int getRomSlot() { return _romslot; };
+    inline int getBootMode() { return _bootmode; };
+    void switchRom();
 
-	void onCommandRelay(const String& method, const JsonObject& json);
-	void onWifiConnected(const String& ssid);
+    void onCommandRelay(const String& method, const JsonObject& json);
+    void onWifiConnected(const String& ssid);
 
 public:
-	AppWIFI network;
-	ApplicationWebserver webserver;
-	APPLedCtrl rgbwwctrl;
-	ApplicationOTA ota;
-	ApplicationSettings cfg;
-	EventServer eventserver;
-	AppMqttClient mqttclient;
-	JsonProcessor jsonproc;
+    AppWIFI network;
+    ApplicationWebserver webserver;
+    APPLedCtrl rgbwwctrl;
+    ApplicationOTA ota;
+    ApplicationSettings cfg;
+    EventServer eventserver;
+    AppMqttClient mqttclient;
+    JsonProcessor jsonproc;
 
 private:
-	void loadbootinfo();
+    void loadbootinfo();
 
-	Timer _systimer;
-	int _bootmode = 0;
-	int _romslot = 0;
-	bool _first_run = false;
-	bool _fs_mounted = false;
-	bool _run_after_ota = false;
+    Timer _systimer;
+    int _bootmode = 0;
+    int _romslot = 0;
+    bool _first_run = false;
+    bool _fs_mounted = false;
+    bool _run_after_ota = false;
 
 };
 // forward declaration for global vars

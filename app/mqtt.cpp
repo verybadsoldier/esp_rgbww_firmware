@@ -41,7 +41,7 @@ void AppMqttClient::onComplete(TcpClient& client, bool success) {
 }
 
 void AppMqttClient::connectDelayed(int delay) {
-	debug_d("MQTT::connectDelayed");
+    debug_d("MQTT::connectDelayed");
     _procTimer.initializeMs(delay, TimerDelegate(&AppMqttClient::connect, this)).startOnce();
 }
 
@@ -57,11 +57,11 @@ void AppMqttClient::connect() {
 #ifdef ENABLE_SSL
     mqtt->addSslOptions(SSL_SERVER_VERIFY_LATER);
 
-    #include <ssl/private_key.h>
-    #include <ssl/cert.h>
+#include <ssl/private_key.h>
+#include <ssl/cert.h>
 
     mqtt->setSslClientKeyCert(default_private_key, default_private_key_len,
-                              default_certificate, default_certificate_len, NULL, true);
+            default_certificate, default_certificate_len, NULL, true);
 
 #endif
     // Assign a disconnect callback function
@@ -86,35 +86,35 @@ void AppMqttClient::init() {
 }
 
 void AppMqttClient::start() {
-	debug_i("Start MQTT");
+    debug_i("Start MQTT");
 
-	delete mqtt;
-	debug_i("MqttClient: Server: %s Port: %d\n", app.cfg.network.mqtt.server.c_str(), app.cfg.network.mqtt.port);
-	mqtt = new MqttClient(app.cfg.network.mqtt.server, app.cfg.network.mqtt.port, MqttStringSubscriptionCallback(&AppMqttClient::onMessageReceived, this));
-	connectDelayed(2000);
+    delete mqtt;
+    debug_i("MqttClient: Server: %s Port: %d\n", app.cfg.network.mqtt.server.c_str(), app.cfg.network.mqtt.port);
+    mqtt = new MqttClient(app.cfg.network.mqtt.server, app.cfg.network.mqtt.port, MqttStringSubscriptionCallback(&AppMqttClient::onMessageReceived, this));
+    connectDelayed(2000);
 }
 
 void AppMqttClient::stop() {
-	 delete mqtt;
-	 mqtt = nullptr;
+    delete mqtt;
+    mqtt = nullptr;
 }
 
 bool AppMqttClient::isRunning() const {
-	return (mqtt != nullptr);
+    return (mqtt != nullptr);
 }
 
 void AppMqttClient::onMessageReceived(String topic, String message) {
-	if (app.cfg.sync.clock_slave_enabled && (topic == app.cfg.sync.clock_slave_topic)) {
-		uint32_t clock = message.toInt();
-		app.rgbwwctrl.onMasterClock(clock);
-	}
-	else if (app.cfg.sync.cmd_slave_enabled && topic == app.cfg.sync.cmd_slave_topic) {
-	    app.jsonproc.onJsonRpc(message);
-	}
-	else if (app.cfg.sync.color_slave_enabled && (topic == app.cfg.sync.color_slave_topic)) {
-	    String error;
-		app.jsonproc.onColor(message, error, false);
-	}
+    if (app.cfg.sync.clock_slave_enabled && (topic == app.cfg.sync.clock_slave_topic)) {
+        uint32_t clock = message.toInt();
+        app.rgbwwctrl.onMasterClock(clock);
+    }
+    else if (app.cfg.sync.cmd_slave_enabled && topic == app.cfg.sync.cmd_slave_topic) {
+        app.jsonproc.onJsonRpc(message);
+    }
+    else if (app.cfg.sync.color_slave_enabled && (topic == app.cfg.sync.color_slave_topic)) {
+        String error;
+        app.jsonproc.onColor(message, error, false);
+    }
 }
 
 void AppMqttClient::publish(const String& topic, const String& data, bool retain) {
@@ -139,21 +139,21 @@ void AppMqttClient::publishCurrentRaw(const ChannelOutput& raw) {
         return;
     debug_d("ApplicationMQTTClient::publishCurrentRaw\n");
 
-	DynamicJsonBuffer jsonBuffer(200);
-	JsonObject& root = jsonBuffer.createObject();
-	JsonObject& rawJson = root.createNestedObject("raw");
-	rawJson["r"] = raw.r;
-	rawJson["g"] = raw.g;
-	rawJson["b"] = raw.b;
-	rawJson["cw"] = raw.cw;
-	rawJson["ww"] = raw.ww;
+    DynamicJsonBuffer jsonBuffer(200);
+    JsonObject& root = jsonBuffer.createObject();
+    JsonObject& rawJson = root.createNestedObject("raw");
+    rawJson["r"] = raw.r;
+    rawJson["g"] = raw.g;
+    rawJson["b"] = raw.b;
+    rawJson["cw"] = raw.cw;
+    rawJson["ww"] = raw.ww;
 
-	root["t"] = 0;
-	root["cmd"] = "solid";
+    root["t"] = 0;
+    root["cmd"] = "solid";
 
-	String jsonMsg;
-	root.printTo(jsonMsg);
-	publish(buildTopic("color"), jsonMsg, true);
+    String jsonMsg;
+    root.printTo(jsonMsg);
+    publish(buildTopic("color"), jsonMsg, true);
 }
 
 void AppMqttClient::publishCurrentHsv(const HSVCT& color) {
@@ -161,24 +161,24 @@ void AppMqttClient::publishCurrentHsv(const HSVCT& color) {
         return;
     debug_d("ApplicationMQTTClient::publishCurrentHsv\n");
 
-	float h, s, v;
-	int ct;
-	color.asRadian(h, s, v, ct);
+    float h, s, v;
+    int ct;
+    color.asRadian(h, s, v, ct);
 
-	DynamicJsonBuffer jsonBuffer(200);
-	JsonObject& root = jsonBuffer.createObject();
-	JsonObject& hsv = root.createNestedObject("hsv");
-	hsv["h"] = h;
-	hsv["s"] = s;
-	hsv["v"] = v;
-	hsv["ct"] = ct;
+    DynamicJsonBuffer jsonBuffer(200);
+    JsonObject& root = jsonBuffer.createObject();
+    JsonObject& hsv = root.createNestedObject("hsv");
+    hsv["h"] = h;
+    hsv["s"] = s;
+    hsv["v"] = v;
+    hsv["ct"] = ct;
 
-	root["t"] = 0;
-	root["cmd"] = "solid";
+    root["t"] = 0;
+    root["cmd"] = "solid";
 
-	String jsonMsg;
-	root.printTo(jsonMsg);
-	publish(buildTopic("color"), jsonMsg, true);
+    String jsonMsg;
+    root.printTo(jsonMsg);
+    publish(buildTopic("color"), jsonMsg, true);
 }
 
 String AppMqttClient::buildTopic(const String& suffix) {
@@ -214,7 +214,7 @@ void AppMqttClient::publishClockSlaveOffset(uint32_t offset) {
 void AppMqttClient::publishCommand(const String& method, const JsonObject& params) {
     debug_d("ApplicationMQTTClient::publishCommand: %s\n", method.c_str());
 
-	JsonRpcMessage msg(method);
+    JsonRpcMessage msg(method);
 
     String topic = buildTopic("command");
 
@@ -227,14 +227,14 @@ void AppMqttClient::publishCommand(const String& method, const JsonObject& param
 }
 
 void AppMqttClient::publishTransitionFinished(const String& name, bool requeued) {
-	debug_d("ApplicationMQTTClient::publishTransitionFinished: %s\n", name.c_str());
+    debug_d("ApplicationMQTTClient::publishTransitionFinished: %s\n", name.c_str());
 
     DynamicJsonBuffer jsonBuffer(200);
-	JsonObject& root = jsonBuffer.createObject();
-	root["name"] = name;
-	root["requequed"] = requeued;
+    JsonObject& root = jsonBuffer.createObject();
+    root["name"] = name;
+    root["requequed"] = requeued;
 
-	String jsonMsg;
-	root.printTo(jsonMsg);
-	publish(buildTopic("transition_finished"), jsonMsg, true);
+    String jsonMsg;
+    root.printTo(jsonMsg);
+    publish(buildTopic("transition_finished"), jsonMsg, true);
 }

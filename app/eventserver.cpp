@@ -8,34 +8,34 @@
 
 
 EventServer::~EventServer() {
-	stop();
+    stop();
 }
 
 void EventServer::start() {
-	debug_i("Starting event server\n");
-	setTimeOut(_connectionTimeout);
-	if (not listen(_tcpPort)) {
-		debug_e("EventServer failed to open listening port!");
-	}
+    debug_i("Starting event server\n");
+    setTimeOut(_connectionTimeout);
+    if (not listen(_tcpPort)) {
+        debug_e("EventServer failed to open listening port!");
+    }
 
-	_keepAliveTimer.initializeMs(_keepAliveInterval * 1000, TimerDelegate(&EventServer::publishKeepAlive, this)).start();
+    _keepAliveTimer.initializeMs(_keepAliveInterval * 1000, TimerDelegate(&EventServer::publishKeepAlive, this)).start();
 }
 
 void EventServer::stop() {
-	if (not active)
-		return;
+    if (not active)
+        return;
 
-	shutdown();
+    shutdown();
 }
 
 void EventServer::onClient(TcpClient *client) {
-	TcpServer::onClient(client);
-	debug_d("Client connected from: %s\n", client->getRemoteIp().toString().c_str());
+    TcpServer::onClient(client);
+    debug_d("Client connected from: %s\n", client->getRemoteIp().toString().c_str());
 }
 
 void EventServer::onClientComplete(TcpClient& client, bool succesfull) {
-	TcpServer::onClientComplete(client, succesfull);
-	debug_d("Client removed: %x\n", &client);
+    TcpServer::onClientComplete(client, succesfull);
+    debug_d("Client removed: %x\n", &client);
 }
 
 void EventServer::publishCurrentState(const ChannelOutput& raw, const HSVCT* pHsv) {
@@ -83,32 +83,32 @@ void EventServer::publishClockSlaveStatus(uint32_t offset, uint32_t interval) {
 }
 
 void EventServer::publishKeepAlive() {
-	debug_d("EventServer::publishKeepAlive\n");
+    debug_d("EventServer::publishKeepAlive\n");
 
     JsonRpcMessage msg("keep_alive");
     sendToClients(msg);
 }
 
 void EventServer::publishTransitionFinished(const String& name, bool requeued) {
-	debug_d("EventServer::publishTransitionComplete: %s\n", name.c_str());
+    debug_d("EventServer::publishTransitionComplete: %s\n", name.c_str());
 
-	JsonRpcMessage msg("transition_finished");
-	JsonObject& root = msg.getParams();
-	root["name"] = name;
-	root["requeued"] = requeued;
+    JsonRpcMessage msg("transition_finished");
+    JsonObject& root = msg.getParams();
+    root["name"] = name;
+    root["requeued"] = requeued;
 
-	sendToClients(msg);
+    sendToClients(msg);
 }
 
 void EventServer::sendToClients(JsonRpcMessage& rpcMsg) {
-	//Serial.printf("EventServer: sendToClient: %x, Vector: %x Tests: %d\n", _client, _clients.elementAt(0), _tests[0]);
+    //Serial.printf("EventServer: sendToClient: %x, Vector: %x Tests: %d\n", _client, _clients.elementAt(0), _tests[0]);
     rpcMsg.setId(_nextId++);
 
-	String jsonStr;
-	rpcMsg.getRoot().printTo(jsonStr);
+    String jsonStr;
+    rpcMsg.getRoot().printTo(jsonStr);
 
-	for(int i=0; i < connections.size(); ++i) {
-		TcpClient* pClient = (TcpClient*)connections[i];
-		pClient->sendString(jsonStr);
-	}
+    for(int i=0; i < connections.size(); ++i) {
+        TcpClient* pClient = (TcpClient*)connections[i];
+        pClient->sendString(jsonStr);
+    }
 }

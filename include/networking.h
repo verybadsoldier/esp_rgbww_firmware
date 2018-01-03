@@ -23,58 +23,58 @@
 #define APP_NETWORKING_H_
 
 enum CONNECTION_STATUS {
-	IDLE = 0,
-	CONNECTING = 1,
-	CONNECTED = 2,
-	ERROR = 3
+    IDLE = 0,
+    CONNECTING = 1,
+    CONNECTED = 2,
+    ERROR = 3
 };
 
 class AppWIFI {
 
 public:
-	AppWIFI();
-	virtual ~AppWIFI() {
-	}
-	;
+    AppWIFI();
+    virtual ~AppWIFI() {
+    }
+    ;
 
-	void init();
+    void init();
 
-	void connect(String ssid, String pass, bool new_con = false);
-	void connect(String ssid, bool new_con = false);
-	CONNECTION_STATUS get_con_status() { return _client_status; }	;
-	String get_con_err_msg() { return _client_err_msg; };
+    void connect(String ssid, String pass, bool new_con = false);
+    void connect(String ssid, bool new_con = false);
+    CONNECTION_STATUS get_con_status() { return _client_status; }	;
+    String get_con_err_msg() { return _client_err_msg; };
 
-	void startAp();
-	void stopAp();
-	void stopAp(int delay);
-	bool isApActive() { return WifiAccessPoint.isEnabled(); };
+    void startAp();
+    void stopAp();
+    void stopAp(int delay);
+    bool isApActive() { return WifiAccessPoint.isEnabled(); };
 
-	void scan();
-	bool isScanning() { return _scanning; };
-	BssList getAvailableNetworks();
+    void scan();
+    bool isScanning() { return _scanning; };
+    BssList getAvailableNetworks();
 
-	void forgetWifi();
-
-private:
-	int _con_ctr;
-	bool _scanning;
-	bool _dns_active;
-	bool _new_connection;
-	String _client_err_msg;
-	String _tmp_ssid;
-	String _tmp_password;
-	Timer _timer;
-	BssList _networks;
-	DNSServer _dns;
-	IPAddress _ApIP;
-
-	CONNECTION_STATUS _client_status;
+    void forgetWifi();
 
 private:
-	void _STADisconnect(String ssid, uint8_t ssid_len, uint8_t bssid[6], uint8_t reason);
-	void _STAConnected(String ssid, uint8_t ssid_len, uint8_t bssid[6], uint8_t reason);
-	void _STAGotIP(IPAddress ip, IPAddress mask, IPAddress gateway);
-	void scanCompleted(bool succeeded, BssList list);
+    int _con_ctr;
+    bool _scanning;
+    bool _dns_active;
+    bool _new_connection;
+    String _client_err_msg;
+    String _tmp_ssid;
+    String _tmp_password;
+    Timer _timer;
+    BssList _networks;
+    DNSServer _dns;
+    IPAddress _ApIP;
+
+    CONNECTION_STATUS _client_status;
+
+private:
+    void _STADisconnect(String ssid, uint8_t ssid_len, uint8_t bssid[6], uint8_t reason);
+    void _STAConnected(String ssid, uint8_t ssid_len, uint8_t bssid[6], uint8_t reason);
+    void _STAGotIP(IPAddress ip, IPAddress mask, IPAddress gateway);
+    void scanCompleted(bool succeeded, BssList list);
 };
 
 #endif //APP_NETWORKING_H_

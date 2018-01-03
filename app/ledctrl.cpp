@@ -33,88 +33,88 @@ APPLedCtrl::~APPLedCtrl() {
 }
 
 PinConfig APPLedCtrl::parsePinConfigString(String& pinStr) {
-	Vector<long> pins;
-	splitString(pinStr, ',', pins);
+    Vector<long> pins;
+    splitString(pinStr, ',', pins);
 
-	bool isCorrect = true;
-	// sanity check
-	for(int i=0; i < 5; ++i) {
-		if (pins[i] == 0l) {
-			isCorrect = false;
-		}
-	}
+    bool isCorrect = true;
+    // sanity check
+    for(int i=0; i < 5; ++i) {
+        if (pins[i] == 0l) {
+            isCorrect = false;
+        }
+    }
 
-	if (pins.size() != 5)
-		isCorrect = false;
+    if (pins.size() != 5)
+        isCorrect = false;
 
-	if (!isCorrect) {
-		debug_e("APPLedCtrl::parsePinConfigString - Error in pin configuration - Using default pin values");
-		return PinConfig();
-	}
+    if (!isCorrect) {
+        debug_e("APPLedCtrl::parsePinConfigString - Error in pin configuration - Using default pin values");
+        return PinConfig();
+    }
 
-	PinConfig cfg;
-	cfg.red       = static_cast<int>(pins[0]);
-	cfg.green     = static_cast<int>(pins[1]);
-	cfg.blue      = static_cast<int>(pins[2]);
-	cfg.warmwhite = static_cast<int>(pins[3]);
-	cfg.coldwhite = static_cast<int>(pins[4]);
-	return cfg;
+    PinConfig cfg;
+    cfg.red       = static_cast<int>(pins[0]);
+    cfg.green     = static_cast<int>(pins[1]);
+    cfg.blue      = static_cast<int>(pins[2]);
+    cfg.warmwhite = static_cast<int>(pins[3]);
+    cfg.coldwhite = static_cast<int>(pins[4]);
+    return cfg;
 }
 
 void APPLedCtrl::init() {
-	debug_i("APPLedCtrl::init");
+    debug_i("APPLedCtrl::init");
 
     _stepSync = new ClockCatchUp3();
 
     const PinConfig pins = APPLedCtrl::parsePinConfigString(app.cfg.general.pin_config);
 
-	RGBWWLed::init(pins.red, pins.green, pins.blue, pins.warmwhite, pins.coldwhite, PWM_FREQUENCY);
+    RGBWWLed::init(pins.red, pins.green, pins.blue, pins.warmwhite, pins.coldwhite, PWM_FREQUENCY);
 
-	setup();
-	colorStorage.load();
-	debug_i("H: %i | s: %i | v: %i | ct: %i", colorStorage.current.h, colorStorage.current.s, colorStorage.current.v, colorStorage.current.ct);
+    setup();
+    colorStorage.load();
+    debug_i("H: %i | s: %i | v: %i | ct: %i", colorStorage.current.h, colorStorage.current.s, colorStorage.current.v, colorStorage.current.ct);
 
-	// boot from off to current color
-	HSVCT dark = colorStorage.current;
-	dark.h = 0;
-	fadeHSV(dark, colorStorage.current, 700); //fade to color in 700ms
+    // boot from off to current color
+    HSVCT dark = colorStorage.current;
+    dark.h = 0;
+    fadeHSV(dark, colorStorage.current, 700); //fade to color in 700ms
 }
 
 void APPLedCtrl::setup() {
-	debug_i("APPLedCtrl::setup");
+    debug_i("APPLedCtrl::setup");
 
-	colorutils.setBrightnessCorrection(app.cfg.color.brightness.red,
-			app.cfg.color.brightness.green, app.cfg.color.brightness.blue,
-			app.cfg.color.brightness.ww, app.cfg.color.brightness.cw);
-	colorutils.setHSVcorrection(app.cfg.color.hsv.red, app.cfg.color.hsv.yellow,
-			app.cfg.color.hsv.green, app.cfg.color.hsv.cyan,
-			app.cfg.color.hsv.blue, app.cfg.color.hsv.magenta);
+    colorutils.setBrightnessCorrection(app.cfg.color.brightness.red,
+            app.cfg.color.brightness.green, app.cfg.color.brightness.blue,
+            app.cfg.color.brightness.ww, app.cfg.color.brightness.cw);
+    colorutils.setHSVcorrection(app.cfg.color.hsv.red, app.cfg.color.hsv.yellow,
+            app.cfg.color.hsv.green, app.cfg.color.hsv.cyan,
+            app.cfg.color.hsv.blue, app.cfg.color.hsv.magenta);
 
-	colorutils.setColorMode((RGBWW_COLORMODE) app.cfg.color.outputmode);
-	colorutils.setHSVmodel((RGBWW_HSVMODEL) app.cfg.color.hsv.model);
+    colorutils.setColorMode((RGBWW_COLORMODE) app.cfg.color.outputmode);
+    colorutils.setHSVmodel((RGBWW_HSVMODEL) app.cfg.color.hsv.model);
 
 }
 
 void APPLedCtrl::publishToEventServer() {
-	HSVCT const * pHsv = NULL;
-	if (_mode == ColorMode::Hsv)
-		pHsv = &getCurrentColor();
+    HSVCT const * pHsv = NULL;
+    if (_mode == ColorMode::Hsv)
+        pHsv = &getCurrentColor();
 
-	app.eventserver.publishCurrentState(getCurrentOutput(), pHsv);
+    app.eventserver.publishCurrentState(getCurrentOutput(), pHsv);
 }
 
 void APPLedCtrl::publishToMqtt() {
     if (!app.cfg.sync.color_master_enabled)
         return;
 
-	switch(_mode) {
-	case ColorMode::Hsv:
+    switch(_mode) {
+    case ColorMode::Hsv:
         app.mqttclient.publishCurrentHsv(getCurrentColor());
-	    break;
+        break;
     case ColorMode::Raw:
         app.mqttclient.publishCurrentRaw(getCurrentOutput());
         break;
-	}
+    }
 }
 
 void APPLedCtrl::updateLedCb(void* pTimerArg) {
@@ -126,17 +126,17 @@ void APPLedCtrl::updateLed() {
     // arm next timer
     ets_timer_arm_new(&_ledTimer, _timerInterval, 0, 0);
 
-	const bool animFinished = show();
+    const bool animFinished = show();
 
     ++_stepCounter;
 
-	if (app.cfg.sync.clock_master_enabled) {
+    if (app.cfg.sync.clock_master_enabled) {
         if ((_stepCounter % (app.cfg.sync.clock_master_interval * RGBWW_UPDATEFREQUENCY)) == 0) {
             app.mqttclient.publishClock(_stepCounter);
         }
-	}
+    }
 
-	const static uint32_t stepLenMs = 1000 / RGBWW_UPDATEFREQUENCY;
+    const static uint32_t stepLenMs = 1000 / RGBWW_UPDATEFREQUENCY;
 
     if (animFinished || app.cfg.events.color_interval_ms == 0 ||
             ((stepLenMs * _stepCounter) % app.cfg.events.color_interval_ms) < stepLenMs) {
@@ -192,58 +192,58 @@ void APPLedCtrl::onMasterClock(uint32_t stepsMaster) {
 }
 
 void APPLedCtrl::start() {
-	debug_i("APPLedCtrl::start");
+    debug_i("APPLedCtrl::start");
 
     ets_timer_setfn(&_ledTimer, APPLedCtrl::updateLedCb, this);
     ets_timer_arm_new(&_ledTimer, _timerInterval, 0, 0);
 }
 
 void APPLedCtrl::stop() {
-	debug_i("APPLedCtrl::stop");
+    debug_i("APPLedCtrl::stop");
     ets_timer_disarm(&_ledTimer);
 }
 
 void APPLedCtrl::colorSave() {
-	colorStorage.current = getCurrentColor();
-	colorStorage.save();
+    colorStorage.current = getCurrentColor();
+    colorStorage.save();
 }
 
 void APPLedCtrl::colorReset() {
-	debug_i("APPLedCtrl::colorReset");
-	colorStorage.current.h = 0;
-	colorStorage.current.s = 0;
-	colorStorage.current.v = 0;
-	colorStorage.current.ct = 0;
-	colorStorage.save();
+    debug_i("APPLedCtrl::colorReset");
+    colorStorage.current.h = 0;
+    colorStorage.current.s = 0;
+    colorStorage.current.v = 0;
+    colorStorage.current.ct = 0;
+    colorStorage.save();
 }
 
 void APPLedCtrl::testChannels() {
-//	debugapp("APPLedCtrl::test_channels");
-//	ChannelOutput red = ChannelOutput(1023, 0, 0, 0, 0);
-//	ChannelOutput green = ChannelOutput(0, 1023, 0, 0, 0);
-//	ChannelOutput blue = ChannelOutput(0, 0, 1023, 0, 0);
-//	ChannelOutput ww = ChannelOutput(0, 0, 0, 1023, 0);
-//	ChannelOutput cw = ChannelOutput(0, 0, 0, 0, 1023);
-//	ChannelOutput black = ChannelOutput(0, 0, 0, 0, 0);
-//	setRAW(black);
-//	fadeRAW(red, 1000, QueuePolicy::Back);
-//	fadeRAW(black, 1000, QueuePolicy::Back);
-//	fadeRAW(green, 1000, QueuePolicy::Back);
-//	fadeRAW(black, 1000, QueuePolicy::Back);
-//	fadeRAW(blue, 1000, QueuePolicy::Back);
-//	fadeRAW(black, 1000, QueuePolicy::Back);
-//	fadeRAW(ww, 1000, QueuePolicy::Back);
-//	fadeRAW(black, 1000, QueuePolicy::Back);
-//	fadeRAW(cw, 1000, QueuePolicy::Back);
-//	fadeRAW(black, 1000, QueuePolicy::Back);
+    // debugapp("APPLedCtrl::test_channels");
+    // ChannelOutput red = ChannelOutput(1023, 0, 0, 0, 0);
+    // ChannelOutput green = ChannelOutput(0, 1023, 0, 0, 0);
+    // ChannelOutput blue = ChannelOutput(0, 0, 1023, 0, 0);
+    // ChannelOutput ww = ChannelOutput(0, 0, 0, 1023, 0);
+    // ChannelOutput cw = ChannelOutput(0, 0, 0, 0, 1023);
+    // ChannelOutput black = ChannelOutput(0, 0, 0, 0, 0);
+    // setRAW(black);
+    // fadeRAW(red, 1000, QueuePolicy::Back);
+    // fadeRAW(black, 1000, QueuePolicy::Back);
+    // fadeRAW(green, 1000, QueuePolicy::Back);
+    // fadeRAW(black, 1000, QueuePolicy::Back);
+    // fadeRAW(blue, 1000, QueuePolicy::Back);
+    // fadeRAW(black, 1000, QueuePolicy::Back);
+    // fadeRAW(ww, 1000, QueuePolicy::Back);
+    // fadeRAW(black, 1000, QueuePolicy::Back);
+    // fadeRAW(cw, 1000, QueuePolicy::Back);
+    // fadeRAW(black, 1000, QueuePolicy::Back);
 }
 
 void APPLedCtrl::onAnimationFinished(const String& name, bool requeued) {
-	debug_d("APPLedCtrl::onAnimationFinished: %s", name.c_str());
+    debug_d("APPLedCtrl::onAnimationFinished: %s", name.c_str());
 
-	if (name.length() > 0) {
-	    _stepFinishedAnimations[name] = requeued;
-	}
+    if (name.length() > 0) {
+        _stepFinishedAnimations[name] = requeued;
+    }
 }
 
 uint32_t ClockCatchUp3::onMasterClock(uint32_t stepsCurrent, uint32_t stepsMaster) {
@@ -275,5 +275,5 @@ uint32_t ClockCatchUp3::getCatchupOffset() const {
 }
 
 void StepSync::resetCatchupOffset() {
-	_catchupOffset = 0;
+    _catchupOffset = 0;
 }
