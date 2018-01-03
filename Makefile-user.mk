@@ -67,3 +67,6 @@ ENABLE_CUSTOM_PWM = 0
 #RBOOT_ROM_0     ?= rom0
 ## input linker file for first rom
 #RBOOT_LD_0      ?= rom0.ld
+
+SMING_RELEASE = 1
+DEBUG_VERBOSE_LEVEL = 2
