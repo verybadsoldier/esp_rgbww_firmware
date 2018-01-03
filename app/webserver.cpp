@@ -28,7 +28,7 @@ ApplicationWebserver::ApplicationWebserver() {
 	// keep some heap space free
 	// value is a good guess and tested to not crash when issuing multiple parallel requests
 	HttpServerSettings settings;
-	settings.minHeapSize = 10000;
+	settings.minHeapSize = 12000;
 	configure(settings);
 
 	// workaround for bug in Sming 3.5.0
