@@ -376,7 +376,7 @@ int JsonProcessor::RequestParameters::checkParams(String& errorMsg) const {
 }
 
 bool JsonProcessor::onJsonRpc(const String& json) {
-    Serial.printf("JsonProcessor::onJsonRpc: %s\n", json.c_str());
+    debug_d("JsonProcessor::onJsonRpc: %s\n", json.c_str());
     JsonRpcMessageIn rpc(json);
 
     String msg;

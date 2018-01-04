@@ -74,7 +74,7 @@ void AppMqttClient::connect() {
         mqtt->subscribe(app.cfg.sync.cmd_slave_topic);
     }
     if (app.cfg.sync.color_slave_enabled) {
-        Serial.printf("Subscribe: %s\n", app.cfg.sync.color_slave_topic.c_str());
+        debug_d("Subscribe: %s\n", app.cfg.sync.color_slave_topic.c_str());
         mqtt->subscribe(app.cfg.sync.color_slave_topic);
     }
 }
