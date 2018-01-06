@@ -712,6 +712,7 @@ void ApplicationWebserver::onInfo(HttpRequest &request, HttpResponse &response) 
     data["git_date"] = fw_git_date;
     data["sming"] = SMING_VERSION;
     data["event_num_clients"] = app.eventserver.activeClients;
+    data["uptime"] = app.getUptime();
 
     JsonObject& rgbww = data.createNestedObject("rgbww");
     rgbww["version"] = RGBWW_VERSION;

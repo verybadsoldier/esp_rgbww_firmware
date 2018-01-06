@@ -52,6 +52,8 @@ public:
     void onCommandRelay(const String& method, const JsonObject& json);
     void onWifiConnected(const String& ssid);
 
+    uint32_t getUptime();
+
 public:
     AppWIFI network;
     ApplicationWebserver webserver;
@@ -61,6 +63,7 @@ public:
     EventServer eventserver;
     AppMqttClient mqttclient;
     JsonProcessor jsonproc;
+    RtcClass rtc;
 
 private:
     void loadbootinfo();
@@ -71,6 +74,8 @@ private:
     bool _first_run = false;
     bool _fs_mounted = false;
     bool _run_after_ota = false;
+
+    uint32_t startupTimestamp;
 
 };
 // forward declaration for global vars

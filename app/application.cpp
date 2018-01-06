@@ -42,9 +42,12 @@ void GDB_IRAM_ATTR init() {
 }
 
 void Application::init() {
-    Serial.systemDebugOutput(false);
+    Serial.systemDebugOutput(true);
 
     debug_i("RGBWW Controller v %s\r\n", fw_version);
+
+    // set timestamp for uptime calculation
+    startupTimestamp = rtc.getRtcSeconds();
 
     //load settings
 
@@ -187,4 +190,8 @@ void Application::onCommandRelay(const String& method, const JsonObject& params)
         return;
 
     mqttclient.publishCommand(method, params);
+}
+
+uint32_t Application::getUptime() {
+    return rtc.getRtcSeconds() - startupTimestamp;
 }
