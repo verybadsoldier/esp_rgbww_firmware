@@ -21,9 +21,8 @@
  */
 #pragma once
 
-#include <limits>
-
 #include "mqtt.h"
+#include "stepsync.h"
 
 #define APP_COLOR_FILE ".color"
 
@@ -78,8 +77,6 @@ struct ColorStorage {
     }
 };
 
-class StepSync;
-
 class APPLedCtrl: public RGBWWLed {
 
 public:
@@ -120,40 +117,4 @@ private:
     ETSTimer _ledTimer;
     uint32_t _timerInterval = RGBWW_MINTIMEDIFF_US;
     HashMap<String, bool> _stepFinishedAnimations;
-};
-
-
-class StepSync {
-public:
-    virtual uint32_t onMasterClock(uint32_t stepsCurrent, uint32_t stepsMaster) = 0;
-    virtual uint32_t getCatchupOffset() const;
-    void resetCatchupOffset();
-
-protected:
-    template<typename T>
-    static T calcOverflowVal(T prevValue, T curValue) {
-        if (curValue < prevValue) {
-            //overflow
-            return std::numeric_limits<T>::max() - prevValue + curValue;
-        }
-        else {
-            return curValue - prevValue;
-        }
-    }
-
-    int _catchupOffset = 0;
-};
-
-
-class ClockCatchUp3 : public StepSync {
-public:
-    virtual uint32_t onMasterClock(uint32_t stepsCurrent, uint32_t stepsMaster) override;
-    virtual uint32_t getCatchupOffset() const;
-
-private:
-    uint32_t _stepsSyncMasterLast = 0;
-    uint32_t _stepsSyncLast = 0;
-    bool _firstMasterSync = true;
-    double _steering = 1.0;
-    const uint32_t _constBaseInt = RGBWW_MINTIMEDIFF_US;
 };

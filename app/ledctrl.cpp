@@ -64,7 +64,7 @@ PinConfig APPLedCtrl::parsePinConfigString(String& pinStr) {
 void APPLedCtrl::init() {
     debug_i("APPLedCtrl::init");
 
-    _stepSync = new ClockCatchUp3();
+    _stepSync = new ClockCatchUp();
 
     const PinConfig pins = APPLedCtrl::parsePinConfigString(app.cfg.general.pin_config);
 
@@ -96,6 +96,9 @@ void APPLedCtrl::setup() {
 }
 
 void APPLedCtrl::publishToEventServer() {
+    if (!app.cfg.events.server_enabled)
+        return;
+
     HSVCT const * pHsv = NULL;
     if (_mode == ColorMode::Hsv)
         pHsv = &getCurrentColor();
@@ -138,9 +141,11 @@ void APPLedCtrl::updateLed() {
 
     const static uint32_t stepLenMs = 1000 / RGBWW_UPDATEFREQUENCY;
 
-    if (animFinished || app.cfg.events.color_interval_ms == 0 ||
-            ((stepLenMs * _stepCounter) % app.cfg.events.color_interval_ms) < stepLenMs) {
-        publishToEventServer();
+    if (app.cfg.events.color_interval_ms >= 0) {
+        if (animFinished || app.cfg.events.color_interval_ms == 0 ||
+                ((stepLenMs * _stepCounter) % app.cfg.events.color_interval_ms) < stepLenMs) {
+            publishToEventServer();
+        }
     }
 
     if (animFinished || app.cfg.sync.color_master_interval_ms == 0 ||
@@ -184,6 +189,7 @@ void APPLedCtrl::onMasterClock(uint32_t stepsMaster) {
 
     _timerInterval = _stepSync->onMasterClock(_stepCounter, stepsMaster);
 
+    // limit interval to sane values (just for safety)
     _timerInterval = std::min(std::max(_timerInterval, RGBWW_MINTIMEDIFF_US / 2u), static_cast<uint32_t>(RGBWW_MINTIMEDIFF_US * 1.5));
 
     app.eventserver.publishClockSlaveStatus(_stepSync->getCatchupOffset(), _timerInterval);
@@ -244,36 +250,4 @@ void APPLedCtrl::onAnimationFinished(const String& name, bool requeued) {
     if (name.length() > 0) {
         _stepFinishedAnimations[name] = requeued;
     }
-}
-
-uint32_t ClockCatchUp3::onMasterClock(uint32_t stepsCurrent, uint32_t stepsMaster) {
-    uint32_t nextInt = _constBaseInt;
-    if (!_firstMasterSync) {
-        int diff = StepSync::calcOverflowVal(_stepsSyncLast, stepsCurrent);
-        int masterDiff = StepSync::calcOverflowVal(_stepsSyncMasterLast, stepsMaster);
-
-        int curOffset = masterDiff - diff;
-        _catchupOffset += curOffset;
-        debug_d("Diff: %d | Master Diff: %d | CurOffset: %d | Catchup Offset: %d\n", diff, masterDiff, curOffset, _catchupOffset);
-
-        float curSteering = 1.0 - static_cast<float>(_catchupOffset) / masterDiff;
-        curSteering = std::min(std::max(curSteering, 0.5f), 1.5f);
-        _steering = 0.5f *_steering + 0.5f * curSteering;
-        nextInt *= _steering;
-        debug_d("New Int: %d | CurSteering: %f | Steering: %f\n", nextInt, curSteering, _steering);
-    }
-
-    _stepsSyncMasterLast = stepsMaster;
-    _stepsSyncLast = stepsCurrent;
-    _firstMasterSync = false;
-
-    return nextInt;
-}
-
-uint32_t ClockCatchUp3::getCatchupOffset() const {
-    return _catchupOffset;
-}
-
-void StepSync::resetCatchupOffset() {
-    _catchupOffset = 0;
 }

@@ -58,5 +58,6 @@
 #include <eventserver.h>
 #include <jsonprocessor.h>
 #include <application.h>
+#include <stepsync.h>
 
 #endif /* RGBWWCTRL_H_ */
