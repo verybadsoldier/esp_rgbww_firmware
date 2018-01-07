@@ -6,8 +6,8 @@
 class StepSync {
 public:
     virtual uint32_t onMasterClock(uint32_t stepsCurrent, uint32_t stepsMaster) = 0;
-    virtual uint32_t getCatchupOffset() const;
-    void resetCatchupOffset();
+    virtual int getCatchupOffset() const;
+    virtual void reset() = 0;
 
 protected:
     template<typename T>
@@ -28,7 +28,8 @@ protected:
 class ClockCatchUp : public StepSync {
 public:
     virtual uint32_t onMasterClock(uint32_t stepsCurrent, uint32_t stepsMaster) override;
-    virtual uint32_t getCatchupOffset() const;
+    virtual int getCatchupOffset() const;
+    virtual void reset();
 
 private:
     uint32_t _stepsSyncMasterLast = 0;

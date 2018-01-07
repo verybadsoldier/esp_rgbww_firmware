@@ -2,7 +2,8 @@
 #include <algorithm>
 
 
-void StepSync::resetCatchupOffset() {
+void ClockCatchUp::reset() {
+    _firstMasterSync = true;
     _catchupOffset = 0;
 }
 
@@ -30,7 +31,7 @@ uint32_t ClockCatchUp::onMasterClock(uint32_t stepsCurrent, uint32_t stepsMaster
     return nextInt;
 }
 
-uint32_t ClockCatchUp::getCatchupOffset() const {
+int ClockCatchUp::getCatchupOffset() const {
     return _catchupOffset;
 }
 
