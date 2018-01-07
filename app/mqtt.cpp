@@ -137,6 +137,8 @@ void AppMqttClient::publish(const String& topic, const String& data, bool retain
 void AppMqttClient::publishCurrentRaw(const ChannelOutput& raw) {
     if (raw == _lastRaw)
         return;
+    _lastRaw = raw;
+
     debug_d("ApplicationMQTTClient::publishCurrentRaw\n");
 
     DynamicJsonBuffer jsonBuffer(200);
@@ -159,6 +161,8 @@ void AppMqttClient::publishCurrentRaw(const ChannelOutput& raw) {
 void AppMqttClient::publishCurrentHsv(const HSVCT& color) {
     if (color == _lastHsv)
         return;
+    _lastHsv = color;
+
     debug_d("ApplicationMQTTClient::publishCurrentHsv\n");
 
     float h, s, v;
