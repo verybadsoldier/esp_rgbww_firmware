@@ -93,6 +93,7 @@ public:
 
     void updateLed();
     void onMasterClock(uint32_t steps);
+    void onMasterClockReset();
     virtual void onAnimationFinished(const String& name, bool requeued);
 private:
     static PinConfig parsePinConfigString(String& pinStr);

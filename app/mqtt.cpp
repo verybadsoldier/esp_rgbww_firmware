@@ -77,6 +77,10 @@ void AppMqttClient::connect() {
         debug_d("Subscribe: %s\n", app.cfg.sync.color_slave_topic.c_str());
         mqtt->subscribe(app.cfg.sync.color_slave_topic);
     }
+
+    if (app.cfg.sync.clock_master_enabled) {
+        mqtt->publishClockReset();
+    }
 }
 
 void AppMqttClient::init() {
@@ -105,8 +109,13 @@ bool AppMqttClient::isRunning() const {
 
 void AppMqttClient::onMessageReceived(String topic, String message) {
     if (app.cfg.sync.clock_slave_enabled && (topic == app.cfg.sync.clock_slave_topic)) {
-        uint32_t clock = message.toInt();
-        app.rgbwwctrl.onMasterClock(clock);
+        if (message == "reset") {
+            app.rgbwwctrl.onMasterClockReset();
+        }
+        else  {
+            uint32_t clock = message.toInt();
+            app.rgbwwctrl.onMasterClock(clock);
+        }
     }
     else if (app.cfg.sync.cmd_slave_enabled && topic == app.cfg.sync.cmd_slave_topic) {
         app.jsonproc.onJsonRpc(message);
@@ -197,6 +206,11 @@ void AppMqttClient::publishClock(uint32_t steps) {
 
     String topic = buildTopic("clock");
     publish(topic, msg, false);
+}
+
+void AppMqttClient::publishClockReset() {
+    String topic = buildTopic("clock");
+    publish(topic, "reset", false);
 }
 
 void AppMqttClient::publishClockInterval(uint32_t curInterval) {

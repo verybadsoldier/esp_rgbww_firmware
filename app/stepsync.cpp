@@ -5,6 +5,7 @@
 void ClockCatchUp::reset() {
     _firstMasterSync = true;
     _catchupOffset = 0;
+    _steering = 1.0;
 }
 
 uint32_t ClockCatchUp::onMasterClock(uint32_t stepsCurrent, uint32_t stepsMaster) {

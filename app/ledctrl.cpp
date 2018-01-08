@@ -183,11 +183,11 @@ void APPLedCtrl::publishFinishedStepAnimations() {
     _stepFinishedAnimations.clear();
 }
 
-void APPLedCtrl::onMasterClock(uint32_t stepsMaster) {
-    // detect if clock master rebooted or changed -> reset our counter also
-    if (std::abs(_stepSync->getCatchupOffset()) > 1000)
-        _stepSync->reset();
+void APPLedCtrl::onMasterClockReset() {
+    _stepSync->reset();
+}
 
+void APPLedCtrl::onMasterClock(uint32_t stepsMaster) {
     _timerInterval = _stepSync->onMasterClock(_stepCounter, stepsMaster);
 
     // limit interval to sane values (just for safety)

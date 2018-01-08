@@ -19,6 +19,7 @@ public:
     void publishCurrentHsv(const HSVCT& color);
     void publishCurrentRaw(const ChannelOutput& raw);
     void publishClock(uint32_t steps);
+    void publishClockReset();
     void publishClockInterval(uint32_t curInterval);
     void publishClockSlaveOffset(uint32_t offset);
     void publishCommand(const String& method, const JsonObject& params);
