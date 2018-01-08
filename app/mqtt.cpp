@@ -79,7 +79,7 @@ void AppMqttClient::connect() {
     }
 
     if (app.cfg.sync.clock_master_enabled) {
-        mqtt->publishClockReset();
+        this->publishClockReset();
     }
 }
 
