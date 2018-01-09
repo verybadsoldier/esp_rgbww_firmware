@@ -103,6 +103,7 @@ private:
     void publishFinishedStepAnimations();
     void publishColorStayedCmds();
     void checkStableColorState();
+    void publishStatus();
 
     ColorStorage colorStorage;
 

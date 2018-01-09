@@ -185,6 +185,7 @@ void APPLedCtrl::publishFinishedStepAnimations() {
 
 void APPLedCtrl::onMasterClockReset() {
     _stepSync->reset();
+    publishStatus();
 }
 
 void APPLedCtrl::onMasterClock(uint32_t stepsMaster) {
@@ -192,7 +193,10 @@ void APPLedCtrl::onMasterClock(uint32_t stepsMaster) {
 
     // limit interval to sane values (just for safety)
     _timerInterval = std::min(std::max(_timerInterval, RGBWW_MINTIMEDIFF_US / 2u), static_cast<uint32_t>(RGBWW_MINTIMEDIFF_US * 1.5));
+    publishStatus();
+}
 
+void APPLedCtrl::publishStatus() {
     app.eventserver.publishClockSlaveStatus(_stepSync->getCatchupOffset(), _timerInterval);
     app.mqttclient.publishClockSlaveOffset(_stepSync->getCatchupOffset());
     app.mqttclient.publishClockInterval(_timerInterval);
