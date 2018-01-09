@@ -184,7 +184,7 @@ void APPLedCtrl::publishFinishedStepAnimations() {
 }
 
 void APPLedCtrl::onMasterClockReset() {
-    _stepSync->reset();
+    _timerInterval = _stepSync->reset();
     publishStatus();
 }
 

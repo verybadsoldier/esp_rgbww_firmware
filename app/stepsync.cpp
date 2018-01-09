@@ -2,10 +2,11 @@
 #include <algorithm>
 
 
-void ClockCatchUp::reset() {
+uint32_t ClockCatchUp::reset() {
     _firstMasterSync = true;
     _catchupOffset = 0;
     _steering = 1.0;
+    return _constBaseInt;
 }
 
 uint32_t ClockCatchUp::onMasterClock(uint32_t stepsCurrent, uint32_t stepsMaster) {
