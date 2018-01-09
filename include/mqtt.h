@@ -38,6 +38,7 @@ private:
     bool _running = false;
     Timer _procTimer;
     String _id;
+    bool _firstClock = true;
 
     HSVCT _lastHsv;
     ChannelOutput _lastRaw;

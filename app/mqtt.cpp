@@ -77,10 +77,6 @@ void AppMqttClient::connect() {
         debug_d("Subscribe: %s\n", app.cfg.sync.color_slave_topic.c_str());
         mqtt->subscribe(app.cfg.sync.color_slave_topic);
     }
-
-    if (app.cfg.sync.clock_master_enabled) {
-        this->publishClockReset();
-    }
 }
 
 void AppMqttClient::init() {
@@ -201,32 +197,34 @@ String AppMqttClient::buildTopic(const String& suffix) {
 }
 
 void AppMqttClient::publishClock(uint32_t steps) {
-    String msg;
-    msg += steps;
+    if (_firstClock) {
+        this->publishClockReset();
+        _firstClock = false;
+    }
+    else {
+        String msg;
+        msg += steps;
 
-    String topic = buildTopic("clock");
-    publish(topic, msg, false);
+        publish(buildTopic("clock"), msg, false);
+    }
 }
 
 void AppMqttClient::publishClockReset() {
-    String topic = buildTopic("clock");
-    publish(topic, "reset", false);
+    publish(buildTopic("clock"), "reset", false);
 }
 
 void AppMqttClient::publishClockInterval(uint32_t curInterval) {
     String msg;
     msg += curInterval;
 
-    String topic = buildTopic("clock_interval");
-    publish(topic, msg, false);
+    publish(buildTopic("clock_interval"), msg, false);
 }
 
 void AppMqttClient::publishClockSlaveOffset(uint32_t offset) {
     String msg;
     msg += offset;
 
-    String topic = buildTopic("clock_slave_offset");
-    publish(topic, msg, false);
+    publish(buildTopic("clock_slave_offset"), msg, false);
 }
 
 void AppMqttClient::publishCommand(const String& method, const JsonObject& params) {
@@ -234,14 +232,12 @@ void AppMqttClient::publishCommand(const String& method, const JsonObject& param
 
     JsonRpcMessage msg(method);
 
-    String topic = buildTopic("command");
-
     if (params.size() > 0)
         msg.getRoot()["params"] = params;
 
     String msgStr;
     msg.getRoot().printTo(msgStr);
-    publish(topic, msgStr, false);
+    publish(buildTopic("command"), msgStr, false);
 }
 
 void AppMqttClient::publishTransitionFinished(const String& name, bool requeued) {
