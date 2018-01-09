@@ -68,5 +68,7 @@ ENABLE_CUSTOM_PWM = 0
 ## input linker file for first rom
 #RBOOT_LD_0      ?= rom0.ld
 
+#COM_SPEED_ESPTOOL = 500000
+
 SMING_RELEASE = 1
 DEBUG_VERBOSE_LEVEL = 0
