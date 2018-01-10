@@ -837,6 +837,16 @@ void ApplicationWebserver::onAnimation(HttpRequest &request, HttpResponse &respo
 
 }
 
+bool ApplicationWebserver::isPrintable(String& str) {
+    for (unsigned int i=0; i < str.length(); ++i)
+    {
+        char c = str[i];
+        if (c < 0x20)
+            return false;
+    }
+    return true;
+}
+
 void ApplicationWebserver::onNetworks(HttpRequest &request, HttpResponse &response) {
 
     if (!authenticated(request, response)) {
@@ -867,6 +877,14 @@ void ApplicationWebserver::onNetworks(HttpRequest &request, HttpResponse &respon
         for (int i = 0; i < networks.count(); i++) {
             if (networks[i].hidden)
                 continue;
+
+            // SSIDs may contain any byte values. Some are not printable and will cause the javascript client to fail
+            // on parsing the message. Try to filter those here
+            if (!ApplicationWebserver::isPrintable(networks[i].ssid)) {
+                debug_w("Filtered SSID due to unprintable characters: %s", networks[i].ssid.c_str());
+                continue;
+            }
+
             JsonObject &item = netlist.createNestedObject();
             item["id"] = (int) networks[i].getHashId();
             item["ssid"] = networks[i].ssid;

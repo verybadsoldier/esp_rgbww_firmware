@@ -41,7 +41,7 @@ void AppWIFI::scan() {
 }
 
 void AppWIFI::scanCompleted(bool succeeded, BssList list) {
-    debug_i("AppWIFI::scanCompleted");
+    debug_i("AppWIFI::scanCompleted. Success: %d", succeeded);
     if (succeeded) {
         _networks.clear();
         for (int i = 0; i < list.count(); i++) {

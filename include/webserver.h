@@ -76,6 +76,8 @@ private:
     void onColorPost(HttpRequest &request, HttpResponse &response);
     bool onColorPostCmd(JsonObject& root, String& errorMsg);
 
+    static bool isPrintable(String& str);
+
 };
 
 #endif // APP_WEBSERVER_H_
