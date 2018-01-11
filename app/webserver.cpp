@@ -707,7 +707,6 @@ void ApplicationWebserver::onInfo(HttpRequest &request, HttpResponse &response) 
     JsonObject& data = stream->getRoot();
     data["deviceid"] = String(system_get_chip_id());
     data["current_rom"] = String(app.getRomSlot());
-    data["firmware"] = fw_version;
     data["git_version"] = fw_git_version;
     data["git_date"] = fw_git_date;
     data["sming"] = SMING_VERSION;

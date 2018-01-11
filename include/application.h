@@ -22,7 +22,6 @@
 #ifndef APPLICATION_H_
 #define APPLICATION_H_
 
-static const char* fw_version = FWVERSION;
 static const char* fw_git_version = GITVERSION;
 static const char* fw_git_date = GITDATE;
 

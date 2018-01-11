@@ -44,7 +44,7 @@ void GDB_IRAM_ATTR init() {
 void Application::init() {
     Serial.systemDebugOutput(false);
 
-    debug_i("RGBWW Controller v %s\r\n", fw_version);
+    debug_i("RGBWW Controller v %s\r\n", fw_git_version);
 
     // set timestamp for uptime calculation
     startupTimestamp = rtc.getRtcSeconds();
