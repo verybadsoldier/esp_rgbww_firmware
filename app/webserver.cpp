@@ -709,6 +709,7 @@ void ApplicationWebserver::onInfo(HttpRequest &request, HttpResponse &response) 
     data["current_rom"] = String(app.getRomSlot());
     data["git_version"] = fw_git_version;
     data["git_date"] = fw_git_date;
+    data["webapp_version"] = WEBAPP_VERSION;
     data["sming"] = SMING_VERSION;
     data["event_num_clients"] = app.eventserver.activeClients;
     data["uptime"] = app.getUptime();

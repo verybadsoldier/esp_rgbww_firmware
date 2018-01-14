@@ -18,7 +18,12 @@ $(info no GIT_DATE available, using unknown)
 GIT_DATE = "unknown"
 endif
 
-USER_CFLAGS += -DGITVERSION=\"$(GIT_VERSION)\" -DGITDATE=\"$(GIT_DATE)\"
+WEBAPP_VERSION := `cat webapp/VERSION`
+ifndef WEBAPP_VERSION
+$(error can not find webapp/VERSION file - please ensure the source code is complete)
+endif
+
+USER_CFLAGS += -DGITVERSION=\"$(GIT_VERSION)\" -DGITDATE=\"$(GIT_DATE)\" -DWEBAPP_VERSION=\"$(WEBAPP_VERSION)\"
 
 # Important parameters check.
 # We need to make sure SMING_HOME and ESP_HOME variables are set.
