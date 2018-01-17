@@ -65,9 +65,12 @@ public:
     RtcClass rtc;
 
 private:
-    void loadbootinfo();
+    void printFreeHeap();
+    void tcpCleanup();
 
+    Timer _heaptimer;
     Timer _systimer;
+    Timer _tcpcleantimer;
     int _bootmode = 0;
     int _romslot = 0;
     bool _first_run = false;

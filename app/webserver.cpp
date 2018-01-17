@@ -28,7 +28,7 @@ ApplicationWebserver::ApplicationWebserver() {
     // keep some heap space free
     // value is a good guess and tested to not crash when issuing multiple parallel requests
     HttpServerSettings settings;
-    settings.minHeapSize = 12000;
+    settings.minHeapSize = 14000;
     configure(settings);
 
     // workaround for bug in Sming 3.5.0
@@ -112,6 +112,9 @@ String ApplicationWebserver::getApiCodeMsg(API_CODES code) {
 }
 
 void ApplicationWebserver::sendApiResponse(HttpResponse &response, JsonObjectStream* stream, int code /* = 200 */) {
+    uint free = system_get_free_heap_size();
+    Serial.printf("WebResp: Free Heap: %u\n", system_get_free_heap_size());
+
     response.setAllowCrossDomainOrigin("*");
     if (code != 200) {
         response.code = 400;
@@ -227,7 +230,25 @@ void ApplicationWebserver::onWebapp(HttpRequest &request, HttpResponse &response
     }
 }
 
+bool ApplicationWebserver::checkHeap(HttpResponse &response) {
+    uint fh = system_get_free_heap_size();
+    Serial.printf(" checkHeap: %d\n", fh);
+
+    if (fh < 10000) {
+        Serial.printf("--------------------REQUET CANCELLED. RETRY AFTER\n");
+        response.code = 429;
+        response.setHeader("Retry-After", "2");
+        return false;
+    }
+    return true;
+}
+
 void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response) {
+    if (!checkHeap(response))
+        return;
+
+    uint fh = system_get_free_heap_size();
+    Serial.printf(" OnConfig: %d\n", fh);
 
     if (!authenticated(request, response)) {
         return;
@@ -683,12 +704,20 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         general["device_name"] = app.cfg.general.device_name;
         general["pin_config"] = app.cfg.general.pin_config;
 
+        Serial.printf(" OnConfig fin: %d\n", system_get_free_heap_size());
+
+        if (!checkHeap(response)) {
+            delete stream;
+            return;
+        }
+
         sendApiResponse(response, stream);
     }
 }
 
 void ApplicationWebserver::onInfo(HttpRequest &request, HttpResponse &response) {
 
+    Serial.printf(" onInfo: %d\n", system_get_free_heap_size());
     if (!authenticated(request, response)) {
         return;
     }
@@ -727,6 +756,8 @@ void ApplicationWebserver::onInfo(HttpRequest &request, HttpResponse &response) 
     con["gateway"] = WifiStation.getNetworkGateway().toString();
     con["mac"] = WifiStation.getMAC();
     //con["mdnshostname"] = app.cfg.network.connection.mdnshostname.c_str();
+    Serial.printf(" OnInfo fin: %d\n", system_get_free_heap_size());
+
     sendApiResponse(response, stream);
 }
 

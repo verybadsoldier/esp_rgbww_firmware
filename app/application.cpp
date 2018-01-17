@@ -28,7 +28,7 @@ Application app;
 void GDB_IRAM_ATTR init() {
 
     Serial.begin(SERIAL_BAUD_RATE); // 115200 by default
-    Serial.systemDebugOutput(false); // don`t show system debug messages
+    Serial.systemDebugOutput(true); // don`t show system debug messages
     //System.setCpuFrequencye(CF_160MHz);
 
     // set CLR pin to input
@@ -39,6 +39,14 @@ void GDB_IRAM_ATTR init() {
 
     // Run Services on system ready
     System.onReady(SystemReadyDelegate(&Application::startServices, &app));
+}
+
+void Application::printFreeHeap() {
+    static uint32 prevheap = 0;
+    uint32 hs = system_get_free_heap_size();
+    if (hs != prevheap)
+        Serial.printf("Free Heap: %u\n", hs);
+    prevheap = hs;
 }
 
 void Application::init() {
@@ -98,6 +106,9 @@ void Application::init() {
 
     // initialize webserver
     app.webserver.init();
+
+    _heaptimer.initializeMs(200, TimerDelegate(&Application::printFreeHeap, this)).start();
+    //_tcpcleantimer.initializeMs(20, TimerDelegate(&Application::tcpCleanup, this)).start();
 }
 
 // Will be called when system initialization was completed
@@ -140,7 +151,7 @@ bool Application::delayedCMD(String cmd, int delay) {
     } else if (cmd.equals("forget_wifi")) {
         _systimer.initializeMs(delay, TimerDelegate(&AppWIFI::forgetWifi, &network)).startOnce();
     } else if (cmd.equals("test_channels")) {
-        rgbwwctrl.testChannels();
+        //rgbwwctrl.testChannels();
     } else if (cmd.equals("switch_rom")) {
         switchRom();
         _systimer.initializeMs(delay, TimerDelegate(&Application::restart, this)).startOnce();
@@ -189,9 +200,20 @@ void Application::onCommandRelay(const String& method, const JsonObject& params)
     if (!cfg.sync.cmd_master_enabled)
         return;
 
-    mqttclient.publishCommand(method, params);
+    //mqttclient.publishCommand(method, params);
 }
 
 uint32_t Application::getUptime() {
     return rtc.getRtcSeconds() - startupTimestamp;
+}
+
+#include "lwip/tcp_impl.h"
+
+void Application::tcpCleanup()
+{
+  while(tcp_tw_pcbs!=NULL)
+  {
+    Serial.printf("Aborting TW con\n");
+    tcp_abort(tcp_tw_pcbs);
+  }
 }
