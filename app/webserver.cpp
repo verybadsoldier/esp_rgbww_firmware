@@ -28,7 +28,7 @@ ApplicationWebserver::ApplicationWebserver() {
     // keep some heap space free
     // value is a good guess and tested to not crash when issuing multiple parallel requests
     HttpServerSettings settings;
-    settings.minHeapSize = 12000;
+    settings.minHeapSize = _minimumHeapAccept;
     configure(settings);
 
     // workaround for bug in Sming 3.5.0
@@ -112,6 +112,11 @@ String ApplicationWebserver::getApiCodeMsg(API_CODES code) {
 }
 
 void ApplicationWebserver::sendApiResponse(HttpResponse &response, JsonObjectStream* stream, int code /* = 200 */) {
+    if (!checkHeap(response)) {
+        delete stream;
+        return;
+    }
+
     response.setAllowCrossDomainOrigin("*");
     if (code != 200) {
         response.code = 400;
@@ -227,7 +232,19 @@ void ApplicationWebserver::onWebapp(HttpRequest &request, HttpResponse &response
     }
 }
 
+bool ApplicationWebserver::checkHeap(HttpResponse &response) {
+    uint fh = system_get_free_heap_size();
+    if (fh < _minimumHeap) {
+        response.code = 429;
+        response.setHeader("Retry-After", "2");
+        return false;
+    }
+    return true;
+}
+
 void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response) {
+    if (!checkHeap(response))
+        return;
 
     if (!authenticated(request, response)) {
         return;
@@ -688,6 +705,8 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
 }
 
 void ApplicationWebserver::onInfo(HttpRequest &request, HttpResponse &response) {
+    if (!checkHeap(response))
+        return;
 
     if (!authenticated(request, response)) {
         return;
@@ -727,11 +746,15 @@ void ApplicationWebserver::onInfo(HttpRequest &request, HttpResponse &response) 
     con["gateway"] = WifiStation.getNetworkGateway().toString();
     con["mac"] = WifiStation.getMAC();
     //con["mdnshostname"] = app.cfg.network.connection.mdnshostname.c_str();
+
     sendApiResponse(response, stream);
 }
 
 
 void ApplicationWebserver::onColorGet(HttpRequest &request, HttpResponse &response) {
+    if (!checkHeap(response))
+        return;
+
     JsonObjectStream* stream = new JsonObjectStream();
     JsonObject& json = stream->getRoot();
 

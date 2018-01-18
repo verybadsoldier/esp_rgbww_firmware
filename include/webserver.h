@@ -48,6 +48,8 @@ private:
 
     bool _init = false;
     bool _running = false;
+    uint _minimumHeap = 9000;
+    uint _minimumHeapAccept = 14000;
 
     bool authenticated(HttpRequest &request, HttpResponse &response);
     void onFile(HttpRequest &request, HttpResponse &response);
@@ -75,6 +77,8 @@ private:
     void onColorGet(HttpRequest &request, HttpResponse &response);
     void onColorPost(HttpRequest &request, HttpResponse &response);
     bool onColorPostCmd(JsonObject& root, String& errorMsg);
+
+    bool checkHeap(HttpResponse &response);
 
     static bool isPrintable(String& str);
 
