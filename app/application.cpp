@@ -46,9 +46,6 @@ void Application::init() {
 
     debug_i("RGBWW Controller v %s\r\n", fw_git_version);
 
-    // set timestamp for uptime calculation
-    startupTimestamp = rtc.getRtcSeconds();
-
     //load settings
 
     // load boot information
@@ -193,5 +190,5 @@ void Application::onCommandRelay(const String& method, const JsonObject& params)
 }
 
 uint32_t Application::getUptime() {
-    return rtc.getRtcSeconds() - startupTimestamp;
+    return static_cast<uint32_t>(millis() / 1000UL);
 }

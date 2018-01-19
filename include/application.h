@@ -62,7 +62,6 @@ public:
     EventServer eventserver;
     AppMqttClient mqttclient;
     JsonProcessor jsonproc;
-    RtcClass rtc;
 
 private:
     void loadbootinfo();
@@ -73,8 +72,6 @@ private:
     bool _first_run = false;
     bool _fs_mounted = false;
     bool _run_after_ota = false;
-
-    uint32_t startupTimestamp;
 
 };
 // forward declaration for global vars
