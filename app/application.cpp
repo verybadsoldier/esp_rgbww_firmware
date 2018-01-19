@@ -41,12 +41,17 @@ void GDB_IRAM_ATTR init() {
     System.onReady(SystemReadyDelegate(&Application::startServices, &app));
 }
 
+void Application::uptimeCounter() {
+    ++_uptimeMinutes;
+}
+
 void Application::init() {
     Serial.systemDebugOutput(false);
 
     debug_i("RGBWW Controller v %s\r\n", fw_git_version);
 
     //load settings
+    _uptimetimer.initializeMs(60000, TimerDelegate(&Application::uptimeCounter, this)).start();
 
     // load boot information
     uint8 bootmode, bootslot;
@@ -190,5 +195,5 @@ void Application::onCommandRelay(const String& method, const JsonObject& params)
 }
 
 uint32_t Application::getUptime() {
-    return static_cast<uint32_t>(millis() / 1000UL);
+    return _uptimeMinutes * 60u;
 }

@@ -52,6 +52,7 @@ public:
     void onWifiConnected(const String& ssid);
 
     uint32_t getUptime();
+    void uptimeCounter();
 
 public:
     AppWIFI network;
@@ -73,6 +74,8 @@ private:
     bool _fs_mounted = false;
     bool _run_after_ota = false;
 
+    Timer _uptimetimer;
+    uint32_t _uptimeMinutes;
 };
 // forward declaration for global vars
 extern Application app;
