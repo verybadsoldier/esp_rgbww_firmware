@@ -33,3 +33,5 @@
 # project related files
 out/
 .settings/
+
+.cproject
