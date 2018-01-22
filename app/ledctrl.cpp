@@ -155,7 +155,12 @@ void APPLedCtrl::updateLed() {
 
     checkStableColorState();
 
-    publishFinishedStepAnimations();
+    if (app.cfg.events.transfin_interval_ms >= 0) {
+        if (app.cfg.events.transfin_interval_ms == 0 ||
+                ((stepLenMs * _stepCounter) % app.cfg.events.transfin_interval_ms) < stepLenMs) {
+            publishFinishedStepAnimations();
+        }
+    }
 }
 
 void APPLedCtrl::checkStableColorState() {

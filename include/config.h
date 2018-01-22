@@ -77,6 +77,7 @@ struct ApplicationSettings {
     struct events {
         bool server_enabled = true;
         int color_interval_ms = 500;
+        int transfin_interval_ms = 500;
     };
 
     struct color {
@@ -228,6 +229,8 @@ struct ApplicationSettings {
                     events.server_enabled = root["events"]["server_enabled"];
                 if (root["events"]["color_interval_ms"].success())
                     events.color_interval_ms = root["events"]["color_interval_ms"];
+                if (root["events"]["transfin_interval_ms"].success())
+                    events.transfin_interval_ms = root["events"]["transfin_interval_ms"];
             }
 
             if (print) {
@@ -308,6 +311,7 @@ struct ApplicationSettings {
         root["events"] = e;
         e["color_interval_ms"] = events.color_interval_ms;
         e["server_enabled"] = events.server_enabled;
+        e["transfin_interval_ms"] = events.transfin_interval_ms;
 
         JsonObject& g = jsonBuffer.createObject();
         root["general"] = g;
