@@ -16,16 +16,16 @@ https://github.com/patrickjahns/esp_rgbww_firmware/wiki
 
 __Quicklinks__
 - __Setup guides__
-  - [Installation on a fresh controller](https://github.com/patrickjahns/esp_rgbww_firmware/wiki/1.1-Flashing)
-  - [Setup guide](https://github.com/patrickjahns/esp_rgbww_firmware/wiki/1.2-Initial-Setup)
-  - [Web interface](https://github.com/patrickjahns/esp_rgbww_firmware/wiki/1.3-Web-Interface)
-  - [OTA] (https://github.com/patrickjahns/esp_rgbww_firmware/wiki/3.-OTA)
+  - [Installation on a fresh controller](https://github.com/verybadsoldier/esp_rgbww_firmware/wiki/1.1-Flashing)
+  - [Setup guide](https://github.com/verybadsoldier/esp_rgbww_firmware/wiki/1.2-Initial-Setup)
+  - [Web interface](https://github.com/verybadsoldier/esp_rgbww_firmware/wiki/1.3-Web-Interface)
+  - [OTA] (https://github.com/verybadsoldier/esp_rgbww_firmware/wiki/3.-OTA)
   - Troubleshooting
-  - [Limitations/Known issues](https://github.com/patrickjahns/esp_rgbww_firmware/wiki/4.-Limitations-and-known-issues)
+  - [Limitations/Known issues](https://github.com/verybadsoldier/esp_rgbww_firmware/wiki/4.-Limitations-and-known-issues)
 - __API Documentation__
-  - [JSON Api](https://github.com/patrickjahns/esp_rgbww_firmware/wiki/2.1-JSON-API-reference)
-  - [TCP/UDP](https://github.com/patrickjahns/esp_rgbww_firmware/wiki/2.2-TCP-UDP-reference)
-  - [MQTT](https://github.com/patrickjahns/esp_rgbww_firmware/wiki/2.3-MQTT-reference)
+  - [JSON Api](https://github.com/verybadsoldier/esp_rgbww_firmware/wiki/2.1-JSON-API-reference)
+  - [TCP/UDP](https://github.com/verybadsoldier/esp_rgbww_firmware/wiki/2.2-TCP-UDP-reference)
+  - [MQTT](https://github.com/verybadsoldier/esp_rgbww_firmware/wiki/2.3-MQTT-reference)
 
 - [Contributing](#contributing)
 - [Useful Links and Sources](#links)
@@ -33,7 +33,7 @@ __Quicklinks__
 
 ## Firmware installation/flashing
 Precompiled binaries are provided via github. It is also possible to compile the firmware images yourself. 
-For more information and instructions please see [the Wiki](https://github.com/patrickjahns/esp_rgbww_firmware/wiki/1.1-Flashing)
+For more information and instructions please see [the Wiki](https://github.com/verybadsoldier/esp_rgbww_firmware/wiki/1.1-Flashing)
 
 
 ## Contributing
@@ -45,6 +45,6 @@ For more information on how to contribute, please check [contribution guidelines
 
 ## Links
 
-- [FHEM Forum](http://forum.fhem.de/)
+- [FHEM Forum](https://forum.fhem.de/index.php?topic=70738.0)
 - [Sming Framework](https://github.com/SmingHub/Sming)
-- [RGBWWLed Library](https://github.com/patrickjahns/RGBWWLed)
+- [RGBWWLed Library](https://github.com/verybadsoldier/RGBWWLed)
