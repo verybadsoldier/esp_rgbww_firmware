@@ -46,8 +46,6 @@ void Application::uptimeCounter() {
 }
 
 void Application::init() {
-    Serial.systemDebugOutput(false);
-
     debug_i("RGBWW Controller v %s\r\n", fw_git_version);
 
     //load settings
