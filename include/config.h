@@ -77,7 +77,8 @@ struct ApplicationSettings {
     struct events {
         bool server_enabled = true;
         int color_interval_ms = 500;
-        int transfin_interval_ms = 500;
+        int color_mininterval_ms = 500;
+        int transfin_interval_ms = 1000;
     };
 
     struct color {

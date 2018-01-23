@@ -144,7 +144,12 @@ void APPLedCtrl::updateLed() {
     if (app.cfg.events.color_interval_ms >= 0) {
         if (animFinished || app.cfg.events.color_interval_ms == 0 ||
                 ((stepLenMs * _stepCounter) % app.cfg.events.color_interval_ms) < stepLenMs) {
-            publishToEventServer();
+
+            uint32_t now = millis();
+            if (now - _lastColorEvent >= app.cfg.events.color_mininterval_ms) {
+                _lastColorEvent = now;
+                publishToEventServer();
+            }
         }
     }
 

@@ -119,4 +119,5 @@ private:
     ETSTimer _ledTimer;
     uint32_t _timerInterval = RGBWW_MINTIMEDIFF_US;
     HashMap<String, bool> _stepFinishedAnimations;
+    uint32_t _lastColorEvent = 0;
 };

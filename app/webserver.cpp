@@ -574,8 +574,14 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
             if (root["events"]["color_interval_ms"].success()) {
                 app.cfg.events.color_interval_ms = root["events"]["color_interval_ms"];
             }
+            if (root["events"]["color_mininterval_ms"].success()) {
+                app.cfg.events.color_mininterval_ms = root["events"]["color_mininterval_ms"];
+            }
             if (root["events"]["server_enabled"].success()) {
                 app.cfg.events.server_enabled = root["events"]["server_enabled"];
+            }
+            if (root["events"]["transfin_interval_ms"].success()) {
+                app.cfg.events.transfin_interval_ms = root["events"]["transfin_interval_ms"];
             }
         }
 
@@ -694,7 +700,9 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
 
         JsonObject& events = json.createNestedObject("events");
         events["color_interval_ms"] = app.cfg.events.color_interval_ms;
+        events["color_mininterval_ms"] = app.cfg.events.color_mininterval_ms;
         events["server_enabled"] = app.cfg.events.server_enabled;
+        events["transfin_interval_ms"] = app.cfg.events.transfin_interval_ms;
 
         JsonObject& general = json.createNestedObject("general");
         general["device_name"] = app.cfg.general.device_name;
