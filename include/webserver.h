@@ -48,8 +48,8 @@ private:
 
     bool _init = false;
     bool _running = false;
-    uint _minimumHeap = 9000;
-    uint _minimumHeapAccept = 14000;
+    uint _minimumHeap = 8000;
+    uint _minimumHeapAccept = 8000;
 
     bool authenticated(HttpRequest &request, HttpResponse &response);
     void onFile(HttpRequest &request, HttpResponse &response);
