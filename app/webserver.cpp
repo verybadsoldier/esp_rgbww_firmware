@@ -740,6 +740,7 @@ void ApplicationWebserver::onInfo(HttpRequest &request, HttpResponse &response) 
     data["sming"] = SMING_VERSION;
     data["event_num_clients"] = app.eventserver.activeClients;
     data["uptime"] = app.getUptime();
+    data["heap_free"] = system_get_free_heap_size();
 
     JsonObject& rgbww = data.createNestedObject("rgbww");
     rgbww["version"] = RGBWW_VERSION;
