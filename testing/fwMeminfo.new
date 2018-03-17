@@ -1,0 +1,10 @@
+   Section|                   Description| Start (hex)|   End (hex)|Used space
+------------------------------------------------------------------------------
+      data|        Initialized Data (RAM)|          -1|          -1|       0
+    rodata|           ReadOnly Data (RAM)|          -1|          -1|       0
+       bss|      Uninitialized Data (RAM)|          -1|          -1|       0
+      text|            Cached Code (IRAM)|          -1|          -1|       0
+irom0_text|           Uncached Code (SPI)|          -1|          -1|       0
+Total Used RAM : 0
+Free RAM : 81920
+Free IRam : 32786
