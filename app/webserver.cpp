@@ -256,7 +256,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
     }
 
     if (request.method != HTTP_POST && request.method != HTTP_GET) {
-        sendApiCode(response, API_CODES::API_BAD_REQUEST);
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not POST or GET request");
         return;
     }
 
@@ -264,7 +264,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         String body = request.getBody();
         if (body == NULL) {
 
-            sendApiCode(response, API_CODES::API_BAD_REQUEST);
+            sendApiCode(response, API_CODES::API_BAD_REQUEST, "could not parse HTTP body");
             return;
 
         }
@@ -281,7 +281,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         bool color_updated = false;
         bool ap_updated = false;
         if (!root.success()) {
-            sendApiCode(response, API_CODES::API_BAD_REQUEST);
+            sendApiCode(response, API_CODES::API_BAD_REQUEST, "no root object");
             return;
         }
         if (root["network"].success()) {
@@ -730,7 +730,7 @@ void ApplicationWebserver::onInfo(HttpRequest &request, HttpResponse &response) 
     }
 
     if (request.method != HTTP_GET) {
-        sendApiCode(response, API_CODES::API_BAD_REQUEST);
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not GET");
         return;
     }
 
@@ -821,7 +821,7 @@ void ApplicationWebserver::onColor(HttpRequest &request, HttpResponse &response)
     }
 
     if (request.method != HTTP_POST && request.method != HTTP_GET) {
-        sendApiCode(response, API_CODES::API_BAD_REQUEST);
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not POST or GET");
         return;
     }
 
@@ -846,7 +846,7 @@ void ApplicationWebserver::onAnimation(HttpRequest &request, HttpResponse &respo
     }
 
     if (request.method != HTTP_POST && request.method != HTTP_GET) {
-        sendApiCode(response, API_CODES::API_BAD_REQUEST);
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not POST or GET");
         return;
     }
 
@@ -854,7 +854,7 @@ void ApplicationWebserver::onAnimation(HttpRequest &request, HttpResponse &respo
     if (request.method == HTTP_POST) {
         String body = request.getBody();
         if (body == NULL || body.length() > 128) {
-            sendApiCode(response, API_CODES::API_BAD_REQUEST);
+            sendApiCode(response, API_CODES::API_BAD_REQUEST, "could not get HTTP body or body too long");
             return;
 
         } else {
@@ -895,7 +895,7 @@ void ApplicationWebserver::onNetworks(HttpRequest &request, HttpResponse &respon
     }
 
     if (request.method != HTTP_GET) {
-        sendApiCode(response, API_CODES::API_BAD_REQUEST);
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP GET");
         return;
     }
 
@@ -946,7 +946,7 @@ void ApplicationWebserver::onScanNetworks(HttpRequest &request, HttpResponse &re
     }
 
     if (request.method != HTTP_POST) {
-        sendApiCode(response, API_CODES::API_BAD_REQUEST);
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP POST");
         return;
     }
     if (!app.network.isScanning()) {
@@ -968,7 +968,7 @@ void ApplicationWebserver::onConnect(HttpRequest &request, HttpResponse &respons
     }
 
     if (request.method != HTTP_POST && request.method != HTTP_GET) {
-        sendApiCode(response, API_CODES::API_BAD_REQUEST);
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP POST or GET");
         return;
     }
 
@@ -977,7 +977,7 @@ void ApplicationWebserver::onConnect(HttpRequest &request, HttpResponse &respons
         String body = request.getBody();
         if (body == NULL) {
 
-            sendApiCode(response, API_CODES::API_BAD_REQUEST);
+            sendApiCode(response, API_CODES::API_BAD_REQUEST, "could not get HTTP body");
             return;
 
         }
@@ -1034,14 +1034,14 @@ void ApplicationWebserver::onSystemReq(HttpRequest &request, HttpResponse &respo
     }
 
     if (request.method != HTTP_POST) {
-        sendApiCode(response, API_CODES::API_BAD_REQUEST);
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP POST");
         return;
     }
 
     bool error = false;
     String body = request.getBody();
     if (body == NULL) {
-        sendApiCode(response, API_CODES::API_BAD_REQUEST);
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "could not get HTTP body");
         return;
     } else {
         DynamicJsonBuffer jsonBuffer;
@@ -1083,7 +1083,7 @@ void ApplicationWebserver::onUpdate(HttpRequest &request, HttpResponse &response
 
     if (request.method != HTTP_POST
             && request.method != HTTP_GET) {
-        sendApiCode(response, API_CODES::API_BAD_REQUEST);
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP POST or GET");
         return;
     }
 
@@ -1095,7 +1095,7 @@ void ApplicationWebserver::onUpdate(HttpRequest &request, HttpResponse &response
 
         String body = request.getBody();
         if (body == NULL) {
-            sendApiCode(response, API_CODES::API_BAD_REQUEST);
+            sendApiCode(response, API_CODES::API_BAD_REQUEST, "could not parse HTTP body");
             return;
         }
         DynamicJsonBuffer jsonBuffer;
@@ -1134,7 +1134,7 @@ void ApplicationWebserver::onUpdate(HttpRequest &request, HttpResponse &response
 //simple call-response to check if we can reach server
 void ApplicationWebserver::onPing(HttpRequest &request, HttpResponse &response) {
     if (request.method != HTTP_GET) {
-        sendApiCode(response, API_CODES::API_BAD_REQUEST);
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP GET");
         return;
     }
     JsonObjectStream* stream = new JsonObjectStream();
@@ -1145,7 +1145,7 @@ void ApplicationWebserver::onPing(HttpRequest &request, HttpResponse &response) 
 
 void ApplicationWebserver::onStop(HttpRequest &request, HttpResponse &response) {
     if (request.method != HTTP_POST) {
-        sendApiCode(response, API_CODES::API_BAD_REQUEST);
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP POST");
         return;
     }
 
@@ -1160,7 +1160,7 @@ void ApplicationWebserver::onStop(HttpRequest &request, HttpResponse &response) 
 
 void ApplicationWebserver::onSkip(HttpRequest &request, HttpResponse &response) {
     if (request.method != HTTP_POST) {
-        sendApiCode(response, API_CODES::API_BAD_REQUEST);
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP POST");
         return;
     }
 
@@ -1175,7 +1175,7 @@ void ApplicationWebserver::onSkip(HttpRequest &request, HttpResponse &response) 
 
 void ApplicationWebserver::onPause(HttpRequest &request, HttpResponse &response) {
     if (request.method != HTTP_POST) {
-        sendApiCode(response, API_CODES::API_BAD_REQUEST);
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP POST");
         return;
     }
 
@@ -1190,7 +1190,7 @@ void ApplicationWebserver::onPause(HttpRequest &request, HttpResponse &response)
 
 void ApplicationWebserver::onContinue(HttpRequest &request, HttpResponse &response) {
     if (request.method != HTTP_POST) {
-        sendApiCode(response, API_CODES::API_BAD_REQUEST);
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP POST");
         return;
     }
 
@@ -1205,7 +1205,7 @@ void ApplicationWebserver::onContinue(HttpRequest &request, HttpResponse &respon
 
 void ApplicationWebserver::onBlink(HttpRequest &request, HttpResponse &response) {
     if (request.method != HTTP_POST) {
-        sendApiCode(response, API_CODES::API_BAD_REQUEST);
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP POST");
         return;
     }
 
