@@ -109,6 +109,7 @@ struct ApplicationSettings {
         brightness brightness;
         colortemp colortemp;
         int outputmode = 0;
+        String startup_color = "last";
     };
 
     struct general {
@@ -164,6 +165,7 @@ struct ApplicationSettings {
 
             // color
             color.outputmode = root["color"]["outputmode"];
+            color.startup_color = root["color"]["startup_color"].asString();
 
             // hsv
             color.hsv.model = root["color"]["hsv"]["model"];
@@ -271,6 +273,7 @@ struct ApplicationSettings {
 
         JsonObject& c = root.createNestedObject("color");
         c["outputmode"] = color.outputmode;
+        c["startup_color"] = color.startup_color.c_str();
 
         JsonObject& h = c.createNestedObject("hsv");
         h["model"] = color.hsv.model;

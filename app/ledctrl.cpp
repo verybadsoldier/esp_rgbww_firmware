@@ -71,13 +71,22 @@ void APPLedCtrl::init() {
     RGBWWLed::init(pins.red, pins.green, pins.blue, pins.warmwhite, pins.coldwhite, PWM_FREQUENCY);
 
     setup();
-    colorStorage.load();
-    debug_i("H: %i | s: %i | v: %i | ct: %i", colorStorage.current.h, colorStorage.current.s, colorStorage.current.v, colorStorage.current.ct);
 
-    // boot from off to current color
-    HSVCT dark = colorStorage.current;
-    dark.h = 0;
-    fadeHSV(dark, colorStorage.current, 700); //fade to color in 700ms
+    HSVCT startupColor;
+    if (app.cfg.color.startup_color == "last") {
+        colorStorage.load();
+        debug_i("H: %i | s: %i | v: %i | ct: %i", colorStorage.current.h, colorStorage.current.s, colorStorage.current.v, colorStorage.current.ct);
+
+        startupColor = colorStorage.current;
+    } else {
+        // interpret as color string
+        startupColor = app.cfg.color.startup_color;
+    }
+
+    // boot from off to startup color
+    HSVCT startupColorDark = startupColor;
+    startupColorDark.h = 0;
+    fadeHSV(startupColorDark, startupColor, 700); //fade to color in 700ms
 }
 
 void APPLedCtrl::setup() {
@@ -169,6 +178,9 @@ void APPLedCtrl::updateLed() {
 }
 
 void APPLedCtrl::checkStableColorState() {
+	if (app.cfg.color.startup_color != "last")
+		return;
+
     if (_prevColor == getCurrentColor())
     {
         ++_numStableColorSteps;
