@@ -446,6 +446,9 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
                     color_updated = true;
                 }
             }
+            if (root["color"]["startup_color"].success()) {
+                app.cfg.color.startup_color = root["color"]["startup_color"].asString();
+            }
             if (root["color"]["brightness"].success()) {
 
                 if (root["color"]["brightness"]["red"].success()) {
@@ -656,6 +659,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
 
         JsonObject& color = json.createNestedObject("color");
         color["outputmode"] = app.cfg.color.outputmode;
+        color["startup_color"] = app.cfg.color.startup_color;
 
         JsonObject& hsv = color.createNestedObject("hsv");
         hsv["model"] = app.cfg.color.hsv.model;

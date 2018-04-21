@@ -2,7 +2,7 @@
 
 
 bool JsonProcessor::onColor(const String& json, String& msg, bool relay) {
-    debug_e("JsonProcessor::onColor: %s\n", json.c_str());
+    debug_e("JsonProcessor::onColor: %s", json.c_str());
     DynamicJsonBuffer jsonBuffer;
     JsonObject& root = jsonBuffer.parseObject(json);
     return onColor(root, msg, relay);
