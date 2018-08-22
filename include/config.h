@@ -135,8 +135,7 @@ struct ApplicationSettings {
             JsonObject& root = jsonBuffer.parseObject(jsonString);
 
             // connection
-            network.connection.mdnshostname =
-                    root["network"]["connection"]["hostname"].asString();
+            network.connection.mdnshostname = root["network"]["connection"]["hostname"].asString();
             network.connection.dhcp = root["network"]["connection"]["dhcp"];
             network.connection.ip = root["network"]["connection"]["ip"].asString();
             network.connection.netmask = root["network"]["connection"]["netmask"].asString();
@@ -165,7 +164,8 @@ struct ApplicationSettings {
 
             // color
             color.outputmode = root["color"]["outputmode"];
-            color.startup_color = root["color"]["startup_color"].asString();
+            if (root["color"]["startup_color"].success())
+                color.startup_color = root["color"]["startup_color"].asString();
 
             // hsv
             color.hsv.model = root["color"]["hsv"]["model"];
