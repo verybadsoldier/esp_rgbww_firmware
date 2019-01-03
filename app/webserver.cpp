@@ -29,6 +29,7 @@ ApplicationWebserver::ApplicationWebserver() {
     // value is a good guess and tested to not crash when issuing multiple parallel requests
     HttpServerSettings settings;
     settings.minHeapSize = _minimumHeapAccept;
+    settings.keepAliveSeconds = 5; // do not close instantly when no transmission occurs. some clients are a bit slow (like FHEM)
     configure(settings);
 
     // workaround for bug in Sming 3.5.0
