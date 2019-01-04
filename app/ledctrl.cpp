@@ -33,13 +33,13 @@ APPLedCtrl::~APPLedCtrl() {
 }
 
 PinConfig APPLedCtrl::parsePinConfigString(String& pinStr) {
-    Vector<long> pins;
+    Vector<int> pins;
     splitString(pinStr, ',', pins);
 
     bool isCorrect = true;
     // sanity check
     for(int i=0; i < 5; ++i) {
-        if (pins[i] == 0l) {
+        if (pins[i] == 0) {
             isCorrect = false;
         }
     }
@@ -53,11 +53,11 @@ PinConfig APPLedCtrl::parsePinConfigString(String& pinStr) {
     }
 
     PinConfig cfg;
-    cfg.red       = static_cast<int>(pins[0]);
-    cfg.green     = static_cast<int>(pins[1]);
-    cfg.blue      = static_cast<int>(pins[2]);
-    cfg.warmwhite = static_cast<int>(pins[3]);
-    cfg.coldwhite = static_cast<int>(pins[4]);
+    cfg.red       = pins[0];
+    cfg.green     = pins[1];
+    cfg.blue      = pins[2];
+    cfg.warmwhite = pins[3];
+    cfg.coldwhite = pins[4];
     return cfg;
 }
 
