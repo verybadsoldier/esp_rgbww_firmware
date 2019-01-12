@@ -28,6 +28,7 @@ Application app;
 void GDB_IRAM_ATTR init() {
 
     Serial.begin(SERIAL_BAUD_RATE); // 115200 by default
+    Serial.systemDebugOutput(true); // Debug output to serial
     //System.setCpuFrequencye(CF_160MHz);
 
     // set CLR pin to input
