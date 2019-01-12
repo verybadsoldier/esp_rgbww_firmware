@@ -85,8 +85,8 @@ void APPLedCtrl::init() {
 
     // boot from off to startup color
     HSVCT startupColorDark = startupColor;
-    startupColorDark.h = 0;
-    fadeHSV(startupColorDark, startupColor, 700); //fade to color in 700ms
+    startupColorDark.v = 0;
+    fadeHSV(startupColorDark, startupColor, 2000); //fade to color in 700ms
 }
 
 void APPLedCtrl::setup() {
