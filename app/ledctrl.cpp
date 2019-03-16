@@ -102,6 +102,7 @@ void APPLedCtrl::setup() {
     colorutils.setColorMode((RGBWW_COLORMODE) app.cfg.color.outputmode);
     colorutils.setHSVmodel((RGBWW_HSVMODEL) app.cfg.color.hsv.model);
 
+    colorutils.setWhiteTemperature(app.cfg.color.colortemp.ww, app.cfg.color.colortemp.cw);
 }
 
 void APPLedCtrl::publishToEventServer() {
