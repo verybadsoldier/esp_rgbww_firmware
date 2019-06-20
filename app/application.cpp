@@ -49,7 +49,7 @@ void Application::init() {
     debug_i("RGBWW Controller v %s\r\n", fw_git_version);
 
     //load settings
-    _uptimetimer.initializeMs(60000, TimerDelegate(&Application::uptimeCounter, this)).start();
+    _uptimetimer.initializeMs(60000, TimerDelegateStdFunction(std::bind(&Application::uptimeCounter, this))).start();
 
     // load boot information
     uint8 bootmode, bootslot;
@@ -114,7 +114,7 @@ void Application::restart() {
     debug_i("Restarting");
     if (network.isApActive()) {
         network.stopAp();
-        _systimer.initializeMs(500, TimerDelegate(&Application::restart, this)).startOnce();
+        _systimer.initializeMs(500, TimerDelegateStdFunction(std::bind(&Application::restart, this))).startOnce();
     }
     System.restart();
 }
@@ -132,18 +132,18 @@ void Application::reset() {
 bool Application::delayedCMD(String cmd, int delay) {
     debug_i("Application::delayedCMD cmd: %s - delay: %i", cmd.c_str(), delay);
     if (cmd.equals("reset")) {
-        _systimer.initializeMs(delay, TimerDelegate(&Application::reset, this)).startOnce();
+        _systimer.initializeMs(delay, TimerDelegateStdFunction(std::bind(&Application::reset, this))).startOnce();
     } else if (cmd.equals("restart")) {
-        _systimer.initializeMs(delay, TimerDelegate(&Application::restart, this)).startOnce();
+        _systimer.initializeMs(delay, TimerDelegateStdFunction(std::bind(&Application::restart, this))).startOnce();
     } else if (cmd.equals("stopap")) {
         network.stopAp(2000);
     } else if (cmd.equals("forget_wifi")) {
-        _systimer.initializeMs(delay, TimerDelegate(&AppWIFI::forgetWifi, &network)).startOnce();
+        _systimer.initializeMs(delay, TimerDelegateStdFunction(std::bind(&AppWIFI::forgetWifi, &network))).startOnce();
     } else if (cmd.equals("test_channels")) {
         rgbwwctrl.testChannels();
     } else if (cmd.equals("switch_rom")) {
         switchRom();
-        _systimer.initializeMs(delay, TimerDelegate(&Application::restart, this)).startOnce();
+        _systimer.initializeMs(delay, TimerDelegateStdFunction(std::bind(&Application::restart, this))).startOnce();
     } else {
         return false;
     }

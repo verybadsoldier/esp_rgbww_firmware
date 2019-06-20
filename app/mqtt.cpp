@@ -42,7 +42,8 @@ void AppMqttClient::onComplete(TcpClient& client, bool success) {
 
 void AppMqttClient::connectDelayed(int delay) {
     debug_d("MQTT::connectDelayed");
-    _procTimer.initializeMs(delay, TimerDelegate(&AppMqttClient::connect, this)).startOnce();
+    TimerDelegateStdFunction fnc = std::bind(&AppMqttClient::connect, this);
+    _procTimer.initializeMs(delay, fnc).startOnce();
 }
 
 void AppMqttClient::connect() {
@@ -53,7 +54,11 @@ void AppMqttClient::connect() {
     if(!mqtt->setWill("last/will","The connection from this device is lost:(", 1, true)) {
         debugf("Unable to set the last will and testament. Most probably there is not enough memory on the device.");
     }
-    mqtt->connect(_id, app.cfg.network.mqtt.username, app.cfg.network.mqtt.password, false);
+//    0);app.cfg.network.mqtt.username, app.cfg.network.mqtt.password);
+    //debug_i("MqttClient: Server: %s Port: %d\n", app.cfg.network.mqtt.server.c_str(), app.cfg.network.mqtt.port);
+
+    Url url = "mqtt://" + app.cfg.network.mqtt.username + ":" + app.cfg.network.mqtt.password + "@" + app.cfg.network.mqtt.server + ":" + String(app.cfg.network.mqtt.port);
+    mqtt->connect(url, _id, 0);
 #ifdef ENABLE_SSL
     mqtt->addSslOptions(SSL_SERVER_VERIFY_LATER);
 
@@ -89,8 +94,9 @@ void AppMqttClient::start() {
     debug_i("Start MQTT");
 
     delete mqtt;
-    debug_i("MqttClient: Server: %s Port: %d\n", app.cfg.network.mqtt.server.c_str(), app.cfg.network.mqtt.port);
-    mqtt = new MqttClient(app.cfg.network.mqtt.server, app.cfg.network.mqtt.port, MqttStringSubscriptionCallback(&AppMqttClient::onMessageReceived, this));
+    mqtt = new MqttClient();
+    mqtt->setMessageHandler(MqttDelegate)
+    MqttStringSubscriptionCallback(&AppMqttClient::onMessageReceived, this);
     connectDelayed(2000);
 }
 
