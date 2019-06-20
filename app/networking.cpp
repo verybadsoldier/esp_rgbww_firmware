@@ -186,7 +186,8 @@ void AppWIFI::_STAGotIP(IPAddress ip, IPAddress mask, IPAddress gateway) {
 void AppWIFI::stopAp(int delay) {
     if (WifiAccessPoint.isEnabled()) {
         debug_i("AppWIFI::stopAp delay %i", delay);
-        _timer.initializeMs(delay, TimerDelegate(&AppWIFI::stopAp, this)).startOnce();
+        TimerDelegateStdFunction fnc = std::bind(static_cast<void(AppWIFI::*)()>(&AppWIFI::stopAp), this);
+        _timer.initializeMs(delay, fnc).startOnce();
     }
 }
 

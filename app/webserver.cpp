@@ -38,25 +38,25 @@ ApplicationWebserver::ApplicationWebserver() {
 }
 
 void ApplicationWebserver::init() {
-    setDefaultHandler(HttpPathDelegate(&ApplicationWebserver::onFile, this));
-    addPath("/", HttpPathDelegate(&ApplicationWebserver::onIndex, this));
-    addPath("/webapp", HttpPathDelegate(&ApplicationWebserver::onWebapp, this));
-    addPath("/config", HttpPathDelegate(&ApplicationWebserver::onConfig, this));
-    addPath("/info", HttpPathDelegate(&ApplicationWebserver::onInfo, this));
-    addPath("/color", HttpPathDelegate(&ApplicationWebserver::onColor, this));
-    addPath("/animation", HttpPathDelegate(&ApplicationWebserver::onAnimation, this));
-    addPath("/networks", HttpPathDelegate(&ApplicationWebserver::onNetworks, this));
-    addPath("/scan_networks", HttpPathDelegate(&ApplicationWebserver::onScanNetworks, this));
-    addPath("/system", HttpPathDelegate(&ApplicationWebserver::onSystemReq, this));
-    addPath("/update", HttpPathDelegate(&ApplicationWebserver::onUpdate, this));
-    addPath("/connect", HttpPathDelegate(&ApplicationWebserver::onConnect, this));
-    addPath("/generate_204", HttpPathDelegate(&ApplicationWebserver::generate204, this));
-    addPath("/ping", HttpPathDelegate(&ApplicationWebserver::onPing, this));
-    addPath("/stop", HttpPathDelegate(&ApplicationWebserver::onStop, this));
-    addPath("/skip", HttpPathDelegate(&ApplicationWebserver::onSkip, this));
-    addPath("/pause", HttpPathDelegate(&ApplicationWebserver::onPause, this));
-    addPath("/continue", HttpPathDelegate(&ApplicationWebserver::onContinue, this));
-    addPath("/blink", HttpPathDelegate(&ApplicationWebserver::onBlink, this));
+    paths.setDefault(HttpPathDelegate(&ApplicationWebserver::onFile, this));
+    paths.set("/", HttpPathDelegate(&ApplicationWebserver::onIndex, this));
+    paths.set("/webapp", HttpPathDelegate(&ApplicationWebserver::onWebapp, this));
+    paths.set("/config", HttpPathDelegate(&ApplicationWebserver::onConfig, this));
+    paths.set("/info", HttpPathDelegate(&ApplicationWebserver::onInfo, this));
+    paths.set("/color", HttpPathDelegate(&ApplicationWebserver::onColor, this));
+    paths.set("/animation", HttpPathDelegate(&ApplicationWebserver::onAnimation, this));
+    paths.set("/networks", HttpPathDelegate(&ApplicationWebserver::onNetworks, this));
+    paths.set("/scan_networks", HttpPathDelegate(&ApplicationWebserver::onScanNetworks, this));
+    paths.set("/system", HttpPathDelegate(&ApplicationWebserver::onSystemReq, this));
+    paths.set("/update", HttpPathDelegate(&ApplicationWebserver::onUpdate, this));
+    paths.set("/connect", HttpPathDelegate(&ApplicationWebserver::onConnect, this));
+    paths.set("/generate_204", HttpPathDelegate(&ApplicationWebserver::generate204, this));
+    paths.set("/ping", HttpPathDelegate(&ApplicationWebserver::onPing, this));
+    paths.set("/stop", HttpPathDelegate(&ApplicationWebserver::onStop, this));
+    paths.set("/skip", HttpPathDelegate(&ApplicationWebserver::onSkip, this));
+    paths.set("/pause", HttpPathDelegate(&ApplicationWebserver::onPause, this));
+    paths.set("/continue", HttpPathDelegate(&ApplicationWebserver::onContinue, this));
+    paths.set("/blink", HttpPathDelegate(&ApplicationWebserver::onBlink, this));
     _init = true;
 }
 
@@ -142,7 +142,7 @@ void ApplicationWebserver::sendApiResponse(HttpResponse &response, JsonObjectStr
     if (code != 200) {
         response.code = 400;
     }
-    response.sendJsonObject(stream);
+    response.sendDataStream(stream, MIME_JSON);
 }
 
 void ApplicationWebserver::sendApiCode(HttpResponse &response, API_CODES code, String msg /* = "" */) {
@@ -180,18 +180,18 @@ void ApplicationWebserver::onFile(HttpRequest &request, HttpResponse &response) 
         return;
     }
 
-    String file = request.getPath();
+    String file = request.uri.Path;
     if (file[0] == '/')
         file = file.substring(1);
     if (file[0] == '.') {
-        response.forbidden();
+        response.code = HTTP_STATUS_FORBIDDEN;
         return;
     }
 
     if (!fileExist(file) && !fileExist(file + ".gz") && WifiAccessPoint.isEnabled()) {
         //if accesspoint is active and we couldn`t find the file - redirect to index
         debug_d("ApplicationWebserver::onFile redirecting");
-        response.redirect("http://" + WifiAccessPoint.getIP().toString() + "/webapp");
+        response.headers[HTTP_HEADER_LOCATION] = "http://" + WifiAccessPoint.getIP().toString() + "/webapp";
     } else {
         response.setCache(86400, true); // It's important to use cache for better performance.
         response.sendFile(file);
@@ -213,9 +213,9 @@ void ApplicationWebserver::onIndex(HttpRequest &request, HttpResponse &response)
     }
 
     if (WifiAccessPoint.isEnabled()) {
-        response.redirect("http://" + WifiAccessPoint.getIP().toString() + "/webapp");
+        response.headers[HTTP_HEADER_LOCATION] = "http://" + WifiAccessPoint.getIP().toString() + "/webapp";
     } else {
-        response.redirect("http://" + WifiStation.getIP().toString() + "/webapp");
+        response.headers[HTTP_HEADER_LOCATION] = "http://" + WifiStation.getIP().toString() + "/webapp";
     }
     response.code = 308;
 }
