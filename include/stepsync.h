@@ -7,7 +7,7 @@ class StepSync {
 public:
     virtual ~StepSync();
     virtual uint32_t onMasterClock(uint32_t stepsCurrent, uint32_t stepsMaster) = 0;
-    virtual int getCatchupOffset() const;
+    virtual int getCatchupOffset() const = 0;
     virtual uint32_t reset() = 0;
 
 protected:

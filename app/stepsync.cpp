@@ -1,6 +1,8 @@
 #include <RGBWWCtrl.h>
 #include <algorithm>
 
+StepSync::~StepSync() {
+};
 
 uint32_t ClockCatchUp::reset() {
     _firstMasterSync = true;
