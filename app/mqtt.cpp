@@ -95,8 +95,7 @@ void AppMqttClient::start() {
 
     delete mqtt;
     mqtt = new MqttClient();
-    mqtt->setMessageHandler(MqttDelegate)
-    MqttStringSubscriptionCallback(&AppMqttClient::onMessageReceived, this);
+    mqtt->setCallback(MqttStringSubscriptionCallback(&AppMqttClient::onMessageReceived, this));
     connectDelayed(2000);
 }
 
