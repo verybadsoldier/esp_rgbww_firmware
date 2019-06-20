@@ -73,30 +73,50 @@ void ApplicationWebserver::stop() {
     _running = false;
 }
 
-bool ICACHE_FLASH_ATTR ApplicationWebserver::authenticated(HttpRequest &request, HttpResponse &response) {
+bool ICACHE_FLASH_ATTR ApplicationWebserver::authenticateExec(HttpRequest &request, HttpResponse &response) {
     if (!app.cfg.general.api_secured)
         return true;
+
+    debug_d("ApplicationWebserver::authenticated - checking...");
+
     String userPass = request.getHeader("Authorization");
+    if (userPass == String::nullstr) {
+        debug_d("ApplicationWebserver::authenticated - No auth header");
+        return false; // header missing
+    }
+
+    debug_d("ApplicationWebserver::authenticated Auth header: %s", userPass.c_str());
+
     // header in form of: "Basic MTIzNDU2OmFiY2RlZmc="so the 6 is to get to beginning of 64 encoded string
-    int headerLength = userPass.length() - 6;
-    if (headerLength > 50) {
+    userPass = userPass.substring(6); //cut "Basic " from start
+    if (userPass.length() > 50) {
         return false;
     }
 
-    unsigned char decbuf[headerLength]; // buffer for the decoded string
-    int outlen = base64_decode(headerLength, userPass.c_str() + 6, headerLength, decbuf);
-    decbuf[outlen] = 0;
-    userPass = String((char*) decbuf);
+    // workaround for this: https://github.com/SmingHub/Sming/issues/1725
+    while(userPass.endsWith("="))
+        userPass = userPass.substring(0, userPass.length() - 2);
+
+    userPass = base64_decode(userPass);
+    debug_d("ApplicationWebserver::authenticated Password: '%s' - Expected password: '%s'", userPass.c_str(), app.cfg.general.api_password.c_str());
     if (userPass.endsWith(app.cfg.general.api_password)) {
         return true;
     }
 
-    response.code = 401;
-    response.setHeader("WWW-Authenticate", "Basic realm=\"RGBWW Server\"");
-    response.setHeader("401 wrong credentials", "wrong credentials");
-    response.setHeader("Connection", "close");
     return false;
+}
 
+bool ICACHE_FLASH_ATTR ApplicationWebserver::authenticated(HttpRequest &request, HttpResponse &response) {
+    bool authenticated = authenticateExec(request, response);
+
+    if (!authenticated) {
+        response.code = 401;
+        response.setHeader("WWW-Authenticate", "Basic realm=\"RGBWW Server\"");
+        response.setHeader("401 wrong credentials", "wrong credentials");
+        response.setHeader("Connection", "close");
+    }
+
+    return authenticated;
 }
 
 String ApplicationWebserver::getApiCodeMsg(API_CODES code) {

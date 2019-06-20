@@ -52,6 +52,7 @@ private:
     uint _minimumHeapAccept = 8000;
 
     bool authenticated(HttpRequest &request, HttpResponse &response);
+    bool authenticateExec(HttpRequest &request, HttpResponse &response);
     void onFile(HttpRequest &request, HttpResponse &response);
     void onIndex(HttpRequest &request, HttpResponse &response);
     void onWebapp(HttpRequest &request, HttpResponse &response);
