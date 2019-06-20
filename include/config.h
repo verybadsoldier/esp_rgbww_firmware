@@ -320,8 +320,8 @@ struct ApplicationSettings {
         JsonObject& g = jsonBuffer.createObject();
         root["general"] = g;
         g["api_secured"] = general.api_secured;
-        g["api_password"] = general.api_password;
-        g["otaurl"] = general.otaurl;
+        g["api_password"] = general.api_password.c_str();
+        g["otaurl"] = general.otaurl.c_str();
         g["device_name"] = general.device_name.c_str();
         g["pin_config"] = general.pin_config.c_str();
         g["settings_ver"] = APP_SETTINGS_VERSION;
