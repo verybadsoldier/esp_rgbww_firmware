@@ -74,6 +74,7 @@ private:
     void onPause(HttpRequest &request, HttpResponse &response);
     void onContinue(HttpRequest &request, HttpResponse &response);
     void onBlink(HttpRequest &request, HttpResponse &response);
+    void onToggle(HttpRequest &request, HttpResponse &response);
 
     void onColorGet(HttpRequest &request, HttpResponse &response);
     void onColorPost(HttpRequest &request, HttpResponse &response);

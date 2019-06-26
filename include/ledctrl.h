@@ -38,7 +38,6 @@ struct PinConfig {
 
 struct ColorStorage {
     HSVCT current;
-
     void load(bool print = false) {
         StaticJsonBuffer < 72 > jsonBuffer;
         if (exist()) {
@@ -72,6 +71,7 @@ struct ColorStorage {
         root.printTo(rootString);
         fileSetContent(APP_COLOR_FILE, rootString);
     }
+
     bool exist() {
         return fileExist(APP_COLOR_FILE);
     }
@@ -90,6 +90,7 @@ public:
     void colorSave();
     void colorReset();
     void testChannels();
+    void toggle();
 
     void updateLed();
     void onMasterClock(uint32_t steps);
@@ -106,6 +107,9 @@ private:
     void publishStatus();
 
     ColorStorage colorStorage;
+
+    HSVCT _lastHsvct;
+    ChannelOutput _lastOutput;
 
     StepSync* _stepSync = nullptr;
 

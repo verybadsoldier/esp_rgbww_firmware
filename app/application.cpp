@@ -93,11 +93,40 @@ void Application::init() {
     // initialize led ctrl
     rgbwwctrl.init();
 
+    initButtons();
+
     // initialize networking
     network.init();
 
     // initialize webserver
     app.webserver.init();
+}
+
+void Application::initButtons() {
+    if (cfg.general.buttons_config.length() <= 0)
+        return;
+
+    debug_i("Configuring buttons using string: '%s'", cfg.general.buttons_config.c_str());
+
+    Vector<String> buttons;
+    splitString(cfg.general.buttons_config, ',', buttons);
+
+    for(int i=0; i < buttons.count(); ++i) {
+        if (buttons[i].length() == 0)
+            continue;
+
+        int pin = buttons[i].toInt();
+        if (pin >= _lastToggles.size()) {
+            debug_i("Pin %d is invalid. Max is %d", pin, _lastToggles.size() - 1);
+            continue;
+        }
+        debug_i("Configuring button: '%s'", buttons[i].c_str());
+
+        _lastToggles[pin] = 0ul;
+
+        attachInterrupt(pin,  InterruptDelegate(std::bind(&Application::onButtonTogglePressed, this, pin)), FALLING);
+        pinMode(pin, INPUT_PULLUP);
+    }
 }
 
 // Will be called when system initialization was completed
@@ -190,6 +219,15 @@ void Application::onCommandRelay(const String& method, const JsonObject& params)
         return;
 
     mqttclient.publishCommand(method, params);
+}
+
+void Application::onButtonTogglePressed(int pin) {
+    unsigned long now = millis();
+    if ((now - _lastToggles[pin]) > cfg.general.buttons_debounce_ms) {  // debounce
+        debug_i("Button %d pressed - toggle", pin);
+        rgbwwctrl.toggle();
+        _lastToggles[pin] = now;
+    }
 }
 
 uint32_t Application::getUptime() {

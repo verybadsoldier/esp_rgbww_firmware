@@ -19,8 +19,7 @@
  *
  *
  */
-#ifndef APPLICATION_H_
-#define APPLICATION_H_
+#pragma once
 
 static const char* fw_git_version = GITVERSION;
 static const char* fw_git_date = GITDATE;
@@ -30,6 +29,7 @@ class Application {
 
 public:
     void init();
+    void initButtons();
 
     void startServices();
     void stopServices();
@@ -50,6 +50,7 @@ public:
 
     void onCommandRelay(const String& method, const JsonObject& json);
     void onWifiConnected(const String& ssid);
+    void onButtonTogglePressed(int pin);
 
     uint32_t getUptime();
     void uptimeCounter();
@@ -76,8 +77,7 @@ private:
 
     Timer _uptimetimer;
     uint32_t _uptimeMinutes;
+    std::array<int, 17> _lastToggles;
 };
 // forward declaration for global vars
 extern Application app;
-
-#endif // APPLICATION_H_

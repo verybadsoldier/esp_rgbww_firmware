@@ -57,6 +57,7 @@ void ApplicationWebserver::init() {
     paths.set("/pause", HttpPathDelegate(&ApplicationWebserver::onPause, this));
     paths.set("/continue", HttpPathDelegate(&ApplicationWebserver::onContinue, this));
     paths.set("/blink", HttpPathDelegate(&ApplicationWebserver::onBlink, this));
+    paths.set("/toggle", HttpPathDelegate(&ApplicationWebserver::onToggle, this));
     _init = true;
 }
 
@@ -559,6 +560,12 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
             if (root["general"]["pin_config"].success()) {
                 app.cfg.general.pin_config = root["general"]["pin_config"].asString();
             }
+            if (root["general"]["buttons_config"].success()) {
+                app.cfg.general.buttons_config = root["general"]["buttons_config"].asString();
+            }
+            if (root["general"]["buttons_debounce_ms"].success()) {
+                app.cfg.general.buttons_debounce_ms = root["general"]["buttons_debounce_ms"];
+            }
         }
 
         if (root["sync"].success()) {
@@ -736,6 +743,8 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         JsonObject& general = json.createNestedObject("general");
         general["device_name"] = app.cfg.general.device_name;
         general["pin_config"] = app.cfg.general.pin_config;
+        general["buttons_config"] = app.cfg.general.buttons_config;
+        general["buttons_debounce_ms"] = app.cfg.general.buttons_debounce_ms;
 
         sendApiResponse(response, stream);
     }
@@ -1236,6 +1245,21 @@ void ApplicationWebserver::onBlink(HttpRequest &request, HttpResponse &response)
 
     String msg;
     if (app.jsonproc.onBlink(request.getBody(), msg)) {
+        sendApiCode(response, API_CODES::API_SUCCESS);
+    }
+    else {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST);
+    }
+}
+
+void ApplicationWebserver::onToggle(HttpRequest &request, HttpResponse &response) {
+    if (request.method != HTTP_POST) {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP POST");
+        return;
+    }
+
+    String msg;
+    if (app.jsonproc.onToggle(request.getBody(), msg)) {
         sendApiCode(response, API_CODES::API_SUCCESS);
     }
     else {
