@@ -144,6 +144,21 @@ bool JsonProcessor::onBlink(JsonObject& root, String& msg, bool relay) {
     return true;
 }
 
+bool JsonProcessor::onToggle(const String& json, String& msg, bool relay) {
+    DynamicJsonBuffer jsonBuffer;
+    JsonObject& root = jsonBuffer.parseObject(json);
+    return onToggle(root, msg, relay);
+}
+
+bool JsonProcessor::onToggle(JsonObject& root, String& msg, bool relay) {
+    app.rgbwwctrl.toggle();
+
+    if (relay)
+        app.onCommandRelay("toggle", root);
+
+    return true;
+}
+
 bool JsonProcessor::onSingleColorCommand(JsonObject& root, String& errorMsg) {
     RequestParameters params;
     parseRequestParams(root, params);

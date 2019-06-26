@@ -279,3 +279,40 @@ void APPLedCtrl::onAnimationFinished(const String& name, bool requeued) {
         _stepFinishedAnimations[name] = requeued;
     }
 }
+
+void APPLedCtrl::toggle() {
+    static const int toggleFadeTime = 1000;
+    switch (_mode) {
+    case ColorMode::Hsv: {
+        HSVCT current = getCurrentColor();
+        if (current.v > 0) {
+            debug_d("APPLedCtrl::toggle - off");
+            _lastHsvct = current;
+            current.v = 0;
+            fadeHSV(_lastHsvct, current, toggleFadeTime);
+        } else {
+            debug_d("APPLedCtrl::toggle - on");
+            if (_lastHsvct.v == 0)
+                _lastHsvct.v = 100; // we were off before but force some light
+            fadeHSV(current, _lastHsvct, toggleFadeTime);
+        }
+        break;
+    }
+    case ColorMode::Raw: {
+        ChannelOutput current = getCurrentOutput();
+        if (current.isOn()) {
+            debug_d("APPLedCtrl::toggle - off");
+            _lastOutput = current;
+            current.r = current.g = current.b = 0;
+            current.ww = current.cw = 0;
+            fadeRAW(_lastOutput, current, toggleFadeTime);
+        } else {
+            debug_d("APPLedCtrl::toggle - on");
+            if (!_lastOutput.isOn())
+                _lastOutput.r = _lastOutput.g = _lastOutput.b = _lastOutput.cw = _lastOutput.ww = 255; // was off before but force light
+
+            fadeRAW(current, _lastOutput, toggleFadeTime);
+        }
+    }
+    }
+}

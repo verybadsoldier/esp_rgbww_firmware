@@ -24,6 +24,9 @@ public:
     bool onBlink(const String& json, String& msg, bool relay = true);
     bool onBlink(JsonObject& root, String& msg, bool relay = true);
 
+    bool onToggle(const String& json, String& msg, bool relay = true);
+    bool onToggle(JsonObject& root, String& msg, bool relay = true);
+
     bool onDirect(const String& json, String& msg, bool relay);
     bool onDirect(JsonObject& root, String& msg, bool relay);
 

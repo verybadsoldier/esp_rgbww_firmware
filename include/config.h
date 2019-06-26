@@ -118,6 +118,8 @@ struct ApplicationSettings {
         String otaurl = DEFAULT_OTA_URL;
         String device_name;
         String pin_config = "13,12,14,5,4";
+        String buttons_config;
+        int buttons_debounce_ms = 50;
     };
 
     general general;
@@ -195,6 +197,10 @@ struct ApplicationSettings {
                     general.device_name = root["general"]["device_name"].asString();
                 if (root["general"]["pin_config"].success())
                     general.pin_config = root["general"]["pin_config"].asString();
+                if (root["general"]["buttons_config"].success())
+                    general.buttons_config = root["general"]["buttons_config"].asString();
+                if (root["general"]["buttons_debounce_ms"].success())
+                    general.buttons_debounce_ms = root["general"]["buttons_debounce_ms"];
             }
 
             // sync
@@ -324,6 +330,8 @@ struct ApplicationSettings {
         g["otaurl"] = general.otaurl.c_str();
         g["device_name"] = general.device_name.c_str();
         g["pin_config"] = general.pin_config.c_str();
+        g["buttons_config"] = general.buttons_config.c_str();
+        g["buttons_debounce_ms"] = general.buttons_debounce_ms;
         g["settings_ver"] = APP_SETTINGS_VERSION;
 
         String rootString;
