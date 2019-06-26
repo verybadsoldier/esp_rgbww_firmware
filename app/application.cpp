@@ -223,10 +223,14 @@ void Application::onCommandRelay(const String& method, const JsonObject& params)
 
 void Application::onButtonTogglePressed(int pin) {
     unsigned long now = millis();
-    if ((now - _lastToggles[pin]) > cfg.general.buttons_debounce_ms) {  // debounce
+    unsigned long diff = now - _lastToggles[pin];
+    if (diff > cfg.general.buttons_debounce_ms) {  // debounce
         debug_i("Button %d pressed - toggle", pin);
         rgbwwctrl.toggle();
         _lastToggles[pin] = now;
+    }
+    else {
+        debug_d("Button press ignored by debounce. Diff: %d Debounce: %d", diff, cfg.general.buttons_debounce_ms);
     }
 }
 
