@@ -8,7 +8,7 @@ This firmware is a fork of Patrick Jahns original firmware (https://github.com/p
  * Smooth and programmable on-board fades and animations
  * Independent animation channels
  * Suitable for different PCBs (easily configurable by config options)
- * Highly customizable configuration
+ * Highly configurable
  * Various network communication options: HTTP - MQTT - TCP (events only)
  * Highly accurate synchronization of multiple controllers
  * [Easy setup and configuration via a feature rich webapplication]
