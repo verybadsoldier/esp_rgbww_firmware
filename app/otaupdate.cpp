@@ -19,6 +19,9 @@
  *
  *
  */
+
+#ifdef ARCH_ESP8266
+
 #include <RGBWWCtrl.h>
 
 void ApplicationOTA::start(String romurl, String spiffsurl) {
@@ -142,3 +145,4 @@ OTASTATUS ApplicationOTA::loadStatus() {
     }
 }
 
+#endif

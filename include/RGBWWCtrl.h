@@ -47,7 +47,9 @@
 
 //includes
 #include <RGBWWLed/RGBWWLed.h>
+#ifdef ARCH_ESP8266
 #include <otaupdate.h>
+#endif
 #include <config.h>
 #include <ledctrl.h>
 #include <networking.h>
