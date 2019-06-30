@@ -151,9 +151,9 @@ void AppMqttClient::publishCurrentRaw(const ChannelOutput& raw) {
 
     debug_d("ApplicationMQTTClient::publishCurrentRaw\n");
 
-    DynamicJsonBuffer jsonBuffer(200);
-    JsonObject& root = jsonBuffer.createObject();
-    JsonObject& rawJson = root.createNestedObject("raw");
+    StaticJsonDocument<200> doc;
+    JsonObject root = doc.to<JsonObject>();
+    JsonObject rawJson = root.createNestedObject("raw");
     rawJson["r"] = raw.r;
     rawJson["g"] = raw.g;
     rawJson["b"] = raw.b;
@@ -163,8 +163,7 @@ void AppMqttClient::publishCurrentRaw(const ChannelOutput& raw) {
     root["t"] = 0;
     root["cmd"] = "solid";
 
-    String jsonMsg;
-    root.printTo(jsonMsg);
+    String jsonMsg = Json::serialize(root);
     publish(buildTopic("color"), jsonMsg, true);
 }
 
@@ -179,9 +178,9 @@ void AppMqttClient::publishCurrentHsv(const HSVCT& color) {
     int ct;
     color.asRadian(h, s, v, ct);
 
-    DynamicJsonBuffer jsonBuffer(200);
-    JsonObject& root = jsonBuffer.createObject();
-    JsonObject& hsv = root.createNestedObject("hsv");
+    StaticJsonDocument<200> doc;
+    JsonObject root = doc.to<JsonObject>();
+    JsonObject hsv = root.createNestedObject("hsv");
     hsv["h"] = h;
     hsv["s"] = s;
     hsv["v"] = v;
@@ -190,8 +189,7 @@ void AppMqttClient::publishCurrentHsv(const HSVCT& color) {
     root["t"] = 0;
     root["cmd"] = "solid";
 
-    String jsonMsg;
-    root.printTo(jsonMsg);
+    String jsonMsg = Json::serialize(root);
     publish(buildTopic("color"), jsonMsg, true);
 }
 
@@ -240,20 +238,18 @@ void AppMqttClient::publishCommand(const String& method, const JsonObject& param
     if (params.size() > 0)
         msg.getRoot()["params"] = params;
 
-    String msgStr;
-    msg.getRoot().printTo(msgStr);
+    String msgStr = Json::serialize(msg.getRoot());
     publish(buildTopic("command"), msgStr, false);
 }
 
 void AppMqttClient::publishTransitionFinished(const String& name, bool requeued) {
     debug_d("ApplicationMQTTClient::publishTransitionFinished: %s\n", name.c_str());
 
-    DynamicJsonBuffer jsonBuffer(200);
-    JsonObject& root = jsonBuffer.createObject();
+    StaticJsonDocument<200> doc;
+    JsonObject root = doc.to<JsonObject>();
     root["name"] = name;
     root["requequed"] = requeued;
 
-    String jsonMsg;
-    root.printTo(jsonMsg);
+    String jsonMsg = Json::serialize(root);
     publish(buildTopic("transition_finished"), jsonMsg, true);
 }

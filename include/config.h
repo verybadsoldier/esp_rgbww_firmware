@@ -128,147 +128,124 @@ struct ApplicationSettings {
     events events;
 
     void load(bool print = false) {
-        DynamicJsonBuffer jsonBuffer;
-        if (exist()) {
-            int size = fileGetSize(APP_SETTINGS_FILE);
-            char* jsonString = new char[size + 1];
-            fileGetContent(APP_SETTINGS_FILE, jsonString, size + 1);
-            JsonObject& root = jsonBuffer.parseObject(jsonString);
+    	DynamicJsonDocument doc(1024);
+        if (Json::loadFromFile(doc, APP_SETTINGS_FILE)) {
+        	auto root = doc.as<JsonObject>();
+        	auto net = root["network"];
 
             // connection
-            network.connection.mdnshostname = root["network"]["connection"]["hostname"].asString();
-            network.connection.dhcp = root["network"]["connection"]["dhcp"];
-            network.connection.ip = root["network"]["connection"]["ip"].asString();
-            network.connection.netmask = root["network"]["connection"]["netmask"].asString();
-            network.connection.gateway = root["network"]["connection"]["gateway"].asString();
+        	JsonObject con = net["connection"];
+            network.connection.mdnshostname = con["hostname"].as<const char*>();
+            network.connection.dhcp = con["dhcp"];
+            network.connection.ip = con["ip"].as<const char*>();
+            network.connection.netmask = con["netmask"].as<const char*>();
+            network.connection.gateway = con["gateway"].as<const char*>();
 
             // accesspoint
-            network.ap.secured = root["network"]["ap"]["secured"];
-            network.ap.ssid = root["network"]["ap"]["ssid"].asString();
-            network.ap.password = root["network"]["ap"]["password"].asString();
+            JsonObject jap = net["ap"];
+            network.ap.secured = jap["secured"];
+            network.ap.ssid = jap["ssid"].as<const char*>();
+            network.ap.password = jap["password"].as<const char*>();
 
             // mqtt
-            if (root["network"]["mqtt"].success()) {
-                if (root["network"]["mqtt"]["enabled"].success())
-                    network.mqtt.enabled = root["network"]["mqtt"]["enabled"];
-                if (root["network"]["mqtt"]["server"].success())
-                    network.mqtt.server = root["network"]["mqtt"]["server"].asString();
-                if (root["network"]["mqtt"]["port"].success())
-                    network.mqtt.port = root["network"]["mqtt"]["port"];
-                if (root["network"]["mqtt"]["username"].success())
-                    network.mqtt.username = root["network"]["mqtt"]["username"].asString();
-                if (root["network"]["mqtt"]["password"].success())
-                    network.mqtt.password = root["network"]["mqtt"]["password"].asString();
-                if (root["network"]["mqtt"]["topic_base"].success())
-                    network.mqtt.topic_base = root["network"]["mqtt"]["topic_base"].asString();
+            JsonObject jmqtt = net["mqtt"];
+            if (!jmqtt.isNull()) {
+                Json::getValue(jmqtt["enabled"], network.mqtt.enabled);
+                Json::getValue(jmqtt["server"], network.mqtt.server);
+                Json::getValue(jmqtt["port"], network.mqtt.port);
+                Json::getValue(jmqtt["username"], network.mqtt.username);
+                Json::getValue(jmqtt["password"], network.mqtt.password);
+                Json::getValue(jmqtt["topic_base"], network.mqtt.topic_base);
             }
 
             // color
-            color.outputmode = root["color"]["outputmode"];
-            if (root["color"]["startup_color"].success())
-                color.startup_color = root["color"]["startup_color"].asString();
+            JsonObject jcol = root["color"];
+            color.outputmode = jcol["outputmode"];
+            Json::getValue(jcol["startup_color"], color.startup_color);
 
             // hsv
-            color.hsv.model = root["color"]["hsv"]["model"];
-            color.hsv.red = root["color"]["hsv"]["red"];
-            color.hsv.yellow = root["color"]["hsv"]["yellow"];
-            color.hsv.green = root["color"]["hsv"]["green"];
-            color.hsv.cyan = root["color"]["hsv"]["cyan"];
-            color.hsv.blue = root["color"]["hsv"]["blue"];
-            color.hsv.magenta = root["color"]["hsv"]["magenta"];
+            JsonObject jhsv = jcol["hsv"];
+            color.hsv.model = jhsv["model"];
+            color.hsv.red = jhsv["red"];
+            color.hsv.yellow = jhsv["yellow"];
+            color.hsv.green = jhsv["green"];
+            color.hsv.cyan = jhsv["cyan"];
+            color.hsv.blue = jhsv["blue"];
+            color.hsv.magenta = jhsv["magenta"];
 
             // brightness
-            color.brightness.red = root["color"]["brightness"]["red"];
-            color.brightness.green = root["color"]["brightness"]["green"];
-            color.brightness.blue = root["color"]["brightness"]["blue"];
-            color.brightness.ww = root["color"]["brightness"]["ww"];
-            color.brightness.cw = root["color"]["brightness"]["cw"];
+            JsonObject jbri = jcol["brightness"];
+            color.brightness.red = jbri["red"];
+            color.brightness.green = jbri["green"];
+            color.brightness.blue = jbri["blue"];
+            color.brightness.ww = jbri["ww"];
+            color.brightness.cw = jbri["cw"];
 
             // general
-            if (root["general"].success()) {
-                if (root["general"]["api_password"].success())
-                    general.api_password = root["general"]["api_password"].asString();
-                if (root["general"]["api_secured"].success())
-                    general.api_secured = root["general"]["api_secured"];
-                if (root["general"]["otaurl"].success())
-                    general.otaurl = root["general"]["otaurl"].asString();
-                if (root["general"]["device_name"].success())
-                    general.device_name = root["general"]["device_name"].asString();
-                if (root["general"]["pin_config"].success())
-                    general.pin_config = root["general"]["pin_config"].asString();
-                if (root["general"]["buttons_config"].success())
-                    general.buttons_config = root["general"]["buttons_config"].asString();
-                if (root["general"]["buttons_debounce_ms"].success())
-                    general.buttons_debounce_ms = root["general"]["buttons_debounce_ms"];
+            auto jgen = root["general"];
+            if (!jgen.isNull()) {
+                Json::getValue(jgen["api_password"], general.api_password);
+                Json::getValue(jgen["api_secured"], general.api_secured);
+                Json::getValue(jgen["otaurl"], general.otaurl);
+                Json::getValue(jgen["device_name"], general.device_name);
+                Json::getValue(jgen["pin_config"], general.pin_config);
+                Json::getValue(jgen["buttons_config"], general.buttons_config);
+                Json::getValue(jgen["buttons_debounce_ms"], general.buttons_debounce_ms);
             }
 
             // sync
-            if (root["sync"].success()) {
-                if (root["sync"]["clock_master_enabled"].success())
-                    sync.clock_master_enabled = root["sync"]["clock_master_enabled"];
-                if (root["sync"]["clock_master_interval"].success())
-                    sync.clock_master_interval = root["sync"]["clock_master_interval"];
-                if (root["sync"]["clock_slave_topic"].success())
-                    sync.clock_slave_topic = root["sync"]["clock_slave_topic"].asString();
-                if (root["sync"]["clock_slave_enabled"].success())
-                    sync.clock_slave_enabled = root["sync"]["clock_slave_enabled"];
+            auto jsync = root["sync"];
+            if (!jsync.isNull()) {
+                Json::getValue(jsync["clock_master_enabled"], sync.clock_master_enabled);
+                Json::getValue(jsync["clock_master_interval"], sync.clock_master_interval);
+                Json::getValue(jsync["clock_slave_topic"], sync.clock_slave_topic);
+                Json::getValue(jsync["clock_slave_enabled"], sync.clock_slave_enabled);
 
-                if (root["sync"]["cmd_master_enabled"].success())
-                    sync.cmd_master_enabled = root["sync"]["cmd_master_enabled"];
-                if (root["sync"]["cmd_slave_enabled"].success())
-                    sync.cmd_slave_enabled = root["sync"]["cmd_slave_enabled"];
-                if (root["sync"]["cmd_slave_topic"].success())
-                    sync.cmd_slave_topic = root["sync"]["cmd_slave_topic"].asString();
+                Json::getValue(jsync["cmd_master_enabled"], sync.cmd_master_enabled);
+                Json::getValue(jsync["cmd_slave_enabled"], sync.cmd_slave_enabled);
+                Json::getValue(jsync["cmd_slave_topic"], sync.cmd_slave_topic);
 
-                if (root["sync"]["color_master_enabled"].success())
-                    sync.color_master_enabled = root["sync"]["color_master_enabled"];
-                if (root["sync"]["color_master_interval_ms"].success())
-                    sync.color_master_interval_ms = root["sync"]["color_master_interval_ms"];
-                if (root["sync"]["color_slave_enabled"].success())
-                    sync.color_slave_enabled = root["sync"]["color_slave_enabled"];
-                if (root["sync"]["color_slave_topic"].success())
-                    sync.color_slave_topic = root["sync"]["color_slave_topic"].asString();
+                Json::getValue(jsync["color_master_enabled"], sync.color_master_enabled);
+                Json::getValue(jsync["color_master_interval_ms"], sync.color_master_interval_ms);
+                Json::getValue(jsync["color_slave_enabled"], sync.color_slave_enabled);
+                Json::getValue(jsync["color_slave_topic"], sync.color_slave_topic);
             }
 
 
             // events
-            if (root["events"].success()) {
-                if (root["events"]["server_enabled"].success())
-                    events.server_enabled = root["events"]["server_enabled"];
-                if (root["events"]["color_interval_ms"].success())
-                    events.color_interval_ms = root["events"]["color_interval_ms"];
-                if (root["events"]["transfin_interval_ms"].success())
-                    events.transfin_interval_ms = root["events"]["transfin_interval_ms"];
+            auto jevents = root["events"];
+            if (!jevents.isNull()) {
+                Json::getValue(jevents["server_enabled"], events.server_enabled);
+                Json::getValue(jevents["color_interval_ms"], events.color_interval_ms);
+                Json::getValue(jevents["transfin_interval_ms"], events.transfin_interval_ms);
             }
 
             if (print) {
-                root.prettyPrintTo(Serial);
+            	Json::serialize(doc, Serial, Json::Pretty);
             }
-
-            delete[] jsonString;
         }
 
         sanitizeValues();
     }
 
     void save(bool print = false) {
-        DynamicJsonBuffer jsonBuffer;
-        JsonObject& root = jsonBuffer.createObject();
+        DynamicJsonDocument doc(1024);
+        JsonObject root = doc.to<JsonObject>();
 
-        JsonObject& net = root.createNestedObject("network");
-        JsonObject& con = net.createNestedObject("connection");
+        JsonObject net = root.createNestedObject("network");
+        JsonObject con = net.createNestedObject("connection");
         con["dhcp"] = network.connection.dhcp;
         con["ip"] = network.connection.ip.toString();
         con["netmask"] = network.connection.netmask.toString();
         con["gateway"] = network.connection.gateway.toString();
         con["mdnhostname"] = network.connection.mdnshostname.c_str();
 
-        JsonObject& jap = net.createNestedObject("ap");
+        JsonObject jap = net.createNestedObject("ap");
         jap["secured"] = network.ap.secured;
         jap["ssid"] = network.ap.ssid.c_str();
         jap["password"] = network.ap.password.c_str();
 
-        JsonObject& jmqtt = net.createNestedObject("mqtt");
+        JsonObject jmqtt = net.createNestedObject("mqtt");
         jmqtt["enabled"] = network.mqtt.enabled;
         jmqtt["server"] = network.mqtt.server.c_str();
         jmqtt["port"] = network.mqtt.port;
@@ -276,11 +253,11 @@ struct ApplicationSettings {
         jmqtt["password"] = network.mqtt.password.c_str();
         jmqtt["topic_base"] = network.mqtt.topic_base.c_str();
 
-        JsonObject& c = root.createNestedObject("color");
+        JsonObject c = root.createNestedObject("color");
         c["outputmode"] = color.outputmode;
         c["startup_color"] = color.startup_color.c_str();
 
-        JsonObject& h = c.createNestedObject("hsv");
+        JsonObject h = c.createNestedObject("hsv");
         h["model"] = color.hsv.model;
         h["red"] = color.hsv.red;
         h["yellow"] = color.hsv.yellow;
@@ -289,19 +266,18 @@ struct ApplicationSettings {
         h["blue"] = color.hsv.blue;
         h["magenta"] = color.hsv.magenta;
 
-        JsonObject& b = c.createNestedObject("brightness");
+        JsonObject b = c.createNestedObject("brightness");
         b["red"] = color.brightness.red;
         b["green"] = color.brightness.green;
         b["blue"] = color.brightness.blue;
         b["ww"] = color.brightness.ww;
         b["cw"] = color.brightness.cw;
 
-        JsonObject& t = c.createNestedObject("colortemp");
+        JsonObject t = c.createNestedObject("colortemp");
         t["ww"] = color.colortemp.ww;
         t["cw"] = color.colortemp.cw;
 
-        JsonObject& s = jsonBuffer.createObject();
-        root["sync"] = s;
+        JsonObject s = root.createNestedObject("sync");
         s["clock_master_enabled"] = sync.clock_master_enabled;
         s["clock_master_interval"] = sync.clock_master_interval;
         s["clock_slave_enabled"] = sync.clock_slave_enabled;
@@ -316,14 +292,12 @@ struct ApplicationSettings {
         s["color_slave_enabled"] = sync.color_slave_enabled;
         s["color_slave_topic"] = sync.color_slave_topic.c_str();
 
-        JsonObject& e = jsonBuffer.createObject();
-        root["events"] = e;
+        JsonObject e = root.createNestedObject("events");
         e["color_interval_ms"] = events.color_interval_ms;
         e["server_enabled"] = events.server_enabled;
         e["transfin_interval_ms"] = events.transfin_interval_ms;
 
-        JsonObject& g = jsonBuffer.createObject();
-        root["general"] = g;
+        JsonObject g = root.createNestedObject("general");
         g["api_secured"] = general.api_secured;
         g["api_password"] = general.api_password.c_str();
         g["otaurl"] = general.otaurl.c_str();
@@ -333,12 +307,10 @@ struct ApplicationSettings {
         g["buttons_debounce_ms"] = general.buttons_debounce_ms;
         g["settings_ver"] = APP_SETTINGS_VERSION;
 
-        String rootString;
         if (print) {
-            root.prettyPrintTo(Serial);
+        	Json::serialize(root, Serial, Json::Pretty);
         }
-        root.printTo(rootString);
-        fileSetContent(APP_SETTINGS_FILE, rootString);
+        Json::saveToFile(root, APP_SETTINGS_FILE);
     }
 
     bool exist() {
