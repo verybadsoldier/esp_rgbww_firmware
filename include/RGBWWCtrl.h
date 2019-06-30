@@ -46,9 +46,7 @@
 #define DEBUG_APP 1
 
 //includes
-#include <user_config.h>
 #include <RGBWWLed/RGBWWLed.h>
-#include <SmingCore/SmingCore.h>
 #include <otaupdate.h>
 #include <config.h>
 #include <ledctrl.h>

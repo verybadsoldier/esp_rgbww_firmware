@@ -21,7 +21,6 @@
  */
 #pragma once
 
-#include <SmingCore/SmingCore.h>
 #include <RGBWWCtrl.h>
 
 #define APP_SETTINGS_FILE ".cfg"
