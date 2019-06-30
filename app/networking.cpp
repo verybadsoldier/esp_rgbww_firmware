@@ -37,7 +37,7 @@ BssList AppWIFI::getAvailableNetworks() {
 
 void AppWIFI::scan() {
     _scanning = true;
-    WifiStation.startScan(ScanCompletedDelegate(&AppWIFI::scanCompleted, this));
+    WifiStation.startScan(std::bind(&AppWIFI::scanCompleted, this, _1, _2));
 }
 
 void AppWIFI::scanCompleted(bool succeeded, BssList list) {
@@ -88,9 +88,9 @@ void AppWIFI::init() {
     }
 
     // register callbacks
-    WifiEvents.onStationDisconnect(StationDisconnectDelegate(&AppWIFI::_STADisconnect, this));
-    WifiEvents.onStationConnect(StationConnectDelegate(&AppWIFI::_STAConnected, this));
-    WifiEvents.onStationGotIP(StationGotIPDelegate(&AppWIFI::_STAGotIP, this));
+    WifiEvents.onStationDisconnect(std::bind(&AppWIFI::_STADisconnect, this, _1, _2, _3, _4));
+    WifiEvents.onStationConnect(std::bind(&AppWIFI::_STAConnected, this, _1, _2, _3, _4));
+    WifiEvents.onStationGotIP(std::bind(&AppWIFI::_STAGotIP, this, _1, _2, _3));
 
 
     if (WifiStation.getSSID() == "") {
@@ -184,14 +184,15 @@ void AppWIFI::_STAGotIP(IPAddress ip, IPAddress mask, IPAddress gateway) {
 }
 
 void AppWIFI::stopAp(int delay) {
-    if (WifiAccessPoint.isEnabled()) {
-        debug_i("AppWIFI::stopAp delay %i", delay);
-        TimerDelegateStdFunction fnc = std::bind(static_cast<void(AppWIFI::*)()>(&AppWIFI::stopAp), this);
-        _timer.initializeMs(delay, fnc).startOnce();
+    if (!WifiAccessPoint.isEnabled()) {
+    	return;
     }
-}
 
-void AppWIFI::stopAp() {
+    if (delay > 0) {
+    	debug_i("AppWIFI::stopAp delay %i", delay);
+        _timer.initializeMs(delay, std::bind(&AppWIFI::stopAp, this, 0)).startOnce();
+    }
+
     debug_i("AppWIFI::stopAp");
     debug_i("Disabling AP and DNS server");
     _timer.stop();
