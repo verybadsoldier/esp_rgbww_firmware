@@ -137,7 +137,7 @@ void APPLedCtrl::updateLedCb(void* pTimerArg) {
 
 void APPLedCtrl::updateLed() {
     // arm next timer
-    ets_timer_arm_new(&_ledTimer, _timerInterval, 0, 0);
+	_ledTimer.startMs(_timerInterval);
 
     const bool animFinished = show();
 
@@ -228,13 +228,13 @@ void APPLedCtrl::publishStatus() {
 void APPLedCtrl::start() {
     debug_i("APPLedCtrl::start");
 
-    ets_timer_setfn(&_ledTimer, APPLedCtrl::updateLedCb, this);
-    ets_timer_arm_new(&_ledTimer, _timerInterval, 0, 0);
+    _ledTimer.setCallback(APPLedCtrl::updateLedCb, this);
+    _ledTimer.startMs(_timerInterval);
 }
 
 void APPLedCtrl::stop() {
     debug_i("APPLedCtrl::stop");
-    ets_timer_disarm(&_ledTimer);
+    _ledTimer.stop();
 }
 
 void APPLedCtrl::colorSave() {
