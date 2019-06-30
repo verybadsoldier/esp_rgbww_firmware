@@ -171,12 +171,14 @@ void ApplicationWebserver::onFile(HttpRequest &request, HttpResponse &response) 
         return;
     }
 
+#ifdef ARCH_ESP8266
     if (app.ota.isProccessing()) {
         response.setContentType("text/plain");
         response.code = 503;
         response.sendString("OTA in progress");
         return;
     }
+#endif
 
     if (!app.isFilesystemMounted()) {
         response.setContentType("text/plain");
@@ -210,12 +212,14 @@ void ApplicationWebserver::onIndex(HttpRequest &request, HttpResponse &response)
         return;
     }
 
+#ifdef ARCH_ESP8266
     if (app.ota.isProccessing()) {
         response.setContentType("text/plain");
         response.code = 503;
         response.sendString("OTA in progress");
         return;
     }
+#endif
 
     if (WifiAccessPoint.isEnabled()) {
         response.headers[HTTP_HEADER_LOCATION] = "http://" + WifiAccessPoint.getIP().toString() + "/webapp";
@@ -231,12 +235,14 @@ void ApplicationWebserver::onWebapp(HttpRequest &request, HttpResponse &response
         return;
     }
 
+#ifdef ARCH_ESP8266
     if (app.ota.isProccessing()) {
         response.setContentType("text/plain");
         response.code = 503;
         response.sendString("OTA in progress");
         return;
     }
+#endif
 
     if (request.method != HTTP_GET) {
         response.code = 400;
@@ -276,10 +282,12 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         return;
     }
 
+#ifdef ARCH_ESP8266
     if (app.ota.isProccessing()) {
         sendApiCode(response, API_CODES::API_UPDATE_IN_PROGRESS);
         return;
     }
+#endif
 
     if (request.method != HTTP_POST && request.method != HTTP_GET) {
         sendApiCode(response, API_CODES::API_BAD_REQUEST, "not POST or GET request");
@@ -612,10 +620,12 @@ void ApplicationWebserver::onInfo(HttpRequest &request, HttpResponse &response) 
         return;
     }
 
+#ifdef ARCH_ESP8266
     if (app.ota.isProccessing()) {
         sendApiCode(response, API_CODES::API_UPDATE_IN_PROGRESS);
         return;
     }
+#endif
 
     if (request.method != HTTP_GET) {
         sendApiCode(response, API_CODES::API_BAD_REQUEST, "not GET");
@@ -703,10 +713,12 @@ void ApplicationWebserver::onColor(HttpRequest &request, HttpResponse &response)
         return;
     }
 
+#ifdef ARCH_ESP8266
     if (app.ota.isProccessing()) {
         sendApiCode(response, API_CODES::API_UPDATE_IN_PROGRESS);
         return;
     }
+#endif
 
     if (request.method != HTTP_POST && request.method != HTTP_GET) {
         sendApiCode(response, API_CODES::API_BAD_REQUEST, "not POST or GET");
@@ -728,10 +740,12 @@ void ApplicationWebserver::onAnimation(HttpRequest &request, HttpResponse &respo
         return;
     }
 
+#ifdef ARCH_ESP8266
     if (app.ota.isProccessing()) {
         sendApiCode(response, API_CODES::API_UPDATE_IN_PROGRESS);
         return;
     }
+#endif
 
     if (request.method != HTTP_POST && request.method != HTTP_GET) {
         sendApiCode(response, API_CODES::API_BAD_REQUEST, "not POST or GET");
@@ -777,10 +791,12 @@ void ApplicationWebserver::onNetworks(HttpRequest &request, HttpResponse &respon
         return;
     }
 
+#ifdef ARCH_ESP8266
     if (app.ota.isProccessing()) {
         sendApiCode(response, API_CODES::API_UPDATE_IN_PROGRESS);
         return;
     }
+#endif
 
     if (request.method != HTTP_GET) {
         sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP GET");
@@ -828,10 +844,12 @@ void ApplicationWebserver::onScanNetworks(HttpRequest &request, HttpResponse &re
         return;
     }
 
+#ifdef ARCH_ESP8266
     if (app.ota.isProccessing()) {
         sendApiCode(response, API_CODES::API_UPDATE_IN_PROGRESS);
         return;
     }
+#endif
 
     if (request.method != HTTP_POST) {
         sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP POST");
@@ -850,10 +868,12 @@ void ApplicationWebserver::onConnect(HttpRequest &request, HttpResponse &respons
         return;
     }
 
+#ifdef ARCH_ESP8266
     if (app.ota.isProccessing()) {
         sendApiCode(response, API_CODES::API_UPDATE_IN_PROGRESS);
         return;
     }
+#endif
 
     if (request.method != HTTP_POST && request.method != HTTP_GET) {
         sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP POST or GET");
@@ -913,10 +933,12 @@ void ApplicationWebserver::onSystemReq(HttpRequest &request, HttpResponse &respo
         return;
     }
 
+#ifdef ARCH_ESP8266
     if (app.ota.isProccessing()) {
         sendApiCode(response, API_CODES::API_UPDATE_IN_PROGRESS);
         return;
     }
+#endif
 
     if (request.method != HTTP_POST) {
         sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP POST");
@@ -963,6 +985,10 @@ void ApplicationWebserver::onUpdate(HttpRequest &request, HttpResponse &response
         return;
     }
 
+#ifdef ARCH_HOST
+    sendApiCode(response, API_CODES::API_BAD_REQUEST, "not supported on Host");
+    return;
+#else
     if (request.method != HTTP_POST
             && request.method != HTTP_GET) {
         sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP POST or GET");
@@ -996,6 +1022,7 @@ void ApplicationWebserver::onUpdate(HttpRequest &request, HttpResponse &response
     JsonObject json = stream->getRoot();
     json["status"] = int(app.ota.getStatus());
     sendApiResponse(response, stream);
+#endif
 }
 
 //simple call-response to check if we can reach server

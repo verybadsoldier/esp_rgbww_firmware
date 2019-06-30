@@ -51,6 +51,7 @@ void Application::init() {
     //load settings
     _uptimetimer.initializeMs(60000, std::bind(&Application::uptimeCounter, this)).start();
 
+#ifdef ARCH_ESP8266
     // load boot information
     uint8 bootmode, bootslot;
     if (rboot_get_last_boot_mode(&bootmode)) {
@@ -65,6 +66,7 @@ void Application::init() {
     if (rboot_get_last_boot_rom(&bootslot)) {
         _romslot = bootslot;
     }
+#endif
 
     // mount filesystem
     mountfs(getRomSlot());
@@ -77,7 +79,9 @@ void Application::init() {
     }
 
     // check ota
+#ifdef ARCH_ESP8266
     ota.checkAtBoot();
+#endif
 
     // load config
     if (cfg.exist()) {
@@ -207,7 +211,9 @@ void Application::switchRom() {
     } else {
         slot = 0;
     }
+#ifdef ARCH_ESP8266
     rboot_set_current_rom(slot);
+#endif
 }
 
 void Application::onWifiConnected(const String& ssid) {

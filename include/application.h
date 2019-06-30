@@ -43,7 +43,11 @@ public:
 
     inline bool isFilesystemMounted() { return _fs_mounted; };
     inline bool isFirstRun() { return _first_run; };
+#ifdef ARCH_ESP8266
     inline bool isTempBoot() { return _bootmode == MODE_TEMP_ROM; };
+#else
+    bool isTempBoot() { return false; };
+#endif
     inline int getRomSlot() { return _romslot; };
     inline int getBootMode() { return _bootmode; };
     void switchRom();
@@ -59,7 +63,9 @@ public:
     AppWIFI network;
     ApplicationWebserver webserver;
     APPLedCtrl rgbwwctrl;
+#ifdef ARCH_ESP8266
     ApplicationOTA ota;
+#endif
     ApplicationSettings cfg;
     EventServer eventserver;
     AppMqttClient mqttclient;
