@@ -18,7 +18,7 @@ void EventServer::start() {
         debug_e("EventServer failed to open listening port!");
     }
 
-    TimerDelegateStdFunction fnc = std::bind(&EventServer::publishKeepAlive, this);
+    auto fnc = std::bind(&EventServer::publishKeepAlive, this);
     _keepAliveTimer.initializeMs(_keepAliveInterval * 1000, fnc).start();
 }
 

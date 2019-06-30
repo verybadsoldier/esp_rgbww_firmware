@@ -45,8 +45,7 @@ public:
     String get_con_err_msg() { return _client_err_msg; };
 
     void startAp();
-    void stopAp();
-    void stopAp(int delay);
+    void stopAp(int delay = 0);
     bool isApActive() { return WifiAccessPoint.isEnabled(); };
 
     void scan();
