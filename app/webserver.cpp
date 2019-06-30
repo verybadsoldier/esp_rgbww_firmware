@@ -265,7 +265,7 @@ void ApplicationWebserver::onWebapp(HttpRequest &request, HttpResponse &response
 }
 
 bool ApplicationWebserver::checkHeap(HttpResponse &response) {
-    uint fh = system_get_free_heap_size();
+    unsigned fh = system_get_free_heap_size();
     if (fh < _minimumHeap) {
         response.code = 429;
         response.setHeader("Retry-After", "2");

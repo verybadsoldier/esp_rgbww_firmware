@@ -48,8 +48,8 @@ private:
 
     bool _init = false;
     bool _running = false;
-    uint _minimumHeap = 8000;
-    uint _minimumHeapAccept = 8000;
+    unsigned _minimumHeap = 8000;
+    unsigned _minimumHeapAccept = 8000;
 
     bool authenticated(HttpRequest &request, HttpResponse &response);
     bool authenticateExec(HttpRequest &request, HttpResponse &response);
