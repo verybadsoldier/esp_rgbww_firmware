@@ -38,7 +38,7 @@ void GDB_IRAM_ATTR init() {
     app.init();
 
     // Run Services on system ready
-    System.onReady(SystemReadyDelegate(&Application::startServices, &app));
+    System.onReady(std::bind(&Application::startServices, &app));
 }
 
 void Application::uptimeCounter() {
@@ -49,7 +49,7 @@ void Application::init() {
     debug_i("RGBWW Controller v %s\r\n", fw_git_version);
 
     //load settings
-    _uptimetimer.initializeMs(60000, TimerDelegateStdFunction(std::bind(&Application::uptimeCounter, this))).start();
+    _uptimetimer.initializeMs(60000, std::bind(&Application::uptimeCounter, this)).start();
 
     // load boot information
     uint8 bootmode, bootslot;
@@ -124,7 +124,7 @@ void Application::initButtons() {
 
         _lastToggles[pin] = 0ul;
 
-        attachInterrupt(pin,  InterruptDelegateStdFunction(std::bind(&Application::onButtonTogglePressed, this, pin)), FALLING);
+        attachInterrupt(pin,  InterruptDelegate(std::bind(&Application::onButtonTogglePressed, this, pin)), FALLING);
         pinMode(pin, INPUT_PULLUP);
     }
 }
@@ -143,7 +143,7 @@ void Application::restart() {
     debug_i("Restarting");
     if (network.isApActive()) {
         network.stopAp();
-        _systimer.initializeMs(500, TimerDelegateStdFunction(std::bind(&Application::restart, this))).startOnce();
+        _systimer.initializeMs(500, std::bind(&Application::restart, this)).startOnce();
     }
     System.restart();
 }
@@ -161,18 +161,18 @@ void Application::reset() {
 bool Application::delayedCMD(String cmd, int delay) {
     debug_i("Application::delayedCMD cmd: %s - delay: %i", cmd.c_str(), delay);
     if (cmd.equals("reset")) {
-        _systimer.initializeMs(delay, TimerDelegateStdFunction(std::bind(&Application::reset, this))).startOnce();
+        _systimer.initializeMs(delay, std::bind(&Application::reset, this)).startOnce();
     } else if (cmd.equals("restart")) {
-        _systimer.initializeMs(delay, TimerDelegateStdFunction(std::bind(&Application::restart, this))).startOnce();
+        _systimer.initializeMs(delay, std::bind(&Application::restart, this)).startOnce();
     } else if (cmd.equals("stopap")) {
         network.stopAp(2000);
     } else if (cmd.equals("forget_wifi")) {
-        _systimer.initializeMs(delay, TimerDelegateStdFunction(std::bind(&AppWIFI::forgetWifi, &network))).startOnce();
+        _systimer.initializeMs(delay, std::bind(&AppWIFI::forgetWifi, &network)).startOnce();
     } else if (cmd.equals("test_channels")) {
         rgbwwctrl.testChannels();
     } else if (cmd.equals("switch_rom")) {
         switchRom();
-        _systimer.initializeMs(delay, TimerDelegateStdFunction(std::bind(&Application::restart, this))).startOnce();
+        _systimer.initializeMs(delay, std::bind(&Application::restart, this)).startOnce();
     } else {
         return false;
     }
