@@ -1,7 +1,5 @@
 #pragma once
 
-#include <SmingCore/SmingCore.h>
-
 #include <RGBWWLed/RGBWWLed.h>
 
 

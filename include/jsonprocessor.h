@@ -1,6 +1,5 @@
 #pragma once
 
-#include <SmingCore/SmingCore.h>
 #include <RGBWWLed/RGBWWLedColor.h>
 
 
