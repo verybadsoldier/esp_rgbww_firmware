@@ -19,6 +19,9 @@
  *
  *
  */
+
+#ifdef ARCH_ESP8266
+
 #include <RGBWWCtrl.h>
 
 void ApplicationOTA::start(String romurl, String spiffsurl) {
@@ -47,7 +50,7 @@ void ApplicationOTA::start(String romurl, String spiffsurl) {
     } else {
         otaUpdater->addItem(RBOOT_SPIFFS_1, spiffsurl);
     }
-    otaUpdater->setCallback(OtaUpdateDelegate(&ApplicationOTA::rBootCallback, this));
+    otaUpdater->setCallback(std::bind(&ApplicationOTA::rBootCallback, this, _1, _2));
     beforeOTA();
     otaUpdater->start();
 }
@@ -125,27 +128,21 @@ void ApplicationOTA::checkAtBoot() {
 
 void ApplicationOTA::saveStatus(OTASTATUS status) {
     debug_i("ApplicationOTA::saveStatus");
-    DynamicJsonBuffer jsonBuffer;
-    JsonObject& root = jsonBuffer.createObject();
+    StaticJsonDocument<128> doc;
+    JsonObject root = doc.to<JsonObject>();
     root["status"] = int(status);
-    String rootString;
-    root.printTo(rootString);
-    fileSetContent(OTA_STATUS_FILE, rootString);
+    Json::saveToFile(root, OTA_STATUS_FILE);
 }
 
 OTASTATUS ApplicationOTA::loadStatus() {
     debug_i("ApplicationOTA::loadStatus");
-    if (fileExist(OTA_STATUS_FILE)) {
-        DynamicJsonBuffer jsonBuffer;
-        int size = fileGetSize(OTA_STATUS_FILE);
-        char* jsonString = new char[size + 1];
-        fileGetContent(OTA_STATUS_FILE, jsonString, size + 1);
-        JsonObject& root = jsonBuffer.parseObject(jsonString);
-        OTASTATUS status = (OTASTATUS) root["status"].as<int>();
-        delete[] jsonString;
+    StaticJsonDocument<128> doc;
+    if (Json::loadFromFile(doc, OTA_STATUS_FILE)) {
+        OTASTATUS status = (OTASTATUS) doc["status"].as<int>();
         return status;
     } else {
         return OTASTATUS::OTA_NOT_UPDATING;
     }
 }
 
+#endif

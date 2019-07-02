@@ -46,10 +46,10 @@
 #define DEBUG_APP 1
 
 //includes
-#include <user_config.h>
 #include <RGBWWLed/RGBWWLed.h>
-#include <SmingCore/SmingCore.h>
+#ifdef ARCH_ESP8266
 #include <otaupdate.h>
+#endif
 #include <config.h>
 #include <ledctrl.h>
 #include <networking.h>
