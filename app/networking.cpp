@@ -37,7 +37,7 @@ BssList AppWIFI::getAvailableNetworks() {
 
 void AppWIFI::scan() {
     _scanning = true;
-    WifiStation.startScan(std::bind(&AppWIFI::scanCompleted, this, _1, _2));
+    WifiStation.startScan(ScanCompletedDelegate(&AppWIFI::scanCompleted, this));
 }
 
 void AppWIFI::scanCompleted(bool succeeded, BssList list) {
@@ -88,9 +88,9 @@ void AppWIFI::init() {
     }
 
     // register callbacks
-    WifiEvents.onStationDisconnect(std::bind(&AppWIFI::_STADisconnect, this, _1, _2, _3, _4));
-    WifiEvents.onStationConnect(std::bind(&AppWIFI::_STAConnected, this, _1, _2, _3, _4));
-    WifiEvents.onStationGotIP(std::bind(&AppWIFI::_STAGotIP, this, _1, _2, _3));
+    WifiEvents.onStationDisconnect(StationDisconnectDelegate(&AppWIFI::_STADisconnect, this));
+    WifiEvents.onStationConnect(StationConnectDelegate(&AppWIFI::_STAConnected, this));
+    WifiEvents.onStationGotIP(StationGotIPDelegate(&AppWIFI::_STAGotIP, this));
 
 
     if (WifiStation.getSSID() == "") {

@@ -1,8 +1,7 @@
-[submodule "mikee47.sming"]
+[submodule "Sming"]
 	path = Sming
-	url = https://github.com/mikee47/Sming
-	branch = dev/Sming-rgbww
+	url = https://github.com/SmingHub/Sming.git
+	branch = develop
 [submodule "Components/RGBWWLed"]
 	path = Components/RGBWWLed
-	url = https://github.com/mikee47/RGBWWLed.git
-	branch = update/Sming-3.9
+	url = https://github.com/verybadsoldier/RGBWWLed.git
