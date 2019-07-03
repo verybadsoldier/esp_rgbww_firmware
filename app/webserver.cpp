@@ -22,6 +22,33 @@
 #include <RGBWWCtrl.h>
 #include <Network/WebHelpers/base64.h>
 
+
+/* Temporary until added to Sming */
+namespace Json {
+/**
+ * @brief Copies a Json data value to a variable, but only if it exists and its value has changed
+ * @param source Typically provided from JsonObject[key], JsonDocument[key] or JsonVariant[key] call
+ * @param dest Variable to store value, unchanged if `data` is null
+ * @retval bool true if value exists and has changed, `value` updated
+ */
+template <typename TSource, typename TDest> bool getValueChanged(const TSource& source, TDest& dest)
+{
+	if(source.isNull()) {
+		return false;
+	}
+
+	TDest value = source.template as<TDest>();
+	if (value == dest) {
+		return false; // value unchanged
+	}
+
+	dest = value;
+	return true;
+}
+
+};
+
+
 ApplicationWebserver::ApplicationWebserver() {
     _running = false;
 
@@ -38,26 +65,26 @@ ApplicationWebserver::ApplicationWebserver() {
 }
 
 void ApplicationWebserver::init() {
-    paths.setDefault(std::bind(&ApplicationWebserver::onFile, this, _1, _2));
-    paths.set("/", std::bind(&ApplicationWebserver::onIndex, this, _1, _2));
-    paths.set("/webapp", std::bind(&ApplicationWebserver::onWebapp, this, _1, _2));
-    paths.set("/config", std::bind(&ApplicationWebserver::onConfig, this, _1, _2));
-    paths.set("/info", std::bind(&ApplicationWebserver::onInfo, this, _1, _2));
-    paths.set("/color", std::bind(&ApplicationWebserver::onColor, this, _1, _2));
-    paths.set("/animation", std::bind(&ApplicationWebserver::onAnimation, this, _1, _2));
-    paths.set("/networks", std::bind(&ApplicationWebserver::onNetworks, this, _1, _2));
-    paths.set("/scan_networks", std::bind(&ApplicationWebserver::onScanNetworks, this, _1, _2));
-    paths.set("/system", std::bind(&ApplicationWebserver::onSystemReq, this, _1, _2));
-    paths.set("/update", std::bind(&ApplicationWebserver::onUpdate, this, _1, _2));
-    paths.set("/connect", std::bind(&ApplicationWebserver::onConnect, this, _1, _2));
-    paths.set("/generate_204", std::bind(&ApplicationWebserver::generate204, this, _1, _2));
-    paths.set("/ping", std::bind(&ApplicationWebserver::onPing, this, _1, _2));
-    paths.set("/stop", std::bind(&ApplicationWebserver::onStop, this, _1, _2));
-    paths.set("/skip", std::bind(&ApplicationWebserver::onSkip, this, _1, _2));
-    paths.set("/pause", std::bind(&ApplicationWebserver::onPause, this, _1, _2));
-    paths.set("/continue", std::bind(&ApplicationWebserver::onContinue, this, _1, _2));
-    paths.set("/blink", std::bind(&ApplicationWebserver::onBlink, this, _1, _2));
-    paths.set("/toggle", std::bind(&ApplicationWebserver::onToggle, this, _1, _2));
+    paths.setDefault(HttpPathDelegate(&ApplicationWebserver::onFile, this));
+    paths.set("/", HttpPathDelegate(&ApplicationWebserver::onIndex, this));
+    paths.set("/webapp", HttpPathDelegate(&ApplicationWebserver::onWebapp, this));
+    paths.set("/config", HttpPathDelegate(&ApplicationWebserver::onConfig, this));
+    paths.set("/info", HttpPathDelegate(&ApplicationWebserver::onInfo, this));
+    paths.set("/color", HttpPathDelegate(&ApplicationWebserver::onColor, this));
+    paths.set("/animation", HttpPathDelegate(&ApplicationWebserver::onAnimation, this));
+    paths.set("/networks", HttpPathDelegate(&ApplicationWebserver::onNetworks, this));
+    paths.set("/scan_networks", HttpPathDelegate(&ApplicationWebserver::onScanNetworks, this));
+    paths.set("/system", HttpPathDelegate(&ApplicationWebserver::onSystemReq, this));
+    paths.set("/update", HttpPathDelegate(&ApplicationWebserver::onUpdate, this));
+    paths.set("/connect", HttpPathDelegate(&ApplicationWebserver::onConnect, this));
+    paths.set("/generate_204", HttpPathDelegate(&ApplicationWebserver::generate204, this));
+    paths.set("/ping", HttpPathDelegate(&ApplicationWebserver::onPing, this));
+    paths.set("/stop", HttpPathDelegate(&ApplicationWebserver::onStop, this));
+    paths.set("/skip", HttpPathDelegate(&ApplicationWebserver::onSkip, this));
+    paths.set("/pause", HttpPathDelegate(&ApplicationWebserver::onPause, this));
+    paths.set("/continue", HttpPathDelegate(&ApplicationWebserver::onContinue, this));
+    paths.set("/blink", HttpPathDelegate(&ApplicationWebserver::onBlink, this));
+    paths.set("/toggle", HttpPathDelegate(&ApplicationWebserver::onToggle, this));
     _init = true;
 }
 
