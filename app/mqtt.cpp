@@ -42,8 +42,7 @@ void AppMqttClient::onComplete(TcpClient& client, bool success) {
 
 void AppMqttClient::connectDelayed(int delay) {
     debug_d("MQTT::connectDelayed");
-    auto fnc = std::bind(&AppMqttClient::connect, this);
-    _procTimer.initializeMs(delay, fnc).startOnce();
+    _procTimer.initializeMs(delay, TimerDelegate(&AppMqttClient::connect, this)).startOnce();
 }
 
 void AppMqttClient::connect() {
@@ -70,7 +69,7 @@ void AppMqttClient::connect() {
 
 #endif
     // Assign a disconnect callback function
-    mqtt->setCompleteDelegate(std::bind(&AppMqttClient::onComplete, this, _1, _2));
+    mqtt->setCompleteDelegate(TcpClientCompleteDelegate(&AppMqttClient::onComplete, this));
 
     if (app.cfg.sync.clock_slave_enabled) {
         mqtt->subscribe(app.cfg.sync.clock_slave_topic);
@@ -95,7 +94,7 @@ void AppMqttClient::start() {
 
     delete mqtt;
     mqtt = new MqttClient();
-    mqtt->setCallback(std::bind(&AppMqttClient::onMessageReceived, this, _1, _2));
+    mqtt->setCallback(MqttStringSubscriptionCallback(&AppMqttClient::onMessageReceived, this));
     connectDelayed(2000);
 }
 
