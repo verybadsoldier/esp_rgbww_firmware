@@ -22,6 +22,7 @@
 #pragma once
 
 #include <RGBWWCtrl.h>
+#include <JsonObjectStream.h>
 
 #define APP_SETTINGS_FILE ".cfg"
 #define APP_SETTINGS_VERSION 1
