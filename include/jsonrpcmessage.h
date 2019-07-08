@@ -1,6 +1,7 @@
 #pragma once
 
 #include <RGBWWLed/RGBWWLed.h>
+#include <JsonObjectStream.h>
 
 
 class JsonRpcMessage {

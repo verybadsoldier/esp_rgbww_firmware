@@ -23,32 +23,6 @@
 #include <Network/WebHelpers/base64.h>
 
 
-/* Temporary until added to Sming */
-namespace Json {
-/**
- * @brief Copies a Json data value to a variable, but only if it exists and its value has changed
- * @param source Typically provided from JsonObject[key], JsonDocument[key] or JsonVariant[key] call
- * @param dest Variable to store value, unchanged if `data` is null
- * @retval bool true if value exists and has changed, `value` updated
- */
-template <typename TSource, typename TDest> bool getValueChanged(const TSource& source, TDest& dest)
-{
-	if(source.isNull()) {
-		return false;
-	}
-
-	TDest value = source.template as<TDest>();
-	if (value == dest) {
-		return false; // value unchanged
-	}
-
-	dest = value;
-	return true;
-}
-
-};
-
-
 ApplicationWebserver::ApplicationWebserver() {
     _running = false;
 
