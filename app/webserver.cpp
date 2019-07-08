@@ -332,7 +332,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
 
         bool error = false;
         String error_msg = getApiCodeMsg(API_CODES::API_BAD_REQUEST);
-        DynamicJsonDocument doc(1024);
+        DynamicJsonDocument doc(2048);
         Json::deserialize(doc, body);
 
         // remove comment for debugging
@@ -489,7 +489,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         	Json::getValue(jgen["buttons_debounce_ms"], app.cfg.general.buttons_debounce_ms);
         }
 
-        JsonObject jsync = jsync;
+        JsonObject jsync = root["sync"];
         if (!jsync.isNull()) {
         	Json::getValue(jsync["clock_master_enabled"], app.cfg.sync.clock_master_enabled);
         	Json::getValue(jsync["clock_master_interval"], app.cfg.sync.clock_master_interval);
@@ -505,7 +505,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         	Json::getValue(jsync["color_slave_topic"], app.cfg.sync.color_slave_topic);
         }
 
-        JsonObject jevents = jevents;
+        JsonObject jevents = root["events"];
         if (!jevents.isNull()) {
         	Json::getValue(jevents["color_interval_ms"], app.cfg.events.color_interval_ms);
         	Json::getValue(jevents["color_mininterval_ms"], app.cfg.events.color_mininterval_ms);
