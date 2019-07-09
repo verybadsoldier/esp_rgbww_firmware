@@ -115,7 +115,7 @@ private:
     static const uint32_t _saveAfterStableColorMs = 2000;
 
     SimpleTimer _ledTimer;
-    uint32_t _timerInterval = RGBWW_MINTIMEDIFF_US;
+    uint32_t _timerInterval = RGBWW_MINTIMEDIFF;
     HashMap<String, bool> _stepFinishedAnimations;
     uint32_t _lastColorEvent = 0;
 };
