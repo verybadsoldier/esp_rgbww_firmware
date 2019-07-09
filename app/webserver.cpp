@@ -23,32 +23,6 @@
 #include <Network/WebHelpers/base64.h>
 
 
-/* Temporary until added to Sming */
-namespace Json {
-/**
- * @brief Copies a Json data value to a variable, but only if it exists and its value has changed
- * @param source Typically provided from JsonObject[key], JsonDocument[key] or JsonVariant[key] call
- * @param dest Variable to store value, unchanged if `data` is null
- * @retval bool true if value exists and has changed, `value` updated
- */
-template <typename TSource, typename TDest> bool getValueChanged(const TSource& source, TDest& dest)
-{
-	if(source.isNull()) {
-		return false;
-	}
-
-	TDest value = source.template as<TDest>();
-	if (value == dest) {
-		return false; // value unchanged
-	}
-
-	dest = value;
-	return true;
-}
-
-};
-
-
 ApplicationWebserver::ApplicationWebserver() {
     _running = false;
 
@@ -332,7 +306,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
 
         bool error = false;
         String error_msg = getApiCodeMsg(API_CODES::API_BAD_REQUEST);
-        DynamicJsonDocument doc(1024);
+        DynamicJsonDocument doc(2048);
         Json::deserialize(doc, body);
 
         // remove comment for debugging
@@ -489,7 +463,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         	Json::getValue(jgen["buttons_debounce_ms"], app.cfg.general.buttons_debounce_ms);
         }
 
-        JsonObject jsync = jsync;
+        JsonObject jsync = root["sync"];
         if (!jsync.isNull()) {
         	Json::getValue(jsync["clock_master_enabled"], app.cfg.sync.clock_master_enabled);
         	Json::getValue(jsync["clock_master_interval"], app.cfg.sync.clock_master_interval);
@@ -505,7 +479,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         	Json::getValue(jsync["color_slave_topic"], app.cfg.sync.color_slave_topic);
         }
 
-        JsonObject jevents = jevents;
+        JsonObject jevents = root["events"];
         if (!jevents.isNull()) {
         	Json::getValue(jevents["color_interval_ms"], app.cfg.events.color_interval_ms);
         	Json::getValue(jevents["color_mininterval_ms"], app.cfg.events.color_mininterval_ms);

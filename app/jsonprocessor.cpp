@@ -391,25 +391,26 @@ bool JsonProcessor::onJsonRpc(const String& json) {
     JsonRpcMessageIn rpc(json);
 
     String msg;
-    if (rpc.getMethod() == "color") {
+    String method = rpc.getMethod();
+    if (method == "color") {
         return onColor(rpc.getParams(), msg, false);
     }
-    else if (rpc.getMethod() == "stop") {
+    else if (method == "stop") {
         return onStop(rpc.getParams(), msg, false);
     }
-    else if (rpc.getMethod() == "blink") {
+    else if (method == "blink") {
         return onBlink(rpc.getParams(), msg, false);
     }
-    else if (rpc.getMethod() == "skip") {
+    else if (method == "skip") {
         return onSkip(rpc.getParams(), msg, false);
     }
-    else if (rpc.getMethod() == "pause") {
+    else if (method == "pause") {
         return onPause(rpc.getParams(), msg, false);
     }
-    else if (rpc.getMethod() == "continue") {
+    else if (method == "continue") {
         return onContinue(rpc.getParams(), msg, false);
     }
-    else if (rpc.getMethod() == "direct") {
+    else if (method == "direct") {
         return onDirect(rpc.getParams(), msg, false);
     } else {
     	return false;
