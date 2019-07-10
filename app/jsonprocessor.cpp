@@ -226,7 +226,7 @@ bool JsonProcessor::onDirect(JsonObject root, String& msg, bool relay) {
 }
 
 void JsonProcessor::parseRequestParams(JsonObject root, RequestParameters& params) {
-	const char* value;
+	String value;
 
 	JsonObject hsv = root["hsv"];
 	if (!hsv.isNull()) {
