@@ -17,6 +17,7 @@ addons:
     packages:     
       - bsdtar
 install:
+  - ls
   - git clone https://github.com/pfalcon/esp-open-sdk
   - export ESP_HOME=$TRAVIS_BUILD_DIR/esp-open-sdk
   - git submodule upate --init --recursive
