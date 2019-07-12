@@ -37,7 +37,7 @@ script:
   
 after_success:
   - export DEPLOY_FILENAME=esp_rgbww_firmware_snapshot_$(date "+%Y%m%d-%H%M%S")_$TRAVIS_COMMIT.tgz
-  - mkdir -p "$ARTIFACTS_DIR";touch $ARTIFACTS_DIR/test1.txt;touch "$ARTIFACTS_DIR"/test2.txt
+  #- mkdir -p "$ARTIFACTS_DIR";touch $ARTIFACTS_DIR/test1.txt;touch "$ARTIFACTS_DIR"/test2.txt
   - mkdir "$DEPLOY_DIR"
   - echo "cd $ARTIFACTS_DIR;tar cvfz $DEPLOY_FILENAME *;mv $DEPLOY_FILENAME $DEPLOY_DIR"
   - cd $ARTIFACTS_DIR;tar cvfz $DEPLOY_FILENAME *;mv $DEPLOY_FILENAME $DEPLOY_DIR
