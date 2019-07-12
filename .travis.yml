@@ -21,8 +21,8 @@ addons:
     packages:     
       - bsdtar
 install:
+  - git clone --recursive https://github.com/pfalcon/esp-open-sdk
   - ls
-  - git clone https://github.com/pfalcon/esp-open-sdk
   - cd esp-open-sdk
   - make STANDALONE=n VENDOR_SDK=2.1.0-18-g61248df
   - export ESP_HOME=$TRAVIS_BUILD_DIR/esp-open-sdk
