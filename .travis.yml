@@ -45,9 +45,7 @@ after_success:
   - cd $ARTIFACTS_DIR
   - find
   - echo "Building deploy archive $DEPLOY_FILENAME"
-  - tar cvfz $DEPLOY_FILENAME *
-  - mv $DEPLOY_FILENAME $DEPLOY_DIR"
-  - tar cvfz $DEPLOY_FILENAME *;mv $DEPLOY_FILENAME $DEPLOY_DIR
+  - tar cvfz $DEPLOY_DIR/$DEPLOY_FILENAME *
   #- bash deploy.sh
 
 deploy:
