@@ -4,9 +4,10 @@ os:
   - linux
 env:
   global:
-    - SDK_VERSION=1.5.0  
-    - SDK_BUILD=258
-    - GH_REF: github.com/patrickjahns/esp_rgbww_firmware.git
+    #- SDK_VERSION=1.5.0  
+    #- SDK_BUILD=258
+    - ESP_OPEN_SDK_GIT: https://github.com/pfalcon/esp-open-sdk
+    #- FW_GIT: https://github.com/verybadsoldier/esp_rgbww_firmware
     - secure: "qGecAiLo1XN5MIm8hDur25XBfsRoZ/leWiRvD4SrEBS+VxLPsoEpojtBBk4ShWav6ACNbLSycnbsgJz3USgfchN8shJqfrjU2tjx9EgAYY0y2ZFjwPWBPiHrWqjRA/18AeSw57uVs32ALpUX1hrBwZ2W1NxIUwIGSS0itN/ixQIqL0vqE6USJg7AIoQ/aLW8g3aQmfyYrwbPHVfym5U+BSMPgrIbSufCeiAGogkmRvWmgcw+Hf2vMPJkgtOvZU/vqkY/IHBgS/nEVZNOtZmEzQhcCogHGtDCXhA9uPvTqCXJ7ndcApm5vXK+K3Ua4B5IGk264w+j+kr75qF49kdoogYJjNbW8C+1zeuosNIgYiISSZTV5aWnmLUSodKhBgLKIeu3PKHa3Yc3jynMF0rHTfTsJYejYuEGguMsn6e8lzsZLt5CGyY3MGhdFefx71VPshQN/6D2MLmOjn0gAmqIIBWV54fbxCYE6l7Fso5F9Br/PiyEZhziGjW7YbV5Docr7hupqcTTgvC2V5tQbj65ynV96FOrCdGycQ3DKCGBNTMOfz43fvFC/eGKCKJZn7eFX2jlWHBq1Ix5N6a32OisLANx2k7g7QTNw1NDbbs/Z2Lb3Yld2swa543N5Zq/FVxRNaCcyTqn2R3FBv0OkYhmhNyK+Eeb4/UUCNdSot6mHvU="
 
 addons:
@@ -16,22 +17,15 @@ addons:
     packages:     
       - bsdtar
 install:
-  - git clone https://github.com/patrickjahns/Sming.git
+  - git clone https://github.com/pfalcon/esp-open-sdk
+  - export ESP_HOME=$TRAVIS_BUILD_DIR/esp-open-sdk
+  - git submodule upate --init --recursive
   - cd Sming
-  - git checkout rgbwwdev
-  - cd ..
-  - export SDK_FILE_NAME="esp-alt-sdk-v${SDK_VERSION}.${SDK_BUILD}-linux-x86_64.tar.gz"
-  - mkdir -p $TRAVIS_BUILD_DIR/Sming/opt/esp-alt-sdk
-  - wget https://bintray.com/artifact/download/kireevco/generic/${SDK_FILE_NAME}
-  - bsdtar -xf ${SDK_FILE_NAME} -C $TRAVIS_BUILD_DIR/Sming/opt/esp-alt-sdk  
   - rm -rf samples
-  - cd $TRAVIS_BUILD_DIR/Sming/Sming/Libraries
-  - git clone https://github.com/patrickjahns/RGBWWLed
   - export SMING_HOME=$TRAVIS_BUILD_DIR/Sming/Sming
-  - export ESP_HOME=$TRAVIS_BUILD_DIR/Sming/opt/esp-alt-sdk  
-  - export PATH=$PATH:$TRAVIS_BUILD_DIR/Sming/opt/esp-alt-sdk/utils/
+  #- export PATH=$PATH:$TRAVIS_BUILD_DIR/Sming/opt/esp-alt-sdk/utils/
   - cd $SMING_HOME
-  - make all spiffy/spiffy 
+  - make all
     
 script:
   - cd $TRAVIS_BUILD_DIR
