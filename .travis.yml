@@ -24,7 +24,7 @@ install:
   - ls esp-open-sdk
   - export ESP_HOME=$TRAVIS_BUILD_DIR/esp-open-sdk
   - export SMING_HOME=$TRAVIS_BUILD_DIR/Sming/Sming
-  - export SDK_BASE=$TRAVIS_BUILD_DIR/Sming/Sming
+  - export SDK_BASE=$TRAVIS_BUILD_DIR/Sming/Sming/third-party/ESP8266_NONOS_SDK
   #- export PATH=$PATH:$TRAVIS_BUILD_DIR/Sming/opt/esp-alt-sdk/utils/
   - cd $SMING_HOME
   - rm -rf samples
