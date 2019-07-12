@@ -40,7 +40,7 @@ script:
 after_success:
   - mkdir -p "$ARTIFACTS_DIR";touch $ARTIFACTS_DIR/test1.txt;touch "$ARTIFACTS_DIR"/test2.txt
   - mkdir "$DEPLOY_DIR"
-  - cd $ARTIFACTS_DIR;tar cvfz $DEPLOY_FILENAME *
+  - cd $ARTIFACTS_DIR;tar cvfz $DEPLOY_FILENAME *;move $DEPLOY_FILENAME $DEPLOY_DIR
   #- bash deploy.sh
 
 deploy:
