@@ -20,6 +20,7 @@ install:
   - ls
   - git clone https://github.com/pfalcon/esp-open-sdk
   - export ESP_HOME=$TRAVIS_BUILD_DIR/esp-open-sdk
+  - cd esp_rgbww_firmware
   - git submodule upate --init --recursive
   - cd Sming
   - rm -rf samples
