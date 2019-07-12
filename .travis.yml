@@ -38,12 +38,10 @@ script:
   
 after_success:
   - export DEPLOY_FILENAME=esp_rgbww_firmware_snapshot_$(date "+%Y%m%d-%H%M%S")_$TRAVIS_COMMIT.tgz
-  #- mkdir -p "$ARTIFACTS_DIR"
-  #- touch $ARTIFACTS_DIR/test1.txt;touch "$ARTIFACTS_DIR"/test2.txt
   - mkdir "$DEPLOY_DIR"
-  - echo "Switching to artifacts directory: $ARTIFACTS_DIR"
+  - echo Switching to artifacts directory: $ARTIFACTS_DIR
   - cd $ARTIFACTS_DIR
-  - find
+  - echo "Date: $(date "+%Y-%m-%d %H:%M:%S")\nBranch: $TRAVIS_BRANCH\nCommit: $TRAVIS_COMMIT\nTag: $TRAVIS_TAG\nApp Host: $TRAVIS_APP_HOST"
   - echo "Building deploy archive $DEPLOY_FILENAME"
   - tar cvfz $DEPLOY_DIR/$DEPLOY_FILENAME *
   #- bash deploy.sh
