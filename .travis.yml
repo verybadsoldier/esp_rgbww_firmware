@@ -41,7 +41,7 @@ after_success:
   - mkdir "$DEPLOY_DIR"
   - echo Switching to artifacts directory: $ARTIFACTS_DIR
   - cd $ARTIFACTS_DIR
-  - echo "Branch\: $TRAVIS_BRANCH"
+  - echo "Date\: $(date \"+%Y-%m-%d %H\:%M\:%S\") Branch\: $TRAVIS_BRANCH Commit\: $TRAVIS_COMMIT Tag\: $TRAVIS_TAG App Host\: $TRAVIS_APP_HOST"
   - echo "Building deploy archive $DEPLOY_FILENAME"
   - tar cvfz $DEPLOY_DIR/$DEPLOY_FILENAME *
   #- bash deploy.sh 
