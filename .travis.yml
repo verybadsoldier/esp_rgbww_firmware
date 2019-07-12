@@ -24,7 +24,7 @@ install:
   - ls
   - git clone https://github.com/pfalcon/esp-open-sdk
   - cd esp-open-sdk
-  - make
+  - make STANDALONE=n VENDOR_SDK=2.1.0-18-g61248df
   - export ESP_HOME=$TRAVIS_BUILD_DIR/esp-open-sdk
   - export SMING_HOME=$TRAVIS_BUILD_DIR/Sming/Sming
   #- export PATH=$PATH:$TRAVIS_BUILD_DIR/Sming/opt/esp-alt-sdk/utils/
