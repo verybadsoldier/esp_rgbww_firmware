@@ -8,7 +8,7 @@ env:
     - ESP_OPEN_SDK_BIN: https://github.com/nodemcu/nodemcu-firmware/raw/2d958750b56fc60297f564b4ec303e47928b5927/tools/esp-open-sdk.tar.xz
     - secure: "qGecAiLo1XN5MIm8hDur25XBfsRoZ/leWiRvD4SrEBS+VxLPsoEpojtBBk4ShWav6ACNbLSycnbsgJz3USgfchN8shJqfrjU2tjx9EgAYY0y2ZFjwPWBPiHrWqjRA/18AeSw57uVs32ALpUX1hrBwZ2W1NxIUwIGSS0itN/ixQIqL0vqE6USJg7AIoQ/aLW8g3aQmfyYrwbPHVfym5U+BSMPgrIbSufCeiAGogkmRvWmgcw+Hf2vMPJkgtOvZU/vqkY/IHBgS/nEVZNOtZmEzQhcCogHGtDCXhA9uPvTqCXJ7ndcApm5vXK+K3Ua4B5IGk264w+j+kr75qF49kdoogYJjNbW8C+1zeuosNIgYiISSZTV5aWnmLUSodKhBgLKIeu3PKHa3Yc3jynMF0rHTfTsJYejYuEGguMsn6e8lzsZLt5CGyY3MGhdFefx71VPshQN/6D2MLmOjn0gAmqIIBWV54fbxCYE6l7Fso5F9Br/PiyEZhziGjW7YbV5Docr7hupqcTTgvC2V5tQbj65ynV96FOrCdGycQ3DKCGBNTMOfz43fvFC/eGKCKJZn7eFX2jlWHBq1Ix5N6a32OisLANx2k7g7QTNw1NDbbs/Z2Lb3Yld2swa543N5Zq/FVxRNaCcyTqn2R3FBv0OkYhmhNyK+Eeb4/UUCNdSot6mHvU="
     - DEPLOY_DIR: $TRAVIS_BUILD_DIR/deploy
-    - ARTIFACTS_DIR: $TRAVIS_BUILD_DIR/out/Esp8266/debug/firmware
+    - ARTIFACTS_DIR: $TRAVIS_BUILD_DIR/out/firmware
     
 before_install:
   # for esp-open-sdk
