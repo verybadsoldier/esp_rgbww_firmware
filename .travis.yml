@@ -20,14 +20,13 @@ install:
   - ls
   - git clone https://github.com/pfalcon/esp-open-sdk
   - export ESP_HOME=$TRAVIS_BUILD_DIR/esp-open-sdk
-  - cd esp_rgbww_firmware
+  - cd verybadsolider/esp_rgbww_firmware
   - git submodule upate --init --recursive
-  - cd Sming
-  - rm -rf samples
   - export SMING_HOME=$TRAVIS_BUILD_DIR/Sming/Sming
   #- export PATH=$PATH:$TRAVIS_BUILD_DIR/Sming/opt/esp-alt-sdk/utils/
   - cd $SMING_HOME
-  - make all
+  - rm -rf samples
+  - make
     
 script:
   - cd $TRAVIS_BUILD_DIR
