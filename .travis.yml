@@ -33,6 +33,7 @@ install:
     
 script:
   - cd $TRAVIS_BUILD_DIR
+  - echo Building firmware...
   - make all
   
 after_success:
@@ -40,9 +41,12 @@ after_success:
   #- mkdir -p "$ARTIFACTS_DIR"
   #- touch $ARTIFACTS_DIR/test1.txt;touch "$ARTIFACTS_DIR"/test2.txt
   - mkdir "$DEPLOY_DIR"
-  - echo "cd $ARTIFACTS_DIR;tar cvfz $DEPLOY_FILENAME *;mv $DEPLOY_FILENAME $DEPLOY_DIR"
+  - echo "Switching to artifacts directory: $ARTIFACTS_DIR"
   - cd $ARTIFACTS_DIR
-  - ls -la
+  - find
+  - echo "Building deploy archive $DEPLOY_FILENAME"
+  - tar cvfz $DEPLOY_FILENAME *
+  - mv $DEPLOY_FILENAME $DEPLOY_DIR"
   - tar cvfz $DEPLOY_FILENAME *;mv $DEPLOY_FILENAME $DEPLOY_DIR
   #- bash deploy.sh
 
