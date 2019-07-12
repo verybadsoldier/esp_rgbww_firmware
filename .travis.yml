@@ -44,7 +44,7 @@ after_success:
   - echo "Date: $(date "+%Y-%m-%d %H:%M:%S")\nBranch: $TRAVIS_BRANCH\nCommit: $TRAVIS_COMMIT\nTag: $TRAVIS_TAG\nApp Host: $TRAVIS_APP_HOST"
   - echo "Building deploy archive $DEPLOY_FILENAME"
   - tar cvfz $DEPLOY_DIR/$DEPLOY_FILENAME *
-  #- bash deploy.sh
+  #- bash deploy.sh 
 
 deploy:
   provider: pages
