@@ -138,15 +138,15 @@ struct ApplicationSettings {
         	JsonObject con = net["connection"];
             network.connection.mdnshostname = con["hostname"].as<const char*>();
             network.connection.dhcp = con["dhcp"];
-            network.connection.ip = con["ip"].as<const char*>();
-            network.connection.netmask = con["netmask"].as<const char*>();
-            network.connection.gateway = con["gateway"].as<const char*>();
+            network.connection.ip = con["ip"].as<String>();
+            network.connection.netmask = con["netmask"].as<String>();
+            network.connection.gateway = con["gateway"].as<String>();
 
             // accesspoint
             JsonObject jap = net["ap"];
             network.ap.secured = jap["secured"];
             network.ap.ssid = jap["ssid"].as<const char*>();
-            network.ap.password = jap["password"].as<const char*>();
+            network.ap.password = jap["password"].as<String>();
 
             // mqtt
             JsonObject jmqtt = net["mqtt"];
@@ -239,20 +239,20 @@ struct ApplicationSettings {
         con["ip"] = network.connection.ip.toString();
         con["netmask"] = network.connection.netmask.toString();
         con["gateway"] = network.connection.gateway.toString();
-        con["mdnhostname"] = network.connection.mdnshostname.c_str();
+        con["mdnhostname"] = network.connection.mdnshostname;
 
         JsonObject jap = net.createNestedObject("ap");
         jap["secured"] = network.ap.secured;
-        jap["ssid"] = network.ap.ssid.c_str();
-        jap["password"] = network.ap.password.c_str();
+        jap["ssid"] = network.ap.ssid;
+        jap["password"] = network.ap.password;
 
         JsonObject jmqtt = net.createNestedObject("mqtt");
         jmqtt["enabled"] = network.mqtt.enabled;
-        jmqtt["server"] = network.mqtt.server.c_str();
+        jmqtt["server"] = network.mqtt.server;
         jmqtt["port"] = network.mqtt.port;
-        jmqtt["username"] = network.mqtt.username.c_str();
-        jmqtt["password"] = network.mqtt.password.c_str();
-        jmqtt["topic_base"] = network.mqtt.topic_base.c_str();
+        jmqtt["username"] = network.mqtt.username;
+        jmqtt["password"] = network.mqtt.password;
+        jmqtt["topic_base"] = network.mqtt.topic_base;
 
         JsonObject c = root.createNestedObject("color");
         c["outputmode"] = color.outputmode;
