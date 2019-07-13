@@ -95,14 +95,6 @@ bool ICACHE_FLASH_ATTR ApplicationWebserver::authenticateExec(HttpRequest &reque
         return false;
     }
 
-    // workaround for this: https://github.com/SmingHub/Sming/issues/1725
-    while(userPass.endsWith("="))
-        userPass = userPass.substring(0, userPass.length() - 2);
-
-    // test code for the issue. Should not spawn 2 extra bytes at the end
-    String s = base64_decode("YWRtaW46dGVzdA==");
-    m_printHex("base64_decode", s.c_str(), s.length());
-
     userPass = base64_decode(userPass);
     debug_d("ApplicationWebserver::authenticated Password: '%s' - Expected password: '%s'", userPass.c_str(), app.cfg.general.api_password.c_str());
     if (userPass.endsWith(app.cfg.general.api_password)) {
