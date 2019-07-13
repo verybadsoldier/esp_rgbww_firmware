@@ -129,7 +129,8 @@ struct ApplicationSettings {
     events events;
 
     void load(bool print = false) {
-    	DynamicJsonDocument doc(1024);
+        // 1024 is too small and leads to load error
+        DynamicJsonDocument doc(2048);
         if (Json::loadFromFile(doc, APP_SETTINGS_FILE)) {
         	auto root = doc.as<JsonObject>();
         	auto net = root["network"];
@@ -222,8 +223,12 @@ struct ApplicationSettings {
             }
 
             if (print) {
+                debug_i("Loaded config file with following contents:");
             	Json::serialize(doc, Serial, Json::Pretty);
             }
+        }
+        else {
+            debug_e("Could not load config file: %s", APP_SETTINGS_FILE);
         }
 
         sanitizeValues();
@@ -311,7 +316,10 @@ struct ApplicationSettings {
         if (print) {
         	Json::serialize(root, Serial, Json::Pretty);
         }
-        Json::saveToFile(root, APP_SETTINGS_FILE);
+
+        debug_i("Saving config to file: %s", APP_SETTINGS_FILE);
+        if (!Json::saveToFile(root, APP_SETTINGS_FILE))
+            debug_e("Saving config to file failed!");
     }
 
     bool exist() {
