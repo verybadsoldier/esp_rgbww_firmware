@@ -14,6 +14,10 @@ before_install:
   # for esp-open-sdk
   - sudo apt-get install -y make unrar-free autoconf automake libtool gcc g++ gperf flex bison texinfo gawk ncurses-dev libexpat-dev python-dev python python-serial sed git unzip bash help2man wget bzip2
 
+before_install:
+  # for esp-open-sdk
+  - sudo apt-get install -y make unrar-free autoconf automake libtool gcc g++ gperf flex bison texinfo gawk ncurses-dev libexpat-dev python-dev python python-serial sed git unzip bash help2man wget bzip2
+  
 addons:
   apt:
     sources:
@@ -27,14 +31,23 @@ install:
   - export ESP_HOME=$TRAVIS_BUILD_DIR/esp-open-sdk
   - export SMING_HOME=$TRAVIS_BUILD_DIR/Sming/Sming
   - export SDK_BASE=$TRAVIS_BUILD_DIR/Sming/Sming/third-party/ESP8266_NONOS_SDK
+<<<<<<< HEAD
   - cd $SMING_HOME
   - rm -rf samples
   - make
 
+=======
+  #- export PATH=$PATH:$TRAVIS_BUILD_DIR/Sming/opt/esp-alt-sdk/utils/
+  - cd $SMING_HOME
+  - rm -rf samples
+  - make
+    
+>>>>>>> origin/master
 script:
   - cd $TRAVIS_BUILD_DIR
   - echo Building firmware...
   - make all
+<<<<<<< HEAD
 
 after_success:
   - export DEPLOY_FILENAME=esp_rgbww_firmware_snapshot_$(date "+%Y%m%d-%H%M%S")_$TRAVIS_COMMIT.tgz
@@ -55,3 +68,9 @@ deploy:
     branch: travis
   target_branch: buildbot
   local_dir: $DEPLOY_DIR
+=======
+  
+after_success: 
+  - bash .travis/deploy.sh
+   
+>>>>>>> origin/master
