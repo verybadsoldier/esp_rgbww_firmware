@@ -318,8 +318,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
 
         	JsonObject con = jnet["connection"];
             if (!con.isNull()) {
-
-            	ip_updated |= Json::getValueChanged(con["dhcp"], app.cfg.network.connection.dhcp);
+            	ip_updated |= Json::getBoolTolerantChanged(con["dhcp"], app.cfg.network.connection.dhcp);
 
             	if (!app.cfg.network.connection.dhcp) {
                     //only change if dhcp is off - otherwise ignore
@@ -365,7 +364,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
             	ap_updated |= Json::getValueChanged(jnet["ap"]["ssid"], app.cfg.network.ap.ssid);
 
             	bool secured;
-                if (Json::getValue(jnet["ap"]["secured"], secured)) {
+                if (Json::getBoolTolerant(jnet["ap"]["secured"], secured)) {
                     if (secured) {
                         if (Json::getValueChanged(jnet["ap"]["password"], app.cfg.network.ap.password)) {
 							app.cfg.network.ap.secured = true;
@@ -385,7 +384,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
             JsonObject jmqtt = jnet["mqtt"];
             if (!jmqtt.isNull()) {
                 //TODO: what to do if changed?
-            	Json::getValue(jmqtt["enabled"], app.cfg.network.mqtt.enabled);
+            	Json::getBoolTolerant(jmqtt["enabled"], app.cfg.network.mqtt.enabled);
             	Json::getValue(jmqtt["server"], app.cfg.network.mqtt.server);
             	Json::getValue(jmqtt["port"], app.cfg.network.mqtt.port);
             	Json::getValue(jmqtt["username"], app.cfg.network.mqtt.username);
@@ -429,7 +428,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         JsonObject jsec = root["security"];
         if (!jsec.isNull()) {
         	bool secured;
-        	if (Json::getValue(jsec["api_secured"], secured)) {
+        	if (Json::getBoolTolerant(jsec["api_secured"], secured)) {
                 if (secured) {
                     if (Json::getValue(jsec["api_password"], app.cfg.general.api_password)) {
                         app.cfg.general.api_secured = secured;
@@ -457,17 +456,17 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
 
         JsonObject jsync = root["sync"];
         if (!jsync.isNull()) {
-        	Json::getValue(jsync["clock_master_enabled"], app.cfg.sync.clock_master_enabled);
+            Json::getBoolTolerant(jsync["clock_master_enabled"], app.cfg.sync.clock_master_enabled);
         	Json::getValue(jsync["clock_master_interval"], app.cfg.sync.clock_master_interval);
-        	Json::getValue(jsync["clock_slave_enabled"], app.cfg.sync.clock_slave_enabled);
+        	Json::getBoolTolerant(jsync["clock_slave_enabled"], app.cfg.sync.clock_slave_enabled);
         	Json::getValue(jsync["clock_slave_topic"], app.cfg.sync.clock_slave_topic);
-        	Json::getValue(jsync["cmd_master_enabled"], app.cfg.sync.cmd_master_enabled);
-        	Json::getValue(jsync["cmd_slave_enabled"], app.cfg.sync.cmd_slave_enabled);
+        	Json::getBoolTolerant(jsync["cmd_master_enabled"], app.cfg.sync.cmd_master_enabled);
+        	Json::getBoolTolerant(jsync["cmd_slave_enabled"], app.cfg.sync.cmd_slave_enabled);
         	Json::getValue(jsync["cmd_slave_topic"], app.cfg.sync.cmd_slave_topic);
 
-        	Json::getValue(jsync["color_master_enabled"], app.cfg.sync.color_master_enabled);
+        	Json::getBoolTolerant(jsync["color_master_enabled"], app.cfg.sync.color_master_enabled);
         	Json::getValue(jsync["color_master_interval_ms"], app.cfg.sync.color_master_interval_ms);
-        	Json::getValue(jsync["color_slave_enabled"], app.cfg.sync.color_slave_enabled);
+        	Json::getBoolTolerant(jsync["color_slave_enabled"], app.cfg.sync.color_slave_enabled);
         	Json::getValue(jsync["color_slave_topic"], app.cfg.sync.color_slave_topic);
         }
 
@@ -475,7 +474,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         if (!jevents.isNull()) {
         	Json::getValue(jevents["color_interval_ms"], app.cfg.events.color_interval_ms);
         	Json::getValue(jevents["color_mininterval_ms"], app.cfg.events.color_mininterval_ms);
-        	Json::getValue(jevents["server_enabled"], app.cfg.events.server_enabled);
+        	Json::getBoolTolerant(jevents["server_enabled"], app.cfg.events.server_enabled);
         	Json::getValue(jevents["transfin_interval_ms"], app.cfg.events.transfin_interval_ms);
         }
 
@@ -533,16 +532,16 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
 
         JsonObject ap = net.createNestedObject("ap");
         ap["secured"] = app.cfg.network.ap.secured;
-        ap["password"] = app.cfg.network.ap.password.c_str();
-        ap["ssid"] = app.cfg.network.ap.ssid.c_str();
+        ap["password"] = app.cfg.network.ap.password;
+        ap["ssid"] = app.cfg.network.ap.ssid;
 
         JsonObject mqtt = net.createNestedObject("mqtt");
         mqtt["enabled"] = app.cfg.network.mqtt.enabled;
-        mqtt["server"] = app.cfg.network.mqtt.server.c_str();
+        mqtt["server"] = app.cfg.network.mqtt.server;
         mqtt["port"] = app.cfg.network.mqtt.port;
-        mqtt["username"] = app.cfg.network.mqtt.username.c_str();
-        mqtt["password"] = app.cfg.network.mqtt.password.c_str();
-        mqtt["topic_base"] = app.cfg.network.mqtt.topic_base.c_str();
+        mqtt["username"] = app.cfg.network.mqtt.username;
+        mqtt["password"] = app.cfg.network.mqtt.password;
+        mqtt["topic_base"] = app.cfg.network.mqtt.topic_base;
 
         JsonObject color = json.createNestedObject("color");
         color["outputmode"] = app.cfg.color.outputmode;
@@ -579,15 +578,15 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         sync["clock_master_enabled"] = app.cfg.sync.clock_master_enabled;
         sync["clock_master_interval"] = app.cfg.sync.clock_master_interval;
         sync["clock_slave_enabled"] = app.cfg.sync.clock_slave_enabled;
-        sync["clock_slave_topic"] = app.cfg.sync.clock_slave_topic.c_str();
+        sync["clock_slave_topic"] = app.cfg.sync.clock_slave_topic;
         sync["cmd_master_enabled"] = app.cfg.sync.cmd_master_enabled;
         sync["cmd_slave_enabled"] = app.cfg.sync.cmd_slave_enabled;
-        sync["cmd_slave_topic"] = app.cfg.sync.cmd_slave_topic.c_str();
+        sync["cmd_slave_topic"] = app.cfg.sync.cmd_slave_topic;
 
         sync["color_master_enabled"] = app.cfg.sync.color_master_enabled;
         sync["color_master_interval_ms"] = app.cfg.sync.color_master_interval_ms;
         sync["color_slave_enabled"] = app.cfg.sync.color_slave_enabled;
-        sync["color_slave_topic"] = app.cfg.sync.color_slave_topic.c_str();
+        sync["color_slave_topic"] = app.cfg.sync.color_slave_topic;
 
         JsonObject events = json.createNestedObject("events");
         events["color_interval_ms"] = app.cfg.events.color_interval_ms;
