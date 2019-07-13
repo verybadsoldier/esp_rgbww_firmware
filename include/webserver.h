@@ -59,13 +59,11 @@ private:
     void onConfig(HttpRequest &request, HttpResponse &response);
     void onInfo(HttpRequest &request, HttpResponse &response);
     void onColor(HttpRequest &request, HttpResponse &response);
-    void onAnimation(HttpRequest &request, HttpResponse &response);
     void onNetworks(HttpRequest &request, HttpResponse &response);
     void onScanNetworks(HttpRequest &request, HttpResponse &response);
     void onSystemReq(HttpRequest &request, HttpResponse &response);
     void onUpdate(HttpRequest &request, HttpResponse &response);
     void onConnect(HttpRequest &request, HttpResponse &response);
-    void generate204(HttpRequest &request, HttpResponse &response);
     void onPing(HttpRequest &request, HttpResponse &response);
     void sendApiResponse(HttpResponse &response, JsonObjectStream* stream, int code = 200);
     void sendApiCode(HttpResponse &response, API_CODES code, String msg = "");
