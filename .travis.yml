@@ -11,7 +11,8 @@ env:
     - ARTIFACTS_DIR: $TRAVIS_BUILD_DIR/out/firmware
     
 before_install:
-  - "echo Branch: '$TRAVIS_BRANCH' > info.txt"
+  - "echo Branch: '$TRAVIS_BRANCH'\nCommit: '$TRAVIS_COMMIT' > info.txt"
+  - cat info.txt
   # for esp-open-sdk
   - sudo apt-get install -y make unrar-free autoconf automake libtool gcc g++ gperf flex bison texinfo gawk ncurses-dev libexpat-dev python-dev python python-serial sed git unzip bash help2man wget bzip2
   
