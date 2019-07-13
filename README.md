@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/verybadsoldier/esp_rgbww_firmware.svg?branch=master)](https://travis-ci.org/verybadsoldier/esp_rgbww_firmware)
+
 # ESP RGBWW Firmware
 ## Firmware for RGBWW controller
 This repository provides an open-source firmware for ESP8266-based RGBWWCW controllers (up to 5 channels). The firmware is based on Sming (https://github.com/SmingHub/Sming).
