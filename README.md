@@ -50,13 +50,13 @@ Available channels:
 
 **Stable**
 
-`http://rgbww.dronezone.de/release/version.json`
+`https://rgbww.dronezone.de/release/version.json`
 
 **Testing**
 
-`http://rgbww.dronezone.de/testing/version.json`
+`https://rgbww.dronezone.de/testing/version.json`
 
-Be aware that this is currently not a secure HTTPS connection and MITM attacks are possible!
+Make sure to only use `HTTPS` protocol! 
 
 ## Index
 Most information about installation (flashing), setup and usage guides are provided via the Wiki
