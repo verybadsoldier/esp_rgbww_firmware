@@ -53,5 +53,5 @@ deploy:
   keep_history: false
   on:
     branch: travis
-  target_branch: gh_pages_test
+  target_branch: buildbot
   local_dir: $DEPLOY_DIR
