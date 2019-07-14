@@ -27,9 +27,15 @@ echo "Using channel: $CHANNEL"
 
 git clone https://${GITHUB_TOKEN}@$GIT_DEPLOY_REPO --recursive --branch $GIT_DEPLOY_BRANCH --single-branch deploy_release
 
+ls deploy_release
+
 # prepare folder
 mkdir -p $TRAVIS_BUILD_DIR/deploy_release/$CHANNEL
 cd $TRAVIS_BUILD_DIR/deploy_release/$CHANNEL
+
+ls
+
+ls $ARTIFACTS_DIR
 
 # copy firmware files
 cp $ARTIFACTS_DIR/* .
@@ -39,6 +45,7 @@ cat <<EOF > version.json
 {"rom":{"fw_version":"${$TRAVIS_TAG}","url":"${GH_PAGE_LINK}/rom0.bin"},"spiffs":{"webapp_version":"${WEBAPP_VERSION}","url":"${GH_PAGE_LINK}/spiff_rom.bin"}}
 EOF
 
+cat version.json
 
 mv $TRAVIS_BUILD_DIR/release $TRAVIS_BUILD_DIR/_release/
 mv $TRAVIS_BUILD_DIR/esp_rgbww_webinterface/dist/esp_rgbww_webinterface.zip $TRAVIS_BUILD_DIR/_release/release/esp_rgbww_webinterface.zip
