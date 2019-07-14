@@ -44,7 +44,7 @@ cp $ARTIFACTS_DIR/* .
 
 # create version information
 cat <<EOF > version.json
-{"rom":{"fw_version":"${$TRAVIS_TAG}","url":"${GH_PAGE_LINK}/rom0.bin"},"spiffs":{"webapp_version":"${WEBAPP_VERSION}","url":"${GH_PAGE_LINK}/spiff_rom.bin"}}
+{"rom":{"fw_version":"${TRAVIS_TAG}","url":"${GH_PAGE_LINK}/rom0.bin"},"spiffs":{"webapp_version":"${WEBAPP_VERSION}","url":"${GH_PAGE_LINK}/spiff_rom.bin"}}
 EOF
 
 cat version.json
