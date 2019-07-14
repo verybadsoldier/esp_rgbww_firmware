@@ -18,8 +18,7 @@ addons:
   apt:
     sources:
     - ubuntu-toolchain-r-test
-    packages:     
-      - bsdtar
+
 install:
   - $TRAVIS_BUILD_DIR/.travis/build_sming.sh
 #  - wget --no-verbose $ESP_OPEN_SDK_BIN
