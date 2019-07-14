@@ -34,8 +34,8 @@ install:
     
 script:
   - cd $TRAVIS_BUILD_DIR
-  - echo Building firmware...
-  - make all
+  - echo Building esp_rgbww_firmware...
+  - ESP_HOME=$TRAVIS_BUILD_DIR/esp-open-sdk SMING_HOME=$TRAVIS_BUILD_DIR/Sming/Sming SDK_BASE=$TRAVIS_BUILD_DIR/Sming/Sming/third-party/ESP8266_NONOS_SDK make all
   
 after_success:
   - export DEPLOY_FILENAME=esp_rgbww_firmware_snapshot_$(date "+%Y%m%d-%H%M%S")_$TRAVIS_COMMIT.tgz
