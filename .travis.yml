@@ -14,11 +14,6 @@ before_install:
   # for esp-open-sdk
   - sudo apt-get install -y make unrar-free autoconf automake libtool gcc g++ gperf flex bison texinfo gawk ncurses-dev libexpat-dev python-dev python python-serial sed git unzip bash help2man wget bzip2
   
-addons:
-  apt:
-    sources:
-    - ubuntu-toolchain-r-test
-
 install:
   - $TRAVIS_BUILD_DIR/.travis/build_sming.sh
 #  - wget --no-verbose $ESP_OPEN_SDK_BIN
