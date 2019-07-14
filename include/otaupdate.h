@@ -23,7 +23,7 @@
 #define OTAUPDATE_H_
 #define OTA_STATUS_FILE ".ota"
 
-enum OTASTATUS {
+enum class OTASTATUS {
     OTA_NOT_UPDATING = 0,
     OTA_PROCESSING = 1,
     OTA_SUCCESS_REBOOT = 2,
