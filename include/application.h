@@ -28,6 +28,8 @@ static const char* fw_git_date = GITDATE;
 class Application {
 
 public:
+    ~Application();
+
     void init();
     void initButtons();
 
@@ -70,6 +72,7 @@ public:
     EventServer eventserver;
     AppMqttClient mqttclient;
     JsonProcessor jsonproc;
+    NtpClient* pNtpclient = nullptr;
 
 private:
     void loadbootinfo();

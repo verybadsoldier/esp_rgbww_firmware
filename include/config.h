@@ -81,6 +81,12 @@ struct ApplicationSettings {
         int transfin_interval_ms = 1000;
     };
 
+    struct ntp {
+        bool enabled = true;
+        String server;
+        int interval;
+    };
+
     struct color {
         struct hsv {
             int model = 0;
@@ -120,7 +126,6 @@ struct ApplicationSettings {
         String pin_config = "13,12,14,5,4";
         String buttons_config;
         int buttons_debounce_ms = 50;
-        String ntp_server;
     };
 
     general general;
@@ -128,6 +133,7 @@ struct ApplicationSettings {
     color color;
     sync sync;
     events events;
+    ntp ntp;
 
     void load(bool print = false) {
         // 1024 is too small and leads to load error
@@ -194,7 +200,14 @@ struct ApplicationSettings {
                 Json::getValue(jgen["pin_config"], general.pin_config);
                 Json::getValue(jgen["buttons_config"], general.buttons_config);
                 Json::getValue(jgen["buttons_debounce_ms"], general.buttons_debounce_ms);
-                Json::getValue(jgen["ntp_server"], general.ntp_server);
+            }
+
+            // ntp
+            auto jntp = root["ntp"];
+            if (!jntp.isNull()) {
+                Json::getValue(jgen["enabled"], ntp.enabled);
+                Json::getValue(jgen["server"], ntp.server);
+                Json::getValue(jgen["interval"], ntp.interval);
             }
 
             // sync
@@ -285,6 +298,11 @@ struct ApplicationSettings {
         t["ww"] = color.colortemp.ww;
         t["cw"] = color.colortemp.cw;
 
+        JsonObject n = root.createNestedObject("ntp");
+        n["enabled"] = ntp.enabled;
+        n["server"] = ntp.server;
+        n["interval"] = ntp.interval;
+
         JsonObject s = root.createNestedObject("sync");
         s["clock_master_enabled"] = sync.clock_master_enabled;
         s["clock_master_interval"] = sync.clock_master_interval;
@@ -313,7 +331,6 @@ struct ApplicationSettings {
         g["pin_config"] = general.pin_config.c_str();
         g["buttons_config"] = general.buttons_config.c_str();
         g["buttons_debounce_ms"] = general.buttons_debounce_ms;
-        g["ntp_server"] = general.ntp_server;
         g["settings_ver"] = APP_SETTINGS_VERSION;
 
         if (print) {
