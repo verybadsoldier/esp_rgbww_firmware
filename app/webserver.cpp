@@ -450,7 +450,13 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         	Json::getValue(jgen["pin_config"], app.cfg.general.pin_config);
         	Json::getValue(jgen["buttons_config"], app.cfg.general.buttons_config);
         	Json::getValue(jgen["buttons_debounce_ms"], app.cfg.general.buttons_debounce_ms);
-        	Json::getValue(jgen["ntp_server"], app.cfg.general.ntp_server);
+        }
+
+        JsonObject jntp = root["ntp"];
+        if (!jntp.isNull()) {
+            Json::getBoolTolerant(jntp["enabled"], app.cfg.ntp.enabled);
+            Json::getValue(jntp["server"], app.cfg.ntp.server);
+            Json::getValue(jntp["interval"], app.cfg.ntp.interval);
         }
 
         JsonObject jsync = root["sync"];
@@ -598,7 +604,6 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         general["pin_config"] = app.cfg.general.pin_config;
         general["buttons_config"] = app.cfg.general.buttons_config;
         general["buttons_debounce_ms"] = app.cfg.general.buttons_debounce_ms;
-        general["ntp_server"] = app.cfg.general.ntp_server;
 
         sendApiResponse(response, stream);
     }
