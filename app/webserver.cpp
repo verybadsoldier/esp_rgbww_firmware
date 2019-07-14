@@ -900,6 +900,7 @@ void ApplicationWebserver::onSystemReq(HttpRequest &request, HttpResponse &respo
         sendApiCode(response, API_CODES::API_BAD_REQUEST, "could not get HTTP body");
         return;
     } else {
+        debug_i("ApplicationWebserver::onSystemReq: %s", body.c_str());
         DynamicJsonDocument doc(1024);
         Json::deserialize(doc, body);
 
