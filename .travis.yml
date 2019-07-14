@@ -8,10 +8,14 @@ env:
     - ESP_OPEN_SDK_BIN: https://github.com/nodemcu/nodemcu-firmware/raw/2d958750b56fc60297f564b4ec303e47928b5927/tools/esp-open-sdk.tar.xz
     - DEPLOY_DIR: $TRAVIS_BUILD_DIR/deploy
     - ARTIFACTS_DIR: $TRAVIS_BUILD_DIR/out/firmware
+
+addons:
+  apt:
+    packages: make unrar-free autoconf automake libtool gcc g++ gperf flex bison texinfo gawk ncurses-dev libexpat-dev python-dev python python-serial sed git unzip bash help2man wget bzip2
     
 before_install:
   # for esp-open-sdk
-  - sudo apt-get install -y make unrar-free autoconf automake libtool gcc g++ gperf flex bison texinfo gawk ncurses-dev libexpat-dev python-dev python python-serial sed git unzip bash help2man wget bzip2
+  #- sudo apt-get install -y make unrar-free autoconf automake libtool gcc g++ gperf flex bison texinfo gawk ncurses-dev libexpat-dev python-dev python python-serial sed git unzip bash help2man wget bzip2
   
 install:
   - $TRAVIS_BUILD_DIR/.travis/build_sming.sh
