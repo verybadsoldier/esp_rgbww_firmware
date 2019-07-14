@@ -12,4 +12,4 @@ cd $SMING_HOME
 echo "Removing Sming examples..."
 rm -rf samples
 echo "Building..."
-make
+make -j2
