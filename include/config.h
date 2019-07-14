@@ -120,6 +120,7 @@ struct ApplicationSettings {
         String pin_config = "13,12,14,5,4";
         String buttons_config;
         int buttons_debounce_ms = 50;
+        String ntp_server;
     };
 
     general general;
@@ -193,6 +194,7 @@ struct ApplicationSettings {
                 Json::getValue(jgen["pin_config"], general.pin_config);
                 Json::getValue(jgen["buttons_config"], general.buttons_config);
                 Json::getValue(jgen["buttons_debounce_ms"], general.buttons_debounce_ms);
+                Json::getValue(jgen["ntp_server"], general.ntp_server);
             }
 
             // sync
@@ -311,6 +313,7 @@ struct ApplicationSettings {
         g["pin_config"] = general.pin_config.c_str();
         g["buttons_config"] = general.buttons_config.c_str();
         g["buttons_debounce_ms"] = general.buttons_debounce_ms;
+        g["ntp_server"] = general.ntp_server;
         g["settings_ver"] = APP_SETTINGS_VERSION;
 
         if (print) {
