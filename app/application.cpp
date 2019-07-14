@@ -124,7 +124,7 @@ void Application::initButtons() {
 
         _lastToggles[pin] = 0ul;
 
-        attachInterrupt(pin,  InterruptDelegateStdFunction(std::bind(&Application::onButtonTogglePressed, this, pin)), FALLING);
+        attachInterrupt(pin,  InterruptDelegate(std::bind(&Application::onButtonTogglePressed, this, pin)), FALLING);
         pinMode(pin, INPUT_PULLUP);
     }
 }
