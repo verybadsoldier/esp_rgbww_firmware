@@ -26,6 +26,7 @@ GIT_DEPLOY_REPO="github.com/verybadsoldier/esp_rgbww_firmware.git"
 
 echo "Using channel: $CHANNEL"
 
+cd $TRAVIS_BUILD_DIR
 git clone https://${GITHUB_TOKEN}@$GIT_DEPLOY_REPO --recursive --branch $GIT_DEPLOY_BRANCH --single-branch deploy_release
 
 ls deploy_release
@@ -48,8 +49,8 @@ EOF
 
 cat version.json
 
-mv $TRAVIS_BUILD_DIR/release $TRAVIS_BUILD_DIR/_release/
-mv $TRAVIS_BUILD_DIR/esp_rgbww_webinterface/dist/esp_rgbww_webinterface.zip $TRAVIS_BUILD_DIR/_release/release/esp_rgbww_webinterface.zip
+#mv $TRAVIS_BUILD_DIR/release $TRAVIS_BUILD_DIR/_release/
+#mv $TRAVIS_BUILD_DIR/esp_rgbww_webinterface/dist/esp_rgbww_webinterface.zip $TRAVIS_BUILD_DIR/_release/release/esp_rgbww_webinterface.zip
 
 git add .
 git commit -m "Release Firmware v${FW_VERSION} webapp v${WEBAPP_VERSION}"
