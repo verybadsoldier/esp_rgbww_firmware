@@ -3,7 +3,8 @@ set -e # exit with nonzero exit code if anything fails
 
 if [ -z "$TRAVIS_TAG" ] || [ "$TRAVIS_PULL_REQUEST" == "true" ]; then
 	echo "Not a release - skipping deploy!"
-	exit 0;
+	#exit 0;
+	$TRAVIS_TAG="9000.0"
 fi
 
 echo "New release - deploying - $TRAVIS_TAG"
