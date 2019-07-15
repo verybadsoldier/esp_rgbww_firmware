@@ -1,3 +1,3 @@
-Build Timestamp: 2019-07-15 15:24:03
-Commit: 08c5fc4b95902b778c125407e6473515ec57e94d
-Branch: 4.2.1-alpha1
+Build Timestamp: 2019-07-15 19:27:47
+Commit: 579aeb44b2c673c49111adfaec551c28b72f447b
+Branch: 4.3.0-tcpdbg-alpha1
