@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/verybadsoldier/esp_rgbww_firmware.svg?branch=master)](https://travis-ci.org/verybadsoldier/esp_rgbww_firmware)
+
 # ESP RGBWW Firmware
 ## Firmware for RGBWW controller
 This repository provides an open-source firmware for ESP8266-based RGBWWCW controllers (up to 5 channels). The firmware is based on Sming (https://github.com/SmingHub/Sming).
@@ -48,13 +50,13 @@ Available channels:
 
 **Stable**
 
-`http://rgbww.dronezone.de/release/version.json`
+`https://rgbww.dronezone.de/release/version.json`
 
 **Testing**
 
-`http://rgbww.dronezone.de/testing/version.json`
+`https://rgbww.dronezone.de/testing/version.json`
 
-Be aware that this is currently not a secure HTTPS connection and MITM attacks are possible!
+Make sure to only use `HTTPS` protocol! 
 
 ## Index
 Most information about installation (flashing), setup and usage guides are provided via the Wiki
