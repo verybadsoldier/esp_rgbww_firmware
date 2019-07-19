@@ -191,6 +191,7 @@ void AppWIFI::stopAp(int delay) {
     if (delay > 0) {
     	debug_i("AppWIFI::stopAp delay %i", delay);
         _timer.initializeMs(delay, std::bind(&AppWIFI::stopAp, this, 0)).startOnce();
+        return;
     }
 
     debug_i("AppWIFI::stopAp");
