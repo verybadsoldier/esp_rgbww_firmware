@@ -59,5 +59,6 @@
 #include <jsonprocessor.h>
 #include <application.h>
 #include <stepsync.h>
+#include <arduinojson.h>
 
 #endif /* RGBWWCTRL_H_ */

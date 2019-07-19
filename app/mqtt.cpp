@@ -59,13 +59,12 @@ void AppMqttClient::connect() {
     Url url = "mqtt://" + app.cfg.network.mqtt.username + ":" + app.cfg.network.mqtt.password + "@" + app.cfg.network.mqtt.server + ":" + String(app.cfg.network.mqtt.port);
     mqtt->connect(url, _id, 0);
 #ifdef ENABLE_SSL
-    mqtt->addSslOptions(SSL_SERVER_VERIFY_LATER);
+    // not need i guess? mqtt->addSslOptions(SSL_SERVER_VERIFY_LATER);
 
 #include <ssl/private_key.h>
 #include <ssl/cert.h>
 
-    mqtt->setSslClientKeyCert(default_private_key, default_private_key_len,
-            default_certificate, default_certificate_len, NULL, true);
+    mqtt->setSslKeyCert(default_private_key, default_private_key_len, default_certificate, default_certificate_len, NULL, true);
 
 #endif
     // Assign a disconnect callback function
