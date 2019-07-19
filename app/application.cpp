@@ -144,7 +144,7 @@ void Application::startServices() {
 }
 
 void Application::restart() {
-    debug_i("Restarting");
+    debug_i("Application::restart");
     if (network.isApActive()) {
         network.stopAp();
         _systimer.initializeMs(500, TimerDelegate(&Application::restart, this)).startOnce();
@@ -154,7 +154,6 @@ void Application::restart() {
 
 void Application::reset() {
     debug_i("Application::reset");
-    debug_i("resetting controller");
     cfg.reset();
     rgbwwctrl.colorReset();
     network.forgetWifi();
@@ -172,8 +171,6 @@ bool Application::delayedCMD(String cmd, int delay) {
         network.stopAp(2000);
     } else if (cmd.equals("forget_wifi")) {
         _systimer.initializeMs(delay, TimerDelegate(&AppWIFI::forgetWifi, &network)).startOnce();
-    } else if (cmd.equals("test_channels")) {
-        rgbwwctrl.testChannels();
     } else if (cmd.equals("switch_rom")) {
         switchRom();
         _systimer.initializeMs(delay, TimerDelegate(&Application::restart, this)).startOnce();
