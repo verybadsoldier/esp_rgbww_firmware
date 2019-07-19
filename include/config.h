@@ -81,6 +81,12 @@ struct ApplicationSettings {
         int transfin_interval_ms = 1000;
     };
 
+    struct ntp {
+        bool enabled = true;
+        String server;
+        int interval;
+    };
+
     struct color {
         struct hsv {
             int model = 0;
@@ -127,9 +133,11 @@ struct ApplicationSettings {
     color color;
     sync sync;
     events events;
+    ntp ntp;
 
     void load(bool print = false) {
-    	DynamicJsonDocument doc(1024);
+        // 1024 is too small and leads to load error
+        DynamicJsonDocument doc(2048);
         if (Json::loadFromFile(doc, APP_SETTINGS_FILE)) {
         	auto root = doc.as<JsonObject>();
         	auto net = root["network"];
@@ -138,15 +146,15 @@ struct ApplicationSettings {
         	JsonObject con = net["connection"];
             network.connection.mdnshostname = con["hostname"].as<const char*>();
             network.connection.dhcp = con["dhcp"];
-            network.connection.ip = con["ip"].as<const char*>();
-            network.connection.netmask = con["netmask"].as<const char*>();
-            network.connection.gateway = con["gateway"].as<const char*>();
+            network.connection.ip = con["ip"].as<String>();
+            network.connection.netmask = con["netmask"].as<String>();
+            network.connection.gateway = con["gateway"].as<String>();
 
             // accesspoint
             JsonObject jap = net["ap"];
             network.ap.secured = jap["secured"];
             network.ap.ssid = jap["ssid"].as<const char*>();
-            network.ap.password = jap["password"].as<const char*>();
+            network.ap.password = jap["password"].as<String>();
 
             // mqtt
             JsonObject jmqtt = net["mqtt"];
@@ -194,6 +202,14 @@ struct ApplicationSettings {
                 Json::getValue(jgen["buttons_debounce_ms"], general.buttons_debounce_ms);
             }
 
+            // ntp
+            auto jntp = root["ntp"];
+            if (!jntp.isNull()) {
+                Json::getValue(jgen["enabled"], ntp.enabled);
+                Json::getValue(jgen["server"], ntp.server);
+                Json::getValue(jgen["interval"], ntp.interval);
+            }
+
             // sync
             auto jsync = root["sync"];
             if (!jsync.isNull()) {
@@ -222,8 +238,12 @@ struct ApplicationSettings {
             }
 
             if (print) {
+                debug_i("Loaded config file with following contents:");
             	Json::serialize(doc, Serial, Json::Pretty);
             }
+        }
+        else {
+            debug_e("Could not load config file: %s", APP_SETTINGS_FILE);
         }
 
         sanitizeValues();
@@ -239,20 +259,20 @@ struct ApplicationSettings {
         con["ip"] = network.connection.ip.toString();
         con["netmask"] = network.connection.netmask.toString();
         con["gateway"] = network.connection.gateway.toString();
-        con["mdnhostname"] = network.connection.mdnshostname.c_str();
+        con["mdnhostname"] = network.connection.mdnshostname;
 
         JsonObject jap = net.createNestedObject("ap");
         jap["secured"] = network.ap.secured;
-        jap["ssid"] = network.ap.ssid.c_str();
-        jap["password"] = network.ap.password.c_str();
+        jap["ssid"] = network.ap.ssid;
+        jap["password"] = network.ap.password;
 
         JsonObject jmqtt = net.createNestedObject("mqtt");
         jmqtt["enabled"] = network.mqtt.enabled;
-        jmqtt["server"] = network.mqtt.server.c_str();
+        jmqtt["server"] = network.mqtt.server;
         jmqtt["port"] = network.mqtt.port;
-        jmqtt["username"] = network.mqtt.username.c_str();
-        jmqtt["password"] = network.mqtt.password.c_str();
-        jmqtt["topic_base"] = network.mqtt.topic_base.c_str();
+        jmqtt["username"] = network.mqtt.username;
+        jmqtt["password"] = network.mqtt.password;
+        jmqtt["topic_base"] = network.mqtt.topic_base;
 
         JsonObject c = root.createNestedObject("color");
         c["outputmode"] = color.outputmode;
@@ -277,6 +297,11 @@ struct ApplicationSettings {
         JsonObject t = c.createNestedObject("colortemp");
         t["ww"] = color.colortemp.ww;
         t["cw"] = color.colortemp.cw;
+
+        JsonObject n = root.createNestedObject("ntp");
+        n["enabled"] = ntp.enabled;
+        n["server"] = ntp.server;
+        n["interval"] = ntp.interval;
 
         JsonObject s = root.createNestedObject("sync");
         s["clock_master_enabled"] = sync.clock_master_enabled;
@@ -311,7 +336,10 @@ struct ApplicationSettings {
         if (print) {
         	Json::serialize(root, Serial, Json::Pretty);
         }
-        Json::saveToFile(root, APP_SETTINGS_FILE);
+
+        debug_i("Saving config to file: %s", APP_SETTINGS_FILE);
+        if (!Json::saveToFile(root, APP_SETTINGS_FILE))
+            debug_e("Saving config to file failed!");
     }
 
     bool exist() {

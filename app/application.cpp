@@ -41,6 +41,13 @@ void GDB_IRAM_ATTR init() {
     System.onReady(SystemReadyDelegate(&Application::startServices, &app));
 }
 
+Application::~Application() {
+    if (pNtpclient != nullptr) {
+        delete pNtpclient;
+        pNtpclient = nullptr;
+    }
+}
+
 void Application::uptimeCounter() {
     ++_uptimeMinutes;
 }
@@ -104,6 +111,16 @@ void Application::init() {
 
     // initialize webserver
     app.webserver.init();
+
+    if (cfg.ntp.enabled) {
+        String server = cfg.ntp.server.length() > 0 ? cfg.ntp.server : NTP_DEFAULT_SERVER;
+        unsigned interval = cfg.ntp.interval > 0 ? cfg.ntp.interval : NTP_DEFAULT_AUTOQUERY_SECONDS;
+        debug_i("Enabling NTP server '%s' with interval %d s", server.c_str(), interval);
+        pNtpclient = new NtpClient(server, interval);
+    }
+    else {
+        debug_i("Disabling NTP server");
+    }
 }
 
 void Application::initButtons() {

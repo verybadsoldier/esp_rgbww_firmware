@@ -26,7 +26,6 @@
 
 void ApplicationOTA::start(String romurl, String spiffsurl) {
     debug_i("ApplicationOTA::start");
-    debug_i("Starting OTA ...");
     reset();
     status = OTASTATUS::OTA_PROCESSING;
     if (otaUpdater) {
@@ -52,6 +51,7 @@ void ApplicationOTA::start(String romurl, String spiffsurl) {
     }
     otaUpdater->setCallback(OtaUpdateDelegate(&ApplicationOTA::rBootCallback, this));
     beforeOTA();
+    debug_i("Starting OTA ...");
     otaUpdater->start();
 }
 
