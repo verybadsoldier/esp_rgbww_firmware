@@ -53,22 +53,19 @@ private:
 
     bool authenticated(HttpRequest &request, HttpResponse &response);
     bool authenticateExec(HttpRequest &request, HttpResponse &response);
+
     void onFile(HttpRequest &request, HttpResponse &response);
     void onIndex(HttpRequest &request, HttpResponse &response);
     void onWebapp(HttpRequest &request, HttpResponse &response);
     void onConfig(HttpRequest &request, HttpResponse &response);
     void onInfo(HttpRequest &request, HttpResponse &response);
     void onColor(HttpRequest &request, HttpResponse &response);
-    void onAnimation(HttpRequest &request, HttpResponse &response);
     void onNetworks(HttpRequest &request, HttpResponse &response);
     void onScanNetworks(HttpRequest &request, HttpResponse &response);
     void onSystemReq(HttpRequest &request, HttpResponse &response);
     void onUpdate(HttpRequest &request, HttpResponse &response);
     void onConnect(HttpRequest &request, HttpResponse &response);
-    void generate204(HttpRequest &request, HttpResponse &response);
     void onPing(HttpRequest &request, HttpResponse &response);
-    void sendApiResponse(HttpResponse &response, JsonObjectStream* stream, int code = 200);
-    void sendApiCode(HttpResponse &response, API_CODES code, String msg = "");
     void onStop(HttpRequest &request, HttpResponse &response);
     void onSkip(HttpRequest &request, HttpResponse &response);
     void onPause(HttpRequest &request, HttpResponse &response);
@@ -79,6 +76,9 @@ private:
     void onColorGet(HttpRequest &request, HttpResponse &response);
     void onColorPost(HttpRequest &request, HttpResponse &response);
     bool onColorPostCmd(JsonObject& root, String& errorMsg);
+
+    void sendApiResponse(HttpResponse &response, JsonObjectStream* stream, int code = 200);
+    void sendApiCode(HttpResponse &response, API_CODES code, String msg = "");
 
     bool checkHeap(HttpResponse &response);
 

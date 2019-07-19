@@ -51,13 +51,15 @@ void ApplicationWebserver::init() {
     paths.set("/system", HttpPathDelegate(&ApplicationWebserver::onSystemReq, this));
     paths.set("/update", HttpPathDelegate(&ApplicationWebserver::onUpdate, this));
     paths.set("/connect", HttpPathDelegate(&ApplicationWebserver::onConnect, this));
-    paths.set("/generate_204", HttpPathDelegate(&ApplicationWebserver::generate204, this));
     paths.set("/ping", HttpPathDelegate(&ApplicationWebserver::onPing, this));
+
+    // animation controls
     paths.set("/stop", HttpPathDelegate(&ApplicationWebserver::onStop, this));
     paths.set("/skip", HttpPathDelegate(&ApplicationWebserver::onSkip, this));
     paths.set("/pause", HttpPathDelegate(&ApplicationWebserver::onPause, this));
     paths.set("/continue", HttpPathDelegate(&ApplicationWebserver::onContinue, this));
     paths.set("/blink", HttpPathDelegate(&ApplicationWebserver::onBlink, this));
+
     paths.set("/toggle", HttpPathDelegate(&ApplicationWebserver::onToggle, this));
     _init = true;
 }
@@ -735,47 +737,6 @@ void ApplicationWebserver::onColor(HttpRequest &request, HttpResponse &response)
 
 }
 
-void ApplicationWebserver::onAnimation(HttpRequest &request, HttpResponse &response) {
-
-    if (!authenticated(request, response)) {
-        return;
-    }
-
-#ifdef ARCH_ESP8266
-    if (app.ota.isProccessing()) {
-        sendApiCode(response, API_CODES::API_UPDATE_IN_PROGRESS);
-        return;
-    }
-#endif
-
-    if (request.method != HTTP_POST && request.method != HTTP_GET) {
-        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not POST or GET");
-        return;
-    }
-
-    bool error = false;
-    if (request.method == HTTP_POST) {
-        String body = request.getBody();
-        if (body == NULL || body.length() > 128) {
-            sendApiCode(response, API_CODES::API_BAD_REQUEST, "could not get HTTP body or body too long");
-            return;
-
-        } else {
-
-            DynamicJsonDocument doc(1024);
-            Json::deserialize(doc, body);
-            //Json::serialize(doc, Serial, Json::Pretty);
-        }
-        sendApiCode(response, API_CODES::API_SUCCESS);
-    } else {
-        JsonObjectStream* stream = new JsonObjectStream();
-        JsonObject json = stream->getRoot();
-
-        sendApiResponse(response, stream);
-    }
-
-}
-
 bool ApplicationWebserver::isPrintable(String& str) {
     for (unsigned int i=0; i < str.length(); ++i)
     {
@@ -1127,13 +1088,3 @@ void ApplicationWebserver::onToggle(HttpRequest &request, HttpResponse &response
         sendApiCode(response, API_CODES::API_BAD_REQUEST);
     }
 }
-
-void ApplicationWebserver::generate204(HttpRequest &request, HttpResponse &response) {
-    response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-    response.setHeader("Pragma", "no-cache");
-    response.setHeader("Expires", "-1");
-    response.setHeader("Content-Lenght", "0");
-    response.setContentType("text/plain");
-    response.code = 204;
-}
-
