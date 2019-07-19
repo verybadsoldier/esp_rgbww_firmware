@@ -167,9 +167,7 @@ bool JsonProcessor::onSingleColorCommand(JsonObject root, String& errorMsg) {
     }
 
     bool queueOk = false;
-    if (params.mode == RequestParameters::Mode::Kelvin) {
-        //TODO: hand to rgbctrl
-    } else if (params.mode == RequestParameters::Mode::Hsv) {
+    if (params.mode == RequestParameters::Mode::Hsv) {
         if(!params.hasHsvFrom) {
             if (params.cmd == "fade") {
                 queueOk = app.rgbwwctrl.fadeHSV(params.hsv, params.ramp, params.direction, params.queue, params.requeue, params.name);
@@ -209,9 +207,7 @@ bool JsonProcessor::onDirect(JsonObject root, String& msg, bool relay) {
     RequestParameters params;
     JsonProcessor::parseRequestParams(root, params);
 
-    if (params.mode == RequestParameters::Mode::Kelvin) {
-        //TODO: hand to rgbctrl
-    } else if (params.mode == RequestParameters::Mode::Hsv) {
+    if (params.mode == RequestParameters::Mode::Hsv) {
         app.rgbwwctrl.colorDirectHSV(params.hsv);
     } else if (params.mode == RequestParameters::Mode::Raw) {
         app.rgbwwctrl.colorDirectRAW(params.raw);
@@ -283,10 +279,6 @@ void JsonProcessor::parseRequestParams(JsonObject root, RequestParameters& param
         }
     }
 
-    if (!root["kelvin"].isNull()) {
-        params.mode = RequestParameters::Mode::Kelvin;
-    }
-
     if (Json::getValue(root["t"], params.ramp.value)) {
         params.ramp.type = RampTimeOrSpeed::Type::Time;
     }
@@ -298,8 +290,6 @@ void JsonProcessor::parseRequestParams(JsonObject root, RequestParameters& param
     if (!root["r"].isNull()) {
         params.requeue = root["r"].as<int>() == 1;
     }
-
-    Json::getValue(root["kelvin"], params.kelvin);
 
     Json::getValue(root["d"], params.direction);
 
@@ -337,6 +327,21 @@ void JsonProcessor::parseRequestParams(JsonObject root, RequestParameters& param
             }
             else if (str == "ct") {
                 params.channels.add(CtrlChannel::ColorTemp);
+            }
+            else if (str == "r") {
+                params.channels.add(CtrlChannel::Red);
+            }
+            else if (str == "g") {
+                params.channels.add(CtrlChannel::Green);
+            }
+            else if (str == "b") {
+                params.channels.add(CtrlChannel::Blue);
+            }
+            else if (str == "ww") {
+                params.channels.add(CtrlChannel::WarmWhite);
+            }
+            else if (str == "cw") {
+                params.channels.add(CtrlChannel::ColdWhite);
             }
         }
     }

@@ -54,8 +54,6 @@ private:
         RequestChannelOutput raw;
         RequestChannelOutput rawFrom;
 
-        int kelvin;
-
         int direction = 1;
         bool requeue = false;
         RampTimeOrSpeed ramp = 0;
