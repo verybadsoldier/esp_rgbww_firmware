@@ -31,7 +31,7 @@ void ApplicationOTA::start(String romurl, String spiffsurl) {
     if (otaUpdater) {
         delete otaUpdater;
     }
-    otaUpdater = new rBootHttpUpdate();
+    otaUpdater = new RbootHttpUpdater();
 
     rboot_config bootconf = rboot_get_config();
     rom_slot = app.getRomSlot();
@@ -91,7 +91,7 @@ void ApplicationOTA::afterOTA() {
     }
 }
 
-void ApplicationOTA::rBootCallback(rBootHttpUpdate& rbHttpUp, bool result) {
+void ApplicationOTA::rBootCallback(RbootHttpUpdater& rbHttpUp, bool result) {
     debug_i("ApplicationOTA::rBootCallback");
     if (result == true) {
 

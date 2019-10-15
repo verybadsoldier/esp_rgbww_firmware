@@ -65,15 +65,15 @@ private:
     Timer _timer;
     BssList _networks;
     DNSServer _dns;
-    IPAddress _ApIP;
+    IpAddress _ApIP;
 
     CONNECTION_STATUS _client_status;
 
 private:
-    void _STADisconnect(String ssid, uint8_t ssid_len, uint8_t bssid[6], uint8_t reason);
-    void _STAConnected(String ssid, uint8_t ssid_len, uint8_t bssid[6], uint8_t reason);
-    void _STAGotIP(IPAddress ip, IPAddress mask, IPAddress gateway);
-    void scanCompleted(bool succeeded, BssList list);
+    void _STADisconnect(const String& ssid, MacAddress bssid, WifiDisconnectReason reason);
+    void _STAConnected(const String& ssid, MacAddress bssid, uint8_t channel);
+    void _STAGotIP(IpAddress ip, IpAddress mask, IpAddress gateway);
+    void scanCompleted(bool succeeded, BssList& list);
 };
 
 #endif //APP_NETWORKING_H_

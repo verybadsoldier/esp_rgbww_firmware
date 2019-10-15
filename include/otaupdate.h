@@ -42,12 +42,12 @@ public:
     inline bool isProccessing() { return status == OTASTATUS::OTA_PROCESSING; };
 
 protected:
-    rBootHttpUpdate* otaUpdater;
+    RbootHttpUpdater* otaUpdater;
     uint8 rom_slot;
     OTASTATUS status = OTASTATUS::OTA_NOT_UPDATING;
 
 protected:
-    void rBootCallback(rBootHttpUpdate& rbHttpUp, bool result);
+    void rBootCallback(RbootHttpUpdater& rbHttpUp, bool result);
     void reset();
     void beforeOTA();
     void afterOTA();

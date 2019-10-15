@@ -317,13 +317,13 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         JsonObject jnet = root["network"];
         if (!jnet.isNull()) {
 
-        	JsonObject con = jnet["connection"];
+            JsonObject con = jnet["connection"];
             if (!con.isNull()) {
-            	ip_updated |= Json::getBoolTolerantChanged(con["dhcp"], app.cfg.network.connection.dhcp);
+                ip_updated |= Json::getBoolTolerantChanged(con["dhcp"], app.cfg.network.connection.dhcp);
 
-            	if (!app.cfg.network.connection.dhcp) {
+                if (!app.cfg.network.connection.dhcp) {
                     //only change if dhcp is off - otherwise ignore
-                    IPAddress ip, netmask, gateway;
+                    IpAddress ip, netmask, gateway;
                     const char* str;
                     if (Json::getValue(con["ip"], str)) {
                     	ip = str;
