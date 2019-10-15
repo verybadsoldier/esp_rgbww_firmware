@@ -40,7 +40,7 @@ void AppWIFI::scan() {
     WifiStation.startScan(ScanCompletedDelegate(&AppWIFI::scanCompleted, this));
 }
 
-void AppWIFI::scanCompleted(bool succeeded, BssList list) {
+void AppWIFI::scanCompleted(bool succeeded, BssList& list) {
     debug_i("AppWIFI::scanCompleted. Success: %d", succeeded);
     if (succeeded) {
         _networks.clear();
@@ -140,7 +140,7 @@ void AppWIFI::connect(String ssid, String pass, bool new_con /* = false */) {
     WifiStation.connect();
 }
 
-void AppWIFI::_STADisconnect(String ssid, uint8_t ssid_len, uint8_t bssid[6], uint8_t reason) {
+void AppWIFI::_STADisconnect(const String& ssid, MacAddress bssid, WifiDisconnectReason reason) {
     debug_i("AppWIFI::_STADisconnect reason - %i - counter %i", reason, _con_ctr);
     if (_con_ctr >= DEFAULT_CONNECTION_RETRIES || WifiStation.getConnectionStatus() == eSCS_WrongPassword) {
         _client_status = CONNECTION_STATUS::ERROR;
@@ -159,13 +159,13 @@ void AppWIFI::_STADisconnect(String ssid, uint8_t ssid_len, uint8_t bssid[6], ui
     _con_ctr++;
 }
 
-void AppWIFI::_STAConnected(String ssid, uint8_t ssid_len, uint8_t bssid[6], uint8_t reason) {
-    debug_i("AppWIFI::_STAConnected reason - %i", reason);
+void AppWIFI::_STAConnected(const String& ssid, MacAddress bssid, uint8_t channel) {
+    debug_i("AppWIFI::_STAConnected SSID - %s", ssid.c_str());
 
     app.onWifiConnected(ssid);
 }
 
-void AppWIFI::_STAGotIP(IPAddress ip, IPAddress mask, IPAddress gateway) {
+void AppWIFI::_STAGotIP(IpAddress ip, IpAddress mask, IpAddress gateway) {
     debug_i("AppWIFI::_STAGotIP");
     _con_ctr = 0;
     _client_status = CONNECTION_STATUS::CONNECTED;

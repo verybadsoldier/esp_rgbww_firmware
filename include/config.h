@@ -32,9 +32,9 @@ struct ApplicationSettings {
         struct connection {
             String mdnshostname;
             bool dhcp = true;
-            IPAddress ip;
-            IPAddress netmask;
-            IPAddress gateway;
+            IpAddress ip;
+            IpAddress netmask;
+            IpAddress gateway;
         };
 
         struct mqtt {

@@ -137,7 +137,7 @@ void APPLedCtrl::updateLedCb(void* pTimerArg) {
 
 void APPLedCtrl::updateLed() {
     // arm next timer
-	_ledTimer.startMs(_timerInterval);
+	_ledTimer.startOnce();
 
     const bool animFinished = show();
 
@@ -229,7 +229,8 @@ void APPLedCtrl::start() {
     debug_i("APPLedCtrl::start");
 
     _ledTimer.setCallback(APPLedCtrl::updateLedCb, this);
-    _ledTimer.startMs(_timerInterval);
+    _ledTimer.setIntervalMs(_timerInterval);
+    _ledTimer.startOnce();
 }
 
 void APPLedCtrl::stop() {
