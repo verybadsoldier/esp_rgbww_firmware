@@ -16,24 +16,16 @@ addons:
     packages:     
       - bsdtar
 install:
-  - git clone https://github.com/patrickjahns/Sming.git
-  - cd Sming
-  - git checkout rgbwwdev
-  - cd ..
   - export SDK_FILE_NAME="esp-alt-sdk-v${SDK_VERSION}.${SDK_BUILD}-linux-x86_64.tar.gz"
   - mkdir -p $TRAVIS_BUILD_DIR/Sming/opt/esp-alt-sdk
   - wget https://bintray.com/artifact/download/kireevco/generic/${SDK_FILE_NAME}
   - bsdtar -xf ${SDK_FILE_NAME} -C $TRAVIS_BUILD_DIR/Sming/opt/esp-alt-sdk  
   - rm -rf samples
-  - cd $TRAVIS_BUILD_DIR/Sming/Sming/Libraries
-  - git clone https://github.com/patrickjahns/RGBWWLed
   - export SMING_HOME=$TRAVIS_BUILD_DIR/Sming/Sming
-  - export ESP_HOME=$TRAVIS_BUILD_DIR/Sming/opt/esp-alt-sdk  
-  - export PATH=$PATH:$TRAVIS_BUILD_DIR/Sming/opt/esp-alt-sdk/utils/
-  - cd $SMING_HOME
-  - make all spiffy/spiffy 
     
 script:
+  - export ESP_HOME=$TRAVIS_BUILD_DIR/Sming/opt/esp-alt-sdk  
+  - export PATH=$PATH:$TRAVIS_BUILD_DIR/Sming/opt/esp-alt-sdk/utils/
   - cd $TRAVIS_BUILD_DIR
   - make all
   
