@@ -82,7 +82,7 @@ struct ApplicationSettings {
     };
 
     struct ntp {
-        bool enabled = true;
+        bool enabled = false;
         String server;
         int interval;
     };
