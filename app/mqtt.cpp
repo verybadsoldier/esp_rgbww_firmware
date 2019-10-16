@@ -22,7 +22,6 @@
 #include <RGBWWCtrl.h>
 
 AppMqttClient::AppMqttClient() {
-    _id = String("rgbww_") + WifiStation.getMAC();
 }
 
 AppMqttClient::~AppMqttClient() {
@@ -85,6 +84,9 @@ void AppMqttClient::connect() {
 void AppMqttClient::init() {
     if (app.cfg.general.device_name.length() > 0) {
         _id = app.cfg.general.device_name;
+    }
+    else {
+        _id = String("rgbww_") + WifiStation.getMAC();
     }
 }
 
