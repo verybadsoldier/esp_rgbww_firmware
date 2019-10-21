@@ -57,14 +57,12 @@ public:
 private:
     int _con_ctr;
     bool _scanning;
-    bool _dns_active;
     bool _new_connection; // this means we just received new user entered Wifi data and are trying them out
     String _client_err_msg;
     String _tmp_ssid;
     String _tmp_password;
     Timer _timer;
     BssList _networks;
-    DNSServer _dns;
     IpAddress _ApIP;
 
     CONNECTION_STATUS _client_status;

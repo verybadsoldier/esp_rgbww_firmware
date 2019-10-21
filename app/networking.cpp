@@ -26,7 +26,6 @@ AppWIFI::AppWIFI() {
     _client_err_msg = "";
     _con_ctr = 0;
     _scanning = false;
-    _dns_active = false;
     _new_connection = false;
     _client_status = CONNECTION_STATUS::IDLE;
 }
@@ -195,22 +194,17 @@ void AppWIFI::stopAp(int delay) {
     }
 
     debug_i("AppWIFI::stopAp");
-    debug_i("Disabling AP and DNS server");
+    debug_i("Disabling AP");
     _timer.stop();
     if (WifiAccessPoint.isEnabled()) {
         debug_i("AppWIFI::stopAp WifiAP disable");
         WifiAccessPoint.enable(false, false);
     }
-    if (_dns_active) {
-        debug_i("AppWIFI::stopAp DNS disable");
-        _dns.close();
-    }
 }
 
 void AppWIFI::startAp() {
-    byte DNS_PORT = 53;
     debug_i("AppWIFI::startAp");
-    debug_i("Enabling AP and DNS server");
+    debug_i("Enabling AP");
     if (!WifiAccessPoint.isEnabled()) {
         debug_i("AppWIFI:: WifiAP enable");
         WifiAccessPoint.enable(true, false);
@@ -219,11 +213,5 @@ void AppWIFI::startAp() {
         } else {
             WifiAccessPoint.config(app.cfg.network.ap.ssid, "", AUTH_OPEN);
         }
-    }
-    if (!_dns_active) {
-        debug_i("AppWIFI:: DNS enable");
-        _dns_active = true;
-        _dns.setErrorReplyCode(DNSReplyCode::NoError);
-        _dns.start(DNS_PORT, "*", _ApIP);
     }
 }
