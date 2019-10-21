@@ -27,8 +27,8 @@ script:
   - export ESP_HOME=$TRAVIS_BUILD_DIR/Sming/opt/esp-alt-sdk  
   - export PATH=$PATH:$TRAVIS_BUILD_DIR/Sming/opt/esp-alt-sdk/utils/
   - cd $TRAVIS_BUILD_DIR
-  - make all
+  - SMING_RELEASE=1 make all
   
 after_success: 
-  - bash deploy.sh
-   
+  - bash deploy_release_ghpages.sh
+
