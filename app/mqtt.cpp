@@ -83,9 +83,11 @@ void AppMqttClient::connect() {
 
 void AppMqttClient::init() {
     if (app.cfg.general.device_name.length() > 0) {
+        debug_w("AppMqttClient::init: building MQTT ID from device name: '%s'\n", app.cfg.general.device_name.c_str());
         _id = app.cfg.general.device_name;
     }
     else {
+        debug_w("AppMqttClient::init: building MQTT ID from MAC (device name is: '%s')\n", app.cfg.general.device_name.c_str());
         _id = String("rgbww_") + WifiStation.getMAC();
     }
 }
