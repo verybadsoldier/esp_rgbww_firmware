@@ -250,7 +250,7 @@ struct ApplicationSettings {
     }
 
     void save(bool print = false) {
-        DynamicJsonDocument doc(1024);
+        DynamicJsonDocument doc(2048);
         JsonObject root = doc.to<JsonObject>();
 
         JsonObject net = root.createNestedObject("network");
