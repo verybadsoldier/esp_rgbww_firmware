@@ -288,7 +288,7 @@ void JsonProcessor::parseRequestParams(JsonObject root, RequestParameters& param
     }
 
     if (!root["r"].isNull()) {
-        params.requeue = root["r"].as<int>() == 1;
+        params.requeue = root["r"].as<bool>();
     }
 
     Json::getValue(root["d"], params.direction);
