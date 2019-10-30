@@ -523,7 +523,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         }
 
     } else {
-        JsonObjectStream* stream = new JsonObjectStream();
+        JsonObjectStream* stream = new JsonObjectStream(2048);
         JsonObject json = stream->getRoot();
         // returning settings
         JsonObject net = json.createNestedObject("network");
