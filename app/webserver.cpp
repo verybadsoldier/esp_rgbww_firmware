@@ -299,7 +299,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
 
         bool error = false;
         String error_msg = getApiCodeMsg(API_CODES::API_BAD_REQUEST);
-        DynamicJsonDocument doc(2048);
+        DynamicJsonDocument doc(CONFIG_MAX_LENGTH);
         Json::deserialize(doc, body);
 
         // remove comment for debugging
@@ -523,7 +523,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         }
 
     } else {
-        JsonObjectStream* stream = new JsonObjectStream(2048);
+        JsonObjectStream* stream = new JsonObjectStream(CONFIG_MAX_LENGTH);
         JsonObject json = stream->getRoot();
         // returning settings
         JsonObject net = json.createNestedObject("network");
