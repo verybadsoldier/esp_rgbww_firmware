@@ -27,6 +27,9 @@
 #define APP_SETTINGS_FILE ".cfg"
 #define APP_SETTINGS_VERSION 1
 
+#define CONFIG_MAX_LENGTH 2048
+
+
 struct ApplicationSettings {
     struct network {
         struct connection {
@@ -137,7 +140,7 @@ struct ApplicationSettings {
 
     void load(bool print = false) {
         // 1024 is too small and leads to load error
-        DynamicJsonDocument doc(2048);
+        DynamicJsonDocument doc(CONFIG_MAX_LENGTH);
         if (Json::loadFromFile(doc, APP_SETTINGS_FILE)) {
         	auto root = doc.as<JsonObject>();
         	auto net = root["network"];
@@ -250,7 +253,7 @@ struct ApplicationSettings {
     }
 
     void save(bool print = false) {
-        DynamicJsonDocument doc(2048);
+        DynamicJsonDocument doc(CONFIG_MAX_LENGTH);
         JsonObject root = doc.to<JsonObject>();
 
         JsonObject net = root.createNestedObject("network");
