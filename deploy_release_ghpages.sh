@@ -15,12 +15,15 @@ if [ -z "$TRAVIS_TAG" ]; then
 		echo "Not a release - skipping deploy!"
 		exit 0
 	fi
+	GIT_VERSION=$(git describe --abbrev=4 --dirty --always --tags)
+	FW_VERSION="$GIT_VERSION"
 	FEED="$TRAVIS_BRANCH"
 else
 	FEED="release"
 	if [[ $TRAVIS_TAG == *"-"* ]]; then
 		FEED="testing"
 	fi
+	FW_VERSION="$TRAVIS_TAG"
 fi
 
 # use feed "testing" if tag contains '-' (e.g. 4.0.1-rc1)
@@ -51,7 +54,7 @@ cp $ARTIFACTS_DIR/* .
 
 # create version information
 cat <<EOF > version.json
-{"rom":{"fw_version":"${FEED}","url":"${GH_PAGE_LINK}/rom0.bin"},"spiffs":{"webapp_version":"${WEBAPP_VERSION}","url":"${GH_PAGE_LINK}/spiff_rom.bin"}}
+{"rom":{"fw_version":"${FW_VERSION}","url":"${GH_PAGE_LINK}/rom0.bin"},"spiffs":{"webapp_version":"${WEBAPP_VERSION}","url":"${GH_PAGE_LINK}/spiff_rom.bin"}}
 EOF
 
 # committing...
