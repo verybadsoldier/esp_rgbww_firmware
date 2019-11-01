@@ -34,8 +34,9 @@ BssList AppWIFI::getAvailableNetworks() {
     return _networks;
 }
 
-void AppWIFI::scan() {
+void AppWIFI::scan(bool connectAfterScan) {
     _scanning = true;
+    _keepStaAfterScan = connectAfterScan;
     WifiStation.startScan(ScanCompletedDelegate(&AppWIFI::scanCompleted, this));
 }
 
@@ -51,6 +52,10 @@ void AppWIFI::scanCompleted(bool succeeded, BssList& list) {
     }
     _networks.sort([](const BssInfo& a, const BssInfo& b) {return b.rssi - a.rssi;});
     _scanning = false;
+
+    // make sure to trigger connect again cause otherwise the Wifi reconnect attempts may come to a stop
+    if (_keepStaAfterScan)
+        WifiStation.connect();
 }
 
 void AppWIFI::forgetWifi() {
@@ -99,7 +104,7 @@ void AppWIFI::init() {
         startAp();
 
         // already scan for avaialble networks to speedup things later
-        scan();
+        scan(false);
 
     } else {
 
@@ -141,19 +146,19 @@ void AppWIFI::connect(String ssid, String pass, bool new_con /* = false */) {
 
 void AppWIFI::_STADisconnect(const String& ssid, MacAddress bssid, WifiDisconnectReason reason) {
     debug_i("AppWIFI::_STADisconnect reason - %i - counter %i", reason, _con_ctr);
-    if (_con_ctr >= DEFAULT_CONNECTION_RETRIES || WifiStation.getConnectionStatus() == eSCS_WrongPassword) {
+
+    if (_con_ctr == DEFAULT_CONNECTION_RETRIES || WifiStation.getConnectionStatus() == eSCS_WrongPassword) {
         _client_status = CONNECTION_STATUS::ERROR;
         _client_err_msg = WifiStation.getConnectionStatusName();
-        debug_i("AppWIFI::_STADisconnect err %s", _client_err_msg.c_str());
+        debug_i("AppWIFI::_STADisconnect err %s - new connection: %i", _client_err_msg.c_str(), _new_connection);
         if (_new_connection) {
+            debug_i("AppWIFI::_STADisconnect - disconnecting station");
             WifiStation.disconnect();
             WifiStation.config("", "");
         } else {
-            scan();
+            scan(true);
             startAp();
         }
-        _con_ctr = 0;
-        return;
     }
     _con_ctr++;
 }
@@ -161,6 +166,7 @@ void AppWIFI::_STADisconnect(const String& ssid, MacAddress bssid, WifiDisconnec
 void AppWIFI::_STAConnected(const String& ssid, MacAddress bssid, uint8_t channel) {
     debug_i("AppWIFI::_STAConnected SSID - %s", ssid.c_str());
 
+    _con_ctr = 0;
     app.onWifiConnected(ssid);
 }
 

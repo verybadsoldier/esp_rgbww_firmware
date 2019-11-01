@@ -48,7 +48,7 @@ public:
     void stopAp(int delay = 0);
     bool isApActive() { return WifiAccessPoint.isEnabled(); };
 
-    void scan();
+    void scan(bool connectAfterScan);
     bool isScanning() { return _scanning; };
     BssList getAvailableNetworks();
 
@@ -57,6 +57,7 @@ public:
 private:
     int _con_ctr;
     bool _scanning;
+    bool _keepStaAfterScan = false;
     bool _new_connection; // this means we just received new user entered Wifi data and are trying them out
     String _client_err_msg;
     String _tmp_ssid;

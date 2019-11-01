@@ -815,7 +815,7 @@ void ApplicationWebserver::onScanNetworks(HttpRequest &request, HttpResponse &re
         return;
     }
     if (!app.network.isScanning()) {
-        app.network.scan();
+        app.network.scan(false);
     }
 
     sendApiCode(response, API_CODES::API_SUCCESS);
