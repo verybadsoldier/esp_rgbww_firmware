@@ -137,7 +137,7 @@ void APPLedCtrl::updateLedCb(void* pTimerArg) {
 
 void APPLedCtrl::updateLed() {
     // arm next timer
-    ets_timer_arm_new(&_ledTimer, _timerInterval, 0, 0);
+	_ledTimer.startOnce();
 
     const bool animFinished = show();
 
@@ -228,13 +228,14 @@ void APPLedCtrl::publishStatus() {
 void APPLedCtrl::start() {
     debug_i("APPLedCtrl::start");
 
-    ets_timer_setfn(&_ledTimer, APPLedCtrl::updateLedCb, this);
-    ets_timer_arm_new(&_ledTimer, _timerInterval, 0, 0);
+    _ledTimer.setCallback(APPLedCtrl::updateLedCb, this);
+    _ledTimer.setIntervalMs(_timerInterval);
+    _ledTimer.startOnce();
 }
 
 void APPLedCtrl::stop() {
     debug_i("APPLedCtrl::stop");
-    ets_timer_disarm(&_ledTimer);
+    _ledTimer.stop();
 }
 
 void APPLedCtrl::colorSave() {
@@ -249,27 +250,6 @@ void APPLedCtrl::colorReset() {
     colorStorage.current.v = 0;
     colorStorage.current.ct = 0;
     colorStorage.save();
-}
-
-void APPLedCtrl::testChannels() {
-    // debugapp("APPLedCtrl::test_channels");
-    // ChannelOutput red = ChannelOutput(1023, 0, 0, 0, 0);
-    // ChannelOutput green = ChannelOutput(0, 1023, 0, 0, 0);
-    // ChannelOutput blue = ChannelOutput(0, 0, 1023, 0, 0);
-    // ChannelOutput ww = ChannelOutput(0, 0, 0, 1023, 0);
-    // ChannelOutput cw = ChannelOutput(0, 0, 0, 0, 1023);
-    // ChannelOutput black = ChannelOutput(0, 0, 0, 0, 0);
-    // setRAW(black);
-    // fadeRAW(red, 1000, QueuePolicy::Back);
-    // fadeRAW(black, 1000, QueuePolicy::Back);
-    // fadeRAW(green, 1000, QueuePolicy::Back);
-    // fadeRAW(black, 1000, QueuePolicy::Back);
-    // fadeRAW(blue, 1000, QueuePolicy::Back);
-    // fadeRAW(black, 1000, QueuePolicy::Back);
-    // fadeRAW(ww, 1000, QueuePolicy::Back);
-    // fadeRAW(black, 1000, QueuePolicy::Back);
-    // fadeRAW(cw, 1000, QueuePolicy::Back);
-    // fadeRAW(black, 1000, QueuePolicy::Back);
 }
 
 void APPLedCtrl::onAnimationFinished(const String& name, bool requeued) {

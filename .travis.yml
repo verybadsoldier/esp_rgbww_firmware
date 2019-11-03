@@ -14,30 +14,19 @@ addons:
     packages: make unrar-free autoconf automake libtool gcc g++ gperf flex bison texinfo gawk ncurses-dev libexpat-dev python-dev python python-serial sed git unzip bash help2man wget bzip2
     
 install:
-  - $TRAVIS_BUILD_DIR/.travis/build_sming.sh
+  - export SDK_FILE_NAME="esp-alt-sdk-v${SDK_VERSION}.${SDK_BUILD}-linux-x86_64.tar.gz"
+  - mkdir -p $TRAVIS_BUILD_DIR/Sming/opt/esp-alt-sdk
+  - wget https://bintray.com/artifact/download/kireevco/generic/${SDK_FILE_NAME}
+  - bsdtar -xf ${SDK_FILE_NAME} -C $TRAVIS_BUILD_DIR/Sming/opt/esp-alt-sdk  
+  - rm -rf samples
+  - export SMING_HOME=$TRAVIS_BUILD_DIR/Sming/Sming
     
 script:
+  - export ESP_HOME=$TRAVIS_BUILD_DIR/Sming/opt/esp-alt-sdk  
+  - export PATH=$PATH:$TRAVIS_BUILD_DIR/Sming/opt/esp-alt-sdk/utils/
   - cd $TRAVIS_BUILD_DIR
-  - echo Building esp_rgbww_firmware...
-  - ESP_HOME=$TRAVIS_BUILD_DIR/esp-open-sdk SMING_HOME=$TRAVIS_BUILD_DIR/Sming/Sming SDK_BASE=$TRAVIS_BUILD_DIR/Sming/Sming/third-party/ESP8266_NONOS_SDK make all
+  - SMING_RELEASE=1 make all
   
-after_success:
-  - export DEPLOY_FILENAME=esp_rgbww_firmware_snapshot_$(date "+%Y%m%d-%H%M%S")_$TRAVIS_COMMIT.tgz
-  - mkdir "$DEPLOY_DIR"
-  - echo Switching to artifacts directory: $ARTIFACTS_DIR
-  - cd $ARTIFACTS_DIR
-  - sh $TRAVIS_BUILD_DIR/.travis/create_info.sh info.txt
-  - cat info.txt
-  - tar cvfz $DEPLOY_DIR/$DEPLOY_FILENAME *
-  # eventually deploy as release (if is tag)
-  - $TRAVIS_BUILD_DIR/.travis/deploy_release.sh
+after_success: 
+  - bash deploy_release_ghpages.sh
 
-deploy:
-  provider: pages
-  skip_cleanup: true
-  github_token: $GITHUB_TOKEN  # Set in the settings page of your repository, as a secure variable
-  keep_history: false
-  on:
-    branch: master
-  target_branch: buildbot
-  local_dir: $DEPLOY_DIR

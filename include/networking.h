@@ -45,11 +45,10 @@ public:
     String get_con_err_msg() { return _client_err_msg; };
 
     void startAp();
-    void stopAp();
-    void stopAp(int delay);
+    void stopAp(int delay = 0);
     bool isApActive() { return WifiAccessPoint.isEnabled(); };
 
-    void scan();
+    void scan(bool connectAfterScan);
     bool isScanning() { return _scanning; };
     BssList getAvailableNetworks();
 
@@ -58,23 +57,22 @@ public:
 private:
     int _con_ctr;
     bool _scanning;
-    bool _dns_active;
-    bool _new_connection;
+    bool _keepStaAfterScan = false;
+    bool _new_connection; // this means we just received new user entered Wifi data and are trying them out
     String _client_err_msg;
     String _tmp_ssid;
     String _tmp_password;
     Timer _timer;
     BssList _networks;
-    DNSServer _dns;
-    IPAddress _ApIP;
+    IpAddress _ApIP;
 
     CONNECTION_STATUS _client_status;
 
 private:
-    void _STADisconnect(String ssid, uint8_t ssid_len, uint8_t bssid[6], uint8_t reason);
-    void _STAConnected(String ssid, uint8_t ssid_len, uint8_t bssid[6], uint8_t reason);
-    void _STAGotIP(IPAddress ip, IPAddress mask, IPAddress gateway);
-    void scanCompleted(bool succeeded, BssList list);
+    void _STADisconnect(const String& ssid, MacAddress bssid, WifiDisconnectReason reason);
+    void _STAConnected(const String& ssid, MacAddress bssid, uint8_t channel);
+    void _STAGotIP(IpAddress ip, IpAddress mask, IpAddress gateway);
+    void scanCompleted(bool succeeded, BssList& list);
 };
 
 #endif //APP_NETWORKING_H_

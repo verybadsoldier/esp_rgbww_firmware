@@ -23,7 +23,7 @@
 #define OTAUPDATE_H_
 #define OTA_STATUS_FILE ".ota"
 
-enum OTASTATUS {
+enum class OTASTATUS {
     OTA_NOT_UPDATING = 0,
     OTA_PROCESSING = 1,
     OTA_SUCCESS_REBOOT = 2,
@@ -42,12 +42,12 @@ public:
     inline bool isProccessing() { return status == OTASTATUS::OTA_PROCESSING; };
 
 protected:
-    rBootHttpUpdate* otaUpdater;
+    RbootHttpUpdater* otaUpdater;
     uint8 rom_slot;
     OTASTATUS status = OTASTATUS::OTA_NOT_UPDATING;
 
 protected:
-    void rBootCallback(rBootHttpUpdate& rbHttpUp, bool result);
+    void rBootCallback(RbootHttpUpdater& rbHttpUp, bool result);
     void reset();
     void beforeOTA();
     void afterOTA();

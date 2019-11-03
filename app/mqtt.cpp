@@ -22,7 +22,6 @@
 #include <RGBWWCtrl.h>
 
 AppMqttClient::AppMqttClient() {
-    _id = String("rgbww_") + WifiStation.getMAC();
 }
 
 AppMqttClient::~AppMqttClient() {
@@ -42,8 +41,7 @@ void AppMqttClient::onComplete(TcpClient& client, bool success) {
 
 void AppMqttClient::connectDelayed(int delay) {
     debug_d("MQTT::connectDelayed");
-    TimerDelegateStdFunction fnc = std::bind(&AppMqttClient::connect, this);
-    _procTimer.initializeMs(delay, fnc).startOnce();
+    _procTimer.initializeMs(delay, TimerDelegate(&AppMqttClient::connect, this)).startOnce();
 }
 
 void AppMqttClient::connect() {
@@ -60,13 +58,12 @@ void AppMqttClient::connect() {
     Url url = "mqtt://" + app.cfg.network.mqtt.username + ":" + app.cfg.network.mqtt.password + "@" + app.cfg.network.mqtt.server + ":" + String(app.cfg.network.mqtt.port);
     mqtt->connect(url, _id, 0);
 #ifdef ENABLE_SSL
-    mqtt->addSslOptions(SSL_SERVER_VERIFY_LATER);
+    // not need i guess? mqtt->addSslOptions(SSL_SERVER_VERIFY_LATER);
 
 #include <ssl/private_key.h>
 #include <ssl/cert.h>
 
-    mqtt->setSslClientKeyCert(default_private_key, default_private_key_len,
-            default_certificate, default_certificate_len, NULL, true);
+    mqtt->setSslKeyCert(default_private_key, default_private_key_len, default_certificate, default_certificate_len, NULL, true);
 
 #endif
     // Assign a disconnect callback function
@@ -86,7 +83,12 @@ void AppMqttClient::connect() {
 
 void AppMqttClient::init() {
     if (app.cfg.general.device_name.length() > 0) {
+        debug_w("AppMqttClient::init: building MQTT ID from device name: '%s'\n", app.cfg.general.device_name.c_str());
         _id = app.cfg.general.device_name;
+    }
+    else {
+        debug_w("AppMqttClient::init: building MQTT ID from MAC (device name is: '%s')\n", app.cfg.general.device_name.c_str());
+        _id = String("rgbww_") + WifiStation.getMAC();
     }
 }
 
@@ -151,9 +153,9 @@ void AppMqttClient::publishCurrentRaw(const ChannelOutput& raw) {
 
     debug_d("ApplicationMQTTClient::publishCurrentRaw\n");
 
-    DynamicJsonBuffer jsonBuffer(200);
-    JsonObject& root = jsonBuffer.createObject();
-    JsonObject& rawJson = root.createNestedObject("raw");
+    StaticJsonDocument<200> doc;
+    JsonObject root = doc.to<JsonObject>();
+    JsonObject rawJson = root.createNestedObject("raw");
     rawJson["r"] = raw.r;
     rawJson["g"] = raw.g;
     rawJson["b"] = raw.b;
@@ -163,8 +165,7 @@ void AppMqttClient::publishCurrentRaw(const ChannelOutput& raw) {
     root["t"] = 0;
     root["cmd"] = "solid";
 
-    String jsonMsg;
-    root.printTo(jsonMsg);
+    String jsonMsg = Json::serialize(root);
     publish(buildTopic("color"), jsonMsg, true);
 }
 
@@ -179,9 +180,9 @@ void AppMqttClient::publishCurrentHsv(const HSVCT& color) {
     int ct;
     color.asRadian(h, s, v, ct);
 
-    DynamicJsonBuffer jsonBuffer(200);
-    JsonObject& root = jsonBuffer.createObject();
-    JsonObject& hsv = root.createNestedObject("hsv");
+    StaticJsonDocument<200> doc;
+    JsonObject root = doc.to<JsonObject>();
+    JsonObject hsv = root.createNestedObject("hsv");
     hsv["h"] = h;
     hsv["s"] = s;
     hsv["v"] = v;
@@ -190,8 +191,7 @@ void AppMqttClient::publishCurrentHsv(const HSVCT& color) {
     root["t"] = 0;
     root["cmd"] = "solid";
 
-    String jsonMsg;
-    root.printTo(jsonMsg);
+    String jsonMsg = Json::serialize(root);
     publish(buildTopic("color"), jsonMsg, true);
 }
 
@@ -240,20 +240,18 @@ void AppMqttClient::publishCommand(const String& method, const JsonObject& param
     if (params.size() > 0)
         msg.getRoot()["params"] = params;
 
-    String msgStr;
-    msg.getRoot().printTo(msgStr);
+    String msgStr = Json::serialize(msg.getRoot());
     publish(buildTopic("command"), msgStr, false);
 }
 
 void AppMqttClient::publishTransitionFinished(const String& name, bool requeued) {
     debug_d("ApplicationMQTTClient::publishTransitionFinished: %s\n", name.c_str());
 
-    DynamicJsonBuffer jsonBuffer(200);
-    JsonObject& root = jsonBuffer.createObject();
+    StaticJsonDocument<200> doc;
+    JsonObject root = doc.to<JsonObject>();
     root["name"] = name;
     root["requequed"] = requeued;
 
-    String jsonMsg;
-    root.printTo(jsonMsg);
+    String jsonMsg = Json::serialize(root);
     publish(buildTopic("transition_finished"), jsonMsg, true);
 }

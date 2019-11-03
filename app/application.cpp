@@ -41,6 +41,13 @@ void GDB_IRAM_ATTR init() {
     System.onReady(SystemReadyDelegate(&Application::startServices, &app));
 }
 
+Application::~Application() {
+    if (pNtpclient != nullptr) {
+        delete pNtpclient;
+        pNtpclient = nullptr;
+    }
+}
+
 void Application::uptimeCounter() {
     ++_uptimeMinutes;
 }
@@ -49,8 +56,9 @@ void Application::init() {
     debug_i("RGBWW Controller v %s\r\n", fw_git_version);
 
     //load settings
-    _uptimetimer.initializeMs(60000, TimerDelegateStdFunction(std::bind(&Application::uptimeCounter, this))).start();
+    _uptimetimer.initializeMs(60000, TimerDelegate(&Application::uptimeCounter, this)).start();
 
+#ifdef ARCH_ESP8266
     // load boot information
     uint8 bootmode, bootslot;
     if (rboot_get_last_boot_mode(&bootmode)) {
@@ -65,6 +73,7 @@ void Application::init() {
     if (rboot_get_last_boot_rom(&bootslot)) {
         _romslot = bootslot;
     }
+#endif
 
     // mount filesystem
     mountfs(getRomSlot());
@@ -77,7 +86,9 @@ void Application::init() {
     }
 
     // check ota
+#ifdef ARCH_ESP8266
     ota.checkAtBoot();
+#endif
 
     // load config
     if (cfg.exist()) {
@@ -100,6 +111,16 @@ void Application::init() {
 
     // initialize webserver
     app.webserver.init();
+
+    if (cfg.ntp.enabled) {
+        String server = cfg.ntp.server.length() > 0 ? cfg.ntp.server : NTP_DEFAULT_SERVER;
+        unsigned interval = cfg.ntp.interval > 0 ? cfg.ntp.interval : NTP_DEFAULT_AUTOQUERY_SECONDS;
+        debug_i("Enabling NTP server '%s' with interval %d s", server.c_str(), interval);
+        pNtpclient = new NtpClient(server, interval);
+    }
+    else {
+        debug_i("Disabling NTP server");
+    }
 }
 
 void Application::initButtons() {
@@ -124,7 +145,7 @@ void Application::initButtons() {
 
         _lastToggles[pin] = 0ul;
 
-        attachInterrupt(pin,  InterruptDelegate(std::bind(&Application::onButtonTogglePressed, this, pin)), FALLING);
+        attachInterrupt(pin,  std::bind(&Application::onButtonTogglePressed, this, pin), FALLING);
         pinMode(pin, INPUT_PULLUP);
     }
 }
@@ -140,17 +161,16 @@ void Application::startServices() {
 }
 
 void Application::restart() {
-    debug_i("Restarting");
+    debug_i("Application::restart");
     if (network.isApActive()) {
         network.stopAp();
-        _systimer.initializeMs(500, TimerDelegateStdFunction(std::bind(&Application::restart, this))).startOnce();
+        _systimer.initializeMs(500, TimerDelegate(&Application::restart, this)).startOnce();
     }
     System.restart();
 }
 
 void Application::reset() {
     debug_i("Application::reset");
-    debug_i("resetting controller");
     cfg.reset();
     rgbwwctrl.colorReset();
     network.forgetWifi();
@@ -161,18 +181,16 @@ void Application::reset() {
 bool Application::delayedCMD(String cmd, int delay) {
     debug_i("Application::delayedCMD cmd: %s - delay: %i", cmd.c_str(), delay);
     if (cmd.equals("reset")) {
-        _systimer.initializeMs(delay, TimerDelegateStdFunction(std::bind(&Application::reset, this))).startOnce();
+        _systimer.initializeMs(delay, TimerDelegate(&Application::reset, this)).startOnce();
     } else if (cmd.equals("restart")) {
-        _systimer.initializeMs(delay, TimerDelegateStdFunction(std::bind(&Application::restart, this))).startOnce();
+        _systimer.initializeMs(delay, TimerDelegate(&Application::restart, this)).startOnce();
     } else if (cmd.equals("stopap")) {
         network.stopAp(2000);
     } else if (cmd.equals("forget_wifi")) {
-        _systimer.initializeMs(delay, TimerDelegateStdFunction(std::bind(&AppWIFI::forgetWifi, &network))).startOnce();
-    } else if (cmd.equals("test_channels")) {
-        rgbwwctrl.testChannels();
+        _systimer.initializeMs(delay, TimerDelegate(&AppWIFI::forgetWifi, &network)).startOnce();
     } else if (cmd.equals("switch_rom")) {
         switchRom();
-        _systimer.initializeMs(delay, TimerDelegateStdFunction(std::bind(&Application::restart, this))).startOnce();
+        _systimer.initializeMs(delay, TimerDelegate(&Application::restart, this)).startOnce();
     } else {
         return false;
     }
@@ -207,7 +225,9 @@ void Application::switchRom() {
     } else {
         slot = 0;
     }
+#ifdef ARCH_ESP8266
     rboot_set_current_rom(slot);
+#endif
 }
 
 void Application::onWifiConnected(const String& ssid) {

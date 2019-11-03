@@ -26,7 +26,6 @@ AppWIFI::AppWIFI() {
     _client_err_msg = "";
     _con_ctr = 0;
     _scanning = false;
-    _dns_active = false;
     _new_connection = false;
     _client_status = CONNECTION_STATUS::IDLE;
 }
@@ -35,12 +34,13 @@ BssList AppWIFI::getAvailableNetworks() {
     return _networks;
 }
 
-void AppWIFI::scan() {
+void AppWIFI::scan(bool connectAfterScan) {
     _scanning = true;
+    _keepStaAfterScan = connectAfterScan;
     WifiStation.startScan(ScanCompletedDelegate(&AppWIFI::scanCompleted, this));
 }
 
-void AppWIFI::scanCompleted(bool succeeded, BssList list) {
+void AppWIFI::scanCompleted(bool succeeded, BssList& list) {
     debug_i("AppWIFI::scanCompleted. Success: %d", succeeded);
     if (succeeded) {
         _networks.clear();
@@ -52,6 +52,10 @@ void AppWIFI::scanCompleted(bool succeeded, BssList list) {
     }
     _networks.sort([](const BssInfo& a, const BssInfo& b) {return b.rssi - a.rssi;});
     _scanning = false;
+
+    // make sure to trigger connect again cause otherwise the Wifi reconnect attempts may come to a stop
+    if (_keepStaAfterScan)
+        WifiStation.connect();
 }
 
 void AppWIFI::forgetWifi() {
@@ -100,7 +104,7 @@ void AppWIFI::init() {
         startAp();
 
         // already scan for avaialble networks to speedup things later
-        scan();
+        scan(false);
 
     } else {
 
@@ -140,32 +144,33 @@ void AppWIFI::connect(String ssid, String pass, bool new_con /* = false */) {
     WifiStation.connect();
 }
 
-void AppWIFI::_STADisconnect(String ssid, uint8_t ssid_len, uint8_t bssid[6], uint8_t reason) {
+void AppWIFI::_STADisconnect(const String& ssid, MacAddress bssid, WifiDisconnectReason reason) {
     debug_i("AppWIFI::_STADisconnect reason - %i - counter %i", reason, _con_ctr);
-    if (_con_ctr >= DEFAULT_CONNECTION_RETRIES || WifiStation.getConnectionStatus() == eSCS_WrongPassword) {
+
+    if (_con_ctr == DEFAULT_CONNECTION_RETRIES || WifiStation.getConnectionStatus() == eSCS_WrongPassword) {
         _client_status = CONNECTION_STATUS::ERROR;
         _client_err_msg = WifiStation.getConnectionStatusName();
-        debug_i("AppWIFI::_STADisconnect err %s", _client_err_msg.c_str());
+        debug_i("AppWIFI::_STADisconnect err %s - new connection: %i", _client_err_msg.c_str(), _new_connection);
         if (_new_connection) {
+            debug_i("AppWIFI::_STADisconnect - disconnecting station");
             WifiStation.disconnect();
             WifiStation.config("", "");
         } else {
-            scan();
+            scan(true);
             startAp();
         }
-        _con_ctr = 0;
-        return;
     }
     _con_ctr++;
 }
 
-void AppWIFI::_STAConnected(String ssid, uint8_t ssid_len, uint8_t bssid[6], uint8_t reason) {
-    debug_i("AppWIFI::_STAConnected reason - %i", reason);
+void AppWIFI::_STAConnected(const String& ssid, MacAddress bssid, uint8_t channel) {
+    debug_i("AppWIFI::_STAConnected SSID - %s", ssid.c_str());
 
+    _con_ctr = 0;
     app.onWifiConnected(ssid);
 }
 
-void AppWIFI::_STAGotIP(IPAddress ip, IPAddress mask, IPAddress gateway) {
+void AppWIFI::_STAGotIP(IpAddress ip, IpAddress mask, IpAddress gateway) {
     debug_i("AppWIFI::_STAGotIP");
     _con_ctr = 0;
     _client_status = CONNECTION_STATUS::CONNECTED;
@@ -184,31 +189,28 @@ void AppWIFI::_STAGotIP(IPAddress ip, IPAddress mask, IPAddress gateway) {
 }
 
 void AppWIFI::stopAp(int delay) {
-    if (WifiAccessPoint.isEnabled()) {
-        debug_i("AppWIFI::stopAp delay %i", delay);
-        TimerDelegateStdFunction fnc = std::bind(static_cast<void(AppWIFI::*)()>(&AppWIFI::stopAp), this);
-        _timer.initializeMs(delay, fnc).startOnce();
+    if (!WifiAccessPoint.isEnabled()) {
+    	return;
     }
-}
 
-void AppWIFI::stopAp() {
+    if (delay > 0) {
+    	debug_i("AppWIFI::stopAp delay %i", delay);
+        _timer.initializeMs(delay, std::bind(&AppWIFI::stopAp, this, 0)).startOnce();
+        return;
+    }
+
     debug_i("AppWIFI::stopAp");
-    debug_i("Disabling AP and DNS server");
+    debug_i("Disabling AP");
     _timer.stop();
     if (WifiAccessPoint.isEnabled()) {
         debug_i("AppWIFI::stopAp WifiAP disable");
         WifiAccessPoint.enable(false, false);
     }
-    if (_dns_active) {
-        debug_i("AppWIFI::stopAp DNS disable");
-        _dns.close();
-    }
 }
 
 void AppWIFI::startAp() {
-    byte DNS_PORT = 53;
     debug_i("AppWIFI::startAp");
-    debug_i("Enabling AP and DNS server");
+    debug_i("Enabling AP");
     if (!WifiAccessPoint.isEnabled()) {
         debug_i("AppWIFI:: WifiAP enable");
         WifiAccessPoint.enable(true, false);
@@ -217,11 +219,5 @@ void AppWIFI::startAp() {
         } else {
             WifiAccessPoint.config(app.cfg.network.ap.ssid, "", AUTH_OPEN);
         }
-    }
-    if (!_dns_active) {
-        debug_i("AppWIFI:: DNS enable");
-        _dns_active = true;
-        _dns.setErrorReplyCode(DNSReplyCode::NoError);
-        _dns.start(DNS_PORT, "*", _ApIP);
     }
 }

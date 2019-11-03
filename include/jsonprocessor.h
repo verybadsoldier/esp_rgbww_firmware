@@ -1,34 +1,33 @@
 #pragma once
 
-#include <SmingCore/SmingCore.h>
 #include <RGBWWLed/RGBWWLedColor.h>
 
 
 class JsonProcessor {
 public:
     bool onColor(const String& json, String& msg, bool relay = true);
-    bool onColor(JsonObject& root, String& msg, bool relay = true);
+    bool onColor(JsonObject root, String& msg, bool relay = true);
 
     bool onStop(const String& json, String& msg, bool relay = true);
-    bool onStop(JsonObject& root, String& msg, bool relay = true);
+    bool onStop(JsonObject root, String& msg, bool relay = true);
 
     bool onSkip(const String& json, String& msg, bool relay = true);
-    bool onSkip(JsonObject& root, String& msg, bool relay = true);
+    bool onSkip(JsonObject root, String& msg, bool relay = true);
 
     bool onPause(const String& json, String& msg, bool relay = true);
-    bool onPause(JsonObject& json, String& msg, bool relay = true);
+    bool onPause(JsonObject json, String& msg, bool relay = true);
 
     bool onContinue(const String& json, String& msg, bool relay = true);
-    bool onContinue(JsonObject& root, String& msg, bool relay = true);
+    bool onContinue(JsonObject root, String& msg, bool relay = true);
 
     bool onBlink(const String& json, String& msg, bool relay = true);
-    bool onBlink(JsonObject& root, String& msg, bool relay = true);
+    bool onBlink(JsonObject root, String& msg, bool relay = true);
 
     bool onToggle(const String& json, String& msg, bool relay = true);
-    bool onToggle(JsonObject& root, String& msg, bool relay = true);
+    bool onToggle(JsonObject root, String& msg, bool relay = true);
 
     bool onDirect(const String& json, String& msg, bool relay);
-    bool onDirect(JsonObject& root, String& msg, bool relay);
+    bool onDirect(JsonObject root, String& msg, bool relay);
 
     bool onJsonRpc(const String& json);
 
@@ -55,8 +54,6 @@ private:
         RequestChannelOutput raw;
         RequestChannelOutput rawFrom;
 
-        int kelvin;
-
         int direction = 1;
         bool requeue = false;
         RampTimeOrSpeed ramp = 0;
@@ -71,8 +68,8 @@ private:
         int checkParams(String& errorMsg) const;
     };
 
-    void parseRequestParams(JsonObject& root, RequestParameters& params);
-    void addChannelStatesToCmd(JsonObject& root, const RGBWWLed::ChannelList& channels);
+    void parseRequestParams(JsonObject root, RequestParameters& params);
+    void addChannelStatesToCmd(JsonObject root, const RGBWWLed::ChannelList& channels);
 
-    bool onSingleColorCommand(JsonObject& root, String& errorMsg);
+    bool onSingleColorCommand(JsonObject root, String& errorMsg);
 };
