@@ -18,7 +18,7 @@ void EventServer::start() {
         debug_e("EventServer failed to open listening port!");
     }
 
-    TimerDelegateStdFunction fnc = std::bind(&EventServer::publishKeepAlive, this);
+    auto fnc = TimerDelegate(&EventServer::publishKeepAlive, this);
     _keepAliveTimer.initializeMs(_keepAliveInterval * 1000, fnc).start();
 }
 
@@ -45,11 +45,11 @@ void EventServer::publishCurrentState(const ChannelOutput& raw, const HSVCT* pHs
     _lastRaw = raw;
 
     JsonRpcMessage msg("color_event");
-    JsonObject& root = msg.getParams();
+    JsonObject root = msg.getParams();
 
     root["mode"] = pHsv ? "hsv" : "raw";
 
-    JsonObject& rawJson = root.createNestedObject("raw");
+    JsonObject rawJson = root.createNestedObject("raw");
     rawJson["r"] = raw.r;
     rawJson["g"] = raw.g;
     rawJson["b"] = raw.b;
@@ -61,7 +61,7 @@ void EventServer::publishCurrentState(const ChannelOutput& raw, const HSVCT* pHs
         int ct;
         pHsv->asRadian(h, s, v, ct);
 
-        JsonObject& hsvJson = root.createNestedObject("hsv");
+        JsonObject hsvJson = root.createNestedObject("hsv");
         hsvJson["h"] = h;
         hsvJson["s"] = s;
         hsvJson["v"] = v;
@@ -77,7 +77,7 @@ void EventServer::publishClockSlaveStatus(uint32_t offset, uint32_t interval) {
     debug_d("EventServer::publishClockSlaveStatus: offset: %d | interval :%d\n", offset, interval);
 
     JsonRpcMessage msg("clock_slave_status");
-    JsonObject& root = msg.getParams();
+    JsonObject root = msg.getParams();
     root["offset"] = offset;
     root["current_interval"] = interval;
     sendToClients(msg);
@@ -94,7 +94,7 @@ void EventServer::publishTransitionFinished(const String& name, bool requeued) {
     debug_d("EventServer::publishTransitionComplete: %s\n", name.c_str());
 
     JsonRpcMessage msg("transition_finished");
-    JsonObject& root = msg.getParams();
+    JsonObject root = msg.getParams();
     root["name"] = name;
     root["requeued"] = requeued;
 
@@ -105,11 +105,10 @@ void EventServer::sendToClients(JsonRpcMessage& rpcMsg) {
     //Serial.printf("EventServer: sendToClient: %x, Vector: %x Tests: %d\n", _client, _clients.elementAt(0), _tests[0]);
     rpcMsg.setId(_nextId++);
 
-    String jsonStr;
-    rpcMsg.getRoot().printTo(jsonStr);
+    String jsonStr = Json::serialize(rpcMsg.getRoot());
 
-    for(int i=0; i < connections.size(); ++i) {
-        TcpClient* pClient = (TcpClient*)connections[i];
+    for(unsigned i=0; i < connections.size(); ++i) {
+        auto pClient = reinterpret_cast<TcpClient*>(connections[i]);
         pClient->sendString(jsonStr);
     }
 }

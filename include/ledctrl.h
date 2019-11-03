@@ -39,37 +39,31 @@ struct PinConfig {
 struct ColorStorage {
     HSVCT current;
     void load(bool print = false) {
-        StaticJsonBuffer < 72 > jsonBuffer;
-        if (exist()) {
-            int size = fileGetSize(APP_COLOR_FILE);
-            char* jsonString = new char[size + 1];
-            fileGetContent(APP_COLOR_FILE, jsonString, size + 1);
-            JsonObject& root = jsonBuffer.parseObject(jsonString);
+    	StaticJsonDocument<128> doc;
+        if (Json::loadFromFile(doc, APP_COLOR_FILE)) {
+            JsonObject root = doc.as<JsonObject>();
             current.h = root["h"];
             current.s = root["s"];
             current.v = root["v"];
             current.ct = root["ct"];
             if (print) {
-                root.prettyPrintTo(Serial);
+            	Json::serialize(root, Serial, Json::Pretty);
             }
-            delete[] jsonString;
         }
     }
 
     void save(bool print = false) {
         debug_d("Saving ColorStorage to file...");
-        DynamicJsonBuffer jsonBuffer;
-        JsonObject& root = jsonBuffer.createObject();
+        StaticJsonDocument<256> doc;
+        JsonObject root = doc.to<JsonObject>();
         root["h"] = current.h;
         root["s"] = current.s;
         root["v"] = current.v;
         root["ct"] = current.ct;
-        String rootString;
         if (print) {
-            root.prettyPrintTo(Serial);
+        	Json::serialize(root, Serial, Json::Pretty);
         }
-        root.printTo(rootString);
-        fileSetContent(APP_COLOR_FILE, rootString);
+        Json::saveToFile(root, APP_COLOR_FILE);
     }
 
     bool exist() {
@@ -120,8 +114,8 @@ private:
 
     static const uint32_t _saveAfterStableColorMs = 2000;
 
-    ETSTimer _ledTimer;
-    uint32_t _timerInterval = RGBWW_MINTIMEDIFF_US;
+    SimpleTimer _ledTimer;
+    uint32_t _timerInterval = RGBWW_MINTIMEDIFF;
     HashMap<String, bool> _stepFinishedAnimations;
     uint32_t _lastColorEvent = 0;
 };

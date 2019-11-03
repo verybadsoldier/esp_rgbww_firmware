@@ -1,8 +1,7 @@
 #pragma once
 
-#include <SmingCore/SmingCore.h>
-
 #include <RGBWWLed/RGBWWLed.h>
+#include <JsonObjectStream.h>
 
 
 class JsonRpcMessage {
@@ -10,24 +9,23 @@ public:
     JsonRpcMessage(const String& name);
     JsonObjectStream& getStream();
     void setId(int id);
-    JsonObject& getParams();
-    JsonObject& getRoot();
+    JsonObject getParams();
+    JsonObject getRoot();
 
 private:
     JsonObjectStream _stream;
-    JsonObject* _pParams = nullptr;
+    JsonObject _pParams;
 };
 
 class JsonRpcMessageIn {
 public:
     JsonRpcMessageIn(const String& json);
-    JsonObject& getParams();
+    JsonObject getParams();
 
-    JsonObject& getRoot();
+    JsonObject getRoot();
     String getMethod();
 
 private:
-    JsonObject* _root = nullptr;
-    DynamicJsonBuffer _jsonBuffer;
+    DynamicJsonDocument _doc;
 };
 
