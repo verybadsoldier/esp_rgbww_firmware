@@ -11,10 +11,6 @@ echo "New release - deploying - $TRAVIS_TAG"
 FEED="<not set>"
 if [ -z "$TRAVIS_TAG" ]; then
 	# not a tag build so we will have proper branch value
-	if [ "$TRAVIS_BRANCH" == "master" ]; then
-		echo "Not a release - skipping deploy!"
-		exit 0
-	fi
 	GIT_VERSION=$(git describe --abbrev=4 --dirty --always --tags)
 	FW_VERSION="$GIT_VERSION"
 	FEED="$TRAVIS_BRANCH"
