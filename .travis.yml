@@ -17,15 +17,15 @@ addons:
       - bsdtar
 install:
   - export SDK_FILE_NAME="esp-alt-sdk-v${SDK_VERSION}.${SDK_BUILD}-linux-x86_64.tar.gz"
-  - mkdir -p $TRAVIS_BUILD_DIR/Sming/opt/esp-alt-sdk
+  - mkdir -p $TRAVIS_BUILD_DIR/esp-alt-sdk
   - wget https://bintray.com/artifact/download/kireevco/generic/${SDK_FILE_NAME}
-  - bsdtar -xf ${SDK_FILE_NAME} -C $TRAVIS_BUILD_DIR/Sming/opt/esp-alt-sdk  
+  - bsdtar -xf ${SDK_FILE_NAME} -C $TRAVIS_BUILD_DIR/esp-alt-sdk  
   - rm -rf samples
   - export SMING_HOME=$TRAVIS_BUILD_DIR/Sming/Sming
     
 script:
-  - export ESP_HOME=$TRAVIS_BUILD_DIR/Sming/opt/esp-alt-sdk  
-  - export PATH=$PATH:$TRAVIS_BUILD_DIR/Sming/opt/esp-alt-sdk/utils/
+  - export ESP_HOME=$TRAVIS_BUILD_DIR/esp-alt-sdk  
+  - export PATH=$PATH:$TRAVIS_BUILD_DIR/esp-alt-sdk/utils/
   - cd $TRAVIS_BUILD_DIR
   - SMING_RELEASE=1 make all
   
