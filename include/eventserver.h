@@ -13,7 +13,7 @@ public:
 	void publishCurrentState(const ChannelOutput& raw, const HSVCT* pColor = NULL);
 	void publishTransitionFinished(const String& name, bool requeued = false);
 	void publishKeepAlive();
-	void publishClockSlaveStatus(uint32_t offset, uint32_t interval);
+	void publishClockSlaveStatus(int offset, uint32_t interval);
 
 private:
 	virtual void onClient(TcpClient *client) override;

@@ -21,7 +21,7 @@ public:
     void publishClock(uint32_t steps);
     void publishClockReset();
     void publishClockInterval(uint32_t curInterval);
-    void publishClockSlaveOffset(uint32_t offset);
+    void publishClockSlaveOffset(int offset);
     void publishCommand(const String& method, const JsonObject& params);
     void publishTransitionFinished(const String& name, bool requeued);
 
