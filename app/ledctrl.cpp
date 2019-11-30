@@ -64,7 +64,7 @@ PinConfig APPLedCtrl::parsePinConfigString(String& pinStr) {
 void APPLedCtrl::init() {
     debug_i("APPLedCtrl::init");
 
-    _stepSync = new ClockCatchUp();
+    _stepSync = new StepSync();
 
     const PinConfig pins = APPLedCtrl::parsePinConfigString(app.cfg.general.pin_config);
 
@@ -137,7 +137,7 @@ void APPLedCtrl::updateLedCb(void* pTimerArg) {
 
 void APPLedCtrl::updateLed() {
     // arm next timer
-	_ledTimer.startOnce();
+    _ledTimer.startOnce();
 
     const bool animFinished = show();
 
@@ -216,6 +216,7 @@ void APPLedCtrl::onMasterClock(uint32_t stepsMaster) {
 
     // limit interval to sane values (just for safety)
     _timerInterval = std::min(std::max(_timerInterval, RGBWW_MINTIMEDIFF_US / 2u), static_cast<uint32_t>(RGBWW_MINTIMEDIFF_US * 1.5));
+    _ledTimer.setIntervalUs(_timerInterval);
     publishStatus();
 }
 
