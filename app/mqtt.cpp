@@ -225,7 +225,7 @@ void AppMqttClient::publishClockInterval(uint32_t curInterval) {
     publish(buildTopic("clock_interval"), msg, false);
 }
 
-void AppMqttClient::publishClockSlaveOffset(uint32_t offset) {
+void AppMqttClient::publishClockSlaveOffset(int offset) {
     String msg;
     msg += offset;
 

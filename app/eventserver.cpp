@@ -73,7 +73,7 @@ void EventServer::publishCurrentState(const ChannelOutput& raw, const HSVCT* pHs
     sendToClients(msg);
 }
 
-void EventServer::publishClockSlaveStatus(uint32_t offset, uint32_t interval) {
+void EventServer::publishClockSlaveStatus(int offset, uint32_t interval) {
     debug_d("EventServer::publishClockSlaveStatus: offset: %d | interval :%d\n", offset, interval);
 
     JsonRpcMessage msg("clock_slave_status");
