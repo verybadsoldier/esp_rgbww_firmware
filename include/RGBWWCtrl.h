@@ -33,34 +33,32 @@
 #define DEFAULT_API_SECURED false
 #define DEFAULT_API_PASSWORD "rgbwwctrl"
 #define DEFAULT_CONNECTION_RETRIES 10
-#define DEFAULT_OTA_URL "http://patrickjahns.github.io/esp_rgbww_firmware/release/version.json"
+#define DEFAULT_OTA_URL "http://rgbww.dronezone.de/release/version.json"
 
 // RGBWW related
 #define DEFAULT_COLORTEMP_WW 2700
 #define DEFAULT_COLORTEMP_CW 6000
 
-#define BLUEPIN 14
-#define GREENPIN 12
-#define REDPIN 13
-#define WWPIN 5
-#define CWPIN 4
-
 #define PWM_FREQUENCY 339
 #define RGBWW_USE_ESP_HWPWM
 
 // Debugging
-#define DEBUG_APP 0
+#define DEBUG_APP 1
 
 //includes
-#include <user_config.h>
-#include <debugutils.h>
 #include <RGBWWLed/RGBWWLed.h>
-#include <SmingCore/SmingCore.h>
+#ifdef ARCH_ESP8266
 #include <otaupdate.h>
+#endif
 #include <config.h>
 #include <ledctrl.h>
 #include <networking.h>
 #include <webserver.h>
+#include <mqtt.h>
+#include <eventserver.h>
+#include <jsonprocessor.h>
 #include <application.h>
+#include <stepsync.h>
+#include <arduinojson.h>
 
 #endif /* RGBWWCTRL_H_ */
