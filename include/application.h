@@ -19,10 +19,8 @@
  *
  *
  */
-#ifndef APPLICATION_H_
-#define APPLICATION_H_
+#pragma once
 
-static const char* fw_version = FWVERSION;
 static const char* fw_git_version = GITVERSION;
 static const char* fw_git_date = GITDATE;
 
@@ -30,46 +28,65 @@ static const char* fw_git_date = GITDATE;
 class Application {
 
 public:
-	void init();
+    ~Application();
 
-	void startServices();
-	void stopServices();
+    void init();
+    void initButtons();
 
-	void reset();
-	void restart();
-	bool delayedCMD(String cmd, int delay);
+    void startServices();
+    void stopServices();
 
-	void mountfs(int slot);
-	void umountfs();
+    void reset();
+    void restart();
+    bool delayedCMD(String cmd, int delay);
 
-	inline bool isFilesystemMounted() { return _fs_mounted; };
-	inline bool isFirstRun() { return _first_run; };
-	inline bool isTempBoot() { return _bootmode == MODE_TEMP_ROM; };
-	inline int getRomSlot() { return _romslot; };
-	inline int getBootMode() { return _bootmode; };
-	void switchRom();
+    void mountfs(int slot);
+    void umountfs();
+
+    inline bool isFilesystemMounted() { return _fs_mounted; };
+    inline bool isFirstRun() { return _first_run; };
+#ifdef ARCH_ESP8266
+    inline bool isTempBoot() { return _bootmode == MODE_TEMP_ROM; };
+#else
+    bool isTempBoot() { return false; };
+#endif
+    inline int getRomSlot() { return _romslot; };
+    inline int getBootMode() { return _bootmode; };
+    void switchRom();
+
+    void onCommandRelay(const String& method, const JsonObject& json);
+    void onWifiConnected(const String& ssid);
+    void onButtonTogglePressed(int pin);
+
+    uint32_t getUptime();
+    void uptimeCounter();
 
 public:
-	AppWIFI network;
-	ApplicationWebserver webserver;
-	APPLedCtrl rgbwwctrl;
-	ApplicationOTA ota;
-	ApplicationSettings cfg;
+    AppWIFI network;
+    ApplicationWebserver webserver;
+    APPLedCtrl rgbwwctrl;
+#ifdef ARCH_ESP8266
+    ApplicationOTA ota;
+#endif
+    ApplicationSettings cfg;
+    EventServer eventserver;
+    AppMqttClient mqttclient;
+    JsonProcessor jsonproc;
+    NtpClient* pNtpclient = nullptr;
 
 private:
-	void loadbootinfo();
+    void loadbootinfo();
 
-private:
+    Timer _systimer;
+    int _bootmode = 0;
+    int _romslot = 0;
+    bool _first_run = false;
+    bool _fs_mounted = false;
+    bool _run_after_ota = false;
 
-	Timer _systimer;
-	int _bootmode = 0;
-	int _romslot = 0;
-	bool _first_run = false;
-	bool _fs_mounted = false;
-	bool _run_after_ota = false;
-
+    Timer _uptimetimer;
+    uint32_t _uptimeMinutes;
+    std::array<int, 17> _lastToggles;
 };
 // forward declaration for global vars
 extern Application app;
-
-#endif // APPLICATION_H_

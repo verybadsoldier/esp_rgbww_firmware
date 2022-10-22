@@ -22,48 +22,68 @@
 #ifndef APP_WEBSERVER_H_
 #define APP_WEBSERVER_H_
 
+#include <RGBWWLed/RGBWWLedColor.h>
+
 enum API_CODES {
-	API_SUCCESS = 0,
-	API_BAD_REQUEST = 1,
-	API_MISSING_PARAM = 2,
-	API_UNAUTHORIZED = 3,
-	API_UPDATE_IN_PROGRESS = 4,
+    API_SUCCESS = 0,
+    API_BAD_REQUEST = 1,
+    API_MISSING_PARAM = 2,
+    API_UNAUTHORIZED = 3,
+    API_UPDATE_IN_PROGRESS = 4,
 };
 
 class ApplicationWebserver: private HttpServer {
 public:
-	ApplicationWebserver();
-	virtual ~ApplicationWebserver() {};
+    ApplicationWebserver();
+    virtual ~ApplicationWebserver() {};
 
-	void start();
-	void stop();
-	void init();
-	inline bool isRunning() { return _running; };
+    void start();
+    void stop();
+    void init();
+    inline bool isRunning() { return _running; };
 
-	String getApiCodeMsg(API_CODES code);
-
-private:
-	bool _init = false;
-	bool _running = false;
+    String getApiCodeMsg(API_CODES code);
 
 private:
-	bool authenticated(HttpRequest &request, HttpResponse &response);
-	void onFile(HttpRequest &request, HttpResponse &response);
-	void onIndex(HttpRequest &request, HttpResponse &response);
-	void onWebapp(HttpRequest &request, HttpResponse &response);
-	void onConfig(HttpRequest &request, HttpResponse &response);
-	void onInfo(HttpRequest &request, HttpResponse &response);
-	void onColor(HttpRequest &request, HttpResponse &response);
-	void onAnimation(HttpRequest &request, HttpResponse &response);
-	void onNetworks(HttpRequest &request, HttpResponse &response);
-	void onScanNetworks(HttpRequest &request, HttpResponse &response);
-	void onSystemReq(HttpRequest &request, HttpResponse &response);
-	void onUpdate(HttpRequest &request, HttpResponse &response);
-	void onConnect(HttpRequest &request, HttpResponse &response);
-	void generate204(HttpRequest &request, HttpResponse &response);
-	void onPing(HttpRequest &request, HttpResponse &response);
-	void sendApiResponse(HttpResponse &response, JsonObjectStream* stream, int code = 200);
-	void sendApiCode(HttpResponse &response, API_CODES code, String msg = "");
+
+    bool _init = false;
+    bool _running = false;
+    unsigned _minimumHeap = 8000;
+    unsigned _minimumHeapAccept = 8000;
+
+    bool authenticated(HttpRequest &request, HttpResponse &response);
+    bool authenticateExec(HttpRequest &request, HttpResponse &response);
+
+    void onFile(HttpRequest &request, HttpResponse &response);
+    void onIndex(HttpRequest &request, HttpResponse &response);
+    void onWebapp(HttpRequest &request, HttpResponse &response);
+    void onConfig(HttpRequest &request, HttpResponse &response);
+    void onInfo(HttpRequest &request, HttpResponse &response);
+    void onColor(HttpRequest &request, HttpResponse &response);
+    void onNetworks(HttpRequest &request, HttpResponse &response);
+    void onScanNetworks(HttpRequest &request, HttpResponse &response);
+    void onSystemReq(HttpRequest &request, HttpResponse &response);
+    void onUpdate(HttpRequest &request, HttpResponse &response);
+    void onConnect(HttpRequest &request, HttpResponse &response);
+    void onPing(HttpRequest &request, HttpResponse &response);
+    void onStop(HttpRequest &request, HttpResponse &response);
+    void onSkip(HttpRequest &request, HttpResponse &response);
+    void onPause(HttpRequest &request, HttpResponse &response);
+    void onContinue(HttpRequest &request, HttpResponse &response);
+    void onBlink(HttpRequest &request, HttpResponse &response);
+    void onToggle(HttpRequest &request, HttpResponse &response);
+
+    void onColorGet(HttpRequest &request, HttpResponse &response);
+    void onColorPost(HttpRequest &request, HttpResponse &response);
+    bool onColorPostCmd(JsonObject& root, String& errorMsg);
+
+    void sendApiResponse(HttpResponse &response, JsonObjectStream* stream, int code = 200);
+    void sendApiCode(HttpResponse &response, API_CODES code, String msg = "");
+
+    bool checkHeap(HttpResponse &response);
+
+    static bool isPrintable(String& str);
+
 };
 
 #endif // APP_WEBSERVER_H_

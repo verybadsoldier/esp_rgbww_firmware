@@ -25,151 +25,235 @@
 Application app;
 
 // Sming Framework INIT method - called during boot
-void init() {
+void GDB_IRAM_ATTR init() {
 
-	Serial.begin(SERIAL_BAUD_RATE); // 115200 by default
-	Serial.systemDebugOutput(false); // don`t show system debug messages
-	//System.setCpuFrequencye(CF_160MHz);
+    Serial.begin(SERIAL_BAUD_RATE); // 115200 by default
+    Serial.systemDebugOutput(true); // Debug output to serial
+    //System.setCpuFrequencye(CF_160MHz);
 
-	// set CLR pin to input
-	pinMode(CLEAR_PIN, INPUT);
+    // set CLR pin to input
+    pinMode(CLEAR_PIN, INPUT);
 
-	// seperated application init
-	app.init();
+    // seperated application init
+    app.init();
 
-	// Run Services on system ready
-	System.onReady(SystemReadyDelegate(&Application::startServices, &app));
+    // Run Services on system ready
+    System.onReady(SystemReadyDelegate(&Application::startServices, &app));
+}
+
+Application::~Application() {
+    if (pNtpclient != nullptr) {
+        delete pNtpclient;
+        pNtpclient = nullptr;
+    }
+}
+
+void Application::uptimeCounter() {
+    ++_uptimeMinutes;
 }
 
 void Application::init() {
+    debug_i("RGBWW Controller v %s\r\n", fw_git_version);
 
-	Serial.printf("RGBWW Controller v %s\r\n", fw_version);
-	//load settings
-	Serial.println();
+    //load settings
+    _uptimetimer.initializeMs(60000, TimerDelegate(&Application::uptimeCounter, this)).start();
 
-	// load boot information
-	uint8 bootmode, bootslot;
-	if (rboot_get_last_boot_mode(&bootmode)) {
-		if (bootmode == MODE_TEMP_ROM) {
-			debugapp("Application::init - booting after OTA");
-		} else {
-			debugapp("Application::init - normal boot");
-		}
-		_bootmode = bootmode;
-	}
+#ifdef ARCH_ESP8266
+    // load boot information
+    uint8 bootmode, bootslot;
+    if (rboot_get_last_boot_mode(&bootmode)) {
+        if (bootmode == MODE_TEMP_ROM) {
+            debug_i("Application::init - booting after OTA");
+        } else {
+            debug_i("Application::init - normal boot");
+        }
+        _bootmode = bootmode;
+    }
 
-	if (rboot_get_last_boot_rom(&bootslot)) {
-		_romslot = bootslot;
-	}
+    if (rboot_get_last_boot_rom(&bootslot)) {
+        _romslot = bootslot;
+    }
+#endif
 
-	// mount filesystem
-	mountfs(getRomSlot());
+    // mount filesystem
+    mountfs(getRomSlot());
 
-	// check if we need to reset settings
-	if (digitalRead(CLEAR_PIN) < 1) {
-		Serial.println("CLR button low - resetting settings");
-		cfg.reset();
-		network.forget_wifi();
-	}
+    // check if we need to reset settings
+    if (digitalRead(CLEAR_PIN) < 1) {
+        debug_i("CLR button low - resetting settings");
+        cfg.reset();
+        network.forgetWifi();
+    }
 
-	// check ota
-	ota.checkAtBoot();
+    // check ota
+#ifdef ARCH_ESP8266
+    ota.checkAtBoot();
+#endif
 
-	// load config
-	if (cfg.exist()) {
-		cfg.load();
-	} else {
-		debugapp("Application::init - first run");
-		_first_run = true;
-		cfg.save();
-	}
+    // load config
+    if (cfg.exist()) {
+        cfg.load();
+    } else {
+        debug_i("Application::init - first run");
+        _first_run = true;
+        cfg.save();
+    }
 
-	// initialize led ctrl
-	rgbwwctrl.init();
+    mqttclient.init();
 
-	// initialize networking
-	network.init();
+    // initialize led ctrl
+    rgbwwctrl.init();
 
-	// initialize webserver
-	app.webserver.init();
+    initButtons();
 
+    // initialize networking
+    network.init();
+
+    // initialize webserver
+    app.webserver.init();
+
+    if (cfg.ntp.enabled) {
+        String server = cfg.ntp.server.length() > 0 ? cfg.ntp.server : NTP_DEFAULT_SERVER;
+        unsigned interval = cfg.ntp.interval > 0 ? cfg.ntp.interval : NTP_DEFAULT_AUTOQUERY_SECONDS;
+        debug_i("Enabling NTP server '%s' with interval %d s", server.c_str(), interval);
+        pNtpclient = new NtpClient(server, interval);
+    }
+    else {
+        debug_i("Disabling NTP server");
+    }
+}
+
+void Application::initButtons() {
+    if (cfg.general.buttons_config.length() <= 0)
+        return;
+
+    debug_i("Configuring buttons using string: '%s'", cfg.general.buttons_config.c_str());
+
+    Vector<String> buttons;
+    splitString(cfg.general.buttons_config, ',', buttons);
+
+    for(int i=0; i < buttons.count(); ++i) {
+        if (buttons[i].length() == 0)
+            continue;
+
+        int pin = buttons[i].toInt();
+        if (pin >= _lastToggles.size()) {
+            debug_i("Pin %d is invalid. Max is %d", pin, _lastToggles.size() - 1);
+            continue;
+        }
+        debug_i("Configuring button: '%s'", buttons[i].c_str());
+
+        _lastToggles[pin] = 0ul;
+
+        attachInterrupt(pin,  std::bind(&Application::onButtonTogglePressed, this, pin), FALLING);
+        pinMode(pin, INPUT_PULLUP);
+    }
 }
 
 // Will be called when system initialization was completed
 void Application::startServices() {
-	debugapp("Application::startServices");
-	rgbwwctrl.start();
-	webserver.start();
+    debug_i("Application::startServices");
+    rgbwwctrl.start();
+    webserver.start();
 
+    if (cfg.events.server_enabled)
+        eventserver.start();
 }
 
 void Application::restart() {
-	Serial.println("Restarting");
-	if (network.isApActive()) {
-		network.stopAp();
-		_systimer.initializeMs(500, TimerDelegate(&Application::restart, this)).startOnce();
-	}
-	System.restart();
+    debug_i("Application::restart");
+    if (network.isApActive()) {
+        network.stopAp();
+        _systimer.initializeMs(500, TimerDelegate(&Application::restart, this)).startOnce();
+    }
+    System.restart();
 }
 
 void Application::reset() {
-	debugapp("Application::reset");
-	Serial.println("resetting controller");
-	cfg.reset();
-	rgbwwctrl.color_reset();
-	network.forget_wifi();
-	delay(500);
-	restart();
+    debug_i("Application::reset");
+    cfg.reset();
+    rgbwwctrl.colorReset();
+    network.forgetWifi();
+    delay(500);
+    restart();
 }
 
 bool Application::delayedCMD(String cmd, int delay) {
-	debugapp("Application::delayedCMD cmd: %s - delay: %i", cmd.c_str(), delay);
-	if (cmd.equals("reset")) {
-		_systimer.initializeMs(delay, TimerDelegate(&Application::reset, this)).startOnce();
-	} else if (cmd.equals("restart")) {
-		_systimer.initializeMs(delay, TimerDelegate(&Application::restart, this)).startOnce();
-	} else if (cmd.equals("stopap")) {
-		network.stopAp(2000);
-	} else if (cmd.equals("forget_wifi")) {
-		_systimer.initializeMs(delay, TimerDelegate(&AppWIFI::forget_wifi, &network)).startOnce();
-	} else if (cmd.equals("test_channels")) {
-		rgbwwctrl.test_channels();
-	} else if (cmd.equals("switch_rom")) {
-		switchRom();
-		_systimer.initializeMs(delay, TimerDelegate(&Application::restart, this)).startOnce();
-	} else {
-		return false;
-	}
-	return true;
+    debug_i("Application::delayedCMD cmd: %s - delay: %i", cmd.c_str(), delay);
+    if (cmd.equals("reset")) {
+        _systimer.initializeMs(delay, TimerDelegate(&Application::reset, this)).startOnce();
+    } else if (cmd.equals("restart")) {
+        _systimer.initializeMs(delay, TimerDelegate(&Application::restart, this)).startOnce();
+    } else if (cmd.equals("stopap")) {
+        network.stopAp(2000);
+    } else if (cmd.equals("forget_wifi")) {
+        _systimer.initializeMs(delay, TimerDelegate(&AppWIFI::forgetWifi, &network)).startOnce();
+    } else if (cmd.equals("switch_rom")) {
+        switchRom();
+        _systimer.initializeMs(delay, TimerDelegate(&Application::restart, this)).startOnce();
+    } else {
+        return false;
+    }
+    return true;
 }
 
 void Application::mountfs(int slot) {
-	debugapp("Application::mountfs rom slot: %i", slot);
-	if (slot == 0) {
-		debugapp("Application::mountfs trying to mount spiffs at %x, length %d",
-				RBOOT_SPIFFS_0 + 0x40200000, SPIFF_SIZE);
-		spiffs_mount_manual(RBOOT_SPIFFS_0 + 0x40200000, SPIFF_SIZE);
-	} else {
-		debugapp("Application::mountfs trying to mount spiffs at %x, length %d",
-				RBOOT_SPIFFS_1 + 0x40200000, SPIFF_SIZE);
-		spiffs_mount_manual(RBOOT_SPIFFS_1 + 0x40200000, SPIFF_SIZE);
-	}
-	_fs_mounted = true;
+    debug_i("Application::mountfs rom slot: %i", slot);
+    if (slot == 0) {
+        debug_i("Application::mountfs trying to mount spiffs at %x, length %d",
+                RBOOT_SPIFFS_0, SPIFF_SIZE);
+        spiffs_mount_manual(RBOOT_SPIFFS_0, SPIFF_SIZE);
+    } else {
+        debug_i("Application::mountfs trying to mount spiffs at %x, length %d",
+                RBOOT_SPIFFS_1, SPIFF_SIZE);
+        spiffs_mount_manual(RBOOT_SPIFFS_1, SPIFF_SIZE);
+    }
+    _fs_mounted = true;
 }
 
 void Application::umountfs() {
-	debugapp("Application::umountfs");
-	spiffs_unmount();
-	_fs_mounted = false;
+    debug_i("Application::umountfs");
+    spiffs_unmount();
+    _fs_mounted = false;
 }
 
 void Application::switchRom() {
-	debugapp("Application::switchRom");
-	int slot = getRomSlot();
-	if (slot == 0) {
-		slot = 1;
-	} else {
-		slot = 0;
-	}
-	rboot_set_current_rom(slot);
+    debug_i("Application::switchRom");
+    int slot = getRomSlot();
+    if (slot == 0) {
+        slot = 1;
+    } else {
+        slot = 0;
+    }
+#ifdef ARCH_ESP8266
+    rboot_set_current_rom(slot);
+#endif
+}
+
+void Application::onWifiConnected(const String& ssid) {
+    debug_i("Application::onWifiConnected");
+}
+
+void Application::onCommandRelay(const String& method, const JsonObject& params) {
+    if (!cfg.sync.cmd_master_enabled)
+        return;
+
+    mqttclient.publishCommand(method, params);
+}
+
+void Application::onButtonTogglePressed(int pin) {
+    unsigned long now = millis();
+    unsigned long diff = now - _lastToggles[pin];
+    if (diff > cfg.general.buttons_debounce_ms) {  // debounce
+        debug_i("Button %d pressed - toggle", pin);
+        rgbwwctrl.toggle();
+        _lastToggles[pin] = now;
+    }
+    else {
+        debug_d("Button press ignored by debounce. Diff: %d Debounce: %d", diff, cfg.general.buttons_debounce_ms);
+    }
+}
+
+uint32_t Application::getUptime() {
+    return _uptimeMinutes * 60u;
 }

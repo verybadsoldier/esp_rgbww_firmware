@@ -20,1140 +20,1068 @@
  *
  */
 #include <RGBWWCtrl.h>
-#include <Services/WebHelpers/base64.h>
+#include <Network/WebHelpers/base64.h>
+
 
 ApplicationWebserver::ApplicationWebserver() {
-	_running = false;
+    _running = false;
+
+    // keep some heap space free
+    // value is a good guess and tested to not crash when issuing multiple parallel requests
+    HttpServerSettings settings;
+    settings.minHeapSize = _minimumHeapAccept;
+    settings.keepAliveSeconds = 5; // do not close instantly when no transmission occurs. some clients are a bit slow (like FHEM)
+    configure(settings);
+
+    // workaround for bug in Sming 3.5.0
+    // https://github.com/SmingHub/Sming/issues/1236
+    setBodyParser("*", bodyToStringParser);
 }
 
 void ApplicationWebserver::init() {
-	setDefaultHandler(HttpPathDelegate(&ApplicationWebserver::onFile, this));
-	enableHeaderProcessing("Authorization");
-	addPath("/", HttpPathDelegate(&ApplicationWebserver::onIndex, this));
-	addPath("/webapp", HttpPathDelegate(&ApplicationWebserver::onWebapp, this));
-	addPath("/config", HttpPathDelegate(&ApplicationWebserver::onConfig, this));
-	addPath("/info", HttpPathDelegate(&ApplicationWebserver::onInfo, this));
-	addPath("/color", HttpPathDelegate(&ApplicationWebserver::onColor, this));
-	addPath("/animation", HttpPathDelegate(&ApplicationWebserver::onAnimation, this));
-	addPath("/networks", HttpPathDelegate(&ApplicationWebserver::onNetworks, this));
-	addPath("/scan_networks", HttpPathDelegate(&ApplicationWebserver::onScanNetworks, this));
-	addPath("/system", HttpPathDelegate(&ApplicationWebserver::onSystemReq, this));
-	addPath("/update", HttpPathDelegate(&ApplicationWebserver::onUpdate, this));
-	addPath("/connect", HttpPathDelegate(&ApplicationWebserver::onConnect, this));
-	addPath("/generate_204", HttpPathDelegate(&ApplicationWebserver::generate204, this));
-	addPath("/ping", HttpPathDelegate(&ApplicationWebserver::onPing, this));
-	_init = true;
+    paths.setDefault(HttpPathDelegate(&ApplicationWebserver::onFile, this));
+    paths.set("/", HttpPathDelegate(&ApplicationWebserver::onIndex, this));
+    paths.set("/webapp", HttpPathDelegate(&ApplicationWebserver::onWebapp, this));
+    paths.set("/config", HttpPathDelegate(&ApplicationWebserver::onConfig, this));
+    paths.set("/info", HttpPathDelegate(&ApplicationWebserver::onInfo, this));
+    paths.set("/color", HttpPathDelegate(&ApplicationWebserver::onColor, this));
+    paths.set("/networks", HttpPathDelegate(&ApplicationWebserver::onNetworks, this));
+    paths.set("/scan_networks", HttpPathDelegate(&ApplicationWebserver::onScanNetworks, this));
+    paths.set("/system", HttpPathDelegate(&ApplicationWebserver::onSystemReq, this));
+    paths.set("/update", HttpPathDelegate(&ApplicationWebserver::onUpdate, this));
+    paths.set("/connect", HttpPathDelegate(&ApplicationWebserver::onConnect, this));
+    paths.set("/ping", HttpPathDelegate(&ApplicationWebserver::onPing, this));
+
+    // animation controls
+    paths.set("/stop", HttpPathDelegate(&ApplicationWebserver::onStop, this));
+    paths.set("/skip", HttpPathDelegate(&ApplicationWebserver::onSkip, this));
+    paths.set("/pause", HttpPathDelegate(&ApplicationWebserver::onPause, this));
+    paths.set("/continue", HttpPathDelegate(&ApplicationWebserver::onContinue, this));
+    paths.set("/blink", HttpPathDelegate(&ApplicationWebserver::onBlink, this));
+
+    paths.set("/toggle", HttpPathDelegate(&ApplicationWebserver::onToggle, this));
+    _init = true;
 }
 
 void ApplicationWebserver::start() {
-	if (_init == false) {
-		init();
-	}
-	listen(80);
-	_running = true;
+    if (_init == false) {
+        init();
+    }
+    listen(80);
+    _running = true;
 }
 
 void ApplicationWebserver::stop() {
-	close();
-	_running = false;
+    close();
+    _running = false;
+}
+
+bool ICACHE_FLASH_ATTR ApplicationWebserver::authenticateExec(HttpRequest &request, HttpResponse &response) {
+    if (!app.cfg.general.api_secured)
+        return true;
+
+    debug_d("ApplicationWebserver::authenticated - checking...");
+
+    String userPass = request.getHeader("Authorization");
+    if (userPass == String::nullstr) {
+        debug_d("ApplicationWebserver::authenticated - No auth header");
+        return false; // header missing
+    }
+
+    debug_d("ApplicationWebserver::authenticated Auth header: %s", userPass.c_str());
+
+    // header in form of: "Basic MTIzNDU2OmFiY2RlZmc="so the 6 is to get to beginning of 64 encoded string
+    userPass = userPass.substring(6); //cut "Basic " from start
+    if (userPass.length() > 50) {
+        return false;
+    }
+
+    userPass = base64_decode(userPass);
+    debug_d("ApplicationWebserver::authenticated Password: '%s' - Expected password: '%s'", userPass.c_str(), app.cfg.general.api_password.c_str());
+    if (userPass.endsWith(app.cfg.general.api_password)) {
+        return true;
+    }
+
+    return false;
 }
 
 bool ICACHE_FLASH_ATTR ApplicationWebserver::authenticated(HttpRequest &request, HttpResponse &response) {
-	if (!app.cfg.general.api_secured)
-		return true;
-	String userPass = request.getHeader("Authorization");
-	// header in form of: "Basic MTIzNDU2OmFiY2RlZmc="so the 6 is to get to beginning of 64 encoded string
-	int headerLength = userPass.length() - 6;
-	if (headerLength > 50) {
-		return false;
-	}
+    bool authenticated = authenticateExec(request, response);
 
-	unsigned char decbuf[headerLength]; // buffer for the decoded string
-	int outlen = base64_decode(headerLength, userPass.c_str() + 6, headerLength, decbuf);
-	decbuf[outlen] = 0;
-	userPass = String((char*) decbuf);
-	if (userPass.endsWith(app.cfg.general.api_password)) {
-		return true;
-	}
+    if (!authenticated) {
+        response.code = 401;
+        response.setHeader("WWW-Authenticate", "Basic realm=\"RGBWW Server\"");
+        response.setHeader("401 wrong credentials", "wrong credentials");
+        response.setHeader("Connection", "close");
+    }
 
-	response.authorizationRequired();
-	response.setHeader("WWW-Authenticate", "Basic realm=\"RGBWW Server\"");
-	response.setHeader("401 wrong credentials", "wrong credentials");
-	response.setHeader("Connection", "close");
-	return false;
-
+    return authenticated;
 }
 
 String ApplicationWebserver::getApiCodeMsg(API_CODES code) {
-	switch (code) {
-	case API_CODES::API_MISSING_PARAM:
-		return String("missing param");
-	case API_CODES::API_UNAUTHORIZED:
-		return String("authorization required");
-	case API_CODES::API_UPDATE_IN_PROGRESS:
-		return String("update in progress");
-	default:
-		return String("bad request");
-	}
+    switch (code) {
+    case API_CODES::API_MISSING_PARAM:
+        return String("missing param");
+    case API_CODES::API_UNAUTHORIZED:
+        return String("authorization required");
+    case API_CODES::API_UPDATE_IN_PROGRESS:
+        return String("update in progress");
+    default:
+        return String("bad request");
+    }
 }
 
 void ApplicationWebserver::sendApiResponse(HttpResponse &response, JsonObjectStream* stream, int code /* = 200 */) {
-	response.setAllowCrossDomainOrigin("*");
-	if (code != 200) {
-		response.badRequest();
-	}
-	response.sendJsonObject(stream);
+    if (!checkHeap(response)) {
+        delete stream;
+        return;
+    }
+
+    response.setAllowCrossDomainOrigin("*");
+    if (code != 200) {
+        response.code = 400;
+    }
+    response.sendDataStream(stream, MIME_JSON);
 }
 
 void ApplicationWebserver::sendApiCode(HttpResponse &response, API_CODES code, String msg /* = "" */) {
-	JsonObjectStream* stream = new JsonObjectStream();
-	JsonObject& json = stream->getRoot();
-	if (msg == "") {
-		msg = getApiCodeMsg(code);
-	}
-	if (code == API_CODES::API_SUCCESS) {
-		json["success"] = true;
-		sendApiResponse(response, stream, 200);
-	} else {
-		json["error"] = msg;
-		sendApiResponse(response, stream, 400);
-	}
-
+    JsonObjectStream* stream = new JsonObjectStream();
+    JsonObject json = stream->getRoot();
+    if (msg == "") {
+        msg = getApiCodeMsg(code);
+    }
+    if (code == API_CODES::API_SUCCESS) {
+        json["success"] = true;
+        sendApiResponse(response, stream, 200);
+    } else {
+        json["error"] = msg;
+        sendApiResponse(response, stream, 400);
+    }
 }
 
 void ApplicationWebserver::onFile(HttpRequest &request, HttpResponse &response) {
 
-	if (!authenticated(request, response)) {
-		return;
-	}
+    if (!authenticated(request, response)) {
+        return;
+    }
 
-	if (app.ota.isProccessing()) {
-		response.setContentType("text/plain");
-		response.setStatusCode(503, "SERVICE UNAVAILABLE");
-		response.sendString("OTA in progress");
-		return;
-	}
+#ifdef ARCH_ESP8266
+    if (app.ota.isProccessing()) {
+        response.setContentType("text/plain");
+        response.code = 503;
+        response.sendString("OTA in progress");
+        return;
+    }
+#endif
 
-	if (!app.isFilesystemMounted()) {
-		response.setContentType("text/plain");
-		response.setStatusCode(500, "INTERNAL SERVER ERROR");
-		response.sendString("No filesystem mounted");
-		return;
-	}
+    if (!app.isFilesystemMounted()) {
+        response.setContentType("text/plain");
+        response.code = 500;
+        response.sendString("No filesystem mounted");
+        return;
+    }
 
-	String file = request.getPath();
-	if (file[0] == '/')
-		file = file.substring(1);
-	if (file[0] == '.') {
-		response.forbidden();
-		return;
-	}
+    String file = request.uri.Path;
+    if (file[0] == '/')
+        file = file.substring(1);
+    if (file[0] == '.') {
+        response.code = HTTP_STATUS_FORBIDDEN;
+        return;
+    }
 
-	if (!fileExist(file) && !fileExist(file + ".gz") && WifiAccessPoint.isEnabled()) {
-		//if accesspoint is active and we couldn`t find the file - redirect to index
-		debugapp("ApplicationWebserver::onFile redirecting");
-		response.redirect("http://" + WifiAccessPoint.getIP().toString() + "/webapp");
-	} else {
-		response.setCache(86400, true); // It's important to use cache for better performance.
-		response.sendFile(file);
-	}
+    if (!fileExist(file) && !fileExist(file + ".gz") && WifiAccessPoint.isEnabled()) {
+        //if accesspoint is active and we couldn`t find the file - redirect to index
+        debug_d("ApplicationWebserver::onFile redirecting");
+        response.headers[HTTP_HEADER_LOCATION] = "http://" + WifiAccessPoint.getIP().toString() + "/webapp";
+    } else {
+        response.setCache(86400, true); // It's important to use cache for better performance.
+        response.sendFile(file);
+    }
 
 }
 
 void ApplicationWebserver::onIndex(HttpRequest &request, HttpResponse &response) {
 
-	if (!authenticated(request, response)) {
-		return;
-	}
+    if (!authenticated(request, response)) {
+        return;
+    }
 
-	if (app.ota.isProccessing()) {
-		response.setContentType("text/plain");
-		response.setStatusCode(503, "SERVICE UNAVAILABLE");
-		response.sendString("OTA in progress");
-		return;
-	}
+#ifdef ARCH_ESP8266
+    if (app.ota.isProccessing()) {
+        response.setContentType("text/plain");
+        response.code = 503;
+        response.sendString("OTA in progress");
+        return;
+    }
+#endif
 
-
-
-	if (WifiAccessPoint.isEnabled()) {
-		response.redirect("http://" + WifiAccessPoint.getIP().toString() + "/webapp");
-	} else {
-		response.redirect("http://" + WifiStation.getIP().toString() + "/webapp");
-	}
-
+    if (WifiAccessPoint.isEnabled()) {
+        response.headers[HTTP_HEADER_LOCATION] = "http://" + WifiAccessPoint.getIP().toString() + "/webapp";
+    } else {
+        response.headers[HTTP_HEADER_LOCATION] = "http://" + WifiStation.getIP().toString() + "/webapp";
+    }
+    response.code = 308;
 }
 
 void ApplicationWebserver::onWebapp(HttpRequest &request, HttpResponse &response) {
 
-	if (!authenticated(request, response)) {
-		return;
-	}
+    if (!authenticated(request, response)) {
+        return;
+    }
 
-	if (app.ota.isProccessing()) {
-		response.setContentType("text/plain");
-		response.setStatusCode(503, "SERVICE UNAVAILABLE");
-		response.sendString("OTA in progress");
-		return;
-	}
+#ifdef ARCH_ESP8266
+    if (app.ota.isProccessing()) {
+        response.setContentType("text/plain");
+        response.code = 503;
+        response.sendString("OTA in progress");
+        return;
+    }
+#endif
 
-	if (request.getRequestMethod() != RequestMethod::GET) {
-		response.badRequest();
-		return;
-	}
+    if (request.method != HTTP_GET) {
+        response.code = 400;
+        return;
+    }
 
-	if (!app.isFilesystemMounted()) {
-		response.setContentType("text/plain");
-		response.setStatusCode(500, "INTERNAL SERVER ERROR");
-		response.sendString("No filesystem mounted");
-		return;
-	}
-	if (!WifiStation.isConnected()) {
-		// not yet connected - serve initial settings page
-		response.sendFile("init.html");
-	} else {
-		// we are connected to ap - serve normal settings page
-		response.sendFile("index.html");
-	}
+    if (!app.isFilesystemMounted()) {
+        response.setContentType("text/plain");
+        response.code = 500;
+        response.sendString("No filesystem mounted");
+        return;
+    }
+    if (!WifiStation.isConnected()) {
+        // not yet connected - serve initial settings page
+        response.sendFile("init.html");
+    } else {
+        // we are connected to ap - serve normal settings page
+        response.sendFile("index.html");
+    }
+}
+
+bool ApplicationWebserver::checkHeap(HttpResponse &response) {
+    unsigned fh = system_get_free_heap_size();
+    if (fh < _minimumHeap) {
+        response.code = 429;
+        response.setHeader("Retry-After", "2");
+        return false;
+    }
+    return true;
 }
 
 void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response) {
+    if (!checkHeap(response))
+        return;
 
-	if (!authenticated(request, response)) {
-		return;
-	}
+    if (!authenticated(request, response)) {
+        return;
+    }
 
-	if (app.ota.isProccessing()) {
-		sendApiCode(response, API_CODES::API_UPDATE_IN_PROGRESS);
-		return;
-	}
+#ifdef ARCH_ESP8266
+    if (app.ota.isProccessing()) {
+        sendApiCode(response, API_CODES::API_UPDATE_IN_PROGRESS);
+        return;
+    }
+#endif
 
-	if (request.getRequestMethod() != RequestMethod::POST && request.getRequestMethod() != RequestMethod::GET) {
-		sendApiCode(response, API_CODES::API_BAD_REQUEST);
-		return;
-	}
+    if (request.method != HTTP_POST && request.method != HTTP_GET) {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not POST or GET request");
+        return;
+    }
 
-	if (request.getRequestMethod() == RequestMethod::POST) {
-		if (request.getBody() == NULL) {
+    if (request.method == HTTP_POST) {
+        String body = request.getBody();
+        if (body == NULL) {
 
-			sendApiCode(response, API_CODES::API_BAD_REQUEST);
-			return;
+            sendApiCode(response, API_CODES::API_BAD_REQUEST, "could not parse HTTP body");
+            return;
 
-		}
+        }
 
-		bool error = false;
-		String error_msg = getApiCodeMsg(API_CODES::API_BAD_REQUEST);
-		DynamicJsonBuffer jsonBuffer;
-		JsonObject& root = jsonBuffer.parseObject(request.getBody());
+        bool error = false;
+        String error_msg = getApiCodeMsg(API_CODES::API_BAD_REQUEST);
+        DynamicJsonDocument doc(CONFIG_MAX_LENGTH);
+        Json::deserialize(doc, body);
 
-		// remove comment for debugging
-		//root.prettyPrintTo(Serial);
+        // remove comment for debugging
+        //Json::serialize(doc, Serial, Json::Pretty);
 
-		bool ip_updated = false;
-		bool color_updated = false;
-		bool ap_updated = false;
-		if (!root.success()) {
-			sendApiCode(response, API_CODES::API_BAD_REQUEST);
-			return;
-		}
-		if (root["network"].success()) {
+        bool ip_updated = false;
+        bool color_updated = false;
+        bool ap_updated = false;
+        JsonObject root = doc.as<JsonObject>();
+        if (root.isNull()) {
+            sendApiCode(response, API_CODES::API_BAD_REQUEST, "no root object");
+            return;
+        }
 
-			if (root["network"]["connection"].success()) {
+        JsonObject jnet = root["network"];
+        if (!jnet.isNull()) {
 
-				if (root["network"]["connection"]["dhcp"].success()) {
+            JsonObject con = jnet["connection"];
+            if (!con.isNull()) {
+                ip_updated |= Json::getBoolTolerantChanged(con["dhcp"], app.cfg.network.connection.dhcp);
 
-					if (root["network"]["connection"]["dhcp"] != app.cfg.network.connection.dhcp) {
-						app.cfg.network.connection.dhcp = root["network"]["connection"]["dhcp"];
-						ip_updated = true;
-					}
+                if (!app.cfg.network.connection.dhcp) {
+                    //only change if dhcp is off - otherwise ignore
+                    IpAddress ip, netmask, gateway;
+                    const char* str;
+                    if (Json::getValue(con["ip"], str)) {
+                    	ip = str;
+                        if (!(ip == app.cfg.network.connection.ip)) {
+                            app.cfg.network.connection.ip = ip;
+                            ip_updated = true;
+                        }
+                    } else {
+                        error = true;
+                        error_msg = "missing ip";
+                    }
+                    if (Json::getValue(con["netmask"], str)) {
+                        netmask = str;
+                        if (!(netmask == app.cfg.network.connection.netmask)) {
+                            app.cfg.network.connection.netmask = netmask;
+                            ip_updated = true;
+                        }
+                    } else {
+                        error = true;
+                        error_msg = "missing netmask";
+                    }
+                    if (Json::getValue(con["gateway"], str)) {
+                        gateway = str;
+                        if (!(gateway == app.cfg.network.connection.gateway)) {
+                            app.cfg.network.connection.gateway = gateway;
+                            ip_updated = true;
+                        }
+                    } else {
+                        error = true;
+                        error_msg = "missing gateway";
+                    }
+
+                }
+
+            }
+            if (!jnet["ap"].isNull()) {
+
+            	String ssid;
+            	ap_updated |= Json::getValueChanged(jnet["ap"]["ssid"], app.cfg.network.ap.ssid);
+
+            	bool secured;
+                if (Json::getBoolTolerant(jnet["ap"]["secured"], secured)) {
+                    if (secured) {
+                        if (Json::getValueChanged(jnet["ap"]["password"], app.cfg.network.ap.password)) {
+							app.cfg.network.ap.secured = true;
+							ap_updated = true;
+                        } else {
+                            error = true;
+                            error_msg = "missing password for securing ap";
+                        }
+                    } else if (secured != app.cfg.network.ap.secured) {
+                        app.cfg.network.ap.secured = secured;
+                        ap_updated = true;
+                    }
+                }
+
+            }
+
+            JsonObject jmqtt = jnet["mqtt"];
+            if (!jmqtt.isNull()) {
+                //TODO: what to do if changed?
+            	Json::getBoolTolerant(jmqtt["enabled"], app.cfg.network.mqtt.enabled);
+            	Json::getValue(jmqtt["server"], app.cfg.network.mqtt.server);
+            	Json::getValue(jmqtt["port"], app.cfg.network.mqtt.port);
+            	Json::getValue(jmqtt["username"], app.cfg.network.mqtt.username);
+            	Json::getValue(jmqtt["password"], app.cfg.network.mqtt.password);
+            	Json::getValue(jmqtt["topic_base"], app.cfg.network.mqtt.topic_base);
+            }
+        }
+
+        JsonObject jcol = root["color"];
+        if (!jcol.isNull()) {
+
+        	JsonObject jhsv = jcol["hsv"];
+            if (!jhsv.isNull()) {
+            	color_updated |= Json::getValueChanged(jhsv["model"], app.cfg.color.hsv.model);
+            	color_updated |= Json::getValueChanged(jhsv["red"], app.cfg.color.hsv.red);
+            	color_updated |= Json::getValueChanged(jhsv["yellow"], app.cfg.color.hsv.yellow);
+            	color_updated |= Json::getValueChanged(jhsv["green"], app.cfg.color.hsv.green);
+            	color_updated |= Json::getValueChanged(jhsv["cyan"], app.cfg.color.hsv.cyan);
+            	color_updated |= Json::getValueChanged(jhsv["blue"], app.cfg.color.hsv.blue);
+            	color_updated |= Json::getValueChanged(jhsv["magenta"], app.cfg.color.hsv.magenta);
+            }
+        	color_updated |= Json::getValueChanged(jcol["outputmode"], app.cfg.color.outputmode);
+        	Json::getValue(jcol["startup_color"], app.cfg.color.startup_color);
+
+        	JsonObject jbri = jcol["brightness"];
+        	if (!jbri.isNull()) {
+        		color_updated |= Json::getValueChanged(jbri["red"], app.cfg.color.brightness.red);
+        		color_updated |= Json::getValueChanged(jbri["green"], app.cfg.color.brightness.green);
+        		color_updated |= Json::getValueChanged(jbri["blue"], app.cfg.color.brightness.blue);
+        		color_updated |= Json::getValueChanged(jbri["ww"], app.cfg.color.brightness.ww);
+        		color_updated |= Json::getValueChanged(jbri["cw"], app.cfg.color.brightness.cw);
+            }
+
+        	JsonObject jcoltemp = jcol["colortemp"];
+        	if (!jcoltemp.isNull()) {
+        		color_updated |= Json::getValueChanged(jcoltemp["ww"], app.cfg.color.colortemp.ww);
+        		color_updated |= Json::getValueChanged(jcoltemp["cw"], app.cfg.color.colortemp.cw);
+            }
+        }
+
+        JsonObject jsec = root["security"];
+        if (!jsec.isNull()) {
+        	bool secured;
+        	if (Json::getBoolTolerant(jsec["api_secured"], secured)) {
+                if (secured) {
+                    if (Json::getValue(jsec["api_password"], app.cfg.general.api_password)) {
+                        app.cfg.general.api_secured = secured;
+                    } else {
+                        error = true;
+                        error_msg = "missing password to secure settings";
+                    }
+                } else {
+                    app.cfg.general.api_secured = false;
+                    app.cfg.general.api_password = nullptr;
+                }
+
+            }
+        }
+
+        Json::getValue(root["ota"]["url"], app.cfg.general.otaurl);
+
+        JsonObject jgen = root["general"];
+        if (!jgen.isNull()) {
+        	Json::getValue(jgen["device_name"], app.cfg.general.device_name);
+        	Json::getValue(jgen["pin_config"], app.cfg.general.pin_config);
+        	Json::getValue(jgen["buttons_config"], app.cfg.general.buttons_config);
+        	Json::getValue(jgen["buttons_debounce_ms"], app.cfg.general.buttons_debounce_ms);
+        }
+
+        JsonObject jntp = root["ntp"];
+        if (!jntp.isNull()) {
+            Json::getBoolTolerant(jntp["enabled"], app.cfg.ntp.enabled);
+            Json::getValue(jntp["server"], app.cfg.ntp.server);
+            Json::getValue(jntp["interval"], app.cfg.ntp.interval);
+        }
+
+        JsonObject jsync = root["sync"];
+        if (!jsync.isNull()) {
+            Json::getBoolTolerant(jsync["clock_master_enabled"], app.cfg.sync.clock_master_enabled);
+        	Json::getValue(jsync["clock_master_interval"], app.cfg.sync.clock_master_interval);
+        	Json::getBoolTolerant(jsync["clock_slave_enabled"], app.cfg.sync.clock_slave_enabled);
+        	Json::getValue(jsync["clock_slave_topic"], app.cfg.sync.clock_slave_topic);
+        	Json::getBoolTolerant(jsync["cmd_master_enabled"], app.cfg.sync.cmd_master_enabled);
+        	Json::getBoolTolerant(jsync["cmd_slave_enabled"], app.cfg.sync.cmd_slave_enabled);
+        	Json::getValue(jsync["cmd_slave_topic"], app.cfg.sync.cmd_slave_topic);
+
+        	Json::getBoolTolerant(jsync["color_master_enabled"], app.cfg.sync.color_master_enabled);
+        	Json::getValue(jsync["color_master_interval_ms"], app.cfg.sync.color_master_interval_ms);
+        	Json::getBoolTolerant(jsync["color_slave_enabled"], app.cfg.sync.color_slave_enabled);
+        	Json::getValue(jsync["color_slave_topic"], app.cfg.sync.color_slave_topic);
+        }
+
+        JsonObject jevents = root["events"];
+        if (!jevents.isNull()) {
+        	Json::getValue(jevents["color_interval_ms"], app.cfg.events.color_interval_ms);
+        	Json::getValue(jevents["color_mininterval_ms"], app.cfg.events.color_mininterval_ms);
+        	Json::getBoolTolerant(jevents["server_enabled"], app.cfg.events.server_enabled);
+        	Json::getValue(jevents["transfin_interval_ms"], app.cfg.events.transfin_interval_ms);
+        }
+
+        app.cfg.sanitizeValues();
+
+        // update and save settings if we haven`t received any error until now
+        if (!error) {
+        	bool restart = root["restart"] | false;
+            if (ip_updated) {
+            	if (restart) {
+					debug_i("ApplicationWebserver::onConfig ip settings changed - rebooting");
+					app.delayedCMD("restart", 3000); // wait 3s to first send response
+					//json["data"] = "restart";
+                }
+            }
+            if (ap_updated) {
+				if (restart && WifiAccessPoint.isEnabled()) {
+					debug_i("ApplicationWebserver::onConfig wifiap settings changed - rebooting");
+					app.delayedCMD("restart", 3000); // wait 3s to first send response
+					//json["data"] = "restart";
+
 				}
-				if (!app.cfg.network.connection.dhcp) {
-					//only change if dhcp is off - otherwise ignore
-					IPAddress ip, netmask, gateway;
-					if (root["network"]["connection"]["ip"].success()) {
-						ip = root["network"]["connection"]["ip"].asString();
-						if (!(ip == app.cfg.network.connection.ip)) {
-							app.cfg.network.connection.ip = ip;
-							ip_updated = true;
-						}
-					} else {
-						error = true;
-						error_msg = "missing ip";
-					}
-					if (root["network"]["connection"]["netmask"].success()) {
-						netmask = root["network"]["connection"]["netmask"].asString();
-						if (!(netmask == app.cfg.network.connection.netmask)) {
-							app.cfg.network.connection.netmask = netmask;
-							ip_updated = true;
-						}
-					} else {
-						error = true;
-						error_msg = "missing netmask";
-					}
-					if (root["network"]["connection"]["gateway"].success()) {
-						gateway = root["network"]["connection"]["gateway"].asString();
-						if (!(gateway == app.cfg.network.connection.gateway)) {
-							app.cfg.network.connection.gateway = gateway;
-							ip_updated = true;
-						}
-					} else {
-						error = true;
-						error_msg = "missing gateway";
-					}
+            }
+            if (color_updated) {
+                debug_d("ApplicationWebserver::onConfig color settings changed - refreshing");
 
-				}
+                //refresh settings
+                app.rgbwwctrl.setup();
 
-			}
-			if (root["network"]["ap"].success()) {
+                //refresh current output
+                app.rgbwwctrl.refresh();
 
-				if (root["network"]["ap"]["ssid"].success()) {
-					if (root["network"]["ap"]["ssid"] != app.cfg.network.ap.ssid) {
-						app.cfg.network.ap.ssid = root["network"]["ap"]["ssid"].asString();
-						ap_updated = true;
-					}
-				}
-				if (root["network"]["ap"]["secured"].success()) {
-					if (root["network"]["ap"]["secured"].as<bool>()) {
-						if (root["network"]["ap"]["password"].success()) {
-							if (root["network"]["ap"]["password"] != app.cfg.network.ap.password) {
-								app.cfg.network.ap.secured = root["network"]["ap"]["secured"];
-								app.cfg.network.ap.password = root["network"]["ap"]["password"].asString();
-								ap_updated = true;
-							}
-						} else {
-							error = true;
-							error_msg = "missing password for securing ap";
-						}
-					} else if (root["network"]["ap"]["secured"] != app.cfg.network.ap.secured) {
-						app.cfg.network.ap.secured = root["network"]["ap"]["secured"];
-						ap_updated = true;
-					}
-				}
+            }
+            app.cfg.save();
+            sendApiCode(response, API_CODES::API_SUCCESS);
+        } else {
+            sendApiCode(response, API_CODES::API_MISSING_PARAM, error_msg);
+        }
 
-			}
-			if (root["network"]["mqtt"].success()) {
-				//TODO: what to do if changed?
-				if (root["network"]["mqtt"]["enabled"].success()) {
-					if (root["network"]["mqtt"]["enabled"] != app.cfg.network.mqtt.enabled) {
-						app.cfg.network.mqtt.enabled = root["network"]["mqtt"]["enabled"];
-					}
-				}
-				if (root["network"]["mqtt"]["server"].success()) {
-					if (root["network"]["mqtt"]["server"] != app.cfg.network.mqtt.server) {
-						app.cfg.network.mqtt.server = root["network"]["mqtt"]["server"].asString();
-					}
-				}
-				if (root["network"]["mqtt"]["port"].success()) {
-					if (root["network"]["mqtt"]["port"] != app.cfg.network.mqtt.port) {
-						app.cfg.network.mqtt.port = root["network"]["mqtt"]["port"];
-					}
-				}
-				if (root["network"]["mqtt"]["username"].success()) {
-					if (root["network"]["mqtt"]["username"] != app.cfg.network.mqtt.username) {
-						app.cfg.network.mqtt.username = root["network"]["mqtt"]["username"].asString();
-					}
-				}
-				if (root["network"]["mqtt"]["password"].success()) {
-					if (root["network"]["mqtt"]["password"] != app.cfg.network.mqtt.password) {
-						app.cfg.network.mqtt.password = root["network"]["mqtt"]["password"].asString();
-					}
-				}
-			}
-		}
+    } else {
+        JsonObjectStream* stream = new JsonObjectStream(CONFIG_MAX_LENGTH);
+        JsonObject json = stream->getRoot();
+        // returning settings
+        JsonObject net = json.createNestedObject("network");
+        JsonObject con = net.createNestedObject("connection");
+        con["dhcp"] = WifiStation.isEnabledDHCP();
 
-		if (root["color"].success()) {
+        //con["ip"] = WifiStation.getIP().toString();
+        //con["netmask"] = WifiStation.getNetworkMask().toString();
+        //con["gateway"] = WifiStation.getNetworkGateway().toString();
 
-			if (root["color"]["hsv"].success()) {
-				if (root["color"]["hsv"]["model"].success()) {
-					if (root["color"]["hsv"]["model"] != app.cfg.color.hsv.model) {
-						app.cfg.color.hsv.model = root["color"]["hsv"]["model"].as<int>();
-						color_updated = true;
-					}
-				}
-				if (root["color"]["hsv"]["red"].success()) {
-					if (root["color"]["hsv"]["red"].as<float>() != app.cfg.color.hsv.red) {
-						app.cfg.color.hsv.red = root["color"]["hsv"]["red"].as<float>();
-						color_updated = true;
-					}
-				}
-				if (root["color"]["hsv"]["yellow"].success()) {
-					if (root["color"]["hsv"]["yellow"].as<float>() != app.cfg.color.hsv.yellow) {
-						app.cfg.color.hsv.yellow = root["color"]["hsv"]["yellow"].as<float>();
-						color_updated = true;
-					}
-				}
-				if (root["color"]["hsv"]["green"].success()) {
-					if (root["color"]["hsv"]["green"].as<float>() != app.cfg.color.hsv.green) {
-						app.cfg.color.hsv.green = root["color"]["hsv"]["green"].as<float>();
-						color_updated = true;
-					}
-				}
-				if (root["color"]["hsv"]["cyan"].success()) {
-					if (root["color"]["hsv"]["cyan"].as<float>() != app.cfg.color.hsv.cyan) {
-						app.cfg.color.hsv.cyan = root["color"]["hsv"]["cyan"].as<float>();
-						color_updated = true;
-					}
-				}
-				if (root["color"]["hsv"]["blue"].success()) {
-					if (root["color"]["hsv"]["blue"].as<float>() != app.cfg.color.hsv.blue) {
-						app.cfg.color.hsv.blue = root["color"]["hsv"]["blue"].as<float>();
-						color_updated = true;
-					}
-				}
-				if (root["color"]["hsv"]["magenta"].success()) {
-					if (root["color"]["hsv"]["magenta"].as<float>() != app.cfg.color.hsv.magenta) {
-						app.cfg.color.hsv.magenta = root["color"]["hsv"]["magenta"].as<float>();
-						color_updated = true;
-					}
-				}
-			}
-			if (root["color"]["outputmode"].success()) {
-				if (root["color"]["outputmode"] != app.cfg.color.outputmode) {
-					app.cfg.color.outputmode = root["color"]["outputmode"].as<int>();
-					color_updated = true;
-				}
-			}
-			if (root["color"]["brightness"].success()) {
+        con["ip"] = app.cfg.network.connection.ip.toString();
+        con["netmask"] = app.cfg.network.connection.netmask.toString();
+        con["gateway"] = app.cfg.network.connection.gateway.toString();
 
-				if (root["color"]["brightness"]["red"].success()) {
-					if (root["color"]["brightness"]["red"].as<int>() != app.cfg.color.brightness.red) {
-						app.cfg.color.brightness.red = root["color"]["brightness"]["red"].as<int>();
-						color_updated = true;
-					}
-				}
-				if (root["color"]["brightness"]["green"].success()) {
-					if (root["color"]["brightness"]["green"].as<int>() != app.cfg.color.brightness.green) {
-						app.cfg.color.brightness.green = root["color"]["brightness"]["green"].as<int>();
-						color_updated = true;
-					}
-				}
-				if (root["color"]["brightness"]["blue"].success()) {
-					if (root["color"]["brightness"]["blue"].as<int>() != app.cfg.color.brightness.blue) {
-						app.cfg.color.brightness.blue = root["color"]["brightness"]["blue"].as<int>();
-						color_updated = true;
-					}
-				}
-				if (root["color"]["brightness"]["ww"].success()) {
-					if (root["color"]["brightness"]["ww"].as<int>() != app.cfg.color.brightness.ww) {
-						app.cfg.color.brightness.ww = root["color"]["brightness"]["ww"].as<int>();
-						color_updated = true;
-					}
-				}
-				if (root["color"]["brightness"]["cw"].success()) {
-					if (root["color"]["brightness"]["cw"].as<int>() != app.cfg.color.brightness.cw) {
-						app.cfg.color.brightness.cw = root["color"]["brightness"]["cw"].as<int>();
-						color_updated = true;
-					}
-				}
-			}
-			if (root["color"]["colortemp"].success()) {
+        JsonObject ap = net.createNestedObject("ap");
+        ap["secured"] = app.cfg.network.ap.secured;
+        ap["password"] = app.cfg.network.ap.password;
+        ap["ssid"] = app.cfg.network.ap.ssid;
 
-				if (root["color"]["colortemp"]["ww"].success()) {
-					if (root["color"]["colortemp"]["cw"].as<int>() != app.cfg.color.colortemp.ww) {
-						app.cfg.color.colortemp.ww = root["color"]["colortemp"]["ww"].as<int>();
-						color_updated = true;
-					}
-				}
-				if (root["color"]["colortemp"]["cw"].success()) {
-					if (root["color"]["colortemp"]["cw"].as<int>() != app.cfg.color.colortemp.cw) {
-						app.cfg.color.colortemp.cw = root["color"]["colortemp"]["cw"].as<int>();
-						color_updated = true;
-					}
-				}
-			}
-		}
+        JsonObject mqtt = net.createNestedObject("mqtt");
+        mqtt["enabled"] = app.cfg.network.mqtt.enabled;
+        mqtt["server"] = app.cfg.network.mqtt.server;
+        mqtt["port"] = app.cfg.network.mqtt.port;
+        mqtt["username"] = app.cfg.network.mqtt.username;
+        mqtt["password"] = app.cfg.network.mqtt.password;
+        mqtt["topic_base"] = app.cfg.network.mqtt.topic_base;
 
-		if (root["security"].success()) {
-			if (root["security"]["api_secured"].success()) {
-				if (root["security"]["api_secured"].as<bool>()) {
-					if (root["security"]["api_password"].success()) {
-						if (root["security"]["api_password"] != app.cfg.general.api_password) {
-							app.cfg.general.api_secured = root["security"]["api_secured"];
-							app.cfg.general.api_password = root["security"]["api_password"].asString();
-						}
+        JsonObject color = json.createNestedObject("color");
+        color["outputmode"] = app.cfg.color.outputmode;
+        color["startup_color"] = app.cfg.color.startup_color;
 
-					} else {
-						error = true;
-						error_msg = "missing password to secure settings";
-					}
-				} else {
-					app.cfg.general.api_secured = root["security"]["api_secured"];
-					app.cfg.general.api_password = "";
-				}
+        JsonObject hsv = color.createNestedObject("hsv");
+        hsv["model"] = app.cfg.color.hsv.model;
 
-			}
-		}
+        hsv["red"] = app.cfg.color.hsv.red;
+        hsv["yellow"] = app.cfg.color.hsv.yellow;
+        hsv["green"] = app.cfg.color.hsv.green;
+        hsv["cyan"] = app.cfg.color.hsv.cyan;
+        hsv["blue"] = app.cfg.color.hsv.blue;
+        hsv["magenta"] = app.cfg.color.hsv.magenta;
 
-		if (root["ota"].success()) {
-			if (root["ota"]["url"].success()) {
-				app.cfg.general.otaurl = root["ota"]["url"].asString();
-			}
+        JsonObject brighntess = color.createNestedObject("brightness");
+        brighntess["red"] = app.cfg.color.brightness.red;
+        brighntess["green"] = app.cfg.color.brightness.green;
+        brighntess["blue"] = app.cfg.color.brightness.blue;
+        brighntess["ww"] = app.cfg.color.brightness.ww;
+        brighntess["cw"] = app.cfg.color.brightness.cw;
 
-		}
+        JsonObject ctmp = color.createNestedObject("colortemp");
+        ctmp["ww"] = app.cfg.color.colortemp.ww;
+        ctmp["cw"] = app.cfg.color.colortemp.cw;
 
-		// update and save settings if we haven`t received any error until now
-		if (!error) {
-			if (ip_updated) {
-				if (root["restart"].success()) {
-					if (root["restart"] == true) {
-						debugapp("ApplicationWebserver::onConfig ip settings changed - rebooting");
-						app.delayedCMD("restart", 3000); // wait 3s to first send response
-						//json["data"] = "restart";
+        JsonObject s = json.createNestedObject("security");
+        s["api_secured"] = app.cfg.general.api_secured;
 
-					}
-				}
-			};
-			if (ap_updated) {
-				if (root["restart"].success()) {
-					if (root["restart"] == true && WifiAccessPoint.isEnabled()) {
-						debugapp("ApplicationWebserver::onConfig wifiap settings changed - rebooting");
-						app.delayedCMD("restart", 3000); // wait 3s to first send response
-						//json["data"] = "restart";
+        JsonObject ota = json.createNestedObject("ota");
+        ota["url"] = app.cfg.general.otaurl;
 
-					}
-				}
-			}
-			if (color_updated) {
-				debugapp("ApplicationWebserver::onConfig color settings changed - refreshing");
+        JsonObject sync = json.createNestedObject("sync");
+        sync["clock_master_enabled"] = app.cfg.sync.clock_master_enabled;
+        sync["clock_master_interval"] = app.cfg.sync.clock_master_interval;
+        sync["clock_slave_enabled"] = app.cfg.sync.clock_slave_enabled;
+        sync["clock_slave_topic"] = app.cfg.sync.clock_slave_topic;
+        sync["cmd_master_enabled"] = app.cfg.sync.cmd_master_enabled;
+        sync["cmd_slave_enabled"] = app.cfg.sync.cmd_slave_enabled;
+        sync["cmd_slave_topic"] = app.cfg.sync.cmd_slave_topic;
 
-				//refresh settings
-				app.rgbwwctrl.setup();
+        sync["color_master_enabled"] = app.cfg.sync.color_master_enabled;
+        sync["color_master_interval_ms"] = app.cfg.sync.color_master_interval_ms;
+        sync["color_slave_enabled"] = app.cfg.sync.color_slave_enabled;
+        sync["color_slave_topic"] = app.cfg.sync.color_slave_topic;
 
-				//refresh current output
-				app.rgbwwctrl.refresh();
+        JsonObject events = json.createNestedObject("events");
+        events["color_interval_ms"] = app.cfg.events.color_interval_ms;
+        events["color_mininterval_ms"] = app.cfg.events.color_mininterval_ms;
+        events["server_enabled"] = app.cfg.events.server_enabled;
+        events["transfin_interval_ms"] = app.cfg.events.transfin_interval_ms;
 
-			}
-			app.cfg.save();
-			sendApiCode(response, API_CODES::API_SUCCESS);
-		} else {
-			sendApiCode(response, API_CODES::API_MISSING_PARAM, error_msg);
-		}
+        JsonObject general = json.createNestedObject("general");
+        general["device_name"] = app.cfg.general.device_name;
+        general["pin_config"] = app.cfg.general.pin_config;
+        general["buttons_config"] = app.cfg.general.buttons_config;
+        general["buttons_debounce_ms"] = app.cfg.general.buttons_debounce_ms;
 
-	} else {
-		JsonObjectStream* stream = new JsonObjectStream();
-		JsonObject& json = stream->getRoot();
-		// returning settings
-		JsonObject& net = json.createNestedObject("network");
-		JsonObject& con = net.createNestedObject("connection");
-		con["dhcp"] = WifiStation.isEnabledDHCP();
-
-		//con["ip"] = WifiStation.getIP().toString();
-		//con["netmask"] = WifiStation.getNetworkMask().toString();
-		//con["gateway"] = WifiStation.getNetworkGateway().toString();
-
-		con["ip"] = app.cfg.network.connection.ip.toString();
-		con["netmask"] = app.cfg.network.connection.netmask.toString();
-		con["gateway"] = app.cfg.network.connection.gateway.toString();
-
-		JsonObject& ap = net.createNestedObject("ap");
-		ap["secured"] = app.cfg.network.ap.secured;
-		ap["ssid"] = app.cfg.network.ap.ssid.c_str();
-
-		JsonObject& mqtt = net.createNestedObject("mqtt");
-		mqtt["enabled"] = app.cfg.network.mqtt.enabled;
-		mqtt["server"] = app.cfg.network.mqtt.server.c_str();
-		mqtt["port"] = app.cfg.network.mqtt.port;
-		mqtt["username"] = app.cfg.network.mqtt.username.c_str();
-
-		//mqtt["password"] = app.cfg.network.mqtt.password.c_str();
-
-		JsonObject& color = json.createNestedObject("color");
-		color["outputmode"] = app.cfg.color.outputmode;
-
-		JsonObject& hsv = color.createNestedObject("hsv");
-		hsv["model"] = app.cfg.color.hsv.model;
-
-		hsv["red"] = app.cfg.color.hsv.red;
-		hsv["yellow"] = app.cfg.color.hsv.yellow;
-		hsv["green"] = app.cfg.color.hsv.green;
-		hsv["cyan"] = app.cfg.color.hsv.cyan;
-		hsv["blue"] = app.cfg.color.hsv.blue;
-		hsv["magenta"] = app.cfg.color.hsv.magenta;
-
-		JsonObject& brighntess = color.createNestedObject("brightness");
-		brighntess["red"] = app.cfg.color.brightness.red;
-		brighntess["green"] = app.cfg.color.brightness.green;
-		brighntess["blue"] = app.cfg.color.brightness.blue;
-		brighntess["ww"] = app.cfg.color.brightness.ww;
-		brighntess["cw"] = app.cfg.color.brightness.cw;
-
-		JsonObject& ctmp = color.createNestedObject("colortemp");
-		ctmp["ww"] = app.cfg.color.colortemp.ww;
-		ctmp["cw"] = app.cfg.color.colortemp.cw;
-
-		JsonObject& s = json.createNestedObject("security");
-		s["api_secured"] = app.cfg.general.api_secured;
-
-		JsonObject& ota = json.createNestedObject("ota");
-		ota["url"] = app.cfg.general.otaurl;
-		sendApiResponse(response, stream);
-	}
+        sendApiResponse(response, stream);
+    }
 }
 
 void ApplicationWebserver::onInfo(HttpRequest &request, HttpResponse &response) {
+    if (!checkHeap(response))
+        return;
 
-	if (!authenticated(request, response)) {
-		return;
-	}
+    if (!authenticated(request, response)) {
+        return;
+    }
 
-	if (app.ota.isProccessing()) {
-		sendApiCode(response, API_CODES::API_UPDATE_IN_PROGRESS);
-		return;
-	}
+#ifdef ARCH_ESP8266
+    if (app.ota.isProccessing()) {
+        sendApiCode(response, API_CODES::API_UPDATE_IN_PROGRESS);
+        return;
+    }
+#endif
 
-	if (request.getRequestMethod() != RequestMethod::GET) {
-		sendApiCode(response, API_CODES::API_BAD_REQUEST);
-		return;
-	}
+    if (request.method != HTTP_GET) {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not GET");
+        return;
+    }
 
-	JsonObjectStream* stream = new JsonObjectStream();
-	JsonObject& data = stream->getRoot();
-	data["deviceid"] = String(system_get_chip_id());
-	data["current_rom"] = String(app.getRomSlot());
-	data["firmware"] = fw_version;
-	data["git_version"] = fw_git_version;
-	data["git_date"] = fw_git_date;
-	data["config_version"] = app.cfg.configversion;
-	data["sming"] = SMING_VERSION;
-	JsonObject& rgbww = data.createNestedObject("rgbww");
-	rgbww["version"] = RGBWW_VERSION;
-	rgbww["queuesize"] = RGBWW_ANIMATIONQSIZE;
-	JsonObject& con = data.createNestedObject("connection");
-	con["connected"] = WifiStation.isConnected();
-	con["ssid"] = WifiStation.getSSID();
-	con["dhcp"] = WifiStation.isEnabledDHCP();
-	con["ip"] = WifiStation.getIP().toString();
-	con["netmask"] = WifiStation.getNetworkMask().toString();
-	con["gateway"] = WifiStation.getNetworkGateway().toString();
-	con["mac"] = WifiStation.getMAC();
-	//con["mdnshostname"] = app.cfg.network.connection.mdnshostname.c_str();
-	sendApiResponse(response, stream);
+    JsonObjectStream* stream = new JsonObjectStream();
+    JsonObject data = stream->getRoot();
+    data["deviceid"] = String(system_get_chip_id());
+    data["current_rom"] = String(app.getRomSlot());
+    data["git_version"] = fw_git_version;
+    data["git_date"] = fw_git_date;
+    data["webapp_version"] = WEBAPP_VERSION;
+    data["sming"] = SMING_VERSION;
+    data["event_num_clients"] = app.eventserver.activeClients;
+    data["uptime"] = app.getUptime();
+    data["heap_free"] = system_get_free_heap_size();
+
+    JsonObject rgbww = data.createNestedObject("rgbww");
+    rgbww["version"] = RGBWW_VERSION;
+    rgbww["queuesize"] = RGBWW_ANIMATIONQSIZE;
+
+    JsonObject con = data.createNestedObject("connection");
+    con["connected"] = WifiStation.isConnected();
+    con["ssid"] = WifiStation.getSSID();
+    con["dhcp"] = WifiStation.isEnabledDHCP();
+    con["ip"] = WifiStation.getIP().toString();
+    con["netmask"] = WifiStation.getNetworkMask().toString();
+    con["gateway"] = WifiStation.getNetworkGateway().toString();
+    con["mac"] = WifiStation.getMAC();
+    //con["mdnshostname"] = app.cfg.network.connection.mdnshostname.c_str();
+
+    sendApiResponse(response, stream);
+}
+
+
+void ApplicationWebserver::onColorGet(HttpRequest &request, HttpResponse &response) {
+    if (!checkHeap(response))
+        return;
+
+    JsonObjectStream* stream = new JsonObjectStream();
+    JsonObject json = stream->getRoot();
+
+    JsonObject raw = json.createNestedObject("raw");
+    ChannelOutput output = app.rgbwwctrl.getCurrentOutput();
+    raw["r"] = output.r;
+    raw["g"] = output.g;
+    raw["b"] = output.b;
+    raw["ww"] = output.ww;
+    raw["cw"] = output.cw;
+
+    JsonObject hsv = json.createNestedObject("hsv");
+    float h, s, v;
+    int ct;
+    HSVCT c = app.rgbwwctrl.getCurrentColor();
+    c.asRadian(h, s, v, ct);
+    hsv["h"] = h;
+    hsv["s"] = s;
+    hsv["v"] = v;
+    hsv["ct"] = ct;
+
+    sendApiResponse(response, stream);
+}
+
+void ApplicationWebserver::onColorPost(HttpRequest &request, HttpResponse &response) {
+    String body = request.getBody();
+    if (body == NULL) {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "no body");
+        return;
+
+    }
+
+    String msg;
+    if (!app.jsonproc.onColor(body, msg)) {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, msg);
+    }
+    else {
+
+        sendApiCode(response, API_CODES::API_SUCCESS);
+    }
 }
 
 void ApplicationWebserver::onColor(HttpRequest &request, HttpResponse &response) {
+    if (!authenticated(request, response)) {
+        return;
+    }
 
-	if (!authenticated(request, response)) {
-		return;
-	}
+#ifdef ARCH_ESP8266
+    if (app.ota.isProccessing()) {
+        sendApiCode(response, API_CODES::API_UPDATE_IN_PROGRESS);
+        return;
+    }
+#endif
 
-	if (app.ota.isProccessing()) {
-		sendApiCode(response, API_CODES::API_UPDATE_IN_PROGRESS);
-		return;
-	}
+    if (request.method != HTTP_POST && request.method != HTTP_GET) {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not POST or GET");
+        return;
+    }
 
-	if (request.getRequestMethod() != RequestMethod::POST && request.getRequestMethod() != RequestMethod::GET) {
-		sendApiCode(response, API_CODES::API_BAD_REQUEST);
-		return;
-	}
-
-	bool error = false;
-	if (request.getRequestMethod() == RequestMethod::POST) {
-		String body = request.getBody();
-		if (body == NULL || body.length() > 128) {
-			sendApiCode(response, API_CODES::API_BAD_REQUEST);
-			return;
-
-		} else {
-
-			DynamicJsonBuffer jsonBuffer;
-			JsonObject& root = jsonBuffer.parseObject(body);
-			//root.prettyPrintTo(Serial);
-
-			if (root["kelvin"].success()) {
-				int t, k = 0;
-				bool q = false;
-
-				k = root["kelvin"].as<int>();
-				if (root["t"].success()) {
-					t = root["t"].as<int>();
-				}
-				if (root["q"].success()) {
-					q = root["q"];
-				}
-				//TODO: hand to rgbctrl
-			} else if (root["hsv"].success()) {
-
-				if (!(root["hsv"]["h"].success() && root["hsv"]["s"].success() && root["hsv"]["v"].success())) {
-					sendApiCode(response, API_CODES::API_MISSING_PARAM);
-					return;
-				}
-				float h, s, v;
-				int t, ct = 0;
-				int d = 1;
-				bool q = false;
-				String cmd = "solid";
-				HSVCT c;
-				h = constrain(root["hsv"]["h"].as<float>(), 0.0, 360.0);
-				s = constrain(root["hsv"]["s"].as<float>(), 0.0, 100.0);
-				v = constrain(root["hsv"]["v"].as<float>(), 0.0, 100.0);
-
-				if (root["hsv"]["ct"].success()) {
-					ct = root["hsv"]["ct"].as<int>();
-					if (ct != 0 && (ct < 100 || ct > 10000 || (ct > 500 && ct < 2000))) {
-						sendApiCode(response, API_CODES::API_BAD_REQUEST, "bad param for ct");
-						return;
-					}
-				}
-				if (root["cmd"].success()) {
-					cmd = root["cmd"].asString();
-				}
-
-				if (root["t"].success()) {
-					t = root["t"].as<int>();
-				}
-				if (root["q"].success()) {
-					q = root["q"];
-					if (q) {
-						if (app.rgbwwctrl.isAnimationQFull()) {
-							sendApiCode(response, API_CODES::API_BAD_REQUEST, "queue is full");
-							return;
-						}
-					}
-				}
-				if (root["d"].success()) {
-					d = root["d"].as<int>();
-				}
-
-				c = HSVCT(h, s, v, ct);
-
-				if(!root["hsv"]["from"].success()) {
-					debugapp("ApplicationWebserver::onColor hsv CMD:%s Q:%d  h:%f s:%f v:%f ct:%i ", cmd, q, h, s, v, ct);
-					if (cmd.equals("fade")) {
-						app.rgbwwctrl.fadeHSV(c, t, d, q);
-					} else {
-						app.rgbwwctrl.setHSV(c, t, q);
-					}
-				} else {
-					float from_h, from_s, from_v;
-					int from_ct = 0;
-					HSVCT from_c;
-					if (!(root["hsv"]["from"]["h"].success() && root["hsv"]["from"]["s"].success() && root["hsv"]["from"]["v"].success())) {
-						sendApiCode(response, API_CODES::API_MISSING_PARAM);
-						return;
-					}
-					from_h = constrain(root["hsv"]["from"]["h"].as<float>(), 0.0, 360.0);
-					from_s = constrain(root["hsv"]["from"]["s"].as<float>(), 0.0, 100.0);
-					from_v = constrain(root["hsv"]["from"]["v"].as<float>(), 0.0, 100.0);
-					if (root["hsv"]["from"]["ct"].success()) {
-						from_ct = root["hsv"]["from"]["ct"].as<int>();
-						if (from_ct != 0 && (from_ct < 100 || from_ct > 10000 || (from_ct > 500 && from_ct < 2000))) {
-							sendApiCode(response, API_CODES::API_BAD_REQUEST, "bad param for from:ct");
-							return;
-						}
-					}
-					from_c = HSVCT(from_h, from_s, from_v, from_ct);
-
-					debugapp("ApplicationWebserver::onColor hsv CMD:%s Q:%d  FROM h:%f s:%f v:%f ct:%i - TO h:%f s :%f v:%f ct:%i ", cmd, q, from_h, from_s, from_v, from_ct, h, s, v, ct);
-					app.rgbwwctrl.fadeHSV(from_c, c, t, d, q);
-
-				}
-
-			} else if (root["raw"].success()) {
-
-				if (!(root["raw"]["r"].success()
-						&& root["raw"]["g"].success()
-						&& root["raw"]["b"].success()
-						&& root["raw"]["ww"].success()
-						&& root["raw"]["cw"].success())) {
-
-					sendApiCode(response, API_CODES::API_MISSING_PARAM);
-					return;
-				}
-				ChannelOutput output;
-				int t, r, g, b, ww, cw = 0;
-				String cmd = "solid";
-				bool q = false;
-
-				r = constrain(root["raw"]["r"].as<int>(), 0, 1023);
-				g = constrain(root["raw"]["g"].as<int>(), 0, 1023);
-				b = constrain(root["raw"]["b"].as<int>(), 0, 1023);
-				ww = constrain(root["raw"]["ww"].as<int>(), 0, 1023);
-				cw = constrain(root["raw"]["cw"].as<int>(), 0, 1023);
-				if (root["cmd"].success()) {
-					cmd = root["cmd"].asString();
-				}
-				if (root["t"].success()) {
-					t = root["t"].as<int>();
-				}
-				if (root["q"].success()) {
-					q = root["q"];
-					if (q) {
-						if (app.rgbwwctrl.isAnimationQFull()) {
-							sendApiCode(response, API_CODES::API_BAD_REQUEST, "queue is full");
-							return;
-						}
-					}
-				}
-
-				output = ChannelOutput(r, g, b, ww, cw);
-				if(!root["raw"]["from"].success()) {
-					debugapp("ApplicationWebserver::onColor raw CMD:%s Q:%d r:%i g:%i b:%i ww:%i cw:%i", cmd, q, r, g, b, ww, cw);
-					if (cmd.equals("fade")) {
-						app.rgbwwctrl.fadeRAW(output, t, q);
-					} else {
-						app.rgbwwctrl.setRAW(output, t, q);
-					}
-				} else {
-					if (!(root["raw"]["from"]["r"].success()
-							&& root["raw"]["from"]["g"].success()
-							&& root["raw"]["from"]["b"].success()
-							&& root["raw"]["from"]["ww"].success()
-							&& root["raw"]["from"]["cw"].success())) {
-
-						sendApiCode(response, API_CODES::API_MISSING_PARAM);
-						return;
-					}
-					int from_r, from_g, from_b, from_ww, from_cw = 0;
-					ChannelOutput from_output;
-					from_r = constrain(root["raw"]["r"].as<int>(), 0, 1023);
-					from_g = constrain(root["raw"]["g"].as<int>(), 0, 1023);
-					from_b = constrain(root["raw"]["b"].as<int>(), 0, 1023);
-					from_ww = constrain(root["raw"]["ww"].as<int>(), 0, 1023);
-					from_cw = constrain(root["raw"]["cw"].as<int>(), 0, 1023);
-
-					from_output = ChannelOutput(from_r, from_g, from_b, from_ww, from_cw);
-					debugapp("ApplicationWebserver::onColor raw CMD:%s Q:%d FROM r:%i g:%i b:%i ww:%i cw:%i  TO r:%i g:%i b:%i ww:%i cw:%i",
-									cmd, q, from_r, from_g, from_b, from_ww, from_cw, r, g, b, ww, cw);
-					app.rgbwwctrl.fadeRAW(from_output, output, t, q);
-				}
-
-			} else {
-				sendApiCode(response, API_CODES::API_MISSING_PARAM);
-				return;
-			}
-			sendApiCode(response, API_CODES::API_SUCCESS);
-
-		}
-	} else {
-		JsonObjectStream* stream = new JsonObjectStream();
-		JsonObject& json = stream->getRoot();
-		String mode = request.getQueryParameter("mode", "hsv");
-		if (mode.equals("raw")) {
-			JsonObject& raw = json.createNestedObject("raw");
-			ChannelOutput output = app.rgbwwctrl.getCurrentOutput();
-			raw["r"] = output.r;
-			raw["g"] = output.g;
-			raw["b"] = output.b;
-			raw["ww"] = output.ww;
-			raw["cw"] = output.cw;
-
-		} else if (mode.equals("temp")) {
-			json["kelvin"] = 0;
-			//TODO get kelvin from controller
-		} else {
-			JsonObject& hsv = json.createNestedObject("hsv");
-
-			float h, s, v;
-			int ct;
-			HSVCT c = app.rgbwwctrl.getCurrentColor();
-			c.asRadian(h, s, v, ct);
-			hsv["h"] = h;
-			hsv["s"] = s;
-			hsv["v"] = v;
-			hsv["ct"] = ct;
-		}
-		sendApiResponse(response, stream);
-	}
+    bool error = false;
+    if (request.method == HTTP_POST) {
+        ApplicationWebserver::onColorPost(request, response);
+    } else {
+        ApplicationWebserver::onColorGet(request, response);
+    }
 
 }
 
-void ApplicationWebserver::onAnimation(HttpRequest &request, HttpResponse &response) {
-
-	if (!authenticated(request, response)) {
-		return;
-	}
-
-	if (app.ota.isProccessing()) {
-		sendApiCode(response, API_CODES::API_UPDATE_IN_PROGRESS);
-		return;
-	}
-
-	if (request.getRequestMethod() != RequestMethod::POST && request.getRequestMethod() != RequestMethod::GET) {
-		sendApiCode(response, API_CODES::API_BAD_REQUEST);
-		return;
-	}
-
-	bool error = false;
-	if (request.getRequestMethod() == RequestMethod::POST) {
-		String body = request.getBody();
-		if (body == NULL || body.length() > 128) {
-			sendApiCode(response, API_CODES::API_BAD_REQUEST);
-			return;
-
-		} else {
-
-			DynamicJsonBuffer jsonBuffer;
-			JsonObject& root = jsonBuffer.parseObject(body);
-			//root.prettyPrintTo(Serial);
-		}
-		sendApiCode(response, API_CODES::API_SUCCESS);
-	} else {
-		JsonObjectStream* stream = new JsonObjectStream();
-		JsonObject& json = stream->getRoot();
-
-		sendApiResponse(response, stream);
-	}
-
+bool ApplicationWebserver::isPrintable(String& str) {
+    for (unsigned int i=0; i < str.length(); ++i)
+    {
+        char c = str[i];
+        if (c < 0x20)
+            return false;
+    }
+    return true;
 }
 
 void ApplicationWebserver::onNetworks(HttpRequest &request, HttpResponse &response) {
 
-	if (!authenticated(request, response)) {
-		return;
-	}
+    if (!authenticated(request, response)) {
+        return;
+    }
 
-	if (app.ota.isProccessing()) {
-		sendApiCode(response, API_CODES::API_UPDATE_IN_PROGRESS);
-		return;
-	}
+#ifdef ARCH_ESP8266
+    if (app.ota.isProccessing()) {
+        sendApiCode(response, API_CODES::API_UPDATE_IN_PROGRESS);
+        return;
+    }
+#endif
 
-	if (request.getRequestMethod() != RequestMethod::GET) {
-		sendApiCode(response, API_CODES::API_BAD_REQUEST);
-		return;
-	}
+    if (request.method != HTTP_GET) {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP GET");
+        return;
+    }
 
-	JsonObjectStream* stream = new JsonObjectStream();
-	JsonObject& json = stream->getRoot();
+    JsonObjectStream* stream = new JsonObjectStream();
+    JsonObject json = stream->getRoot();
 
-	bool error = false;
+    bool error = false;
 
-	if (app.network.isScanning()) {
-		json["scanning"] = true;
-	} else {
-		json["scanning"] = false;
-		JsonArray& netlist = json.createNestedArray("available");
-		BssList networks = app.network.getAvailableNetworks();
-		for (int i = 0; i < networks.count(); i++) {
-			if (networks[i].hidden)
-				continue;
-			JsonObject &item = netlist.createNestedObject();
-			item["id"] = (int) networks[i].getHashId();
-			item["ssid"] = networks[i].ssid;
-			item["signal"] = networks[i].rssi;
-			item["encryption"] = networks[i].getAuthorizationMethodName();
-			//limit to max 25 networks
-			if (i >= 25)
-				break;
-		}
-	}
-	sendApiResponse(response, stream);
+    if (app.network.isScanning()) {
+        json["scanning"] = true;
+    } else {
+        json["scanning"] = false;
+        JsonArray netlist = json.createNestedArray("available");
+        BssList networks = app.network.getAvailableNetworks();
+        for (int i = 0; i < networks.count(); i++) {
+            if (networks[i].hidden)
+                continue;
+
+            // SSIDs may contain any byte values. Some are not printable and will cause the javascript client to fail
+            // on parsing the message. Try to filter those here
+            if (!ApplicationWebserver::isPrintable(networks[i].ssid)) {
+                debug_w("Filtered SSID due to unprintable characters: %s", networks[i].ssid.c_str());
+                continue;
+            }
+
+            JsonObject item = netlist.createNestedObject();
+            item["id"] = (int) networks[i].getHashId();
+            item["ssid"] = networks[i].ssid;
+            item["signal"] = networks[i].rssi;
+            item["encryption"] = networks[i].getAuthorizationMethodName();
+            //limit to max 25 networks
+            if (i >= 25)
+                break;
+        }
+    }
+    sendApiResponse(response, stream);
 }
 
 void ApplicationWebserver::onScanNetworks(HttpRequest &request, HttpResponse &response) {
 
-	if (!authenticated(request, response)) {
-		return;
-	}
+    if (!authenticated(request, response)) {
+        return;
+    }
 
-	if (app.ota.isProccessing()) {
-		sendApiCode(response, API_CODES::API_UPDATE_IN_PROGRESS);
-		return;
-	}
+#ifdef ARCH_ESP8266
+    if (app.ota.isProccessing()) {
+        sendApiCode(response, API_CODES::API_UPDATE_IN_PROGRESS);
+        return;
+    }
+#endif
 
-	if (request.getRequestMethod() != RequestMethod::POST) {
-		sendApiCode(response, API_CODES::API_BAD_REQUEST);
-		return;
-	}
-	if (!app.network.isScanning()) {
-		app.network.scan();
-	}
+    if (request.method != HTTP_POST) {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP POST");
+        return;
+    }
+    if (!app.network.isScanning()) {
+        app.network.scan(false);
+    }
 
-	sendApiCode(response, API_CODES::API_SUCCESS);
+    sendApiCode(response, API_CODES::API_SUCCESS);
 }
 
 void ApplicationWebserver::onConnect(HttpRequest &request, HttpResponse &response) {
 
-	if (!authenticated(request, response)) {
-		return;
-	}
+    if (!authenticated(request, response)) {
+        return;
+    }
 
-	if (app.ota.isProccessing()) {
-		sendApiCode(response, API_CODES::API_UPDATE_IN_PROGRESS);
-		return;
-	}
+#ifdef ARCH_ESP8266
+    if (app.ota.isProccessing()) {
+        sendApiCode(response, API_CODES::API_UPDATE_IN_PROGRESS);
+        return;
+    }
+#endif
 
-	if (request.getRequestMethod() != RequestMethod::POST && request.getRequestMethod() != RequestMethod::GET) {
-		sendApiCode(response, API_CODES::API_BAD_REQUEST);
-		return;
-	}
+    if (request.method != HTTP_POST && request.method != HTTP_GET) {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP POST or GET");
+        return;
+    }
 
-	if (request.getRequestMethod() == RequestMethod::POST) {
+    if (request.method == HTTP_POST) {
 
-		String body = request.getBody();
-		if (body == NULL) {
+        String body = request.getBody();
+        if (body == NULL) {
 
-			sendApiCode(response, API_CODES::API_BAD_REQUEST);
-			return;
+            sendApiCode(response, API_CODES::API_BAD_REQUEST, "could not get HTTP body");
+            return;
 
-		}
-		DynamicJsonBuffer jsonBuffer;
-		JsonObject& root = jsonBuffer.parseObject(body);
-		String ssid = "";
-		String password = "";
-		if (root["ssid"].success()) {
-			ssid = root["ssid"].asString();
-			if (root["password"].success()) {
-				password = root["password"].asString();
-			}
-			debugapp("ssid %s - pass %s", ssid.c_str(), password.c_str());
-			app.network.connect(ssid, password, true);
-			sendApiCode(response, API_CODES::API_SUCCESS);
-			return;
+        }
+        DynamicJsonDocument doc(1024);
+        Json::deserialize(doc, body);
+        String ssid;
+        String password;
+        if (Json::getValue(doc["ssid"], ssid)) {
+        	password = doc["password"].as<const char*>();
+            debug_d("ssid %s - pass %s", ssid.c_str(), password.c_str());
+            app.network.connect(ssid, password, true);
+            sendApiCode(response, API_CODES::API_SUCCESS);
+            return;
 
-		} else {
-			sendApiCode(response, API_CODES::API_MISSING_PARAM);
-			return;
-		}
-	} else {
-		JsonObjectStream* stream = new JsonObjectStream();
-		JsonObject& json = stream->getRoot();
+        } else {
+            sendApiCode(response, API_CODES::API_MISSING_PARAM);
+            return;
+        }
+    } else {
+        JsonObjectStream* stream = new JsonObjectStream();
+        JsonObject json = stream->getRoot();
 
-		CONNECTION_STATUS status = app.network.get_con_status();
-		json["status"] = int(status);
-		if (status == CONNECTION_STATUS::ERR) {
-			json["error"] = app.network.get_con_err_msg();
-		} else if (status == CONNECTION_STATUS::CONNECTED) {
-			// return connected
-			if (app.cfg.network.connection.dhcp) {
-				json["ip"] = WifiStation.getIP().toString();
-			} else {
-				json["ip"] = app.cfg.network.connection.ip.toString();
-			}
-			json["dhcp"] = app.cfg.network.connection.dhcp;
-			json["ssid"] = WifiStation.getSSID();
+        CONNECTION_STATUS status = app.network.get_con_status();
+        json["status"] = int(status);
+        if (status == CONNECTION_STATUS::ERROR) {
+            json["error"] = app.network.get_con_err_msg();
+        } else if (status == CONNECTION_STATUS::CONNECTED) {
+            // return connected
+            if (app.cfg.network.connection.dhcp) {
+                json["ip"] = WifiStation.getIP().toString();
+            } else {
+                json["ip"] = app.cfg.network.connection.ip.toString();
+            }
+            json["dhcp"] = app.cfg.network.connection.dhcp;
+            json["ssid"] = WifiStation.getSSID();
 
-		}
-		sendApiResponse(response, stream);
-	}
+        }
+        sendApiResponse(response, stream);
+    }
 }
 
 void ApplicationWebserver::onSystemReq(HttpRequest &request, HttpResponse &response) {
 
-	if (!authenticated(request, response)) {
-		return;
-	}
+    if (!authenticated(request, response)) {
+        return;
+    }
 
-	if (app.ota.isProccessing()) {
-		sendApiCode(response, API_CODES::API_UPDATE_IN_PROGRESS);
-		return;
-	}
+#ifdef ARCH_ESP8266
+    if (app.ota.isProccessing()) {
+        sendApiCode(response, API_CODES::API_UPDATE_IN_PROGRESS);
+        return;
+    }
+#endif
 
-	if (request.getRequestMethod() != RequestMethod::POST) {
-		sendApiCode(response, API_CODES::API_BAD_REQUEST);
-		return;
-	}
+    if (request.method != HTTP_POST) {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP POST");
+        return;
+    }
 
-	bool error = false;
-	String body = request.getBody();
-	if (body == NULL) {
-		sendApiCode(response, API_CODES::API_BAD_REQUEST);
-		return;
-	} else {
-		DynamicJsonBuffer jsonBuffer;
-		JsonObject& root = jsonBuffer.parseObject(body);
+    bool error = false;
+    String body = request.getBody();
+    if (body == NULL) {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "could not get HTTP body");
+        return;
+    } else {
+        debug_i("ApplicationWebserver::onSystemReq: %s", body.c_str());
+        DynamicJsonDocument doc(1024);
+        Json::deserialize(doc, body);
 
-		if (root["cmd"].success()) {
-			String cmd = root["cmd"].asString();
-			if (cmd.equals("debug")) {
-				if (root["enable"].success()) {
-					if (root["enable"]) {
-						Serial.systemDebugOutput(true);
-					} else {
-						Serial.systemDebugOutput(false);
-					}
-				} else {
-					error = true;
-				}
-			} else if (!app.delayedCMD(cmd, 1500)) {
-				error = true;
-			}
+        String cmd = doc["cmd"].as<const char*>();
+        if (cmd) {
+            if (cmd.equals("debug")) {
+            	bool enable;
+            	if (Json::getValue(doc["enable"], enable)) {
+                    Serial.systemDebugOutput(enable);
+                } else {
+                    error = true;
+                }
+            } else if (!app.delayedCMD(cmd, 1500)) {
+                error = true;
+            }
 
-		} else {
-			error = true;
-		}
+        } else {
+            error = true;
+        }
 
-	}
-	if (!error) {
-		sendApiCode(response, API_CODES::API_SUCCESS);
-	} else {
-		sendApiCode(response, API_CODES::API_MISSING_PARAM);
-	}
+    }
+    if (!error) {
+        sendApiCode(response, API_CODES::API_SUCCESS);
+    } else {
+        sendApiCode(response, API_CODES::API_MISSING_PARAM);
+    }
 
 }
 
 void ApplicationWebserver::onUpdate(HttpRequest &request, HttpResponse &response) {
+    if (!authenticated(request, response)) {
+        return;
+    }
 
-	if (!authenticated(request, response)) {
-		return;
-	}
+#ifdef ARCH_HOST
+    sendApiCode(response, API_CODES::API_BAD_REQUEST, "not supported on Host");
+    return;
+#else
+    if (request.method != HTTP_POST && request.method != HTTP_GET) {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP POST or GET");
+        return;
+    }
 
-	if (request.getRequestMethod() != RequestMethod::POST
-			&& request.getRequestMethod() != RequestMethod::GET) {
-		sendApiCode(response, API_CODES::API_BAD_REQUEST);
-		return;
-	}
+    if (request.method == HTTP_POST) {
+        if (app.ota.isProccessing()) {
+            sendApiCode(response, API_CODES::API_UPDATE_IN_PROGRESS);
+            return;
+        }
 
-	if (request.getRequestMethod() == RequestMethod::POST) {
-		if (app.ota.isProccessing()) {
-			sendApiCode(response, API_CODES::API_UPDATE_IN_PROGRESS);
-			return;
-		}
+        String body = request.getBody();
+        if (body == NULL) {
+            sendApiCode(response, API_CODES::API_BAD_REQUEST, "could not parse HTTP body");
+            return;
+        }
+        DynamicJsonDocument doc(1024);
+        Json::deserialize(doc, body);
 
-		if (request.getBody() == NULL) {
-			sendApiCode(response, API_CODES::API_BAD_REQUEST);
-			return;
-		}
-		DynamicJsonBuffer jsonBuffer;
-		JsonObject& root = jsonBuffer.parseObject(request.getBody());
-		String romurl, spiffsurl;
-		bool error = false;
-
-		if (root["rom"].success() && root["spiffs"].success()) {
-
-			if (root["rom"]["url"].success() && root["spiffs"]["url"].success()) {
-				romurl = root["rom"]["url"].asString();
-				spiffsurl = root["spiffs"]["url"].asString();
-			} else {
-				error = true;
-			}
-
-		} else {
-			error = true;
-		}
-		if (error) {
-			sendApiCode(response, API_CODES::API_MISSING_PARAM);
-			return;
-		} else {
-			app.ota.start(romurl, spiffsurl);
-			sendApiCode(response, API_CODES::API_SUCCESS);
-			return;
-		}
-
-	}
-	JsonObjectStream* stream = new JsonObjectStream();
-	JsonObject& json = stream->getRoot();
-	json["status"] = int(app.ota.getStatus());
-	sendApiResponse(response, stream);
-
+        String romurl, spiffsurl;
+        if (!Json::getValue(doc["rom"]["url"], romurl) || !Json::getValue(doc["spiffs"]["url"], spiffsurl)) {
+            sendApiCode(response, API_CODES::API_MISSING_PARAM);
+        } else {
+            app.ota.start(romurl, spiffsurl);
+            sendApiCode(response, API_CODES::API_SUCCESS);
+        }
+        return;
+    }
+    JsonObjectStream* stream = new JsonObjectStream();
+    JsonObject json = stream->getRoot();
+    json["status"] = int(app.ota.getStatus());
+    sendApiResponse(response, stream);
+#endif
 }
 
 //simple call-response to check if we can reach server
 void ApplicationWebserver::onPing(HttpRequest &request, HttpResponse &response) {
-	if (request.getRequestMethod() != RequestMethod::GET) {
-		sendApiCode(response, API_CODES::API_BAD_REQUEST);
-		return;
-	}
-	JsonObjectStream* stream = new JsonObjectStream();
-	JsonObject& json = stream->getRoot();
-	json["ping"] = "pong";
-	sendApiResponse(response, stream);
+    if (request.method != HTTP_GET) {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP GET");
+        return;
+    }
+    JsonObjectStream* stream = new JsonObjectStream();
+    JsonObject json = stream->getRoot();
+    json["ping"] = "pong";
+    sendApiResponse(response, stream);
 }
 
-void ApplicationWebserver::generate204(HttpRequest &request, HttpResponse &response) {
-	response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-	response.setHeader("Pragma", "no-cache");
-	response.setHeader("Expires", "-1");
-	response.setHeader("Content-Lenght", "0");
-	response.setContentType("text/plain");
-	response.setStatusCode(204, "NO CONTENT");
+void ApplicationWebserver::onStop(HttpRequest &request, HttpResponse &response) {
+    if (request.method != HTTP_POST) {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP POST");
+        return;
+    }
+
+    String msg;
+    if (app.jsonproc.onStop(request.getBody(), msg, true)) {
+        sendApiCode(response, API_CODES::API_SUCCESS);
+    }
+    else {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST);
+    }
 }
 
+void ApplicationWebserver::onSkip(HttpRequest &request, HttpResponse &response) {
+    if (request.method != HTTP_POST) {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP POST");
+        return;
+    }
+
+    String msg;
+    if (app.jsonproc.onSkip(request.getBody(), msg)) {
+        sendApiCode(response, API_CODES::API_SUCCESS);
+    }
+    else {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST);
+    }
+}
+
+void ApplicationWebserver::onPause(HttpRequest &request, HttpResponse &response) {
+    if (request.method != HTTP_POST) {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP POST");
+        return;
+    }
+
+    String msg;
+    if (app.jsonproc.onPause(request.getBody(), msg, true)) {
+        sendApiCode(response, API_CODES::API_SUCCESS);
+    }
+    else {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST);
+    }
+}
+
+void ApplicationWebserver::onContinue(HttpRequest &request, HttpResponse &response) {
+    if (request.method != HTTP_POST) {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP POST");
+        return;
+    }
+
+    String msg;
+    if (app.jsonproc.onContinue(request.getBody(), msg)) {
+        sendApiCode(response, API_CODES::API_SUCCESS);
+    }
+    else {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST);
+    }
+}
+
+void ApplicationWebserver::onBlink(HttpRequest &request, HttpResponse &response) {
+    if (request.method != HTTP_POST) {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP POST");
+        return;
+    }
+
+    String msg;
+    if (app.jsonproc.onBlink(request.getBody(), msg)) {
+        sendApiCode(response, API_CODES::API_SUCCESS);
+    }
+    else {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST);
+    }
+}
+
+void ApplicationWebserver::onToggle(HttpRequest &request, HttpResponse &response) {
+    if (request.method != HTTP_POST) {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP POST");
+        return;
+    }
+
+    String msg;
+    if (app.jsonproc.onToggle(request.getBody(), msg)) {
+        sendApiCode(response, API_CODES::API_SUCCESS);
+    }
+    else {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST);
+    }
+}

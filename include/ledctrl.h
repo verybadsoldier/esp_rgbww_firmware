@@ -19,75 +19,103 @@
  *
  *
  */
-#ifndef APP_LEDCTRL_H_
-#define APP_LEDCTRL_H_
+#pragma once
+
+#include "mqtt.h"
+#include "stepsync.h"
 
 #define APP_COLOR_FILE ".color"
 
-struct ColorStorage {
-	int h = 0;
-	int s = 0;
-	int v = 0;
-	int ct = 0;
+struct PinConfig {
+    PinConfig() : red(13), green(12), blue(14), warmwhite(5), coldwhite(4) {}
 
-	void load(bool print = false) {
-		StaticJsonBuffer < 72 > jsonBuffer;
-		if (exist()) {
-			int size = fileGetSize(APP_COLOR_FILE);
-			char* jsonString = new char[size + 1];
-			fileGetContent(APP_COLOR_FILE, jsonString, size + 1);
-			JsonObject& root = jsonBuffer.parseObject(jsonString);
-			h = root["h"];
-			s = root["s"];
-			v = root["v"];
-			ct = root["ct"];
-			if (print) {
-				root.prettyPrintTo(Serial);
-			}
-			delete[] jsonString;
-		}
-	}
-
-	void save(bool print = false) {
-		DynamicJsonBuffer jsonBuffer;
-		JsonObject& root = jsonBuffer.createObject();
-		root["h"] = h;
-		root["s"] = s;
-		root["v"] = v;
-		root["ct"] = ct;
-		String rootString;
-		if (print) {
-			root.prettyPrintTo(Serial);
-		}
-		root.printTo(rootString);
-		fileSetContent(APP_COLOR_FILE, rootString);
-	}
-	bool exist() {
-		return fileExist(APP_COLOR_FILE);
-	}
+    int red;
+    int green;
+    int blue;
+    int warmwhite;
+    int coldwhite;
 };
 
-typedef Delegate<bool(void)> ledctrlDelegate;
+struct ColorStorage {
+    HSVCT current;
+    void load(bool print = false) {
+    	StaticJsonDocument<128> doc;
+        if (Json::loadFromFile(doc, APP_COLOR_FILE)) {
+            JsonObject root = doc.as<JsonObject>();
+            current.h = root["h"];
+            current.s = root["s"];
+            current.v = root["v"];
+            current.ct = root["ct"];
+            if (print) {
+            	Json::serialize(root, Serial, Json::Pretty);
+            }
+        }
+    }
+
+    void save(bool print = false) {
+        debug_d("Saving ColorStorage to file...");
+        StaticJsonDocument<256> doc;
+        JsonObject root = doc.to<JsonObject>();
+        root["h"] = current.h;
+        root["s"] = current.s;
+        root["v"] = current.v;
+        root["ct"] = current.ct;
+        if (print) {
+        	Json::serialize(root, Serial, Json::Pretty);
+        }
+        Json::saveToFile(root, APP_COLOR_FILE);
+    }
+
+    bool exist() {
+        return fileExist(APP_COLOR_FILE);
+    }
+};
 
 class APPLedCtrl: public RGBWWLed {
 
 public:
-	void init();
-	void setup();
+    virtual ~APPLedCtrl();
 
-	void start();
-	void stop();
-	void color_save();
-	void color_reset();
-	void test_channels();
+    void init();
+    void setup();
 
-	void show_led();
-	static void led_callback(RGBWWLed* rgbwwctrl);
+    void start();
+    void stop();
+    void colorSave();
+    void colorReset();
+    void testChannels();
+    void toggle();
 
+    void updateLed();
+    void onMasterClock(uint32_t steps);
+    void onMasterClockReset();
+    virtual void onAnimationFinished(const String& name, bool requeued);
 private:
-	ColorStorage color;
-	Timer ledTimer;
+    static PinConfig parsePinConfigString(String& pinStr);
+    static void updateLedCb(void* pTimerArg);
+    void publishToEventServer();
+    void publishToMqtt();
+    void publishFinishedStepAnimations();
+    void publishColorStayedCmds();
+    void checkStableColorState();
+    void publishStatus();
 
+    ColorStorage colorStorage;
+
+    HSVCT _lastHsvct;
+    ChannelOutput _lastOutput;
+
+    StepSync* _stepSync = nullptr;
+
+    uint32_t _stepCounter = 0;
+    HSVCT _prevColor;
+    uint32_t _numStableColorSteps = 0;
+    ChannelOutput _prevOutput;
+
+    static const uint32_t _saveAfterStableColorMs = 2000;
+
+    SimpleTimer _ledTimer;
+    uint32_t _timerInterval = RGBWW_MINTIMEDIFF;
+    HashMap<String, bool> _stepFinishedAnimations;
+    uint32_t _lastColorEvent = 0;
 };
-
-#endif
