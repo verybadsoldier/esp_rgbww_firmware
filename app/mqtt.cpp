@@ -49,14 +49,15 @@ void AppMqttClient::connect() {
         return;
 
     debug_d("MQTT::connect ID: %s\n", _id.c_str());
-    if(!mqtt->setWill("last/will","The connection from this device is lost:(", 1, true)) {
+    if(!mqtt->setWill(F("last/will"),F("the connection from this device ist lost"),mqtt->getFlags(MQTT_QOS_AT_LEAST_ONCE, MQTT_RETAIN_TRUE))){
+    //if(!mqtt->setWill("last/will","The connection from this device is lost:(", 1, true)) {
         debugf("Unable to set the last will and testament. Most probably there is not enough memory on the device.");
     }
 //    0);app.cfg.network.mqtt.username, app.cfg.network.mqtt.password);
     //debug_i("MqttClient: Server: %s Port: %d\n", app.cfg.network.mqtt.server.c_str(), app.cfg.network.mqtt.port);
 
     Url url = "mqtt://" + app.cfg.network.mqtt.username + ":" + app.cfg.network.mqtt.password + "@" + app.cfg.network.mqtt.server + ":" + String(app.cfg.network.mqtt.port);
-    mqtt->connect(url, _id, 0);
+    mqtt->connect(url, _id);
 #ifdef ENABLE_SSL
     // not need i guess? mqtt->addSslOptions(SSL_SERVER_VERIFY_LATER);
 
@@ -97,7 +98,8 @@ void AppMqttClient::start() {
 
     delete mqtt;
     mqtt = new MqttClient();
-    mqtt->setCallback(MqttStringSubscriptionCallback(&AppMqttClient::onMessageReceived, this));
+    //mqtt->setCallback(MqttStringSubscriptionCallback(&AppMqttClient::onMessageReceived, this));
+    mqtt->setMessageHandler(AppMqttClient::onMessageReceived);
     connectDelayed(2000);
 }
 
@@ -110,7 +112,9 @@ bool AppMqttClient::isRunning() const {
     return (mqtt != nullptr);
 }
 
-void AppMqttClient::onMessageReceived(String topic, String message) {
+void AppMqttClient::onMessageReceived(MqttClient client, mqtt_message_t* msg) {
+    String topic=String(msg->publish.topic_name);
+    String message=String(msg->publish.content);
     if (app.cfg.sync.clock_slave_enabled && (topic == app.cfg.sync.clock_slave_topic)) {
         if (message == "reset") {
             app.rgbwwctrl.onMasterClockReset();
@@ -120,10 +124,10 @@ void AppMqttClient::onMessageReceived(String topic, String message) {
             app.rgbwwctrl.onMasterClock(clock);
         }
     }
-    else if (app.cfg.sync.cmd_slave_enabled && topic == app.cfg.sync.cmd_slave_topic) {
+    else if (app.cfg.sync.cmd_slave_enabled && message->publish.topic_name==app.cfg.sync.cmd_slave_topic) {
         app.jsonproc.onJsonRpc(message);
     }
-    else if (app.cfg.sync.color_slave_enabled && (topic == app.cfg.sync.color_slave_topic)) {
+    else if (app.cfg.sync.color_slave_enabled && (message->publish.topic_name== app.cfg.sync.color_slave_topic)) {
         String error;
         app.jsonproc.onColor(message, error, false);
     }

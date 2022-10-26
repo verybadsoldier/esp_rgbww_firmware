@@ -192,7 +192,7 @@ void APPLedCtrl::checkStableColorState() {
     }
 
     // save if color was stable for _saveAfterStableColorMs
-    if (abs(_saveAfterStableColorMs - (_numStableColorSteps * RGBWW_MINTIMEDIFF)) <= (RGBWW_MINTIMEDIFF / 2))
+    if (abs(_saveAfterStableColorMs - (_numStableColorSteps * RGBWW_MINTIMEDIFF)) <= (uint32_t)(RGBWW_MINTIMEDIFF / 2))
         colorSave();
 }
 
@@ -215,7 +215,7 @@ void APPLedCtrl::onMasterClock(uint32_t stepsMaster) {
     _timerInterval = _stepSync->onMasterClock(_stepCounter, stepsMaster);
 
     // limit interval to sane values (just for safety)
-    _timerInterval = std::min(std::max(_timerInterval, RGBWW_MINTIMEDIFF_US / 2u), static_cast<uint32_t>(RGBWW_MINTIMEDIFF_US * 1.5));
+    _timerInterval = std::min(std::max(_timerInterval, RGBWW_MINTIMEDIFF_US / 2u), (uint32_t)(RGBWW_MINTIMEDIFF_US * 1.5));
     _ledTimer.setIntervalUs(_timerInterval);
     publishStatus();
 }
