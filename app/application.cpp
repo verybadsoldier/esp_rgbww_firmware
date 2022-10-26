@@ -20,6 +20,17 @@
  *
  */
 
+#ifdef __riscv
+//#if SMING_SOC==esp32c3
+//#warning "redefining INT32 to be int, not long int for riscv based esp32c3"
+#undef __INT32_TYPE__
+#define __INT32_TYPE__      int
+
+#undef __UINT32_TYPE__
+#define __UINT32_TYPE__     unsigned int
+
+#endif // __riscv
+
 #include <RGBWWCtrl.h>
 
 Application app;
@@ -198,7 +209,12 @@ bool Application::delayedCMD(String cmd, int delay) {
 }
 
 void Application::mountfs(int slot) {
-    debug_i("Application::mountfs rom slot: %i", slot);
+   	debug_i("Application::mountfs rom slot: %i", slot);
+	String name = F("spiffs_");
+   	name += String(slot);
+    auto part = Storage::findPartition(name);
+    spiffs_mount(part);
+    /*
     if (slot == 0) {
         debug_i("Application::mountfs trying to mount spiffs at %x, length %d",
                 RBOOT_SPIFFS_0, SPIFF_SIZE);
@@ -207,13 +223,15 @@ void Application::mountfs(int slot) {
         debug_i("Application::mountfs trying to mount spiffs at %x, length %d",
                 RBOOT_SPIFFS_1, SPIFF_SIZE);
         spiffs_mount_manual(RBOOT_SPIFFS_1, SPIFF_SIZE);
-    }
+    }*/
+
     _fs_mounted = true;
 }
 
 void Application::umountfs() {
     debug_i("Application::umountfs");
-    spiffs_unmount();
+    //spiffs_unmount();
+    fileFreeFileSystem();
     _fs_mounted = false;
 }
 
