@@ -20,6 +20,7 @@
  *
  */
 #include <RGBWWCtrl.h>
+#include <Network/Mqtt/MqttBuffer.h>
 
 AppMqttClient::AppMqttClient() {
 }
@@ -49,14 +50,14 @@ void AppMqttClient::connect() {
         return;
 
     debug_d("MQTT::connect ID: %s\n", _id.c_str());
-    if(!mqtt->setWill("last/will","The connection from this device is lost:(", 1, true)) {
+    if(!mqtt->setWill("last/will","The connection from this device is lost:(", MqttClient::getFlags(MQTT_QOS_AT_LEAST_ONCE, MQTT_RETAIN_TRUE))) {
         debugf("Unable to set the last will and testament. Most probably there is not enough memory on the device.");
     }
 //    0);app.cfg.network.mqtt.username, app.cfg.network.mqtt.password);
     //debug_i("MqttClient: Server: %s Port: %d\n", app.cfg.network.mqtt.server.c_str(), app.cfg.network.mqtt.port);
 
     Url url = "mqtt://" + app.cfg.network.mqtt.username + ":" + app.cfg.network.mqtt.password + "@" + app.cfg.network.mqtt.server + ":" + String(app.cfg.network.mqtt.port);
-    mqtt->connect(url, _id, 0);
+    mqtt->connect(url, _id);
 #ifdef ENABLE_SSL
     // not need i guess? mqtt->addSslOptions(SSL_SERVER_VERIFY_LATER);
 
@@ -97,7 +98,7 @@ void AppMqttClient::start() {
 
     delete mqtt;
     mqtt = new MqttClient();
-    mqtt->setCallback(MqttStringSubscriptionCallback(&AppMqttClient::onMessageReceived, this));
+    mqtt->setEventHandler(MQTT_TYPE_PUBLISH, MqttDelegate(&AppMqttClient::onMessageReceived, this));
     connectDelayed(2000);
 }
 
@@ -110,7 +111,9 @@ bool AppMqttClient::isRunning() const {
     return (mqtt != nullptr);
 }
 
-void AppMqttClient::onMessageReceived(String topic, String message) {
+int AppMqttClient::onMessageReceived(MqttClient& client, mqtt_message_t* msg) {
+    String topic = MqttBuffer(msg->publish.topic_name);
+    String message = MqttBuffer(msg->publish.content);
     if (app.cfg.sync.clock_slave_enabled && (topic == app.cfg.sync.clock_slave_topic)) {
         if (message == "reset") {
             app.rgbwwctrl.onMasterClockReset();
@@ -127,6 +130,7 @@ void AppMqttClient::onMessageReceived(String topic, String message) {
         String error;
         app.jsonproc.onColor(message, error, false);
     }
+    return 0;
 }
 
 void AppMqttClient::publish(const String& topic, const String& data, bool retain) {
