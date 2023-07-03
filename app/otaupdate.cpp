@@ -31,7 +31,7 @@ void ApplicationOTA::start(String romurl, String spiffsurl) {
     if (otaUpdater) {
         delete otaUpdater;
     }
-    otaUpdater = new RbootHttpUpdater();
+    otaUpdater = new Ota::Network::HttpUpgrader();
 
     rboot_config bootconf = rboot_get_config();
     rom_slot = app.getRomSlot();
@@ -42,14 +42,13 @@ void ApplicationOTA::start(String romurl, String spiffsurl) {
         rom_slot = 0;
     }
 
-    otaUpdater->addItem(bootconf.roms[rom_slot], romurl);
+    auto part = OtaUpgrader::getPartitionForSlot(rom_slot);
+    otaUpdater->addItem(romurl, part);
 
-    if (rom_slot == 0) {
-        otaUpdater->addItem(RBOOT_SPIFFS_0, spiffsurl);
-    } else {
-        otaUpdater->addItem(RBOOT_SPIFFS_1, spiffsurl);
-    }
-    otaUpdater->setCallback(OtaUpdateDelegate(&ApplicationOTA::rBootCallback, this));
+    part = Storage::findPartition(F("spiffs") + rom_slot);
+    otaUpdater->addItem(spiffsurl, part);
+
+    otaUpdater->setCallback(Ota::Network::HttpUpgrader::CompletedDelegate(&ApplicationOTA::upgradeCallback, this));
     beforeOTA();
     debug_i("Starting OTA ...");
     otaUpdater->start();
@@ -91,7 +90,7 @@ void ApplicationOTA::afterOTA() {
     }
 }
 
-void ApplicationOTA::rBootCallback(RbootHttpUpdater& rbHttpUp, bool result) {
+void ApplicationOTA::upgradeCallback(Ota::Network::HttpUpgrader& client, bool result) {
     debug_i("ApplicationOTA::rBootCallback");
     if (result == true) {
 

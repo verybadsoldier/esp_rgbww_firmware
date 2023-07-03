@@ -20,7 +20,7 @@
  *
  */
 #include <RGBWWCtrl.h>
-#include <Network/WebHelpers/base64.h>
+#include <Data/WebHelpers/base64.h>
 
 
 ApplicationWebserver::ApplicationWebserver() {
@@ -109,7 +109,7 @@ bool ICACHE_FLASH_ATTR ApplicationWebserver::authenticated(HttpRequest &request,
     bool authenticated = authenticateExec(request, response);
 
     if (!authenticated) {
-        response.code = 401;
+        response.code = HTTP_STATUS_UNAUTHORIZED;
         response.setHeader("WWW-Authenticate", "Basic realm=\"RGBWW Server\"");
         response.setHeader("401 wrong credentials", "wrong credentials");
         response.setHeader("Connection", "close");
@@ -131,15 +131,15 @@ String ApplicationWebserver::getApiCodeMsg(API_CODES code) {
     }
 }
 
-void ApplicationWebserver::sendApiResponse(HttpResponse &response, JsonObjectStream* stream, int code /* = 200 */) {
+void ApplicationWebserver::sendApiResponse(HttpResponse &response, JsonObjectStream* stream, HttpStatus code) {
     if (!checkHeap(response)) {
         delete stream;
         return;
     }
 
     response.setAllowCrossDomainOrigin("*");
-    if (code != 200) {
-        response.code = 400;
+    if (code != HTTP_STATUS_OK) {
+        response.code = HTTP_STATUS_BAD_REQUEST;
     }
     response.sendDataStream(stream, MIME_JSON);
 }
@@ -152,10 +152,10 @@ void ApplicationWebserver::sendApiCode(HttpResponse &response, API_CODES code, S
     }
     if (code == API_CODES::API_SUCCESS) {
         json["success"] = true;
-        sendApiResponse(response, stream, 200);
+        sendApiResponse(response, stream, HTTP_STATUS_OK);
     } else {
         json["error"] = msg;
-        sendApiResponse(response, stream, 400);
+        sendApiResponse(response, stream, HTTP_STATUS_BAD_REQUEST);
     }
 }
 
@@ -167,16 +167,16 @@ void ApplicationWebserver::onFile(HttpRequest &request, HttpResponse &response) 
 
 #ifdef ARCH_ESP8266
     if (app.ota.isProccessing()) {
-        response.setContentType("text/plain");
-        response.code = 503;
+        response.setContentType(MIME_TEXT);
+        response.code = HTTP_STATUS_SERVICE_UNAVAILABLE;
         response.sendString("OTA in progress");
         return;
     }
 #endif
 
     if (!app.isFilesystemMounted()) {
-        response.setContentType("text/plain");
-        response.code = 500;
+        response.setContentType(MIME_TEXT);
+        response.code = HTTP_STATUS_INTERNAL_SERVER_ERROR;
         response.sendString("No filesystem mounted");
         return;
     }
@@ -208,8 +208,8 @@ void ApplicationWebserver::onIndex(HttpRequest &request, HttpResponse &response)
 
 #ifdef ARCH_ESP8266
     if (app.ota.isProccessing()) {
-        response.setContentType("text/plain");
-        response.code = 503;
+        response.setContentType(MIME_TEXT);
+        response.code = HTTP_STATUS_SERVICE_UNAVAILABLE;
         response.sendString("OTA in progress");
         return;
     }
@@ -220,7 +220,7 @@ void ApplicationWebserver::onIndex(HttpRequest &request, HttpResponse &response)
     } else {
         response.headers[HTTP_HEADER_LOCATION] = "http://" + WifiStation.getIP().toString() + "/webapp";
     }
-    response.code = 308;
+    response.code = HTTP_STATUS_PERMANENT_REDIRECT;
 }
 
 void ApplicationWebserver::onWebapp(HttpRequest &request, HttpResponse &response) {
@@ -231,21 +231,21 @@ void ApplicationWebserver::onWebapp(HttpRequest &request, HttpResponse &response
 
 #ifdef ARCH_ESP8266
     if (app.ota.isProccessing()) {
-        response.setContentType("text/plain");
-        response.code = 503;
+        response.setContentType(MIME_TEXT);
+        response.code = HTTP_STATUS_SERVICE_UNAVAILABLE;
         response.sendString("OTA in progress");
         return;
     }
 #endif
 
     if (request.method != HTTP_GET) {
-        response.code = 400;
+        response.code = HTTP_STATUS_BAD_REQUEST;
         return;
     }
 
     if (!app.isFilesystemMounted()) {
-        response.setContentType("text/plain");
-        response.code = 500;
+        response.setContentType(MIME_TEXT);
+        response.code = HTTP_STATUS_INTERNAL_SERVER_ERROR;
         response.sendString("No filesystem mounted");
         return;
     }
@@ -261,7 +261,7 @@ void ApplicationWebserver::onWebapp(HttpRequest &request, HttpResponse &response
 bool ApplicationWebserver::checkHeap(HttpResponse &response) {
     unsigned fh = system_get_free_heap_size();
     if (fh < _minimumHeap) {
-        response.code = 429;
+        response.code = HTTP_STATUS_TOO_MANY_REQUESTS;
         response.setHeader("Retry-After", "2");
         return false;
     }

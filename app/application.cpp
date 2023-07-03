@@ -21,6 +21,7 @@
  */
 
 #include <RGBWWCtrl.h>
+#include <Ota/Upgrader.h>
 
 Application app;
 
@@ -199,21 +200,15 @@ bool Application::delayedCMD(String cmd, int delay) {
 
 void Application::mountfs(int slot) {
     debug_i("Application::mountfs rom slot: %i", slot);
-    if (slot == 0) {
-        debug_i("Application::mountfs trying to mount spiffs at %x, length %d",
-                RBOOT_SPIFFS_0, SPIFF_SIZE);
-        spiffs_mount_manual(RBOOT_SPIFFS_0, SPIFF_SIZE);
-    } else {
-        debug_i("Application::mountfs trying to mount spiffs at %x, length %d",
-                RBOOT_SPIFFS_1, SPIFF_SIZE);
-        spiffs_mount_manual(RBOOT_SPIFFS_1, SPIFF_SIZE);
-    }
-    _fs_mounted = true;
+    auto part = OtaUpgrader::getPartitionForSlot(slot);
+    debug_i("Application::mountfs trying to mount spiffs at %x, length %d",
+            part.address(), part.size());
+    _fs_mounted = spiffs_mount(part);
 }
 
 void Application::umountfs() {
     debug_i("Application::umountfs");
-    spiffs_unmount();
+    fileFreeFileSystem();
     _fs_mounted = false;
 }
 

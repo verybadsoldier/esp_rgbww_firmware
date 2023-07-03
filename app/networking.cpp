@@ -22,7 +22,7 @@
 #include <RGBWWCtrl.h>
 
 AppWIFI::AppWIFI() {
-    _ApIP = IPAddress(String(DEFAULT_AP_IP));
+    _ApIP = IpAddress(String(DEFAULT_AP_IP));
     _client_err_msg = "";
     _con_ctr = 0;
     _scanning = false;
