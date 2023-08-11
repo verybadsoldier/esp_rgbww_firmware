@@ -2,7 +2,7 @@ COMPONENT_SEARCH_DIRS := $(PROJECT_DIR)/Components
 
 ARDUINO_LIBRARIES := RGBWWLed ArduinoJson6 OtaNetwork
 
-HWCONFIG := spiffs-two-roms
+HWCONFIG := two-spiffs-two-roms
 
 # These are defined in hardware config or no longer required
 # SPI_SIZE = 4M
@@ -28,6 +28,8 @@ RBOOT_TWO_ROMS  = 0
 ENABLE_CUSTOM_PWM = 0
 #ENABLE_CUSTOM_PWM = 0
 
+COM_SPEED = 460800
+COM_PORT=/dev/ttyUSB0
 
 CUSTOM_TARGETS += check_versions
 

@@ -84,7 +84,9 @@ void AppWIFI::init() {
     _con_ctr = 0;
 
     if (app.isFirstRun()) {
-        debug_i("AppWIFI::init initial run - setting up AP");
+        debug_i("AppWIFI::init initial run - setting up AP, ssid: ");
+        String SSID=String(DEFAULT_AP_SSIDPREFIX) + String(system_get_chip_id());
+        printf("%s",SSID);
         app.cfg.network.connection.mdnshostname = String(DEFAULT_AP_SSIDPREFIX) + String(system_get_chip_id());
         app.cfg.network.ap.ssid = String(DEFAULT_AP_SSIDPREFIX) + String(system_get_chip_id());
         app.cfg.save();
@@ -209,15 +211,19 @@ void AppWIFI::stopAp(int delay) {
 }
 
 void AppWIFI::startAp() {
+    String ssid="rgbww test";
     debug_i("AppWIFI::startAp");
     debug_i("Enabling AP");
     if (!WifiAccessPoint.isEnabled()) {
         debug_i("AppWIFI:: WifiAP enable");
         WifiAccessPoint.enable(true, false);
+        debug_i("AP enabled");
+        //debug_i("AP SSID: %s", app.cfg.network.ap.ssid);
         if (app.cfg.network.ap.secured) {
             WifiAccessPoint.config(app.cfg.network.ap.ssid, app.cfg.network.ap.password, AUTH_WPA2_PSK);
         } else {
-            WifiAccessPoint.config(app.cfg.network.ap.ssid, "", AUTH_OPEN);
+            //WifiAccessPoint.config(app.cfg.network.ap.ssid, "", AUTH_OPEN);
+            WifiAccessPoint.config(ssid, "", AUTH_OPEN);
         }
     }
 }

@@ -54,6 +54,7 @@ void Application::uptimeCounter() {
 }
 
 void Application::init() {
+    delay(2000);
     debug_i("RGBWW Controller v %s\r\n", fw_git_version);
 
     //load settings
@@ -62,6 +63,7 @@ void Application::init() {
 #ifdef ARCH_ESP8266
     // load boot information
     uint8 bootmode, bootslot;
+    debug_i("loading boot info");
     if (rboot_get_last_boot_mode(&bootmode)) {
         if (bootmode == MODE_TEMP_ROM) {
             debug_i("Application::init - booting after OTA");
@@ -70,14 +72,16 @@ void Application::init() {
         }
         _bootmode = bootmode;
     }
-
+    
     if (rboot_get_last_boot_rom(&bootslot)) {
         _romslot = bootslot;
     }
 #endif
 
     // mount filesystem
-    mountfs(getRomSlot());
+    int romSlot=getRomSlot();
+    debug_i("got rom slot %i", romSlot);
+    mountfs(romSlot);
 
     // check if we need to reset settings
     if (digitalRead(CLEAR_PIN) < 1) {
