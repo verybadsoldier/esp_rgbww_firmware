@@ -160,7 +160,7 @@ void ApplicationWebserver::sendApiCode(HttpResponse &response, API_CODES code, S
 }
 
 void ApplicationWebserver::onFile(HttpRequest &request, HttpResponse &response) {
-
+    debug_i("gotten http file request");
     if (!authenticated(request, response)) {
         return;
     }
@@ -201,7 +201,7 @@ void ApplicationWebserver::onFile(HttpRequest &request, HttpResponse &response) 
 }
 
 void ApplicationWebserver::onIndex(HttpRequest &request, HttpResponse &response) {
-
+    debug_i("http onIndex");
     if (!authenticated(request, response)) {
         return;
     }
@@ -216,6 +216,7 @@ void ApplicationWebserver::onIndex(HttpRequest &request, HttpResponse &response)
 #endif
 
     if (WifiAccessPoint.isEnabled()) {
+        debug_i("adding AP headers");
         response.headers[HTTP_HEADER_LOCATION] = "http://" + WifiAccessPoint.getIP().toString() + "/webapp";
     } else {
         response.headers[HTTP_HEADER_LOCATION] = "http://" + WifiStation.getIP().toString() + "/webapp";
@@ -244,6 +245,7 @@ void ApplicationWebserver::onWebapp(HttpRequest &request, HttpResponse &response
     }
 
     if (!app.isFilesystemMounted()) {
+        debug_i("no filesystem");
         response.setContentType(MIME_TEXT);
         response.code = HTTP_STATUS_INTERNAL_SERVER_ERROR;
         response.sendString("No filesystem mounted");
@@ -251,6 +253,7 @@ void ApplicationWebserver::onWebapp(HttpRequest &request, HttpResponse &response
     }
     if (!WifiStation.isConnected()) {
         // not yet connected - serve initial settings page
+        debug_i("AP connection, sending init.html");
         response.sendFile("init.html");
     } else {
         // we are connected to ap - serve normal settings page
