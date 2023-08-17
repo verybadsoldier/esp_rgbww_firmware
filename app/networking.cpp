@@ -44,7 +44,7 @@ void AppWIFI::scanCompleted(bool succeeded, BssList& list) {
     debug_i("AppWIFI::scanCompleted. Success: %d", succeeded);
     if (succeeded) {
         _networks.clear();
-        for (int i = 0; i < list.count(); i++) {
+        for (size_t i = 0; i < list.count(); i++) {
             if (!list[i].hidden && list[i].ssid.length() > 0) {
                 _networks.add(list[i]);
             }
@@ -211,7 +211,7 @@ void AppWIFI::stopAp(int delay) {
 }
 
 void AppWIFI::startAp() {
-    String ssid="rgbww test";
+    //String ssid="rgbww test";
     debug_i("AppWIFI::startAp");
     debug_i("Enabling AP");
     if (!WifiAccessPoint.isEnabled()) {
@@ -222,8 +222,8 @@ void AppWIFI::startAp() {
         if (app.cfg.network.ap.secured) {
             WifiAccessPoint.config(app.cfg.network.ap.ssid, app.cfg.network.ap.password, AUTH_WPA2_PSK);
         } else {
-            //WifiAccessPoint.config(app.cfg.network.ap.ssid, "", AUTH_OPEN);
-            WifiAccessPoint.config(ssid, "", AUTH_OPEN);
+            WifiAccessPoint.config(app.cfg.network.ap.ssid, "", AUTH_OPEN);
+            //WifiAccessPoint.config(ssid, "", AUTH_OPEN);
         }
     }
 }

@@ -77,7 +77,8 @@ void Application::init() {
         _romslot = bootslot;
     }
 #endif
-
+    // check file systems
+    // listSpiffsPartitions();
     // mount filesystem
     int romSlot=getRomSlot();
     debug_i("got rom slot %i", romSlot);
@@ -202,9 +203,31 @@ bool Application::delayedCMD(String cmd, int delay) {
     return true;
 }
 
+/*
+void Application::listSpiffsPartitions()
+{
+	Serial.println(_F("** Enumerate registered SPIFFS partitions"));
+	for(auto part : Storage::findPartition(Storage::Partition::SubType::Data::spiffs)) {
+		Serial << _F(">> Mounting '") << part.name() << "' ..." << endl;
+		bool ok = spiffs_mount(part);
+		Serial.println(ok ? "OK, listing files:" : "Mount failed!");
+		if(ok) {
+			Directory dir;
+			if(dir.open()) {
+				while(dir.next()) {
+					Serial.print("  ");
+					Serial.println(dir.stat().name);
+				}
+			}
+			Serial << dir.count() << _F(" files found") << endl << endl;
+		}
+	}
+}
+*/
 void Application::mountfs(int slot) {
     debug_i("Application::mountfs rom slot: %i", slot);
-    auto part = OtaUpgrader::getPartitionForSlot(slot);
+    // auto part = OtaUpgrader::getPartitionForSlot(slot);
+    auto part = Storage::findPartition(F("spiffs") + slot);
     debug_i("Application::mountfs trying to mount spiffs at %x, length %d",
             part.address(), part.size());
     _fs_mounted = spiffs_mount(part);
