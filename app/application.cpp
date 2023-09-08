@@ -138,11 +138,11 @@ void Application::initButtons() {
     Vector<String> buttons;
     splitString(cfg.general.buttons_config, ',', buttons);
 
-    for(int i=0; i < buttons.count(); ++i) {
+    for(uint32_t i=0; i < buttons.count(); ++i) {
         if (buttons[i].length() == 0)
             continue;
 
-        int pin = buttons[i].toInt();
+        uint32_t pin = buttons[i].toInt();
         if (pin >= _lastToggles.size()) {
             debug_i("Pin %d is invalid. Max is %d", pin, _lastToggles.size() - 1);
             continue;
@@ -264,9 +264,9 @@ void Application::onCommandRelay(const String& method, const JsonObject& params)
 }
 
 void Application::onButtonTogglePressed(int pin) {
-    unsigned long now = millis();
-    unsigned long diff = now - _lastToggles[pin];
-    if (diff > cfg.general.buttons_debounce_ms) {  // debounce
+    uint32_t now = millis();
+    uint32_t diff = now - _lastToggles[pin];
+    if (diff > (uint32_t) cfg.general.buttons_debounce_ms) {  // debounce
         debug_i("Button %d pressed - toggle", pin);
         rgbwwctrl.toggle();
         _lastToggles[pin] = now;

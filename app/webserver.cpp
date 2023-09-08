@@ -776,7 +776,7 @@ void ApplicationWebserver::onNetworks(HttpRequest &request, HttpResponse &respon
         json["scanning"] = false;
         JsonArray netlist = json.createNestedArray("available");
         BssList networks = app.network.getAvailableNetworks();
-        for (int i = 0; i < networks.count(); i++) {
+        for (unsigned int i = 0; i < networks.count(); i++) {
             if (networks[i].hidden)
                 continue;
 
