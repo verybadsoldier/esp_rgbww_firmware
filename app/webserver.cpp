@@ -21,6 +21,30 @@
  */
 #include <RGBWWCtrl.h>
 #include <Data/WebHelpers/base64.h>
+#include <FlashString/Map.hpp>
+#include <FlashString/Stream.hpp>
+
+#define FILE_LIST(XX)                    \
+    XX(app_min_css, "app.min.css.gz")    \
+    XX(app_min_js, "app.min.js.gz")      \
+    XX(index_html, "index.html.gz")      \
+    XX(init_html, "init.html.gz")        \
+    XX(test_txt, "test.txt")
+
+// Define the names for each file
+#define XX(name, file) DEFINE_FSTR_LOCAL(KEY_##name, file)
+FILE_LIST(XX)
+#undef XX
+
+// Import content for each file
+#define XX(name, file) IMPORT_FSTR_LOCAL(CONTENT_##name, PROJECT_DIR "/webapp/" file);
+FILE_LIST(XX)
+#undef XX
+
+// Define the table structure linking key => content
+#define XX(name, file) {&KEY_##name, &CONTENT_##name},
+DEFINE_FSTR_MAP_LOCAL(fileMap, FlashString, FlashString, FILE_LIST(XX));
+#undef XX
 
 
 ApplicationWebserver::ApplicationWebserver() {
@@ -37,6 +61,7 @@ ApplicationWebserver::ApplicationWebserver() {
     // https://github.com/SmingHub/Sming/issues/1236
     setBodyParser("*", bodyToStringParser);
 }
+
 
 void ApplicationWebserver::init() {
     paths.setDefault(HttpPathDelegate(&ApplicationWebserver::onFile, this));
@@ -174,6 +199,30 @@ void ApplicationWebserver::onFile(HttpRequest &request, HttpResponse &response) 
     }
 #endif
 
+    String fileName = request.uri.getRelativePath();
+
+    //auto response = connection.getResponse();
+
+	String compressed = fileName + ".gz";
+	auto v = fileMap[compressed];
+	if(v) {
+		response.headers[HTTP_HEADER_CONTENT_ENCODING] = _F("gzip");
+	} else {
+		v = fileMap[fileName];
+		if(!v) {
+			debug_w("File '%s' not found", fileName.c_str());
+            response.headers[HTTP_HEADER_LOCATION] = "http://" + WifiAccessPoint.getIP().toString() + "/webapp";
+			return;
+		}
+	}
+
+	debug_i("found %s in fileMap", String(v.key()).c_str());
+	auto stream = new FSTR::Stream(v.content());
+	response.sendDataStream(stream, ContentType::fromFullFileName(fileName));
+
+	// Use client caching for better performance.
+	//	response->setCache(86400, true);
+/*
     if (!app.isFilesystemMounted()) {
         response.setContentType(MIME_TEXT);
         response.code = HTTP_STATUS_INTERNAL_SERVER_ERROR;
@@ -197,7 +246,7 @@ void ApplicationWebserver::onFile(HttpRequest &request, HttpResponse &response) 
         response.setCache(86400, true); // It's important to use cache for better performance.
         response.sendFile(file);
     }
-
+*/
 }
 
 void ApplicationWebserver::onIndex(HttpRequest &request, HttpResponse &response) {
