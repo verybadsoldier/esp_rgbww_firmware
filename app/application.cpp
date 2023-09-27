@@ -26,7 +26,7 @@
 Application app;
 
 // Sming Framework INIT method - called during boot
-void GDB_IRAM_ATTR init() {
+void init() {
 
     Serial.begin(SERIAL_BAUD_RATE); // 115200 by default
     Serial.systemDebugOutput(true); // Debug output to serial
