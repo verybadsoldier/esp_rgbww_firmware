@@ -22,6 +22,10 @@
 
 #include <RGBWWCtrl.h>
 #include <Ota/Upgrader.h>
+#include <SmingCore.h>
+#include <Storage/SysMem.h>
+#include <Storage/ProgMem.h>
+#include <Storage/Debug.h>
 
 Application app;
 
@@ -80,9 +84,13 @@ void Application::init() {
     // check file systems
     // listSpiffsPartitions();
     // mount filesystem
-    int romSlot=getRomSlot();
-    debug_i("got rom slot %i", romSlot);
-    mountfs(romSlot);
+    /**********************
+    * old, two spiffs model 
+    * int romSlot=getRomSlot();
+    * debug_i("got rom slot %i", romSlot);
+    * mountfs(romSlot);
+    */
+    mountfs(_romslot);
 
     // check if we need to reset settings
     if (digitalRead(CLEAR_PIN) < 1) {
@@ -227,10 +235,21 @@ void Application::listSpiffsPartitions()
 void Application::mountfs(int slot) {
     debug_i("Application::mountfs rom slot: %i", slot);
     // auto part = OtaUpgrader::getPartitionForSlot(slot);
-    auto part = Storage::findPartition(F("spiffs") + slot);
+    auto part = Storage::findPartition(F("spiffs0"));
     debug_i("Application::mountfs trying to mount spiffs at %x, length %d",
             part.address(), part.size());
     _fs_mounted = spiffs_mount(part);
+    _fs_mounted ? debug_i("OK, listing files:") : debug_i("Mount failed!");
+    if(_fs_mounted) {
+        Directory dir;
+        if(dir.open()) {
+            while(dir.next()) {
+                Serial.print("  ");
+                Serial.println(dir.stat().name);
+            }
+        }
+        debug_i("%i files found", dir.count());
+    }       
 }
 
 void Application::umountfs() {
