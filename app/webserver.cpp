@@ -29,6 +29,7 @@
     XX(app_min_js, "app.min.js.gz")      \
     XX(index_html, "index.html.gz")      \
     XX(init_html, "init.html.gz")        \
+    XX(favicon_ico, "favicon.ico")       \
     XX(test_txt, "test.txt")
 
 // Define the names for each file
@@ -274,6 +275,7 @@ void ApplicationWebserver::onIndex(HttpRequest &request, HttpResponse &response)
 }
 
 void ApplicationWebserver::onWebapp(HttpRequest &request, HttpResponse &response) {
+    debug_i("onWebapp");
 
     if (!authenticated(request, response)) {
         return;
@@ -300,14 +302,30 @@ void ApplicationWebserver::onWebapp(HttpRequest &request, HttpResponse &response
         response.sendString("No filesystem mounted");
         return;
     }
+    String fileName;
     if (!WifiStation.isConnected()) {
         // not yet connected - serve initial settings page
         debug_i("AP connection, sending init.html");
-        response.sendFile("init.html");
+        fileName=F("init.html");
     } else {
-        // we are connected to ap - serve normal settings page
-        response.sendFile("index.html");
+        fileName=F("index.html");
     }
+    String compressed = fileName + ".gz";
+    auto v = fileMap[compressed];
+    if(v) {
+        response.headers[HTTP_HEADER_CONTENT_ENCODING] = _F("gzip");
+    } else {
+        v = fileMap[fileName];
+        if(!v) {
+            debug_w("File '%s' not found", fileName.c_str());
+            response.headers[HTTP_HEADER_LOCATION] = "http://" + WifiAccessPoint.getIP().toString() + "/webapp";
+            return;
+        }
+    }
+
+    debug_i("found %s in fileMap", String(v.key()).c_str());
+    auto stream = new FSTR::Stream(v.content());
+    response.sendDataStream(stream, ContentType::fromFullFileName(fileName));
 }
 
 bool ApplicationWebserver::checkHeap(HttpResponse &response) {
