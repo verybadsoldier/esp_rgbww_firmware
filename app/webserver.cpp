@@ -29,8 +29,7 @@
     XX(app_min_js, "app.min.js.gz")      \
     XX(index_html, "index.html.gz")      \
     XX(init_html, "init.html.gz")        \
-    XX(favicon_ico, "favicon.ico")       \
-    XX(test_txt, "test.txt")
+    XX(favicon_ico, "favicon.ico.gz")       
 
 // Define the names for each file
 #define XX(name, file) DEFINE_FSTR_LOCAL(KEY_##name, file)
@@ -302,6 +301,7 @@ void ApplicationWebserver::onWebapp(HttpRequest &request, HttpResponse &response
         response.sendString("No filesystem mounted");
         return;
     }
+    
     String fileName;
     if (!WifiStation.isConnected()) {
         // not yet connected - serve initial settings page
@@ -339,6 +339,7 @@ bool ApplicationWebserver::checkHeap(HttpResponse &response) {
 }
 
 void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response) {
+    debug_i("onConfig");
     if (!checkHeap(response))
         return;
 
