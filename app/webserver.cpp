@@ -163,6 +163,8 @@ void ApplicationWebserver::sendApiResponse(HttpResponse &response, JsonObjectStr
     }
 
     response.setAllowCrossDomainOrigin("*");
+    response.setHeader("accept","GET, POST, OPTIONS");
+    response.setHeader("Access-Control-Allow-Headers","*");
     if (code != HTTP_STATUS_OK) {
         response.code = HTTP_STATUS_BAD_REQUEST;
     }
@@ -353,19 +355,32 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         return;
     }
 #endif
+    
 
-    if (request.method != HTTP_POST && request.method != HTTP_GET) {
-        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not POST or GET request");
+    if (request.method != HTTP_POST && request.method != HTTP_GET && request.method!=HTTP_OPTIONS) {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not POST, GET or OPTIONS request");
         return;
     }
-
+    
+    /*
+    / axios sends a HTTP_OPTIONS request to check if server is CORS permissive (which this firmware 
+    / has been for years) this is just to reply to that request in order to pass the CORS test
+    */
+    if (request.method == HTTP_OPTIONS){
+        // probably a CORS request
+        sendApiCode(response,API_CODES::API_SUCCESS,"");
+        debug_i("HTTP_OPTIONS Request, sent API_SUCCSSS");
+        return;
+    }
+    
     if (request.method == HTTP_POST) {
+        debug_i("======================\nHTTP POST request received, ");
         String body = request.getBody();
+        debug_i("body: \n", body);
         if (body == NULL) {
 
             sendApiCode(response, API_CODES::API_BAD_REQUEST, "could not parse HTTP body");
             return;
-
         }
 
         bool error = false;
@@ -387,7 +402,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
 
         JsonObject jnet = root["network"];
         if (!jnet.isNull()) {
-
+  
             JsonObject con = jnet["connection"];
             if (!con.isNull()) {
                 ip_updated |= Json::getBoolTolerantChanged(con["dhcp"], app.cfg.network.connection.dhcp);
@@ -791,8 +806,13 @@ void ApplicationWebserver::onColor(HttpRequest &request, HttpResponse &response)
     }
 #endif
 
-    if (request.method != HTTP_POST && request.method != HTTP_GET) {
-        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not POST or GET");
+    if (request.method != HTTP_POST && request.method != HTTP_GET && request.method!=HTTP_OPTIONS) {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not POST, GET or OPTIONS");
+        return;
+    }
+
+    if (request.method==HTTP_OPTIONS){
+        sendApiCode(response, API_CODES::API_SUCCESS);
         return;
     }
 
