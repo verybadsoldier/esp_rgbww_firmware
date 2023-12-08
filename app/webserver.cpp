@@ -20,7 +20,7 @@
  *
  */
 #include <RGBWWCtrl.h>
-#include <Data/WebHelpers/base64.h>
+#include <Data/WebHelpers/base64.h> 
 #include <FlashString/Map.hpp>
 #include <FlashString/Stream.hpp>
 
@@ -85,6 +85,10 @@ void ApplicationWebserver::init() {
     paths.set("/blink", HttpPathDelegate(&ApplicationWebserver::onBlink, this));
 
     paths.set("/toggle", HttpPathDelegate(&ApplicationWebserver::onToggle, this));
+
+    // storage api
+    paths.set("/storage",HttpPathDelegate(&ApplicationWebserver::onStorage, this));
+
     _init = true;
 }
 
@@ -209,18 +213,29 @@ void ApplicationWebserver::onFile(HttpRequest &request, HttpResponse &response) 
 	auto v = fileMap[compressed];
 	if(v) {
 		response.headers[HTTP_HEADER_CONTENT_ENCODING] = _F("gzip");
+       	debug_i("found %s in fileMap", String(v.key()).c_str());
+    	auto stream = new FSTR::Stream(v.content());
+	    response.sendDataStream(stream, ContentType::fromFullFileName(fileName));
 	} else {
 		v = fileMap[fileName];
 		if(!v) {
-			debug_w("File '%s' not found", fileName.c_str());
-            response.headers[HTTP_HEADER_LOCATION] = "http://" + WifiAccessPoint.getIP().toString() + "/webapp";
+                if (!fileExist(fileName) && !fileExist(fileName + ".gz")) {
+			        debug_w("File '%s' not found in filemap or SPIFFS", fileName.c_str());
+                    response.code = HTTP_STATUS_NOT_FOUND;
+                    response.sendString("file not found");
+                    return;
+                }else{
+   			        debug_w("File '%s' found in SPIFFS", fileName.c_str());
+                    response.code=HTTP_STATUS_OK;
+                    response.sendFile(fileName);
+                }
 			return;
-		}
+		}else{
+            debug_i("found %s in fileMap", String(v.key()).c_str());
+            auto stream = new FSTR::Stream(v.content());
+            response.sendDataStream(stream, ContentType::fromFullFileName(fileName));
+        }
 	}
-
-	debug_i("found %s in fileMap", String(v.key()).c_str());
-	auto stream = new FSTR::Stream(v.content());
-	response.sendDataStream(stream, ContentType::fromFullFileName(fileName));
 
 	// Use client caching for better performance.
 	//	response->setCache(86400, true);
@@ -1174,5 +1189,46 @@ void ApplicationWebserver::onToggle(HttpRequest &request, HttpResponse &response
     }
     else {
         sendApiCode(response, API_CODES::API_BAD_REQUEST);
+    }
+}
+
+void ApplicationWebserver::onStorage(HttpRequest &request, HttpResponse &response){
+    if (request.method != HTTP_POST && request.method != HTTP_GET && request.method!=HTTP_OPTIONS) {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not POST, GET or OPTIONS request");
+        return;
+    }
+    
+    /*
+    / axios sends a HTTP_OPTIONS request to check if server is CORS permissive (which this firmware 
+    / has been for years) this is just to reply to that request in order to pass the CORS test
+    */
+    if (request.method == HTTP_OPTIONS){
+        // probably a CORS request
+        sendApiCode(response,API_CODES::API_SUCCESS,"");
+        debug_i("HTTP_OPTIONS Request, sent API_SUCCSSS");
+        return;
+    }
+    
+    if (request.method == HTTP_POST) {
+        debug_i("======================\nHTTP POST request received, ");
+        String header=request.getHeader("Content-type");
+        if(header!="application/json"){
+            sendApiCode(response,API_BAD_REQUEST,"only json content allowed");
+        }
+        debug_i("got post with content type %s", header.c_str());
+        String body = request.getBody();
+        if (body == NULL || body.length()>FILE_MAX_SIZE) {
+
+            sendApiCode(response, API_CODES::API_BAD_REQUEST, "could not parse HTTP body");
+            return;
+        }
+
+        bool error = false;
+        
+        debug_i("body length: %i", body.length());
+        DynamicJsonDocument doc(body.length()+32);
+        Json::deserialize(doc, body);
+     
+
     }
 }

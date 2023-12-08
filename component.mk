@@ -13,7 +13,7 @@ HWCONFIG := spiffs-two-roms
 
 #### SPIFFS options ####
 # folder with files to include
-SPIFF_FILES = spiffs
+SPIFF_FILES = Storage
 
 #### rBoot options ####
 # use rboot build mode
@@ -28,7 +28,7 @@ RBOOT_TWO_ROMS  = 0
 ENABLE_CUSTOM_PWM = 0
 #ENABLE_CUSTOM_PWM = 0
 
-COM_SPEED = 460800
+COM_SPEED = 230400
 COM_PORT=/dev/ttyUSB0
 
 CUSTOM_TARGETS += check_versions

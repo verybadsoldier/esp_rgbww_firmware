@@ -24,6 +24,8 @@
 
 #include <RGBWWLed/RGBWWLedColor.h>
 
+#define FILE_MAX_SIZE 16384 //max filesize for storage api files.
+
 enum API_CODES {
     API_SUCCESS = 0,
     API_BAD_REQUEST = 1,
@@ -80,9 +82,13 @@ private:
     void sendApiResponse(HttpResponse &response, JsonObjectStream* stream, HttpStatus code = HTTP_STATUS_OK);
     void sendApiCode(HttpResponse &response, API_CODES code, String msg = "");
 
+    void onUpload(HttpRequest &request, HttpResponse &response);
+
     bool checkHeap(HttpResponse &response);
 
     static bool isPrintable(String& str);
+
+    void onStorage(HttpRequest &request, HttpResponse &response);
 
 };
 
