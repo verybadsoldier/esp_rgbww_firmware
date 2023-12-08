@@ -1,0 +1,42 @@
+{
+    "presets:":[
+        {
+            "name":"dunkelschwarz",
+            "hsv":{
+                "h":0,
+                "s":0,
+                "v":0
+            },
+            "favorite":true
+        },
+        {
+            "name":"mittelschwarz",
+            "hsv":{
+                "h":0,
+                "s":0,
+                "v":10
+            },
+            "favorite":true
+        },
+        {
+            "name":"hellschwarz",
+            "hsv":{
+                "h":0,
+                "s":0,
+                "v":30
+            },
+            "favorite":true
+        },
+        {
+            "name":"gleissendschwarz",
+            "raw":{
+                "r":1023,
+                "g":1023,
+                "b":1023,
+                "ww":1023,
+                "cw":1023
+            }
+        }
+
+    ]
+}
