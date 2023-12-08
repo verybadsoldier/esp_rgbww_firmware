@@ -211,6 +211,7 @@ void ApplicationWebserver::onFile(HttpRequest &request, HttpResponse &response) 
 
 	String compressed = fileName + ".gz";
 	auto v = fileMap[compressed];
+    response.setAllowCrossDomainOrigin("*");
 	if(v) {
 		response.headers[HTTP_HEADER_CONTENT_ENCODING] = _F("gzip");
        	debug_i("found %s in fileMap", String(v.key()).c_str());
@@ -1242,6 +1243,8 @@ void ApplicationWebserver::onStorage(HttpRequest &request, HttpResponse &respons
             debug_e("Saving config to file %s failed!", fileName.c_str());
         }
         fileClose(file);
-        
+        response.setAllowCrossDomainOrigin("*");
+        sendApiCode(response, API_CODES::API_SUCCESS);
+        return;       
     }
 }
