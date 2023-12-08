@@ -1228,7 +1228,20 @@ void ApplicationWebserver::onStorage(HttpRequest &request, HttpResponse &respons
         debug_i("body length: %i", body.length());
         DynamicJsonDocument doc(body.length()+32);
         Json::deserialize(doc, body);
-     
-
+        String fileName=doc["filename"];
+        
+        //DynamicJsonDocument data(body.length()+32);
+        //Json::deserialize(data, Json::serialize(doc["data"]));
+        //doc.clear(); //clearing the original document to save RAM
+        debug_i("will save to file %s", fileName.c_str());
+        debug_i("original document uses %i bytes", doc.memoryUsage());
+        String data=doc["data"];
+        debug_i("data: %s", data.c_str());
+        FileHandle file=fileOpen(fileName.c_str(),IFS::OpenFlag::Write|IFS::OpenFlag::Create|IFS::OpenFlag::Truncate);
+        if(!fileWrite(file, data.c_str(), data.length())){
+            debug_e("Saving config to file %s failed!", fileName.c_str());
+        }
+        fileClose(file);
+        
     }
 }
