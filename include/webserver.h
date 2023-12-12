@@ -77,7 +77,7 @@ private:
     void onColorPost(HttpRequest &request, HttpResponse &response);
     bool onColorPostCmd(JsonObject& root, String& errorMsg);
 
-    void sendApiResponse(HttpResponse &response, JsonObjectStream* stream, int code = 200);
+    void sendApiResponse(HttpResponse &response, JsonObjectStream* stream, HttpStatus code = HTTP_STATUS_OK);
     void sendApiCode(HttpResponse &response, API_CODES code, String msg = "");
 
     bool checkHeap(HttpResponse &response);

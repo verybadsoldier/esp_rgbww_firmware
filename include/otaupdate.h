@@ -23,6 +23,8 @@
 #define OTAUPDATE_H_
 #define OTA_STATUS_FILE ".ota"
 
+#include <Ota/Network/HttpUpgrader.h>
+
 enum class OTASTATUS {
     OTA_NOT_UPDATING = 0,
     OTA_PROCESSING = 1,
@@ -42,12 +44,12 @@ public:
     inline bool isProccessing() { return status == OTASTATUS::OTA_PROCESSING; };
 
 protected:
-    RbootHttpUpdater* otaUpdater;
+    Ota::Network::HttpUpgrader* otaUpdater{};
     uint8 rom_slot;
     OTASTATUS status = OTASTATUS::OTA_NOT_UPDATING;
 
 protected:
-    void rBootCallback(RbootHttpUpdater& rbHttpUp, bool result);
+    void upgradeCallback(Ota::Network::HttpUpgrader& client, bool result);
     void reset();
     void beforeOTA();
     void afterOTA();

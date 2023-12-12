@@ -1,42 +1,32 @@
 COMPONENT_SEARCH_DIRS := $(PROJECT_DIR)/Components
 
-ARDUINO_LIBRARIES := RGBWWLed ArduinoJson6
+ARDUINO_LIBRARIES := RGBWWLed ArduinoJson6 OtaNetwork
 
-# SPI EEPROM SIZE
-SPI_SIZE = 4M
+HWCONFIG := spiffs-two-roms
+
+# These are defined in hardware config or no longer required
+# SPI_SIZE = 4M
+# SPIFF_SIZE ?= 786432 #~768KB spiffs size
+# RBOOT_SPIFFS_0  = 0x100000
+# RBOOT_SPIFFS_1  = 0x300000
+# RBOOT_BIG_FLASH = 1
 
 #### SPIFFS options ####
 # folder with files to include
 SPIFF_FILES = webapp
 
-# size of filesystem
-SPIFF_SIZE ?= 786432 #~768KB spiffs size
-#SPIFF_SIZE      = 284288 #~512KB spiffs size
-
-
 #### rBoot options ####
 # use rboot build mode
-RBOOT_ENABLED = 1
+# RBOOT_ENABLED = 1
 
 #  enable tmp rom switching
 RBOOT_RTC_ENABLED = 1
 
-# enable big flash support (for multiple roms, each in separate 1mb block of flash)
-RBOOT_BIG_FLASH = 1
-
 # two rom mode (where two roms sit in the same 1mb block of flash)
 RBOOT_TWO_ROMS  = 0
 
-# where does the filesystem reside
-RBOOT_SPIFFS_0  = 0x100000
-RBOOT_SPIFFS_1  = 0x300000 
-
 ENABLE_CUSTOM_PWM = 0
 #ENABLE_CUSTOM_PWM = 0
-## output file for first rom (.bin will be appended)
-#RBOOT_ROM_0     ?= rom0
-## input linker file for first rom
-#RBOOT_LD_0      ?= rom0.ld
 
 
 CUSTOM_TARGETS += check_versions
