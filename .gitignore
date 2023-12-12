@@ -34,4 +34,10 @@
 out/
 .settings/
 
+# vscode files
+.vscode/*
+.vscode/
+.vscode/
+sming.code-workspace
+
 .cproject

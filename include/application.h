@@ -40,6 +40,8 @@ public:
     void restart();
     bool delayedCMD(String cmd, int delay);
 
+    //void listSpiffsPartitions();
+    
     void mountfs(int slot);
     void umountfs();
 

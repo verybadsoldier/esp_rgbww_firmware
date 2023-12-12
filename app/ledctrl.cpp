@@ -156,7 +156,7 @@ void APPLedCtrl::updateLed() {
                 ((stepLenMs * _stepCounter) % app.cfg.events.color_interval_ms) < stepLenMs) {
 
             uint32_t now = millis();
-            if (now - _lastColorEvent >= app.cfg.events.color_mininterval_ms) {
+            if (now - _lastColorEvent >= (uint32_t) app.cfg.events.color_mininterval_ms) {
                 _lastColorEvent = now;
                 publishToEventServer();
             }
@@ -215,7 +215,7 @@ void APPLedCtrl::onMasterClock(uint32_t stepsMaster) {
     _timerInterval = _stepSync->onMasterClock(_stepCounter, stepsMaster);
 
     // limit interval to sane values (just for safety)
-    _timerInterval = std::min(std::max(_timerInterval, RGBWW_MINTIMEDIFF_US / 2u), (uint32_t)(RGBWW_MINTIMEDIFF_US * 1.5));
+    _timerInterval = std::min(std::max(_timerInterval, static_cast<uint32_t>(RGBWW_MINTIMEDIFF_US / 2u)), static_cast<uint32_t>(RGBWW_MINTIMEDIFF_US * 1.5));
     _ledTimer.setIntervalUs(_timerInterval);
     publishStatus();
 }
