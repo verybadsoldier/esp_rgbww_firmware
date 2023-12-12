@@ -20,6 +20,7 @@
  *
  */
 #include <RGBWWCtrl.h>
+#include <Network/Mqtt/MqttBuffer.h>
 
 AppMqttClient::AppMqttClient() {
 }
@@ -49,8 +50,8 @@ void AppMqttClient::connect() {
         return;
 
     debug_d("MQTT::connect ID: %s\n", _id.c_str());
-    if(!mqtt->setWill(F("last/will"),F("the connection from this device ist lost"),mqtt->getFlags(MQTT_QOS_AT_LEAST_ONCE, MQTT_RETAIN_TRUE))){
-    //if(!mqtt->setWill("last/will","The connection from this device is lost:(", 1, true)) {
+
+    if(!mqtt->setWill("last/will","The connection from this device is lost:(", MqttClient::getFlags(MQTT_QOS_AT_LEAST_ONCE, MQTT_RETAIN_TRUE))) {
         debugf("Unable to set the last will and testament. Most probably there is not enough memory on the device.");
     }
 //    0);app.cfg.network.mqtt.username, app.cfg.network.mqtt.password);
@@ -98,8 +99,7 @@ void AppMqttClient::start() {
 
     delete mqtt;
     mqtt = new MqttClient();
-    //mqtt->setCallback(MqttStringSubscriptionCallback(&AppMqttClient::onMessageReceived, this));
-    mqtt->setMessageHandler(AppMqttClient::onMessageReceived);
+    mqtt->setEventHandler(MQTT_TYPE_PUBLISH, MqttDelegate(&AppMqttClient::onMessageReceived, this));
     connectDelayed(2000);
 }
 
@@ -112,9 +112,10 @@ bool AppMqttClient::isRunning() const {
     return (mqtt != nullptr);
 }
 
-void AppMqttClient::onMessageReceived(MqttClient client, mqtt_message_t* msg) {
-    String topic=String(msg->publish.topic_name);
-    String message=String(msg->publish.content);
+int AppMqttClient::onMessageReceived(MqttClient& client, mqtt_message_t* msg) {
+    String topic = MqttBuffer(msg->publish.topic_name);
+    String message = MqttBuffer(msg->publish.content);
+
     if (app.cfg.sync.clock_slave_enabled && (topic == app.cfg.sync.clock_slave_topic)) {
         if (message == "reset") {
             app.rgbwwctrl.onMasterClockReset();
@@ -131,6 +132,7 @@ void AppMqttClient::onMessageReceived(MqttClient client, mqtt_message_t* msg) {
         String error;
         app.jsonproc.onColor(message, error, false);
     }
+    return 0;
 }
 
 void AppMqttClient::publish(const String& topic, const String& data, bool retain) {

@@ -29,7 +29,7 @@ private:
     void connectDelayed(int delay = 2000);
     void connect();
     void onComplete(TcpClient& client, bool success);
-    void onMessageReceived(String topic, String message);
+    int onMessageReceived(MqttClient& client, mqtt_message_t* message);
     void publish(const String& topic, const String& data, bool retain);
 
     String buildTopic(const String& suffix);

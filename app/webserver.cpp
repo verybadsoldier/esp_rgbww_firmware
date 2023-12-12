@@ -20,7 +20,6 @@
  *
  */
 #include <RGBWWCtrl.h>
-//#include <Network/WebHelpers/base64.h>
 #include <Data/WebHelpers/base64.h>
 
 ApplicationWebserver::ApplicationWebserver() {
@@ -109,7 +108,7 @@ bool ICACHE_FLASH_ATTR ApplicationWebserver::authenticated(HttpRequest &request,
     bool authenticated = authenticateExec(request, response);
 
     if (!authenticated) {
-        response.code = 401;
+        response.code = HTTP_STATUS_UNAUTHORIZED;
         response.setHeader("WWW-Authenticate", "Basic realm=\"RGBWW Server\"");
         response.setHeader("401 wrong credentials", "wrong credentials");
         response.setHeader("Connection", "close");
@@ -131,15 +130,17 @@ String ApplicationWebserver::getApiCodeMsg(API_CODES code) {
     }
 }
 
-void ApplicationWebserver::sendApiResponse(HttpResponse &response, JsonObjectStream* stream, int code /* = 200 */) {
+void ApplicationWebserver::sendApiResponse(HttpResponse &response, JsonObjectStream* stream, HttpStatus code) {
     if (!checkHeap(response)) {
         delete stream;
         return;
     }
 
     response.setAllowCrossDomainOrigin("*");
-    if (code != 200) {
-        response.code = 400;
+    response.setHeader("accept","GET, POST, OPTIONS");
+    response.setHeader("Access-Control-Allow-Headers","*");
+    if (code != HTTP_STATUS_OK) {
+        response.code = HTTP_STATUS_BAD_REQUEST;
     }
     response.sendDataStream(stream, MIME_JSON);
 }
@@ -152,10 +153,10 @@ void ApplicationWebserver::sendApiCode(HttpResponse &response, API_CODES code, S
     }
     if (code == API_CODES::API_SUCCESS) {
         json["success"] = true;
-        sendApiResponse(response, stream, 200);
+        sendApiResponse(response, stream, HTTP_STATUS_OK);
     } else {
         json["error"] = msg;
-        sendApiResponse(response, stream, 400);
+        sendApiResponse(response, stream, HTTP_STATUS_BAD_REQUEST);
     }
 }
 
@@ -167,16 +168,16 @@ void ApplicationWebserver::onFile(HttpRequest &request, HttpResponse &response) 
 
 #ifdef ARCH_ESP8266
     if (app.ota.isProccessing()) {
-        response.setContentType("text/plain");
-        response.code = 503;
+        response.setContentType(MIME_TEXT);
+        response.code = HTTP_STATUS_SERVICE_UNAVAILABLE;
         response.sendString("OTA in progress");
         return;
     }
 #endif
 
     if (!app.isFilesystemMounted()) {
-        response.setContentType("text/plain");
-        response.code = 500;
+        response.setContentType(MIME_TEXT);
+        response.code = HTTP_STATUS_INTERNAL_SERVER_ERROR;
         response.sendString("No filesystem mounted");
         return;
     }
@@ -208,8 +209,8 @@ void ApplicationWebserver::onIndex(HttpRequest &request, HttpResponse &response)
 
 #ifdef ARCH_ESP8266
     if (app.ota.isProccessing()) {
-        response.setContentType("text/plain");
-        response.code = 503;
+        response.setContentType(MIME_TEXT);
+        response.code = HTTP_STATUS_SERVICE_UNAVAILABLE;
         response.sendString("OTA in progress");
         return;
     }
@@ -220,7 +221,7 @@ void ApplicationWebserver::onIndex(HttpRequest &request, HttpResponse &response)
     } else {
         response.headers[HTTP_HEADER_LOCATION] = "http://" + WifiStation.getIP().toString() + "/webapp";
     }
-    response.code = 308;
+    response.code = HTTP_STATUS_PERMANENT_REDIRECT;
 }
 
 void ApplicationWebserver::onWebapp(HttpRequest &request, HttpResponse &response) {
@@ -231,21 +232,21 @@ void ApplicationWebserver::onWebapp(HttpRequest &request, HttpResponse &response
 
 #ifdef ARCH_ESP8266
     if (app.ota.isProccessing()) {
-        response.setContentType("text/plain");
-        response.code = 503;
+        response.setContentType(MIME_TEXT);
+        response.code = HTTP_STATUS_SERVICE_UNAVAILABLE;
         response.sendString("OTA in progress");
         return;
     }
 #endif
 
     if (request.method != HTTP_GET) {
-        response.code = 400;
+        response.code = HTTP_STATUS_BAD_REQUEST;
         return;
     }
 
     if (!app.isFilesystemMounted()) {
-        response.setContentType("text/plain");
-        response.code = 500;
+        response.setContentType(MIME_TEXT);
+        response.code = HTTP_STATUS_INTERNAL_SERVER_ERROR;
         response.sendString("No filesystem mounted");
         return;
     }
@@ -261,7 +262,7 @@ void ApplicationWebserver::onWebapp(HttpRequest &request, HttpResponse &response
 bool ApplicationWebserver::checkHeap(HttpResponse &response) {
     unsigned fh = system_get_free_heap_size();
     if (fh < _minimumHeap) {
-        response.code = 429;
+        response.code = HTTP_STATUS_TOO_MANY_REQUESTS;
         response.setHeader("Retry-After", "2");
         return false;
     }
@@ -282,19 +283,32 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         return;
     }
 #endif
+    
 
-    if (request.method != HTTP_POST && request.method != HTTP_GET) {
-        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not POST or GET request");
+    if (request.method != HTTP_POST && request.method != HTTP_GET && request.method!=HTTP_OPTIONS) {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not POST, GET or OPTIONS request");
         return;
     }
-
+    
+    /*
+    / axios sends a HTTP_OPTIONS request to check if server is CORS permissive (which this firmware 
+    / has been for years) this is just to reply to that request in order to pass the CORS test
+    */
+    if (request.method == HTTP_OPTIONS){
+        // probably a CORS request
+        sendApiCode(response,API_CODES::API_SUCCESS,"");
+        debug_i("HTTP_OPTIONS Request, sent API_SUCCSSS");
+        return;
+    }
+    
     if (request.method == HTTP_POST) {
+        debug_i("======================\nHTTP POST request received, ");
         String body = request.getBody();
+        debug_i("body: \n", body);
         if (body == NULL) {
 
             sendApiCode(response, API_CODES::API_BAD_REQUEST, "could not parse HTTP body");
             return;
-
         }
 
         bool error = false;
@@ -316,7 +330,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
 
         JsonObject jnet = root["network"];
         if (!jnet.isNull()) {
-
+  
             JsonObject con = jnet["connection"];
             if (!con.isNull()) {
                 ip_updated |= Json::getBoolTolerantChanged(con["dhcp"], app.cfg.network.connection.dhcp);
@@ -720,8 +734,13 @@ void ApplicationWebserver::onColor(HttpRequest &request, HttpResponse &response)
     }
 #endif
 
-    if (request.method != HTTP_POST && request.method != HTTP_GET) {
-        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not POST or GET");
+    if (request.method != HTTP_POST && request.method != HTTP_GET && request.method!=HTTP_OPTIONS) {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not POST, GET or OPTIONS");
+        return;
+    }
+
+    if (request.method==HTTP_OPTIONS){
+        sendApiCode(response, API_CODES::API_SUCCESS);
         return;
     }
 
