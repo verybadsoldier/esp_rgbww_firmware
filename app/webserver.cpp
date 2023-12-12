@@ -46,7 +46,6 @@ FILE_LIST(XX)
 DEFINE_FSTR_MAP_LOCAL(fileMap, FlashString, FlashString, FILE_LIST(XX));
 #undef XX
 
-
 ApplicationWebserver::ApplicationWebserver() {
     _running = false;
 
