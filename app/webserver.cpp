@@ -22,7 +22,6 @@
 #include <RGBWWCtrl.h>
 #include <Data/WebHelpers/base64.h>
 
-
 ApplicationWebserver::ApplicationWebserver() {
     _running = false;
 
