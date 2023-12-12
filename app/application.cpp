@@ -33,11 +33,15 @@
 
 #include <RGBWWCtrl.h>
 #include <Ota/Upgrader.h>
+#include <SmingCore.h>
+#include <Storage/SysMem.h>
+#include <Storage/ProgMem.h>
+#include <Storage/Debug.h>
 
 Application app;
 
 // Sming Framework INIT method - called during boot
-void GDB_IRAM_ATTR init() {
+void init() {
 
     Serial.begin(SERIAL_BAUD_RATE); // 115200 by default
     Serial.systemDebugOutput(true); // Debug output to serial
@@ -65,6 +69,7 @@ void Application::uptimeCounter() {
 }
 
 void Application::init() {
+    delay(2000);
     debug_i("RGBWW Controller v %s\r\n", fw_git_version);
 
     //load settings
@@ -73,6 +78,7 @@ void Application::init() {
 #ifdef ARCH_ESP8266
     // load boot information
     uint8 bootmode, bootslot;
+    debug_i("loading boot info");
     if (rboot_get_last_boot_mode(&bootmode)) {
         if (bootmode == MODE_TEMP_ROM) {
             debug_i("Application::init - booting after OTA");
@@ -81,14 +87,21 @@ void Application::init() {
         }
         _bootmode = bootmode;
     }
-
+    
     if (rboot_get_last_boot_rom(&bootslot)) {
         _romslot = bootslot;
     }
 #endif
-
+    // check file systems
+    // listSpiffsPartitions();
     // mount filesystem
-    mountfs(getRomSlot());
+    /**********************
+    * old, two spiffs model 
+    * int romSlot=getRomSlot();
+    * debug_i("got rom slot %i", romSlot);
+    * mountfs(romSlot);
+    */
+    mountfs(_romslot);
 
     // check if we need to reset settings
     if (digitalRead(CLEAR_PIN) < 1) {
@@ -144,11 +157,11 @@ void Application::initButtons() {
     Vector<String> buttons;
     splitString(cfg.general.buttons_config, ',', buttons);
 
-    for(int i=0; i < buttons.count(); ++i) {
+    for(uint32_t i=0; i < buttons.count(); ++i) {
         if (buttons[i].length() == 0)
             continue;
 
-        int pin = buttons[i].toInt();
+        uint32_t pin = buttons[i].toInt();
         if (pin >= _lastToggles.size()) {
             debug_i("Pin %d is invalid. Max is %d", pin, _lastToggles.size() - 1);
             continue;
@@ -209,12 +222,45 @@ bool Application::delayedCMD(String cmd, int delay) {
     return true;
 }
 
+/*
+void Application::listSpiffsPartitions()
+{
+	Serial.println(_F("** Enumerate registered SPIFFS partitions"));
+	for(auto part : Storage::findPartition(Storage::Partition::SubType::Data::spiffs)) {
+		Serial << _F(">> Mounting '") << part.name() << "' ..." << endl;
+		bool ok = spiffs_mount(part);
+		Serial.println(ok ? "OK, listing files:" : "Mount failed!");
+		if(ok) {
+			Directory dir;
+			if(dir.open()) {
+				while(dir.next()) {
+					Serial.print("  ");
+					Serial.println(dir.stat().name);
+				}
+			}
+			Serial << dir.count() << _F(" files found") << endl << endl;
+		}
+	}
+}
+*/
 void Application::mountfs(int slot) {
     debug_i("Application::mountfs rom slot: %i", slot);
-    auto part = OtaUpgrader::getPartitionForSlot(slot);
+    // auto part = OtaUpgrader::getPartitionForSlot(slot);
+    auto part = Storage::findPartition(F("spiffs0"));
     debug_i("Application::mountfs trying to mount spiffs at %x, length %d",
             part.address(), part.size());
     _fs_mounted = spiffs_mount(part);
+    _fs_mounted ? debug_i("OK, listing files:") : debug_i("Mount failed!");
+    if(_fs_mounted) {
+        Directory dir;
+        if(dir.open()) {
+            while(dir.next()) {
+                Serial.print("  ");
+                Serial.println(dir.stat().name);
+            }
+        }
+        debug_i("%i files found", dir.count());
+    }       
 }
 
 void Application::umountfs() {
@@ -247,9 +293,9 @@ void Application::onCommandRelay(const String& method, const JsonObject& params)
 }
 
 void Application::onButtonTogglePressed(int pin) {
-    unsigned long now = millis();
-    unsigned long diff = now - _lastToggles[pin];
-    if (diff > cfg.general.buttons_debounce_ms) {  // debounce
+    uint32_t now = millis();
+    uint32_t diff = now - _lastToggles[pin];
+    if (diff > (uint32_t) cfg.general.buttons_debounce_ms) {  // debounce
         debug_i("Button %d pressed - toggle", pin);
         rgbwwctrl.toggle();
         _lastToggles[pin] = now;
