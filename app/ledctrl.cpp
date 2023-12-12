@@ -192,7 +192,7 @@ void APPLedCtrl::checkStableColorState() {
     }
 
     // save if color was stable for _saveAfterStableColorMs
-    if (abs(_saveAfterStableColorMs - (_numStableColorSteps * RGBWW_MINTIMEDIFF)) <= (RGBWW_MINTIMEDIFF / 2))
+    if (abs(_saveAfterStableColorMs - (_numStableColorSteps * RGBWW_MINTIMEDIFF)) <= (uint32_t)(RGBWW_MINTIMEDIFF / 2))
         colorSave();
 }
 

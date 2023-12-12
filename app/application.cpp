@@ -20,6 +20,17 @@
  *
  */
 
+#ifdef __riscv
+//#if SMING_SOC==esp32c3
+//#warning "redefining INT32 to be int, not long int for riscv based esp32c3"
+#undef __INT32_TYPE__
+#define __INT32_TYPE__      int
+
+#undef __UINT32_TYPE__
+#define __UINT32_TYPE__     unsigned int
+
+#endif // __riscv
+
 #include <RGBWWCtrl.h>
 #include <Ota/Upgrader.h>
 #include <SmingCore.h>
@@ -254,8 +265,7 @@ void Application::mountfs(int slot) {
 
 void Application::umountfs() {
     debug_i("Application::umountfs");
-    fileFreeFileSystem();
-    _fs_mounted = false;
+    //spiffs_unmount();
 }
 
 void Application::switchRom() {

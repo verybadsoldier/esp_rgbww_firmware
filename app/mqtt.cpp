@@ -50,6 +50,7 @@ void AppMqttClient::connect() {
         return;
 
     debug_d("MQTT::connect ID: %s\n", _id.c_str());
+
     if(!mqtt->setWill("last/will","The connection from this device is lost:(", MqttClient::getFlags(MQTT_QOS_AT_LEAST_ONCE, MQTT_RETAIN_TRUE))) {
         debugf("Unable to set the last will and testament. Most probably there is not enough memory on the device.");
     }
@@ -114,6 +115,7 @@ bool AppMqttClient::isRunning() const {
 int AppMqttClient::onMessageReceived(MqttClient& client, mqtt_message_t* msg) {
     String topic = MqttBuffer(msg->publish.topic_name);
     String message = MqttBuffer(msg->publish.content);
+
     if (app.cfg.sync.clock_slave_enabled && (topic == app.cfg.sync.clock_slave_topic)) {
         if (message == "reset") {
             app.rgbwwctrl.onMasterClockReset();
@@ -123,10 +125,10 @@ int AppMqttClient::onMessageReceived(MqttClient& client, mqtt_message_t* msg) {
             app.rgbwwctrl.onMasterClock(clock);
         }
     }
-    else if (app.cfg.sync.cmd_slave_enabled && topic == app.cfg.sync.cmd_slave_topic) {
+    else if (app.cfg.sync.cmd_slave_enabled && message->publish.topic_name==app.cfg.sync.cmd_slave_topic) {
         app.jsonproc.onJsonRpc(message);
     }
-    else if (app.cfg.sync.color_slave_enabled && (topic == app.cfg.sync.color_slave_topic)) {
+    else if (app.cfg.sync.color_slave_enabled && (message->publish.topic_name== app.cfg.sync.color_slave_topic)) {
         String error;
         app.jsonproc.onColor(message, error, false);
     }
