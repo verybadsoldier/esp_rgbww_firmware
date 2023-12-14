@@ -1,5 +1,5 @@
 {
-    "presets:":[
+    "presets":[
         {
             "name":"dunkelschwarz",
             "hsv":{
@@ -36,7 +36,24 @@
                 "ww":1023,
                 "cw":1023
             }
+        },
+       	{
+            "name":"rot",
+            "hsv":{
+                "h":0,
+                "s":100,
+                "v":100
+            },
+            "favorite":true
+        },
+       	{
+            "name":"gelb",
+            "hsv":{
+                "h":60,
+                "s":100,
+                "v":100
+            },
+            "favorite":true
         }
-
     ]
 }
