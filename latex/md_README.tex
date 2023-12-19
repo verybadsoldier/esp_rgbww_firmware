@@ -1,0 +1,56 @@
+\href{https://travis-ci.org/verybadsoldier/esp_rgbww_firmware}{\texttt{ }}\hypertarget{md_README_autotoc_md1}{}\doxysection{ESP RGBWW Firmware}\label{md_README_autotoc_md1}
+\hypertarget{md_README_autotoc_md2}{}\doxysubsection{Firmware for RGBWW controller}\label{md_README_autotoc_md2}
+This repository provides an open-\/source firmware for ESP8266-\/based RGBWWCW controllers (up to 5 channels). The firmware is based on Sming (\href{https://github.com/SmingHub/Sming}{\texttt{ https\+://github.\+com/\+Sming\+Hub/\+Sming}}).
+
+This firmware is a fork of Patrick Jahns original firmware (\href{https://github.com/patrickjahns/esp_rgbww_firmware}{\texttt{ https\+://github.\+com/patrickjahns/esp\+\_\+rgbww\+\_\+firmware}}). Thanks for founding it!\hypertarget{md_README_autotoc_md3}{}\doxysection{General Notes}\label{md_README_autotoc_md3}
+This is a firmware modification based on the great RGBWWLed firmware from Patrick Jahns (\href{https://github.com/patrickjahns/esp_rgbww_firmware}{\texttt{ https\+://github.\+com/patrickjahns/esp\+\_\+rgbww\+\_\+firmware}}). Big thanks to Patrick for his work.
+
+The firmware has generic APIs and can be integrated into various systems. For the home automation system {\ttfamily FHEM} a device module is readily available\+: \href{https://github.com/verybadsoldier/esp_rgbww_fhemmodule}{\texttt{ https\+://github.\+com/verybadsoldier/esp\+\_\+rgbww\+\_\+fhemmodule}}\hypertarget{md_README_autotoc_md4}{}\doxysubsection{Features}\label{md_README_autotoc_md4}
+
+\begin{DoxyItemize}
+\item Smooth and programmable on-\/board fades and animations
+\item Independent animation channels
+\item Suitable for different PCBs (easily configurable by config options)
+\item Highly configurable
+\item Various network communication options\+: HTTP -\/ MQTT -\/ TCP (events only)
+\item Highly accurate synchronization of multiple controllers
+\item \mbox{[}Easy setup and configuration via a feature rich webapplication\mbox{]}
+\item \mbox{[}OTA updates\mbox{]}
+\item \mbox{[}Simple JSON API for configuration\mbox{]}
+\item Security (change default AP password and Password for accessing API endpoints)
+\item Hardware push button support
+\end{DoxyItemize}\hypertarget{md_README_autotoc_md5}{}\doxysubsubsection{Advanced Color Control}\label{md_README_autotoc_md5}
+
+\begin{DoxyItemize}
+\item Relative commands (+/-\/ xxx)
+\item Command requeuing (enabling animation loops)
+\item Pausing and continuing of animations
+\item Independent color channels (e.\+g. send command to {\ttfamily hue} channel without affecting other channels)
+\item Multiple commands in a single request
+\item Different queue policies for animation commands
+\item Instant blink commands
+\item Ramp speed -\/ ramp timing can be specified as ramp speed instead of just ramp time
+\end{DoxyItemize}\hypertarget{md_README_autotoc_md6}{}\doxysection{Installation}\label{md_README_autotoc_md6}
+Initially the firmware has to be flashed using a serial flasher (e.\+g. {\ttfamily esptool}, refer to the Wiki for details). Further updates can be installed using the OTA update method (using the web interface).
+
+Precompiled binaries are provided via Git\+Hub. It is also possible to compile the firmware images yourself. For more information and instructions please see \href{https://github.com/verybadsoldier/esp_rgbww_firmware/wiki/1.1-Flashing}{\texttt{ the Wiki}}\hypertarget{md_README_autotoc_md7}{}\doxysubsection{OTA Updates}\label{md_README_autotoc_md7}
+There are 2 different update channels available. The firmware can be updates using these update URLs.
+
+Available channels\+:
+
+{\bfseries{Stable}}
+
+{\ttfamily \href{https://rgbww.dronezone.de/release/version.json}{\texttt{ https\+://rgbww.\+dronezone.\+de/release/version.\+json}}}
+
+{\bfseries{Testing}}
+
+{\ttfamily \href{https://rgbww.dronezone.de/testing/version.json}{\texttt{ https\+://rgbww.\+dronezone.\+de/testing/version.\+json}}}
+
+Make sure to only use {\ttfamily HTTPS} protocol!\hypertarget{md_README_autotoc_md8}{}\doxysubsection{Index}\label{md_README_autotoc_md8}
+Most information about installation (flashing), setup and usage guides are provided via the Wiki \href{https://github.com/verybadsoldier/esp_rgbww_firmware/wiki}{\texttt{ https\+://github.\+com/verybadsoldier/esp\+\_\+rgbww\+\_\+firmware/wiki}}\hypertarget{md_README_autotoc_md9}{}\doxysubsection{Links}\label{md_README_autotoc_md9}
+
+\begin{DoxyItemize}
+\item \href{https://forum.fhem.de/index.php?topic=70738.0}{\texttt{ FHEM Forum}}
+\item \href{https://github.com/SmingHub/Sming}{\texttt{ Sming Framework}}
+\item \href{https://github.com/verybadsoldier/RGBWWLed}{\texttt{ RGBWWLed Library}} 
+\end{DoxyItemize}
