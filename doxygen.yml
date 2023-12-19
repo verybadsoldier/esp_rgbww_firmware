@@ -1,0 +1,24 @@
+name: Doxygen
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install Doxygen
+      run: sudo apt-get install doxygen
+
+    - name: Run Doxygen
+      run: doxygen Doxyfile
+
+    - name: Upload Documentation
+      uses: actions/upload-artifact@v2
+      with:
+        name: Documentation
+        path: html
