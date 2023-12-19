@@ -23,6 +23,7 @@
 #include <Data/WebHelpers/base64.h> 
 #include <FlashString/Map.hpp>
 #include <FlashString/Stream.hpp>
+#include <Network/Http/Websocket/WebsocketResource.h>
 
 #define FILE_LIST(XX)                    \
     XX(app_min_css, "app.min.css.gz")    \
@@ -48,7 +49,6 @@ DEFINE_FSTR_MAP_LOCAL(fileMap, FlashString, FlashString, FILE_LIST(XX));
 
 ApplicationWebserver::ApplicationWebserver() {
     _running = false;
-
     // keep some heap space free
     // value is a good guess and tested to not crash when issuing multiple parallel requests
     HttpServerSettings settings;
@@ -88,8 +88,29 @@ void ApplicationWebserver::init() {
     // storage api
     paths.set("/storage",HttpPathDelegate(&ApplicationWebserver::onStorage, this));
 
+    // websocket api
+    wsResource= new WebsocketResource();
+	wsResource->setConnectionHandler([this](WebsocketConnection& socket) { this->wsConnected(socket); });
+    wsResource->setDisconnectionHandler([this](WebsocketConnection& socket) { this->wsDisconnected(socket); });
+	paths.set("/ws", wsResource);
+
     _init = true;
 }
+
+void ApplicationWebserver::wsConnected(WebsocketConnection& socket){
+    debug_i("wsConnected");
+    webSockets.addElement(&socket);
+    }
+
+void ApplicationWebserver::wsDisconnected(WebsocketConnection& socket){
+    debug_i("wsDisconnected");
+    webSockets.removeElement(&socket);
+    }
+
+void ApplicationWebserver::wsBroadcast(String message){
+for(auto& socket : webSockets) { // Iterate over all active sockets
+        socket->send(message, WS_FRAME_TEXT); // Send the message to each socket
+    }}
 
 void ApplicationWebserver::start() {
     if (_init == false) {
@@ -277,7 +298,8 @@ void ApplicationWebserver::onIndex(HttpRequest &request, HttpResponse &response)
         response.setContentType(MIME_TEXT);
         response.code = HTTP_STATUS_SERVICE_UNAVAILABLE;
         response.sendString("OTA in progress");
-        return;
+        return;	void publishTransitionFinished(const String& name, bool requeued = false);
+
     }
 #endif
 
@@ -1246,4 +1268,8 @@ void ApplicationWebserver::onStorage(HttpRequest &request, HttpResponse &respons
         sendApiCode(response, API_CODES::API_SUCCESS);
         return;       
     }
+}
+void ApplicationWebserver::attachWebsocket(WebsocketResource resource){
+    //if(!resource.onConnect) return; //no onConnect callback, websocket is not initialized, nothing to do
+    //paths.set("/ws",resource);
 }
