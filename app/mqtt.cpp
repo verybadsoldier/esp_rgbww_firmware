@@ -125,10 +125,10 @@ int AppMqttClient::onMessageReceived(MqttClient& client, mqtt_message_t* msg) {
             app.rgbwwctrl.onMasterClock(clock);
         }
     }
-    else if (app.cfg.sync.cmd_slave_enabled && message->publish.topic_name==app.cfg.sync.cmd_slave_topic) {
+    else if (app.cfg.sync.cmd_slave_enabled && topic==app.cfg.sync.cmd_slave_topic) {
         app.jsonproc.onJsonRpc(message);
     }
-    else if (app.cfg.sync.color_slave_enabled && (message->publish.topic_name== app.cfg.sync.color_slave_topic)) {
+    else if (app.cfg.sync.color_slave_enabled && (topic== app.cfg.sync.color_slave_topic)) {
         String error;
         app.jsonproc.onColor(message, error, false);
     }

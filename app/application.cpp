@@ -69,7 +69,11 @@ void Application::uptimeCounter() {
 }
 
 void Application::init() {
-    delay(2000);
+    for(int i=0;i<10;i++){
+        Serial.print("=");
+        delay(200);
+    }
+    
     debug_i("RGBWW Controller v %s\r\n", fw_git_version);
 
     //load settings
@@ -182,7 +186,7 @@ void Application::startServices() {
     webserver.start();
 
     if (cfg.events.server_enabled)
-        eventserver.start();
+        eventserver.start(app.webserver);
 }
 
 void Application::restart() {

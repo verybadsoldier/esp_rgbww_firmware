@@ -6,18 +6,18 @@
  */
 #include <RGBWWCtrl.h>
 
-
 EventServer::~EventServer() {
     stop();
 }
 
-void EventServer::start() {
-    debug_i("Starting event server\n");
+void EventServer::start(ApplicationWebserver& webServer) {
+    this->webServer=&webServer;
+    debug_i("Starting event server with webserver referal\n");
     setTimeOut(_connectionTimeout);
     if (not listen(_tcpPort)) {
         debug_e("EventServer failed to open listening port!");
     }
-
+  
     auto fnc = TimerDelegate(&EventServer::publishKeepAlive, this);
     _keepAliveTimer.initializeMs(_keepAliveInterval * 1000, fnc).start();
 }
@@ -111,4 +111,6 @@ void EventServer::sendToClients(JsonRpcMessage& rpcMsg) {
         auto pClient = reinterpret_cast<TcpClient*>(connections[i]);
         pClient->sendString(jsonStr);
     }
+
+    webServer->wsBroadcast(jsonStr);
 }

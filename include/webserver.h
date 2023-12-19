@@ -23,6 +23,7 @@
 #define APP_WEBSERVER_H_
 
 #include <RGBWWLed/RGBWWLedColor.h>
+#include <Network/Http/Websocket/WebsocketResource.h>
 
 #define FILE_MAX_SIZE 16384 //max filesize for storage api files.
 
@@ -44,6 +45,9 @@ public:
     void init();
     inline bool isRunning() { return _running; };
 
+    void wsBroadcast(String message);
+    void attachWebsocket(WebsocketResource resource);
+
     String getApiCodeMsg(API_CODES code);
 
 private:
@@ -52,6 +56,9 @@ private:
     bool _running = false;
     unsigned _minimumHeap = 8000;
     unsigned _minimumHeapAccept = 8000;
+
+    WebsocketResource* wsResource;
+    WebsocketList webSockets;
 
     bool authenticated(HttpRequest &request, HttpResponse &response);
     bool authenticateExec(HttpRequest &request, HttpResponse &response);
@@ -89,6 +96,9 @@ private:
     static bool isPrintable(String& str);
 
     void onStorage(HttpRequest &request, HttpResponse &response);
+
+    void wsConnected(WebsocketConnection& socket);
+    void wsDisconnected(WebsocketConnection& socket);
 
 };
 
