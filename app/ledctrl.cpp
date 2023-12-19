@@ -32,6 +32,20 @@ APPLedCtrl::~APPLedCtrl() {
     _stepSync = nullptr;
 }
 
+/**
+ * @struct PinConfig
+ * @brief Structure representing the pin configuration for controlling LEDs.
+ * 
+ * The PinConfig structure holds the pin numbers for controlling different color channels of LEDs.
+ * It is used by the APPLedCtrl class to parse and store the pin configuration.
+ * 
+ * The structure has the following members:
+ * - red: Pin number for the red color channel.
+ * - green: Pin number for the green color channel.
+ * - blue: Pin number for the blue color channel.
+ * - warmwhite: Pin number for the warm white color channel.
+ * - coldwhite: Pin number for the cold white color channel.
+ */
 PinConfig APPLedCtrl::parsePinConfigString(String& pinStr) {
     Vector<int> pins;
     splitString(pinStr, ',', pins);
@@ -61,6 +75,13 @@ PinConfig APPLedCtrl::parsePinConfigString(String& pinStr) {
     return cfg;
 }
 
+/**
+ * @brief Initializes the APPLedCtrl class.
+ *
+ * This function initializes the APPLedCtrl class by creating a StepSync object,
+ * parsing the pin configuration string, initializing the RGBWWLed, setting up
+ * the LED controller, and setting the startup color.
+ */
 void APPLedCtrl::init() {
     debug_i("APPLedCtrl::init");
 
@@ -89,6 +110,13 @@ void APPLedCtrl::init() {
     fadeHSV(startupColorDark, startupColor, 2000); //fade to color in 700ms
 }
 
+/**
+ * @brief Initializes the LED controller.
+ * 
+ * This function sets up the LED controller by configuring the brightness correction,
+ * HSV correction, color mode, HSV model, and white temperature based on the 
+ * configuration settings stored in the `app` object.
+ */
 void APPLedCtrl::setup() {
     debug_i("APPLedCtrl::setup");
 
@@ -105,18 +133,36 @@ void APPLedCtrl::setup() {
     colorutils.setWhiteTemperature(app.cfg.color.colortemp.ww, app.cfg.color.colortemp.cw);
 }
 
+/**
+ * @brief Publishes the current state of the LED controller to the event server.
+ * 
+ * This function checks if the event server is enabled and updates the clients accordingly.
+ * It publishes the current output and color information to the event server.
+ */
 void APPLedCtrl::publishToEventServer() {
-    if (!app.cfg.events.server_enabled)
-    debug_i("APPLEDCtrl - eventserver is enabled, updating clients");
+    if (!app.cfg.events.server_enabled){
+        debug_i("APPLEDCtrl - eventserver is disabled");
         return;
-
+    }else{
+    debug_i("APPLEDCtrl - eventserver is enabled, updating clients");
+        
     HSVCT const * pHsv = NULL;
     if (_mode == ColorMode::Hsv)
         pHsv = &getCurrentColor();
 
     app.eventserver.publishCurrentState(getCurrentOutput(), pHsv);
+    }
 }
 
+/**
+ * @brief Publishes the current LED color or output to MQTT.
+ * 
+ * This function is responsible for publishing the current LED color or output to MQTT.
+ * It checks if the color master is enabled and based on the current color mode, it publishes
+ * the corresponding data to the MQTT broker.
+ * 
+ * @note This function does nothing if the color master is disabled.
+ */
 void APPLedCtrl::publishToMqtt() {
     if (!app.cfg.sync.color_master_enabled)
         return;
@@ -136,6 +182,16 @@ void APPLedCtrl::updateLedCb(void* pTimerArg) {
     pThis->updateLed();
 }
 
+/**
+ * @brief Updates the LED state and performs various actions based on the configuration settings.
+ *
+ * This function is responsible for updating the LED state and performing actions such as publishing clock values,
+ * publishing to MQTT, checking for stable color state, and publishing finished step animations.
+ * The function takes into account the configuration settings for synchronization, events, and intervals.
+ * It also checks if the animation has finished and if the color or transition interval has elapsed.
+ *
+ * @note This function relies on the configuration settings provided by the `app` object.
+ */
 void APPLedCtrl::updateLed() {
     // arm next timer
     _ledTimer.startOnce();
@@ -158,6 +214,7 @@ void APPLedCtrl::updateLed() {
 
             uint32_t now = millis();
             if (now - _lastColorEvent >= (uint32_t) app.cfg.events.color_mininterval_ms) {
+                debug_i("APPLedCtrl::updateLed - publishing color event");
                 _lastColorEvent = now;
                 publishToEventServer();
             }
@@ -179,6 +236,14 @@ void APPLedCtrl::updateLed() {
     }
 }
 
+/**
+ * @brief Checks if the current color state is stable and saves it if necessary.
+ *
+ * This function checks if the current color state is stable by comparing it with the previous color state.
+ * If the current color state is the same as the previous color state, the number of stable color steps is incremented.
+ * If the current color state is different from the previous color state, the previous color state is updated and the number of stable color steps is reset.
+ * If the number of stable color steps reaches a certain threshold, the current color state is saved.
+ */
 void APPLedCtrl::checkStableColorState() {
 	if (app.cfg.color.startup_color != "last")
 		return;
@@ -197,6 +262,13 @@ void APPLedCtrl::checkStableColorState() {
         colorSave();
 }
 
+/**
+ * @brief Publishes the finished step animations.
+ * 
+ * This function publishes the finished step animations to the MQTT client and event server.
+ * It iterates through the list of step animations and publishes each animation's name and requeued status.
+ * After publishing, the list of step animations is cleared.
+ */
 void APPLedCtrl::publishFinishedStepAnimations() {
     for(unsigned int i=0; i < _stepFinishedAnimations.count(); i++) {
         const String& name = _stepFinishedAnimations.keyAt(i);
@@ -207,11 +279,28 @@ void APPLedCtrl::publishFinishedStepAnimations() {
     _stepFinishedAnimations.clear();
 }
 
+/**
+ * @brief Resets the master clock and updates the timer interval.
+ * 
+ * This function is called when the master clock is reset. It resets the step synchronization
+ * and updates the timer interval accordingly. After updating the timer interval, it publishes
+ * the status.
+ */
 void APPLedCtrl::onMasterClockReset() {
     _timerInterval = _stepSync->reset();
     publishStatus();
 }
 
+/**
+ * @brief Handles the master clock event and updates the timer interval for LED control.
+ * 
+ * This function is called when the master clock event occurs. It calculates the new timer interval
+ * based on the current step counter and the number of steps in the master clock. The timer interval
+ * is then limited to ensure it falls within a safe range. Finally, the timer interval is set and the
+ * status is published.
+ * 
+ * @param stepsMaster The number of steps in the master clock.
+ */
 void APPLedCtrl::onMasterClock(uint32_t stepsMaster) {
     _timerInterval = _stepSync->onMasterClock(_stepCounter, stepsMaster);
 
