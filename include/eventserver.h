@@ -6,8 +6,11 @@
 
 class EventServer : public TcpServer{
 public:
+    EventServer() : webServer(nullptr) {} // Empty constructor
+	EventServer(ApplicationWebserver& webServer) : webServer(&webServer){} ;
 	virtual ~EventServer();
-	void start();
+
+    void start(ApplicationWebserver& webServer); // Add this line
 	void stop();
 
 	void publishCurrentState(const ChannelOutput& raw, const HSVCT* pColor = NULL);
@@ -24,9 +27,11 @@ private:
 	static const int _tcpPort = 9090;
 	static const int _connectionTimeout = 120;
 	static const int _keepAliveInterval = 60;
-
+	
     Timer _keepAliveTimer;
 	int _nextId = 1;
 
 	ChannelOutput _lastRaw;
-};
+	// websocket interface
+    ApplicationWebserver* webServer;
+	};
