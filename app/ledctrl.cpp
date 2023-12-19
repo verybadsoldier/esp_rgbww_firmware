@@ -107,6 +107,7 @@ void APPLedCtrl::setup() {
 
 void APPLedCtrl::publishToEventServer() {
     if (!app.cfg.events.server_enabled)
+    debug_i("APPLEDCtrl - eventserver is enabled, updating clients");
         return;
 
     HSVCT const * pHsv = NULL;

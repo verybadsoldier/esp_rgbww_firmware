@@ -100,17 +100,19 @@ void ApplicationWebserver::init() {
 void ApplicationWebserver::wsConnected(WebsocketConnection& socket){
     debug_i("wsConnected");
     webSockets.addElement(&socket);
-    }
+}
 
 void ApplicationWebserver::wsDisconnected(WebsocketConnection& socket){
     debug_i("wsDisconnected");
     webSockets.removeElement(&socket);
-    }
+}
 
 void ApplicationWebserver::wsBroadcast(String message){
-for(auto& socket : webSockets) { // Iterate over all active sockets
+    debug_i("=== Websocket Broadcast ===\n%s",message.c_str());
+    for(auto& socket : webSockets) { // Iterate over all active sockets
         socket->send(message, WS_FRAME_TEXT); // Send the message to each socket
-    }}
+    }
+}
 
 void ApplicationWebserver::start() {
     if (_init == false) {
@@ -822,6 +824,7 @@ void ApplicationWebserver::onColorPost(HttpRequest &request, HttpResponse &respo
     }
 
     String msg;
+    debug_i("received color update wirh message %s", msg.c_str());
     if (!app.jsonproc.onColor(body, msg)) {
         sendApiCode(response, API_CODES::API_BAD_REQUEST, msg);
     }
