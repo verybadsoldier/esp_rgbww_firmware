@@ -125,7 +125,6 @@ int AppMqttClient::onMessageReceived(MqttClient& client, mqtt_message_t* msg) {
             app.rgbwwctrl.onMasterClock(clock);
         }
     }
-<<<<<<< HEAD
     else if (app.cfg.sync.cmd_slave_enabled && topic == app.cfg.sync.cmd_slave_topic) {
         app.jsonproc.onJsonRpc(message);
     }
