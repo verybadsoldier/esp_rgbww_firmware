@@ -1,0 +1,19 @@
+All contributions (PRs) have to be done towards {\itshape develop} branch. If a feature or bugfix is a major change please contact me to prepare feature specific handling.
+
+{\bfseries{master}}\+: Branch that contains latest production (stable) release. No PRs other than firmware releases will be merged into {\bfseries{master}}. ~\newline
+ {\bfseries{develop}}\+: Main development branch\+: contains latest features and fixes.
+
+This will mean that {\bfseries{all contributors}} will have to submit a PR to {\itshape develop} , it will be tested and then merged to {\bfseries{develop}} for automated integration testing (via Travis\+CI), as well as manual testing on a real device.
+
+{\bfseries{Project Contributing flow}}\+:
+\begin{DoxyItemize}
+\item Fork repository
+\item Create a branch off {\itshape develop} (name it {\bfseries{feature/mynewfeature}} or {\bfseries{fix/myfix}})
+\item Build, test your code against a real device
+\item Commit changes
+\item Push your changes to your fork on github
+\item Submit PR to the main repo, {\bfseries{develop}} branch.
+\item Work with other contributors to test your feature and get it merged to {\itshape develop}
+\end{DoxyItemize}
+
+This is the most common approach for a git-\/flow\+: \href{http://nvie.com/posts/a-successful-git-branching-model/}{\texttt{ http\+://nvie.\+com/posts/a-\/successful-\/git-\/branching-\/model/}} 
