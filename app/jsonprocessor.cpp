@@ -1,6 +1,17 @@
 #include <RGBWWCtrl.h>
 
 
+/**
+ * @brief Processes the color JSON data.
+ *
+ * This function deserializes the JSON data and calls the overloaded onColor function
+ * with the deserialized JsonObject.
+ *
+ * @param json The JSON data to be processed.
+ * @param msg The output message.
+ * @param relay A flag indicating whether to relay the message.
+ * @return True if the processing is successful, false otherwise.
+ */
 bool JsonProcessor::onColor(const String& json, String& msg, bool relay) {
     debug_e("JsonProcessor::onColor: %s", json.c_str());
     StaticJsonDocument<256> doc;
@@ -8,6 +19,17 @@ bool JsonProcessor::onColor(const String& json, String& msg, bool relay) {
     return onColor(doc.as<JsonObject>(), msg, relay);
 }
 
+/**
+ * @brief Processes the color command from a JSON object.
+ * 
+ * This function is responsible for processing the color command from a JSON object.
+ * It can handle both single command and multi-command posts.
+ * 
+ * @param root The JSON object containing the color command.
+ * @param msg A reference to a string that will hold any error messages.
+ * @param relay A boolean indicating whether to relay the command to the app.
+ * @return A boolean indicating the success of the color command processing.
+ */
 bool JsonProcessor::onColor(JsonObject root, String& msg, bool relay) {
     bool result = false;
     auto cmds = root["cmds"].as<JsonArray>();
@@ -42,12 +64,34 @@ bool JsonProcessor::onColor(JsonObject root, String& msg, bool relay) {
     return result;
 }
 
+/**
+ * @brief Handles the "onStop" event for the JsonProcessor class.
+ * 
+ * This function deserializes the given JSON string into a StaticJsonDocument object
+ * and calls the overloaded onStop function with the deserialized JsonObject, a message string,
+ * and a boolean flag indicating whether to use the relay.
+ * 
+ * @param json The JSON string to be deserialized.
+ * @param msg The output message string.
+ * @param relay Flag indicating whether to use the relay.
+ * @return True if the onStop function is successfully called, false otherwise.
+ */
 bool JsonProcessor::onStop(const String& json, String& msg, bool relay) {
 	StaticJsonDocument<256> doc;
 	Json::deserialize(doc, json);
     return onStop(doc.as<JsonObject>(), msg, relay);
 }
 
+/**
+ * @brief Handles the "stop" command in the JSON message.
+ * 
+ * This function stops the animation and performs other necessary actions based on the provided JSON message.
+ * 
+ * @param root The JSON object containing the command and parameters.
+ * @param msg A reference to a string where error messages can be stored.
+ * @param relay A boolean indicating whether the command should be relayed to another device.
+ * @return true if the command was successfully processed, false otherwise.
+ */
 bool JsonProcessor::onStop(JsonObject root, String& msg, bool relay) {
     RequestParameters params;
     JsonProcessor::parseRequestParams(root, params);
@@ -64,12 +108,36 @@ bool JsonProcessor::onStop(JsonObject root, String& msg, bool relay) {
     return true;
 }
 
+/**
+ * @brief Skips the animation and performs additional actions based on the provided parameters.
+ *
+ * This function deserializes the given JSON string into a StaticJsonDocument object and then calls the overloaded
+ * onSkip function with the deserialized JsonObject, a message string, and a relay flag.
+ *
+ * @param json The JSON string to be skipped.
+ * @param msg The message string to be passed to the onSkip function.
+ * @param relay The relay flag to be passed to the onSkip function.
+ * @return True if the onSkip function is successfully called, false otherwise.
+ */
 bool JsonProcessor::onSkip(const String& json, String& msg, bool relay) {
 	StaticJsonDocument<256> doc;
 	Json::deserialize(doc, json);
     return onSkip(doc.as<JsonObject>(), msg, relay);
 }
 
+/**
+ * @brief Skips the animation and performs additional actions based on the provided parameters.
+ *
+ * This function parses the request parameters from the given JSON object and skips the animation
+ * for the specified channels. It then calls the onDirect function to perform additional actions.
+ * If the relay flag is set to true, it adds the channel states to the command and calls the
+ * onCommandRelay function.
+ *
+ * @param root The JSON object containing the request data.
+ * @param msg A reference to a string that will be modified to store any error messages.
+ * @param relay A boolean flag indicating whether to relay the command.
+ * @return True if the animation was skipped successfully, false otherwise.
+ */
 bool JsonProcessor::onSkip(JsonObject root, String& msg, bool relay) {
     RequestParameters params;
     JsonProcessor::parseRequestParams(root, params);
@@ -85,12 +153,37 @@ bool JsonProcessor::onSkip(JsonObject root, String& msg, bool relay) {
     return true;
 }
 
+/**
+ * @brief Pauses the animation and performs additional actions based on the provided parameters.
+ *
+ * This function deserializes the given JSON string into a StaticJsonDocument,
+ * and then calls the onPause function with the deserialized JsonObject.
+ *
+ * @param json The JSON string to be deserialized.
+ * @param msg The output message.
+ * @param relay The relay flag.
+ * @return True if the onPause function is successfully called, false otherwise.
+ */
 bool JsonProcessor::onPause(const String& json, String& msg, bool relay) {
 	StaticJsonDocument<256> doc;
 	Json::deserialize(doc, json);
     return onPause(doc.as<JsonObject>(), msg, relay);
 }
 
+/**
+ * @brief Pauses the animation and performs additional actions based on the provided parameters.
+ * 
+ * This function pauses the animation by calling `app.rgbwwctrl.pauseAnimation()` with the specified channels.
+ * It also calls `onDirect()` with the provided `root` and `msg` parameters.
+ * 
+ * If the `relay` parameter is true, it adds the channel states to the command and calls `app.onCommandRelay()`
+ * with the command "pause" and the `root` parameter.
+ * 
+ * @param root The JsonObject containing the request data.
+ * @param msg A reference to a String object to store any additional message.
+ * @param relay A boolean indicating whether to perform additional relay actions.
+ * @return true if the function executed successfully, false otherwise.
+ */
 bool JsonProcessor::onPause(JsonObject root, String& msg, bool relay) {
     RequestParameters params;
     JsonProcessor::parseRequestParams(root, params);
@@ -107,12 +200,34 @@ bool JsonProcessor::onPause(JsonObject root, String& msg, bool relay) {
     return true;
 }
 
+/**
+ * @brief Continues the animation and relays the command if specified.
+ * 
+ * This function deserializes the JSON data using the StaticJsonDocument class
+ * and calls the overloaded onContinue function with the deserialized JsonObject.
+ * 
+ * @param json The JSON data to be processed.
+ * @param msg Output parameter to store any error message.
+ * @param relay Flag indicating whether to relay the data or not.
+ * @return True if the operation is successful, false otherwise.
+ */
 bool JsonProcessor::onContinue(const String& json, String& msg, bool relay) {
 	StaticJsonDocument<256> doc;
 	Json::deserialize(doc, json);
     return onContinue(doc.as<JsonObject>(), msg, relay);
 }
 
+/**
+ * @brief Continues the animation and relays the command if specified.
+ *
+ * This function is called to continue the animation based on the provided JSON object.
+ * It parses the request parameters, continues the animation, and relays the command if the relay flag is set.
+ *
+ * @param root The JSON object containing the animation parameters.
+ * @param msg A reference to a string that will hold any error message.
+ * @param relay A boolean flag indicating whether to relay the command or not.
+ * @return True if the animation was continued successfully, false otherwise.
+ */
 bool JsonProcessor::onContinue(JsonObject root, String& msg, bool relay) {
     RequestParameters params;
     JsonProcessor::parseRequestParams(root, params);
@@ -124,12 +239,36 @@ bool JsonProcessor::onContinue(JsonObject root, String& msg, bool relay) {
     return true;
 }
 
+/**
+ * @brief Handles the "blink" command in the JSON payload.
+ * 
+ * This function deserializes the JSON data into a StaticJsonDocument,
+ * and then calls the overloaded onBlink function with the deserialized
+ * JsonObject, message string, and relay flag.
+ * 
+ * @param json The JSON data to process.
+ * @param msg The output message string.
+ * @param relay The relay flag.
+ * @return True if the blink command was processed successfully, false otherwise.
+ */
 bool JsonProcessor::onBlink(const String& json, String& msg, bool relay) {
 	StaticJsonDocument<256> doc;
 	Json::deserialize(doc, json);
     return onBlink(doc.as<JsonObject>(), msg, relay);
 }
 
+/**
+ * @brief Handles the "blink" command in the JSON payload.
+ * 
+ * This function parses the JSON payload and extracts the necessary parameters for the "blink" command.
+ * It then calls the `blink` function of the `rgbwwctrl` object with the extracted parameters.
+ * If the `relay` flag is set to true, it also calls the `onCommandRelay` function with the "blink" command.
+ * 
+ * @param root The JSON object containing the command and its parameters.
+ * @param msg A reference to a string that will hold any error message generated during the processing.
+ * @param relay A boolean flag indicating whether to relay the command or not.
+ * @return Returns true if the command was successfully processed, false otherwise.
+ */
 bool JsonProcessor::onBlink(JsonObject root, String& msg, bool relay) {
     RequestParameters params;
     params.ramp.value = 500; //default
@@ -144,12 +283,31 @@ bool JsonProcessor::onBlink(JsonObject root, String& msg, bool relay) {
     return true;
 }
 
+/**
+ * @brief Toggles the RGBWW control and sends a command relay if specified.
+ *
+ * This function deserializes the JSON data and calls the overloaded onToggle function
+ * with the deserialized JsonObject, message string, and relay flag.
+ *
+ * @param json The JSON data to be processed.
+ * @param msg The output message string.
+ * @param relay The relay flag.
+ * @return True if the toggle operation is successful, false otherwise.
+ */
 bool JsonProcessor::onToggle(const String& json, String& msg, bool relay) {
 	StaticJsonDocument<256> doc;
 	Json::deserialize(doc, json);
     return onToggle(doc.as<JsonObject>(), msg, relay);
 }
 
+/**
+ * @brief Toggles the RGBWW control and sends a command relay if specified.
+ * 
+ * @param root The JSON object containing the command.
+ * @param msg The message to be modified.
+ * @param relay Flag indicating whether to send a command relay.
+ * @return true if the toggle was successful, false otherwise.
+ */
 bool JsonProcessor::onToggle(JsonObject root, String& msg, bool relay) {
     app.rgbwwctrl.toggle();
 
@@ -159,6 +317,18 @@ bool JsonProcessor::onToggle(JsonObject root, String& msg, bool relay) {
     return true;
 }
 
+/**
+ * @brief Handles a single color command from a JSON object.
+ * 
+ * This function parses the request parameters from the JSON object and performs the corresponding action
+ * based on the parameters. It supports both HSV and RAW color modes. If the parameters are valid and the
+ * action is successfully executed, it returns true. Otherwise, it returns false and sets the errorMsg
+ * parameter with an appropriate error message.
+ * 
+ * @param root The JSON object containing the command parameters.
+ * @param errorMsg A reference to a string variable to store the error message, if any.
+ * @return Returns true if the command is executed successfully, false otherwise.
+ */
 bool JsonProcessor::onSingleColorCommand(JsonObject root, String& errorMsg) {
     RequestParameters params;
     parseRequestParams(root, params);
@@ -197,12 +367,35 @@ bool JsonProcessor::onSingleColorCommand(JsonObject root, String& errorMsg) {
     return queueOk;
 }
 
+/**
+ * @brief Handles a direct JSON command.
+ *
+ * This function processes a direct JSON command and performs the corresponding action based on the provided parameters.
+ * 
+ * This function deserializes the given JSON string into a JSON document and calls the overloaded
+ * `onDirect` function with the deserialized JSON object.
+ *
+ * @param json The JSON string to be processed.
+ * @param msg Output parameter to store any error message.
+ * @param relay Flag indicating whether to relay the message.
+ * @return True if the processing is successful, false otherwise.
+ */
 bool JsonProcessor::onDirect(const String& json, String& msg, bool relay) {
 	StaticJsonDocument<256> doc;
 	Json::deserialize(doc, json);
     return onDirect(doc.as<JsonObject>(), msg, relay);
 }
 
+/**
+ * @brief Handles a direct JSON command.
+ *
+ * This function processes a direct JSON command and performs the corresponding action based on the provided parameters.
+ *
+ * @param root The JSON object containing the command parameters.
+ * @param msg A reference to a string that will be updated with a message indicating the result of the command.
+ * @param relay A boolean value indicating whether the command should be relayed to another component.
+ * @return Returns true if the command was successfully processed, false otherwise.
+ */
 bool JsonProcessor::onDirect(JsonObject root, String& msg, bool relay) {
     RequestParameters params;
     JsonProcessor::parseRequestParams(root, params);
@@ -221,6 +414,15 @@ bool JsonProcessor::onDirect(JsonObject root, String& msg, bool relay) {
     return true;
 }
 
+/**
+ * @brief Parses the request parameters from a JSON object.
+ *
+ * This function extracts the request parameters from the provided JSON object and populates
+ * the RequestParameters object accordingly.
+ *
+ * @param root The JSON object containing the request parameters.
+ * @param params The RequestParameters object to be populated.
+ */
 void JsonProcessor::parseRequestParams(JsonObject root, RequestParameters& params) {
 	String value;
 
@@ -347,6 +549,14 @@ void JsonProcessor::parseRequestParams(JsonObject root, RequestParameters& param
     }
 }
 
+/**
+ * @brief Check the parameters of the RequestParameters object.
+ *
+ * This function checks the parameters of the RequestParameters object and returns an error message if any parameter is invalid.
+ *
+ * @param errorMsg The error message to be returned if any parameter is invalid.
+ * @return An integer indicating the result of the parameter check. 0 if all parameters are valid, non-zero otherwise.
+ */
 int JsonProcessor::RequestParameters::checkParams(String& errorMsg) const {
     if (mode == Mode::Hsv) {
         if (hsv.ct.hasValue()) {
@@ -391,6 +601,14 @@ int JsonProcessor::RequestParameters::checkParams(String& errorMsg) const {
     return 0;
 }
 
+/**
+ * @brief Handles the JSON-RPC request.
+ *
+ * This function processes the JSON-RPC request and performs the necessary actions based on the received JSON data.
+ *
+ * @param json The JSON string containing the request.
+ * @return True if the request was successfully processed, false otherwise.
+ */
 bool JsonProcessor::onJsonRpc(const String& json) {
     debug_d("JsonProcessor::onJsonRpc: %s\n", json.c_str());
     JsonRpcMessageIn rpc(json);
@@ -422,6 +640,16 @@ bool JsonProcessor::onJsonRpc(const String& json) {
     }
 }
 
+/**
+ * @brief Adds channel states to the command JSON object.
+ * 
+ * This function adds channel states to the command JSON object based on the current color mode.
+ * If the color mode is HSV, the function adds the hue, saturation, value, and color temperature channels.
+ * If the color mode is Raw, the function adds the red, green, blue, warm white, and cold white channels.
+ * 
+ * @param root The root JSON object to which the channel states will be added.
+ * @param channels The list of channels for which the states will be added.
+ */
 void JsonProcessor::addChannelStatesToCmd(JsonObject root, const RGBWWLed::ChannelList& channels) {
     switch(app.rgbwwctrl.getMode()) {
     case RGBWWLed::ColorMode::Hsv:

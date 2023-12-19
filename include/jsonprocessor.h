@@ -3,6 +3,15 @@
 #include <RGBWWLed/RGBWWLedColor.h>
 
 
+/**
+ * @class JsonProcessor
+ * @brief A class for processing JSON commands related to color control.
+ *
+ * The JsonProcessor class provides methods for handling various color control commands
+ * received in JSON format. It includes functions for setting color, stopping, skipping,
+ * pausing, continuing, blinking, toggling, and executing direct commands. It also supports
+ * JSON-RPC commands.
+ */
 class JsonProcessor {
 public:
     bool onColor(const String& json, String& msg, bool relay = true);
