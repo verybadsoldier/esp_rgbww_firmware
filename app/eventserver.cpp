@@ -106,6 +106,7 @@ void EventServer::sendToClients(JsonRpcMessage& rpcMsg) {
     rpcMsg.setId(_nextId++);
 
     String jsonStr = Json::serialize(rpcMsg.getRoot());
+    debug_i("EventServer::sendToClients: %s\n", jsonStr.c_str());
 
     for(unsigned i=0; i < connections.size(); ++i) {
         auto pClient = reinterpret_cast<TcpClient*>(connections[i]);
