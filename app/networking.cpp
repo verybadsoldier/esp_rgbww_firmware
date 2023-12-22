@@ -21,6 +21,19 @@
  */
 #include <RGBWWCtrl.h>
 
+static mDNS::Responder responder;
+static LEDControllerAPIervice ledControllerAPIService;
+static LEDControllerWebAppervice ledControllerWebAppService;
+static LEDControllerWService ledControllerWSService;
+
+void AppWIFI::startmDNS()
+{
+	responder.begin(app.cfg.network.connection.mdnshostname.c_str());
+	responder.addService(ledControllerAPIService);
+    responder.addService(ledControllerWebAppService);
+    responder.addService(ledControllerWSService);
+}
+
 AppWIFI::AppWIFI() {
     _ApIP = IpAddress(String(DEFAULT_AP_IP));
     _client_err_msg = "";
@@ -74,6 +87,8 @@ void AppWIFI::init() {
     if (!WifiStation.isEnabled()) {
         debug_i("AppWIFI::init enable WifiStation");
         WifiStation.enable(true, true);
+        //ledControllerService.addText(F("md=Sming Device"));
+        //ledControllerService.addText(F("fn=LED Controller"));
     }
 
     if (WifiAccessPoint.isEnabled()) {
@@ -185,6 +200,11 @@ void AppWIFI::_STAGotIP(IpAddress ip, IpAddress mask, IpAddress gateway) {
         stopAp(1000);
     }
 
+    if(app.cfg.network.connection.mdnshostname.length() > 0) {
+        debug_i("AppWIFI::_STAGotIP - setting mdns hostname to %s", app.cfg.network.connection.mdnshostname.c_str());
+        startmDNS();
+    }
+
     if(app.cfg.network.mqtt.enabled) {
         app.mqttclient.start();
     }
@@ -227,3 +247,5 @@ void AppWIFI::startAp() {
         }
     }
 }
+
+
