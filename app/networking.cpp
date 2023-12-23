@@ -20,19 +20,9 @@
  *
  */
 #include <RGBWWCtrl.h>
+#include "mdnshandler.cpp"
 
-static mDNS::Responder responder;
-static LEDControllerAPIervice ledControllerAPIService;
-static LEDControllerWebAppervice ledControllerWebAppService;
-static LEDControllerWService ledControllerWSService;
-
-void AppWIFI::startmDNS()
-{
-	responder.begin(app.cfg.network.connection.mdnshostname.c_str());
-	responder.addService(ledControllerAPIService);
-    responder.addService(ledControllerWebAppService);
-    responder.addService(ledControllerWSService);
-}
+mdnsHandler mdnsHandler;
 
 AppWIFI::AppWIFI() {
     _ApIP = IpAddress(String(DEFAULT_AP_IP));
@@ -87,8 +77,6 @@ void AppWIFI::init() {
     if (!WifiStation.isEnabled()) {
         debug_i("AppWIFI::init enable WifiStation");
         WifiStation.enable(true, true);
-        //ledControllerService.addText(F("md=Sming Device"));
-        //ledControllerService.addText(F("fn=LED Controller"));
     }
 
     if (WifiAccessPoint.isEnabled()) {
@@ -184,6 +172,7 @@ void AppWIFI::_STAConnected(const String& ssid, MacAddress bssid, uint8_t channe
     debug_i("AppWIFI::_STAConnected SSID - %s", ssid.c_str());
 
     _con_ctr = 0;
+    //mdnsHandler.start(); // start mDNS responderF
     app.onWifiConnected(ssid);
 }
 
@@ -202,8 +191,9 @@ void AppWIFI::_STAGotIP(IpAddress ip, IpAddress mask, IpAddress gateway) {
 
     if(app.cfg.network.connection.mdnshostname.length() > 0) {
         debug_i("AppWIFI::_STAGotIP - setting mdns hostname to %s", app.cfg.network.connection.mdnshostname.c_str());
-        startmDNS();
     }
+
+    mdnsHandler.start();
 
     if(app.cfg.network.mqtt.enabled) {
         app.mqttclient.start();
