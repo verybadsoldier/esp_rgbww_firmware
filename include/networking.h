@@ -75,79 +75,8 @@ private:
     void _STAConnected(const String& ssid, MacAddress bssid, uint8_t channel);
     void _STAGotIP(IpAddress ip, IpAddress mask, IpAddress gateway);
     void scanCompleted(bool succeeded, BssList& list);
-    void startmDNS();
 };
 
-
-class LEDControllerAPIService : public mDNS::Service{
-    public:
-
-        String getInstance() override{
-		    return F("RGBWWCtrlAPI");
-        }
-        String getName() override{
-		    return F("http");
-        }
-        Protocol getProtocol() override{
-		    return Protocol::Tcp;
-	    }
-        uint16_t getPort() override{
-		    return 80;
-    	};
-	}
-    void addText(mDNS::Resource::TXT& txt) override{
-            txt.add("md=rgbwwctrl");
-            txt.add("fn=LED Controller API");
-        }
-    private:
-};
-
-class LEDControllerWebAppService : public mDNS::Service{
-    public:
-
-        String getInstance() override{
-		    return F("RGBWWCtrl WebApp");
-        }
-        String getName() override{
-		    return F("http");
-        }
-        Protocol getProtocol() override{
-		    return Protocol::Tcp;
-	    }
-        uint16_t getPort() override{
-		    return 80;
-    	};
-	}
-    void addText(mDNS::Resource::TXT& txt) override{
-            txt.add("md=rgbwwctrl");
-            txt.add("fn=LED Controller WebApp");
-        }
-    private:
-};
-
-class LEDControllerWSService : public mDNS::Service{
-    public:
-
-        String getInstance() override{
-		    return F("RGBWWCtrlWS");
-        }
-        String getName() override{
-		    return F("ws");
-        }
-        Protocol getProtocol() override{
-		    return Protocol::Tcp;
-	    }
-        uint16_t getPort() override{
-		    return 80;
-    	};
-	}
-    void addText(mDNS::Resource::TXT& txt) override{
-            txt.add("md=rgbwwctrl");
-            txt.add("fn=LED Controller");
-        }
-    private:
-};
-    
 
 
 
