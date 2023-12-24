@@ -22,7 +22,6 @@
 #ifndef APP_NETWORKING_H_
 #define APP_NETWORKING_H_
 
-#include <Network/Mdns/Responder.h>
 
 enum CONNECTION_STATUS {
     IDLE = 0,

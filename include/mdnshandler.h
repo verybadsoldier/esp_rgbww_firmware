@@ -1,17 +1,29 @@
+#include <Network/Mdns/Handler.h>
+#include <Network/Mdns/Message.h>
+#include <SimpleTimer.h>
+#include <Network/Mdns/Resource.h>
 #include <Network/Mdns/Responder.h>
 #include <Network/Mdns/debug.h>
 
-class mdnsHandler{
+class mdnsHandler: public mDNS::Responder {
     public:
         mdnsHandler();
         virtual ~mdnsHandler(){};
-        bool onMessage(mDNS::Message& message);
-        void sendSearch();
         void start();
-
-    private:
+        void setSearchName(const String& name){
+            searchName=name;
+        }
+        bool onMessage(mDNS::Message& message);
         
+    private:
+        SimpleTimer _mdnsSearchTimer;        
+        String searchName;
+        String service = "esprgbwwAPI._http._tcp.local";
+        int _mdnsTimerInterval = 10000; //search every 10 seconds
 
+        static void sendSearchCb(void* pTimerArg);
+        void sendSearch();
+        
 };
 
 class LEDControllerAPIService : public mDNS::Service{
