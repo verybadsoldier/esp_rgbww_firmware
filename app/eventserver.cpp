@@ -83,7 +83,7 @@ void EventServer::onClientComplete(TcpClient& client, bool succesfull) {
  *             the mode will be set to "raw".
  */
 void EventServer::publishCurrentState(const ChannelOutput& raw, const HSVCT* pHsv) {
-    debug_i("EventServer::publishCurrentState\n");
+    //debug_i("EventServer::publishCurrentState\n");
     if (raw == _lastRaw)
         return;
     _lastRaw = raw;
