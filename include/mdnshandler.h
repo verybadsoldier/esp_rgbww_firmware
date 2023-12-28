@@ -11,6 +11,7 @@ class mdnsHandler: public mDNS::Responder {
         virtual ~mdnsHandler(){};
         void start();
         void setSearchName(const String& name){
+            debug_i("setting searchName to %s", name.c_str());
             searchName=name;
         }
         bool onMessage(mDNS::Message& message);
