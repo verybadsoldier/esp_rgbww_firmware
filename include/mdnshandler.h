@@ -22,6 +22,8 @@ class mdnsHandler: public mDNS::Responder {
         String service = "esprgbwwAPI._http._tcp.local";
         int _mdnsTimerInterval = 10000; //search every 10 seconds
 
+        StaticJsonDocument<1024> hostsDoc;
+        JsonArray hosts;
         static void sendSearchCb(void* pTimerArg);
         void sendSearch();
         
