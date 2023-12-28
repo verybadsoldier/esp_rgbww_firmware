@@ -41,50 +41,65 @@ bool mdnsHandler::onMessage(mDNS::Message& message)
 {
     debug_i("onMessage handler called");
     using namespace mDNS;
-    mDNS::printMessage(Serial, message);
-
+    
     // Check if we're interested in this message
     if(!message.isReply()) {
         debug_i("Ignoring query");
         return false;
     }
-    auto answer = message[mDNS::ResourceType::PTR];
+    
+    mDNS::printMessage(Serial, message);
+    
+    auto answer = message[mDNS::ResourceType::SRV];
     if(answer == nullptr) {
-        debug_i("Ignoring message: no PTR record");
+        debug_i("Ignoring message: no SRV record");
         return false;
     }
-    if(answer->getName() != searchName) {
+
+    String answerName=String(answer->getName());
+    debug_i("\nanswer name: %s\n searchName: %s", answerName.c_str(),searchName.c_str());
+    if(answerName!= searchName){
+        debug_i("length of answerName: %i", answerName.length());
+        for(int i=0; i<answerName.length(); i++){
+            Serial.printf("%#00x ", answerName[i]);
+        }
+        Serial.println();
+        for(int i=0; i<searchName.length(); i++){
+            Serial.printf("%#00x ", searchName[i]);
+        }
         debug_i("Ignoring message: Name doesn't match");
         return false;
     }
-
+    
     // Extract our required information from the message
     struct {
-        String instance;
-        String service;
-        IpAddress ipaddr;
+        String hostName;
+        IpAddress ipAddr;
+        int ttl;
     } info;
 
-    answer = message[mDNS::ResourceType::TXT];
+    answer = message[mDNS::ResourceType::A];
     if(answer != nullptr) {
-        mDNS::Resource::TXT txt(*answer);
-        info.instance = txt["md"];
-        info.service = txt["fn"];
-    }
-
+        info.hostName=String(answer->getName());
+        info.ipAddr=String(answer->getRecordString());
+        info.ttl=answer->getTtl();
+      }
+      debug_i("found Host %s with IP %s and TTL %i", info.hostName.c_str(), info.ipAddr.toString().c_str(), info.ttl);
+/*
     answer = message[mDNS::ResourceType::A];
     if(answer != nullptr) {
         mDNS::Resource::A a(*answer);
         info.ipaddr = a.getAddress();
     }
-
+*/
     // Create a JSON object
+    
     StaticJsonDocument<200> doc;
-    doc["hostname"] = info.instance;
-    doc["ip_address"] = info.ipaddr.toString();
-    doc["service"] = info.service;
+    doc["hostname"] = info.hostName;
+    doc["ip_address"] = info.ipAddr.toString();
+    doc["ttl"] = info.ttl;
 
-    debug_i("Found service: %s at address %s", info.service.c_str(), info.ipaddr.toString().c_str());
+    // debug_i("Found service: %s at address %s", info.service.c_str(), info.ipaddr.toString().c_str());
 
     // Serialize JSON document
     String output;
