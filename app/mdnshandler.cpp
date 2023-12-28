@@ -19,6 +19,7 @@ void mdnsHandler::start()
     responder.addService(ledControllerWebAppService);
     responder.addService(ledControllerWSService);
 
+    hosts=hostsDoc.createNestedArray("hosts");
     _mdnsSearchTimer.setCallback(mdnsHandler::sendSearchCb, this);
     _mdnsSearchTimer.setIntervalMs(_mdnsTimerInterval);
     _mdnsSearchTimer.startOnce();
@@ -39,35 +40,27 @@ void mdnsHandler::start()
  */
 bool mdnsHandler::onMessage(mDNS::Message& message)
 {
-    debug_i("onMessage handler called");
+    //debug_i("onMessage handler called");
     using namespace mDNS;
     
     // Check if we're interested in this message
     if(!message.isReply()) {
-        debug_i("Ignoring query");
+        //debug_i("Ignoring query");
         return false;
     }
     
-    mDNS::printMessage(Serial, message);
+    //mDNS::printMessage(Serial, message);
     
     auto answer = message[mDNS::ResourceType::SRV];
     if(answer == nullptr) {
-        debug_i("Ignoring message: no SRV record");
+        //debug_i("Ignoring message: no SRV record");
         return false;
     }
 
     String answerName=String(answer->getName());
-    debug_i("\nanswer name: %s\n searchName: %s", answerName.c_str(),searchName.c_str());
+    //debug_i("\nanswer name: %s\n searchName: %s", answerName.c_str(),searchName.c_str());
     if(answerName!= searchName){
-        debug_i("length of answerName: %i", answerName.length());
-        for(int i=0; i<answerName.length(); i++){
-            Serial.printf("%#00x ", answerName[i]);
-        }
-        Serial.println();
-        for(int i=0; i<searchName.length(); i++){
-            Serial.printf("%#00x ", searchName[i]);
-        }
-        debug_i("Ignoring message: Name doesn't match");
+        //debug_i("Ignoring message: Name doesn't match");
         return false;
     }
     
@@ -84,20 +77,27 @@ bool mdnsHandler::onMessage(mDNS::Message& message)
         info.ipAddr=String(answer->getRecordString());
         info.ttl=answer->getTtl();
       }
-      debug_i("found Host %s with IP %s and TTL %i", info.hostName.c_str(), info.ipAddr.toString().c_str(), info.ttl);
-/*
-    answer = message[mDNS::ResourceType::A];
-    if(answer != nullptr) {
-        mDNS::Resource::A a(*answer);
-        info.ipaddr = a.getAddress();
-    }
-*/
+    debug_i("found Host %s with IP %s and TTL %i", info.hostName.c_str(), info.ipAddr.toString().c_str(), info.ttl);
+    mDNS::printMessage(Serial, message);
     // Create a JSON object
     
     StaticJsonDocument<200> doc;
     doc["hostname"] = info.hostName;
     doc["ip_address"] = info.ipAddr.toString();
     doc["ttl"] = info.ttl;
+
+    bool knownHost=false;
+    for (JsonVariant host : hosts) {
+        if (host["hostname"] == info.hostName && host["ip_address"] == info.ipAddr.toString()) {
+            debug_i("Hostname %s already in list", info.hostName.c_str());
+            host["ttl"] = (int)info.ttl+_mdnsTimerInterval/1000;
+            knownHost=true;
+            break;
+        }
+    }
+    if (!knownHost) {
+        hosts.add(doc);
+    }
 
     // debug_i("Found service: %s at address %s", info.service.c_str(), info.ipaddr.toString().c_str());
 
@@ -118,13 +118,25 @@ bool mdnsHandler::onMessage(mDNS::Message& message)
 void mdnsHandler::sendSearch()
 {
     // Search for the service
-        bool ok = mDNS::server.search(service);
-        debug_i("search('%s'): %s", service.c_str(), ok ? "OK" : "FAIL");
+    bool ok = mDNS::server.search(service);
+    debug_i("search('%s'): %s", service.c_str(), ok ? "OK" : "FAIL");
 
-	    setSearchName(service);
+    setSearchName(service);
 
-        //restart the timer
-        _mdnsSearchTimer.startOnce();
+    //restart the timer
+    _mdnsSearchTimer.startOnce();
+    for (size_t i = 0; i < hosts.size(); ++i) {
+        JsonVariant host = hosts[i];
+        host["ttl"] = (int)host["ttl"] - _mdnsTimerInterval/1000;
+        if (host["ttl"].as<int>() < 0) {
+            debug_i("Removing host %s from list", host["hostname"].as<const char*>());
+            hosts.remove(i);
+            --i;
+        }
+    }
+    String prettyString;
+    serializeJsonPretty(hosts,prettyString);
+    debug_i("Hosts array: %s", prettyString.c_str());
 }
 
 void mdnsHandler::sendSearchCb(void* pTimerArg) {
