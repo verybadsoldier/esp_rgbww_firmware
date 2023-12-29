@@ -145,6 +145,14 @@ void AppWIFI::connect(String ssid, String pass, bool new_con /* = false */) {
     _con_ctr = 0;
     _new_connection = new_con;
     _client_status = CONNECTION_STATUS::CONNECTING;
+    
+    if(app.cfg.general.device_name!="") {
+        debug_i("AppWIFI::connect setting hostname to %s", app.cfg.general.device_name.c_str());
+        WifiStation.setHostname(app.cfg.general.device_name);
+        app.cfg.network.connection.mdnshostname = app.cfg.general.device_name;
+
+    }
+    
     WifiStation.config(ssid, pass);
     WifiStation.connect();
 }
@@ -181,7 +189,7 @@ void AppWIFI::_STAGotIP(IpAddress ip, IpAddress mask, IpAddress gateway) {
     _con_ctr = 0;
     _client_status = CONNECTION_STATUS::CONNECTED;
 
-    // if we have a new connection, wait 90 seconds oterhwise
+    // if we have a new connection, wait 90 seconds otherwise
     // disable the accesspoint mode directly
     if(_new_connection) {
         stopAp(90000);
@@ -189,11 +197,13 @@ void AppWIFI::_STAGotIP(IpAddress ip, IpAddress mask, IpAddress gateway) {
         stopAp(1000);
     }
 
+    debug_i("AppWIFI::_STAGotIP - device_name %s mdnshostname %s", app.cfg.general.device_name.c_str(),app.cfg.network.connection.mdnshostname.c_str());
     if(app.cfg.network.connection.mdnshostname.length() > 0) {
         debug_i("AppWIFI::_STAGotIP - setting mdns hostname to %s", app.cfg.network.connection.mdnshostname.c_str());
     }
 
     mdnsHandler.start();
+    mdnsHandler.addHost(app.cfg.network.connection.mdnshostname, ip.toString());
 
     if(app.cfg.network.mqtt.enabled) {
         app.mqttclient.start();

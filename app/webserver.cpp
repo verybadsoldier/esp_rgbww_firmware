@@ -574,8 +574,10 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
 
         JsonObject jgen = root["general"];
         if (!jgen.isNull()) {
+            debug_i("general settings found");
         	Json::getValue(jgen["device_name"], app.cfg.general.device_name);
-        	Json::getValue(jgen["pin_config"], app.cfg.general.pin_config);
+        	debug_i("device_name: %s", app.cfg.general.device_name.c_str());
+            Json::getValue(jgen["pin_config"], app.cfg.general.pin_config);
         	Json::getValue(jgen["buttons_config"], app.cfg.general.buttons_config);
         	Json::getValue(jgen["buttons_debounce_ms"], app.cfg.general.buttons_debounce_ms);
         }
