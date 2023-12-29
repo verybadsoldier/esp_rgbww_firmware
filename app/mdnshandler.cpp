@@ -20,6 +20,8 @@ void mdnsHandler::start()
     responder.addService(ledControllerWSService);
 
     hosts=hostsDoc.createNestedArray("hosts");
+
+
     _mdnsSearchTimer.setCallback(mdnsHandler::sendSearchCb, this);
     _mdnsSearchTimer.setIntervalMs(_mdnsTimerInterval);
     _mdnsSearchTimer.startOnce();
@@ -127,11 +129,16 @@ void mdnsHandler::sendSearch()
     _mdnsSearchTimer.startOnce();
     for (size_t i = 0; i < hosts.size(); ++i) {
         JsonVariant host = hosts[i];
+        if((int)host["ttl"]==-1)
+            continue;
         host["ttl"] = (int)host["ttl"] - _mdnsTimerInterval/1000;
         if (host["ttl"].as<int>() < 0) {
             debug_i("Removing host %s from list", host["hostname"].as<const char*>());
             hosts.remove(i);
             --i;
+        }
+        if (host["hostname"]== null){
+            hosts.remove(i);
         }
     }
     String prettyString;
@@ -143,4 +150,13 @@ void mdnsHandler::sendSearchCb(void* pTimerArg) {
     debug_i("sendSearchCb called");
     mdnsHandler* pThis = static_cast<mdnsHandler*>(pTimerArg);
     pThis->sendSearch();
+}
+
+void mdnsHandler::addHost(const String& hostname, const String& ip_address){
+    debug_i("Adding host %s with IP %s", hostname.c_str(), ip_address.c_str());
+    StaticJsonDocument<200> doc;
+    doc["hostname"] = hostname;
+    doc["ip_address"] = ip_address;
+    doc["ttl"] = -1;
+    hosts.add(doc);
 }
