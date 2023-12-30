@@ -75,7 +75,7 @@ void ApplicationWebserver::init() {
     paths.set("/update", HttpPathDelegate(&ApplicationWebserver::onUpdate, this));
     paths.set("/connect", HttpPathDelegate(&ApplicationWebserver::onConnect, this));
     paths.set("/ping", HttpPathDelegate(&ApplicationWebserver::onPing, this));
-
+    paths.set("/hosts", HttpPathDelegate(&ApplicationWebserver::onHosts, this));
     // animation controls
     paths.set("/stop", HttpPathDelegate(&ApplicationWebserver::onStop, this));
     paths.set("/skip", HttpPathDelegate(&ApplicationWebserver::onSkip, this));
@@ -1278,3 +1278,24 @@ void ApplicationWebserver::attachWebsocket(WebsocketResource resource){
     //if(!resource.onConnect) return; //no onConnect callback, websocket is not initialized, nothing to do
     //paths.set("/ws",resource);
 }
+void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response){
+    if (request.method != HTTP_GET && request.method!=HTTP_OPTIONS) {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not GET or OPTIONS request");
+        return;
+    }
+    
+    if (request.method == HTTP_OPTIONS){
+        // probably a CORS request
+        sendApiCode(response,API_CODES::API_SUCCESS,"");
+        debug_i("HTTP_OPTIONS Request, sent API_SUCCSSS");
+        return;
+    }
+    
+    String myHosts;
+    // Set the response body with the JSON
+    response.setContentType("application/json");
+    response.sendString(app.cfg.network.mdnsHosts);
+
+    return;
+}
+ 

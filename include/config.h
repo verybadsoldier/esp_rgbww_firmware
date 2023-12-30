@@ -58,6 +58,7 @@ struct ApplicationSettings {
         connection connection;
         mqtt mqtt;
         ap ap;
+        String mdnsHosts;
     };
 
     struct sync {

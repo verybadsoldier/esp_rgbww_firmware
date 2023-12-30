@@ -101,12 +101,16 @@ bool mdnsHandler::onMessage(mDNS::Message& message)
         hosts.add(doc);
     }
 
-    // debug_i("Found service: %s at address %s", info.service.c_str(), info.ipaddr.toString().c_str());
+    //ßdebug_i("Found service: %s at address %s", info.hostName.c_str(), info.ipAddr.toString().c_str());
+    
+    String prettyString;
+    serializeJsonPretty(doc,prettyString);
+    debug_i("found service: %s",prettyString.c_str());
 
     // Serialize JSON document
     String output;
     serializeJson(doc, output);
-    Serial.println(output);
+    Serial.printf("\nnew hosts document: %s",output);
 
     return true;
 }
@@ -129,8 +133,9 @@ void mdnsHandler::sendSearch()
     _mdnsSearchTimer.startOnce();
     for (size_t i = 0; i < hosts.size(); ++i) {
         JsonVariant host = hosts[i];
-        if((int)host["ttl"]==-1)
+        if((int)host["ttl"]==-1){
             continue;
+        }
         host["ttl"] = (int)host["ttl"] - _mdnsTimerInterval/1000;
         if (host["ttl"].as<int>() < 0) {
             debug_i("Removing host %s from list", host["hostname"].as<const char*>());
@@ -159,4 +164,6 @@ void mdnsHandler::addHost(const String& hostname, const String& ip_address){
     doc["ip_address"] = ip_address;
     doc["ttl"] = -1;
     hosts.add(doc);
+    serializeJson(hosts,app.cfg.network.mdnsHosts);
+    app.cfg.network.mdnsHosts="{\"hosts\":"+app.cfg.network.mdnsHosts+"}";
 }
