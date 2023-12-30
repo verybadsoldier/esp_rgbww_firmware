@@ -17,7 +17,7 @@ class mdnsHandler: public mDNS::Responder {
             searchName=name;
         }
         bool onMessage(mDNS::Message& message);
-        void addHost(const String& hostname, const String& ip_address);
+        void addHost(const String& hostname, const String& ip_address, int ttl);
 
     private:
         SimpleTimer _mdnsSearchTimer;        
@@ -27,7 +27,8 @@ class mdnsHandler: public mDNS::Responder {
 
         StaticJsonDocument<JSON_SIZE> hostsDoc;
         JsonArray hosts;
-        
+
+        void updateHosts();
         static void sendSearchCb(void* pTimerArg);
         void sendSearch();
         

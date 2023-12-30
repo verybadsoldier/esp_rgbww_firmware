@@ -289,7 +289,9 @@ void AppWIFI::_STAGotIP(IpAddress ip, IpAddress mask, IpAddress gateway) {
     }
 
     mdnsHandler.start();
-    mdnsHandler.addHost(app.cfg.network.connection.mdnshostname, ip.toString());
+    String ipAddress=ip.toString();
+
+    mdnsHandler.addHost(app.cfg.network.connection.mdnshostname, ipAddress, -1);
 
     if(app.cfg.network.mqtt.enabled) {
         app.mqttclient.start();
