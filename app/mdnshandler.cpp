@@ -8,6 +8,7 @@ mdnsHandler::mdnsHandler(){};
 
 void mdnsHandler::start()
 {
+    using namespace mDNS;
     static mDNS::Responder responder;
 
     static LEDControllerAPIService ledControllerAPIService;
@@ -18,14 +19,17 @@ void mdnsHandler::start()
 	responder.addService(ledControllerAPIService);
     responder.addService(ledControllerWebAppService);
     responder.addService(ledControllerWSService);
-
+    
     hosts=hostsDoc.createNestedArray("hosts");
-
+    
+    String hostString;
+    serializeJsonPretty(hosts, hostString);
+    debug_i("Hosts array: %s", hostString.c_str());
 
     _mdnsSearchTimer.setCallback(mdnsHandler::sendSearchCb, this);
     _mdnsSearchTimer.setIntervalMs(_mdnsTimerInterval);
     _mdnsSearchTimer.startOnce();
-
+    //MDNS_TTL = 600; //set TTL to 10 minutes
     mDNS::server.addHandler(*this);
 }
 
@@ -81,37 +85,8 @@ bool mdnsHandler::onMessage(mDNS::Message& message)
       }
     debug_i("found Host %s with IP %s and TTL %i", info.hostName.c_str(), info.ipAddr.toString().c_str(), info.ttl);
     mDNS::printMessage(Serial, message);
-    // Create a JSON object
     
-    StaticJsonDocument<200> doc;
-    doc["hostname"] = info.hostName;
-    doc["ip_address"] = info.ipAddr.toString();
-    doc["ttl"] = info.ttl;
-
-    bool knownHost=false;
-    for (JsonVariant host : hosts) {
-        if (host["hostname"] == info.hostName && host["ip_address"] == info.ipAddr.toString()) {
-            debug_i("Hostname %s already in list", info.hostName.c_str());
-            host["ttl"] = (int)info.ttl+_mdnsTimerInterval/1000;
-            knownHost=true;
-            break;
-        }
-    }
-    if (!knownHost) {
-        hosts.add(doc);
-    }
-
-    //ßdebug_i("Found service: %s at address %s", info.hostName.c_str(), info.ipAddr.toString().c_str());
-    
-    String prettyString;
-    serializeJsonPretty(doc,prettyString);
-    debug_i("found service: %s",prettyString.c_str());
-
-    // Serialize JSON document
-    String output;
-    serializeJson(doc, output);
-    Serial.printf("\nnew hosts document: %s",output);
-
+    addHost(info.hostName, info.ipAddr.toString(), info.ttl+_mdnsTimerInterval/1000); //add host to list, ttl is increased by one check interval to prevent it from being removed immediately
     return true;
 }
 
@@ -142,13 +117,13 @@ void mdnsHandler::sendSearch()
             hosts.remove(i);
             --i;
         }
+        
         if (host["hostname"]== null){
             hosts.remove(i);
         }
+        
     }
-    String prettyString;
-    serializeJsonPretty(hosts,prettyString);
-    debug_i("Hosts array: %s", prettyString.c_str());
+    updateHosts();
 }
 
 void mdnsHandler::sendSearchCb(void* pTimerArg) {
@@ -157,13 +132,47 @@ void mdnsHandler::sendSearchCb(void* pTimerArg) {
     pThis->sendSearch();
 }
 
-void mdnsHandler::addHost(const String& hostname, const String& ip_address){
-    debug_i("Adding host %s with IP %s", hostname.c_str(), ip_address.c_str());
-    StaticJsonDocument<200> doc;
-    doc["hostname"] = hostname;
-    doc["ip_address"] = ip_address;
-    doc["ttl"] = -1;
-    hosts.add(doc);
-    serializeJson(hosts,app.cfg.network.mdnsHosts);
-    app.cfg.network.mdnsHosts="{\"hosts\":"+app.cfg.network.mdnsHosts+"}";
+void mdnsHandler::addHost(const String& hostname, const String& ip_address, int ttl){
+    /*
+     * ToDo: this is currently an ugly implementation, as it needs both, the hosts 
+     * JsonArray and the app.cfg.network.mdnsHosts string, wasting memory
+     * however, it's the most convenient way to pass the list from here to the webserver
+     * without having to pass object references around
+     */
+    debug_i("Adding host %s with IP %s and ttl %i", hostname.c_str(), ip_address.c_str(), ttl);
+    String _hostname, _ip_address;
+    int _ttl;
+    _hostname=hostname;
+    _ip_address=ip_address;
+    _ttl=ttl;   
+    
+    bool knownHost=false;
+    for (JsonVariant host : hosts) {
+        if (host["hostname"] ==_hostname && host["ip_address"] == _ip_address) {
+            debug_i("Hostname %s already in list", _hostname.c_str());
+            if(_ttl!=-1)
+                host["ttl"] = _ttl+_mdnsTimerInterval/1000; //reset ttl
+            knownHost=true;
+            break;
+        }
+    }
+
+    if (!knownHost) {
+        JsonObject newHost = hosts.createNestedObject();
+
+        newHost["hostname"] = _hostname;
+        newHost["ip_address"] = _ip_address;
+        newHost["ttl"] = _ttl;
+        String newHostString;
+        serializeJsonPretty(newHost, newHostString);
+        debug_i("new host: %s", newHostString.c_str());
+    }
+    updateHosts();
+}
+
+void mdnsHandler::updateHosts(){
+    // and now the ugly part:
+    app.cfg.network.mdnsHosts="";
+    serializeJson(hostsDoc,app.cfg.network.mdnsHosts);
+    Serial.printf("\nnew hosts document:\n %s",app.cfg.network.mdnsHosts.c_str());
 }
