@@ -5,6 +5,8 @@
 #include <Network/Mdns/Responder.h>
 #include <Network/Mdns/debug.h>
 
+#define JSON_SIZE 2048
+
 class mdnsHandler: public mDNS::Responder {
     public:
         mdnsHandler();
@@ -23,7 +25,7 @@ class mdnsHandler: public mDNS::Responder {
         String service = "esprgbwwAPI._http._tcp.local";
         int _mdnsTimerInterval = 10000; //search every 10 seconds
 
-        StaticJsonDocument<1024> hostsDoc;
+        StaticJsonDocument<JSON_SIZE> hostsDoc;
         JsonArray hosts;
         
         static void sendSearchCb(void* pTimerArg);

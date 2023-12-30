@@ -74,6 +74,7 @@ private:
     void onSystemReq(HttpRequest &request, HttpResponse &response);
     void onUpdate(HttpRequest &request, HttpResponse &response);
     void onConnect(HttpRequest &request, HttpResponse &response);
+    void onHosts(HttpRequest &request, HttpResponse &response);
     void onPing(HttpRequest &request, HttpResponse &response);
     void onStop(HttpRequest &request, HttpResponse &response);
     void onSkip(HttpRequest &request, HttpResponse &response);
