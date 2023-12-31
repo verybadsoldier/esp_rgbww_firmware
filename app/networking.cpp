@@ -349,4 +349,6 @@ void AppWIFI::startAp() {
     }
 }
 
-
+String AppWIFI::getMdnsHosts() {
+    return mdnsHandler.getHosts();
+}
