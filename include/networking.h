@@ -53,6 +53,8 @@ public:
     bool isScanning() { return _scanning; };
     BssList getAvailableNetworks();
 
+    String getMdnsHosts();
+    
     void forgetWifi();
 
 private:

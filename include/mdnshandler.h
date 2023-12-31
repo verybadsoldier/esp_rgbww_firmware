@@ -18,17 +18,17 @@ class mdnsHandler: public mDNS::Responder {
         }
         bool onMessage(mDNS::Message& message);
         void addHost(const String& hostname, const String& ip_address, int ttl);
+        String getHosts();
 
     private:
         SimpleTimer _mdnsSearchTimer;        
         String searchName;
         String service = "esprgbwwAPI._http._tcp.local";
-        int _mdnsTimerInterval = 10000; //search every 10 seconds
+        int _mdnsTimerInterval = 30000; //search every 10 seconds
 
         StaticJsonDocument<JSON_SIZE> hostsDoc;
         JsonArray hosts;
 
-        void updateHosts();
         static void sendSearchCb(void* pTimerArg);
         void sendSearch();
         

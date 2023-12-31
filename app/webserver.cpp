@@ -1294,7 +1294,7 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
     String myHosts;
     // Set the response body with the JSON
     response.setContentType("application/json");
-    response.sendString(app.cfg.network.mdnsHosts);
+    response.sendString(app.network.getMdnsHosts());
 
     return;
 }

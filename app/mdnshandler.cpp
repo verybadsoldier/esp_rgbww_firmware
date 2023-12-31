@@ -123,7 +123,6 @@ void mdnsHandler::sendSearch()
         }
         
     }
-    updateHosts();
 }
 
 void mdnsHandler::sendSearchCb(void* pTimerArg) {
@@ -167,12 +166,11 @@ void mdnsHandler::addHost(const String& hostname, const String& ip_address, int 
         serializeJsonPretty(newHost, newHostString);
         debug_i("new host: %s", newHostString.c_str());
     }
-    updateHosts();
 }
 
-void mdnsHandler::updateHosts(){
-    // and now the ugly part:
-    app.cfg.network.mdnsHosts="";
-    serializeJson(hostsDoc,app.cfg.network.mdnsHosts);
-    Serial.printf("\nnew hosts document:\n %s",app.cfg.network.mdnsHosts.c_str());
+String mdnsHandler::getHosts(){
+    String mdnsHosts;
+    serializeJson(hostsDoc,mdnsHosts);
+    Serial.printf("\nnew hosts document:\n %s",mdnsHosts.c_str());
+    return mdnsHosts;
 }
