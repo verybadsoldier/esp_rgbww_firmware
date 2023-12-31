@@ -144,7 +144,7 @@ void APPLedCtrl::publishToEventServer() {
         debug_i("APPLEDCtrl - eventserver is disabled");
         return;
     }else{
-    debug_i("APPLEDCtrl - eventserver is enabled, updating clients");
+    //debug_i("APPLEDCtrl - eventserver is enabled, updating clients");
         
     HSVCT const * pHsv = NULL;
     if (_mode == ColorMode::Hsv)
@@ -214,7 +214,7 @@ void APPLedCtrl::updateLed() {
 
             uint32_t now = millis();
             if (now - _lastColorEvent >= (uint32_t) app.cfg.events.color_mininterval_ms) {
-                debug_i("APPLedCtrl::updateLed - publishing color event");
+                // debug_i("APPLedCtrl::updateLed - publishing color event");
                 _lastColorEvent = now;
                 publishToEventServer();
             }

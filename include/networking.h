@@ -22,6 +22,7 @@
 #ifndef APP_NETWORKING_H_
 #define APP_NETWORKING_H_
 
+
 enum CONNECTION_STATUS {
     IDLE = 0,
     CONNECTING = 1,
@@ -52,6 +53,8 @@ public:
     bool isScanning() { return _scanning; };
     BssList getAvailableNetworks();
 
+    String getMdnsHosts();
+    
     void forgetWifi();
 
 private:
@@ -74,5 +77,8 @@ private:
     void _STAGotIP(IpAddress ip, IpAddress mask, IpAddress gateway);
     void scanCompleted(bool succeeded, BssList& list);
 };
+
+
+
 
 #endif //APP_NETWORKING_H_
