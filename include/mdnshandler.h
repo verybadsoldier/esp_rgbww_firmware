@@ -38,7 +38,7 @@ class LEDControllerAPIService : public mDNS::Service{
     public:
 
         String getInstance() override{
-		    return F("esprgbwwAPI");
+		    return F("esprgbwwAPI") ;
         }
         String getName() override{
 		    return F("http");
@@ -100,8 +100,9 @@ class LEDControllerWSService : public mDNS::Service{
 		    return F("esprgbwwWS");
         }
         String getName() override{
-		    return F("ws");
+		    return F("http");
         }
+        
         Protocol getProtocol() override{
 		    return Protocol::Tcp;
 	    }
