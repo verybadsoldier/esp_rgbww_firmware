@@ -1293,6 +1293,7 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
     
     String myHosts;
     // Set the response body with the JSON
+    response.setHeader("Access-Control-Allow-Origin", "*");
     response.setContentType("application/json");
     response.sendString(app.network.getMdnsHosts());
 
