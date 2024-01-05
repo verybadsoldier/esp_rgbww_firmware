@@ -7,6 +7,13 @@
 
 #define JSON_SIZE 2048
 
+/**
+ * @class mdnsHandler
+ * @brief A class that handles mDNS (Multicast DNS) functionality.
+ * 
+ * This class is responsible for starting and managing mDNS services, 
+ * adding hosts to the mDNS responder, and retrieving the list of hosts.
+ */
 class mdnsHandler: public mDNS::Responder {
     public:
         mdnsHandler();
@@ -23,8 +30,8 @@ class mdnsHandler: public mDNS::Responder {
     private:
         SimpleTimer _mdnsSearchTimer;        
         String searchName;
-        String service = "esprgbwwAPI._http._tcp.local";
-        int _mdnsTimerInterval = 30000; //search every 10 seconds
+        String service = "_http._tcp.local";
+        int _mdnsTimerInterval = 60000; //TTL for the records is 120s, so we need to update the list every 60s to be sure.
 
         StaticJsonDocument<JSON_SIZE> hostsDoc;
         JsonArray hosts;
@@ -38,7 +45,7 @@ class LEDControllerAPIService : public mDNS::Service{
     public:
 
         String getInstance() override{
-		    return F("esprgbwwAPI");
+		    return F("esprgbwwAPI") ;
         }
         String getName() override{
 		    return F("http");
@@ -100,8 +107,9 @@ class LEDControllerWSService : public mDNS::Service{
 		    return F("esprgbwwWS");
         }
         String getName() override{
-		    return F("ws");
+		    return F("http");
         }
+        
         Protocol getProtocol() override{
 		    return Protocol::Tcp;
 	    }
