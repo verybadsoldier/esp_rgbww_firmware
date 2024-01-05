@@ -41,3 +41,8 @@ out/
 sming.code-workspace
 
 .cproject
+
+# local flash handling files
+flash.sh
+term.sh
+tflash
