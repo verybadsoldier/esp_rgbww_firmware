@@ -25,28 +25,6 @@
 #include <FlashString/Stream.hpp>
 #include <Network/Http/Websocket/WebsocketResource.h>
 
-#define FILE_LIST(XX)                    \
-    XX(app_min_css, "app.min.css.gz")    \
-    XX(app_min_js, "app.min.js.gz")      \
-    XX(index_html, "index.html.gz")      \
-    XX(init_html, "init.html.gz")        \
-    XX(favicon_ico, "favicon.ico.gz")       
-
-// Define the names for each file
-#define XX(name, file) DEFINE_FSTR_LOCAL(KEY_##name, file)
-FILE_LIST(XX)
-#undef XX
-
-// Import content for each file
-#define XX(name, file) IMPORT_FSTR_LOCAL(CONTENT_##name, PROJECT_DIR "/webapp/" file);
-FILE_LIST(XX)
-#undef XX
-
-// Define the table structure linking key => content
-#define XX(name, file) {&KEY_##name, &CONTENT_##name},
-DEFINE_FSTR_MAP_LOCAL(fileMap, FlashString, FlashString, FILE_LIST(XX));
-#undef XX
-
 ApplicationWebserver::ApplicationWebserver() {
     _running = false;
     // keep some heap space free
@@ -60,7 +38,6 @@ ApplicationWebserver::ApplicationWebserver() {
     // https://github.com/SmingHub/Sming/issues/1236
     setBodyParser("*", bodyToStringParser);
 }
-
 
 void ApplicationWebserver::init() {
     paths.setDefault(HttpPathDelegate(&ApplicationWebserver::onFile, this));
@@ -213,7 +190,7 @@ void ApplicationWebserver::sendApiCode(HttpResponse &response, API_CODES code, S
 }
 
 void ApplicationWebserver::onFile(HttpRequest &request, HttpResponse &response) {
-    debug_i("gotten http file request");
+
     if (!authenticated(request, response)) {
         return;
     }
@@ -226,43 +203,9 @@ void ApplicationWebserver::onFile(HttpRequest &request, HttpResponse &response) 
         return;
     }
 #endif
-
-    String fileName = request.uri.getRelativePath();
-
-    //auto response = connection.getResponse();
-
-	String compressed = fileName + ".gz";
-	auto v = fileMap[compressed];
-    response.setAllowCrossDomainOrigin("*");
-	if(v) {
-		response.headers[HTTP_HEADER_CONTENT_ENCODING] = _F("gzip");
-       	debug_i("found %s in fileMap", String(v.key()).c_str());
-    	auto stream = new FSTR::Stream(v.content());
-	    response.sendDataStream(stream, ContentType::fromFullFileName(fileName));
-	} else {
-		v = fileMap[fileName];
-		if(!v) {
-                if (!fileExist(fileName) && !fileExist(fileName + ".gz")) {
-			        debug_w("File '%s' not found in filemap or SPIFFS", fileName.c_str());
-                    response.code = HTTP_STATUS_NOT_FOUND;
-                    response.sendString("file not found");
-                    return;
-                }else{
-   			        debug_w("File '%s' found in SPIFFS", fileName.c_str());
-                    response.code=HTTP_STATUS_OK;
-                    response.sendFile(fileName);
-                }
-			return;
-		}else{
-            debug_i("found %s in fileMap", String(v.key()).c_str());
-            auto stream = new FSTR::Stream(v.content());
-            response.sendDataStream(stream, ContentType::fromFullFileName(fileName));
-        }
-	}
-
 	// Use client caching for better performance.
 	//	response->setCache(86400, true);
-/*
+
     if (!app.isFilesystemMounted()) {
         response.setContentType(MIME_TEXT);
         response.code = HTTP_STATUS_INTERNAL_SERVER_ERROR;
@@ -284,9 +227,10 @@ void ApplicationWebserver::onFile(HttpRequest &request, HttpResponse &response) 
         response.headers[HTTP_HEADER_LOCATION] = "http://" + WifiAccessPoint.getIP().toString() + "/webapp";
     } else {
         response.setCache(86400, true); // It's important to use cache for better performance.
+        response.code=HTTP_STATUS_OK;
         response.sendFile(file);
     }
-*/
+
 }
 
 void ApplicationWebserver::onIndex(HttpRequest &request, HttpResponse &response) {
@@ -315,7 +259,6 @@ void ApplicationWebserver::onIndex(HttpRequest &request, HttpResponse &response)
 }
 
 void ApplicationWebserver::onWebapp(HttpRequest &request, HttpResponse &response) {
-    debug_i("onWebapp");
 
     if (!authenticated(request, response)) {
         return;
@@ -336,38 +279,20 @@ void ApplicationWebserver::onWebapp(HttpRequest &request, HttpResponse &response
     }
 
     if (!app.isFilesystemMounted()) {
-        debug_i("no filesystem");
         response.setContentType(MIME_TEXT);
         response.code = HTTP_STATUS_INTERNAL_SERVER_ERROR;
         response.sendString("No filesystem mounted");
         return;
     }
-    
-    String fileName;
     if (!WifiStation.isConnected()) {
         // not yet connected - serve initial settings page
-        debug_i("AP connection, sending init.html");
-        fileName=F("init.html");
+        response.sendFile("init.html");
     } else {
-        fileName=F("index.html");
+        // we are connected to ap - serve normal settings page
+        response.sendFile("index.html");
     }
-    String compressed = fileName + ".gz";
-    auto v = fileMap[compressed];
-    if(v) {
-        response.headers[HTTP_HEADER_CONTENT_ENCODING] = _F("gzip");
-    } else {
-        v = fileMap[fileName];
-        if(!v) {
-            debug_w("File '%s' not found", fileName.c_str());
-            response.headers[HTTP_HEADER_LOCATION] = "http://" + WifiAccessPoint.getIP().toString() + "/webapp";
-            return;
-        }
-    }
-
-    debug_i("found %s in fileMap", String(v.key()).c_str());
-    auto stream = new FSTR::Stream(v.content());
-    response.sendDataStream(stream, ContentType::fromFullFileName(fileName));
 }
+
 
 bool ApplicationWebserver::checkHeap(HttpResponse &response) {
     unsigned fh = system_get_free_heap_size();
@@ -402,7 +327,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
     }
     
     /*
-    / axios sends a HTTP_OPTIONS request to check if server is CORS permissive (which this firmware 
+    / handle HTTP_OPTIONS request to check if server is CORS permissive (which this firmware 
     / has been for years) this is just to reply to that request in order to pass the CORS test
     */
     if (request.method == HTTP_OPTIONS){

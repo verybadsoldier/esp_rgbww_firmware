@@ -83,6 +83,7 @@ bool mdnsHandler::onMessage(mDNS::Message& message)
     answer = message[mDNS::ResourceType::A];
     if(answer != nullptr) {
         info.hostName=String(answer->getName());
+        info.hostName = info.hostName.substring(0, info.hostName.lastIndexOf(".local"));
         info.ipAddr=String(answer->getRecordString());
         info.ttl=answer->getTtl();
       }
