@@ -15,21 +15,24 @@ void mdnsHandler::start()
     static LEDControllerWebAppService ledControllerWebAppService;  
     static LEDControllerWSService ledControllerWSService;
 
+    //start the mDNS responder with the configured services, using the configured hostname
 	responder.begin(app.cfg.network.connection.mdnshostname.c_str());
 	responder.addService(ledControllerAPIService);
     responder.addService(ledControllerWebAppService);
     responder.addService(ledControllerWSService);
     
+    //create an empty hosts array to store recieved host entries
     hosts=hostsDoc.createNestedArray("hosts");
     
-    String hostString;
-    serializeJsonPretty(hosts, hostString);
-    debug_i("Hosts array: %s", hostString.c_str());
+    
+    //serch for the esprgbwwAIP service. This is used in the onMessage handler to filter out unwanted messages.
+    //to fulter for a number of services, this would have to be adapted a bit.
+    setSearchName("esprgbwwAPI."+service);
 
+    //query mDNS at regular intervals
     _mdnsSearchTimer.setCallback(mdnsHandler::sendSearchCb, this);
     _mdnsSearchTimer.setIntervalMs(_mdnsTimerInterval);
     _mdnsSearchTimer.startOnce();
-    //MDNS_TTL = 600; //set TTL to 10 minutes
     mDNS::server.addHandler(*this);
 }
 
@@ -48,7 +51,7 @@ bool mdnsHandler::onMessage(mDNS::Message& message)
 {
     //debug_i("onMessage handler called");
     using namespace mDNS;
-    
+   
     // Check if we're interested in this message
     if(!message.isReply()) {
         //debug_i("Ignoring query");
@@ -62,14 +65,14 @@ bool mdnsHandler::onMessage(mDNS::Message& message)
         //debug_i("Ignoring message: no SRV record");
         return false;
     }
-
+    //mDNS::printMessage(Serial, message);
     String answerName=String(answer->getName());
-    //debug_i("\nanswer name: %s\n searchName: %s", answerName.c_str(),searchName.c_str());
+    //debug_i("\nanswerName: %s\nsearchName: %s", answerName.c_str(),searchName.c_str());
     if(answerName!= searchName){
         //debug_i("Ignoring message: Name doesn't match");
         return false;
     }
-    
+    debug_i("Found matching SRV record");
     // Extract our required information from the message
     struct {
         String hostName;
@@ -80,13 +83,13 @@ bool mdnsHandler::onMessage(mDNS::Message& message)
     answer = message[mDNS::ResourceType::A];
     if(answer != nullptr) {
         info.hostName=String(answer->getName());
+        info.hostName = info.hostName.substring(0, info.hostName.lastIndexOf(".local"));
         info.ipAddr=String(answer->getRecordString());
         info.ttl=answer->getTtl();
       }
     debug_i("found Host %s with IP %s and TTL %i", info.hostName.c_str(), info.ipAddr.toString().c_str(), info.ttl);
-    mDNS::printMessage(Serial, message);
     
-    addHost(info.hostName, info.ipAddr.toString(), info.ttl+_mdnsTimerInterval/1000); //add host to list, ttl is increased by one check interval to prevent it from being removed immediately
+    addHost(info.hostName, info.ipAddr.toString(), info.ttl); //add host to list
     return true;
 }
 
@@ -101,8 +104,6 @@ void mdnsHandler::sendSearch()
     // Search for the service
     bool ok = mDNS::server.search(service);
     debug_i("search('%s'): %s", service.c_str(), ok ? "OK" : "FAIL");
-
-    setSearchName(service);
 
     //restart the timer
     _mdnsSearchTimer.startOnce();
@@ -150,7 +151,7 @@ void mdnsHandler::addHost(const String& hostname, const String& ip_address, int 
         if (host["hostname"] ==_hostname && host["ip_address"] == _ip_address) {
             debug_i("Hostname %s already in list", _hostname.c_str());
             if(_ttl!=-1)
-                host["ttl"] = _ttl+_mdnsTimerInterval/1000; //reset ttl
+                host["ttl"] = _ttl; //reset ttl
             knownHost=true;
             break;
         }
@@ -171,6 +172,6 @@ void mdnsHandler::addHost(const String& hostname, const String& ip_address, int 
 String mdnsHandler::getHosts(){
     String mdnsHosts;
     serializeJson(hostsDoc,mdnsHosts);
-    Serial.printf("\nnew hosts document:\n %s",mdnsHosts.c_str());
+    //Serial.printf("\nnew hosts document:\n %s",mdnsHosts.c_str());
     return mdnsHosts;
 }
