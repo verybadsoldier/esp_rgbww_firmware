@@ -23,7 +23,7 @@ class mdnsHandler: public mDNS::Responder {
     private:
         SimpleTimer _mdnsSearchTimer;        
         String searchName;
-        String service = "esprgbwwAPI._http._tcp.local";
+        String service = "_http._tcp.local";
         int _mdnsTimerInterval = 30000; //search every 10 seconds
 
         StaticJsonDocument<JSON_SIZE> hostsDoc;

@@ -424,7 +424,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
 
         bool error = false;
         String error_msg = getApiCodeMsg(API_CODES::API_BAD_REQUEST);
-        DynamicJsonDocument doc(CONFIG_MAX_LENGTH);
+        DynamicJsonDocument doc(CONFIG_MAX_LENGTH); //TODO: CONFIG_MAX_LENGTH is 2048, that would not fit into one package, not sure what happens then
         Json::deserialize(doc, body);
 
         // remove comment for debugging
@@ -1264,6 +1264,7 @@ void ApplicationWebserver::onStorage(HttpRequest &request, HttpResponse &respons
         debug_i("original document uses %i bytes", doc.memoryUsage());
         String data=doc["data"];
         debug_i("data: %s", data.c_str());
+        
         FileHandle file=fileOpen(fileName.c_str(),IFS::OpenFlag::Write|IFS::OpenFlag::Create|IFS::OpenFlag::Truncate);
         if(!fileWrite(file, data.c_str(), data.length())){
             debug_e("Saving config to file %s failed!", fileName.c_str());
