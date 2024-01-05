@@ -15,21 +15,24 @@ void mdnsHandler::start()
     static LEDControllerWebAppService ledControllerWebAppService;  
     static LEDControllerWSService ledControllerWSService;
 
+    //start the mDNS responder with the configured services, using the configured hostname
 	responder.begin(app.cfg.network.connection.mdnshostname.c_str());
 	responder.addService(ledControllerAPIService);
     responder.addService(ledControllerWebAppService);
     responder.addService(ledControllerWSService);
     
+    //create an empty hosts array to store recieved host entries
     hosts=hostsDoc.createNestedArray("hosts");
     
-    String hostString;
-    serializeJsonPretty(hosts, hostString);
-    debug_i("Hosts array: %s", hostString.c_str());
+    
+    //serch for the esprgbwwAIP service. This is used in the onMessage handler to filter out unwanted messages.
+    //to fulter for a number of services, this would have to be adapted a bit.
+    setSearchName("esprgbwwAPI."+service);
 
+    //query mDNS at regular intervals
     _mdnsSearchTimer.setCallback(mdnsHandler::sendSearchCb, this);
     _mdnsSearchTimer.setIntervalMs(_mdnsTimerInterval);
     _mdnsSearchTimer.startOnce();
-    //MDNS_TTL = 600; //set TTL to 10 minutes
     mDNS::server.addHandler(*this);
 }
 
@@ -100,8 +103,6 @@ void mdnsHandler::sendSearch()
     // Search for the service
     bool ok = mDNS::server.search(service);
     debug_i("search('%s'): %s", service.c_str(), ok ? "OK" : "FAIL");
-
-    setSearchName("esprgbwwAPI."+service);
 
     //restart the timer
     _mdnsSearchTimer.startOnce();
