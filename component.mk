@@ -2,7 +2,7 @@ COMPONENT_SEARCH_DIRS := $(PROJECT_DIR)/Components
 COMPONENT_DEPENDS += MDNS
 ARDUINO_LIBRARIES := RGBWWLed ArduinoJson6 OtaNetwork
 
-HWCONFIG := spiffs-two-roms
+HWCONFIG := two-spiffs-two-roms
 
 # These are defined in hardware config or no longer required
 # SPI_SIZE = 4M
@@ -13,7 +13,7 @@ HWCONFIG := spiffs-two-roms
 
 #### SPIFFS options ####
 # folder with files to include
-SPIFF_FILES = Storage
+SPIFF_FILES = spiffs
 
 #### rBoot options ####
 # use rboot build mode
