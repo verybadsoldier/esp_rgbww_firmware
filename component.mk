@@ -2,7 +2,8 @@ COMPONENT_SEARCH_DIRS := $(PROJECT_DIR)/Components
 COMPONENT_DEPENDS += MDNS
 ARDUINO_LIBRARIES := RGBWWLed ArduinoJson6 OtaNetwork
 
-HWCONFIG := two-spiffs-two-roms
+#HWCONFIG := two-spiffs-two-roms
+HWCONFIG := hwconfig
 
 # These are defined in hardware config or no longer required
 # SPI_SIZE = 4M
@@ -42,7 +43,7 @@ CUSTOM_TARGETS += check_versions
 #### GIT VERSION Information #####
 GIT_VERSION = $(shell git describe --abbrev=4 --dirty --always --tags)
 GIT_DATE = $(firstword $(shell git --no-pager show --date=short --format="%ad" --name-only))
-WEBAPP_VERSION = `cat $(PROJECT_DIR)/webapp/VERSION`
+WEBAPP_VERSION = `cat $(PROJECT_DIR)/spiffs/VERSION`
 USER_CFLAGS = -DGITVERSION=\"$(GIT_VERSION)\" -DGITDATE=\"$(GIT_DATE)\" -DWEBAPP_VERSION=\"$(WEBAPP_VERSION)\"
 
 .PHONY: check_versions

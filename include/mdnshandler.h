@@ -7,6 +7,9 @@
 
 #define JSON_SIZE 2048
 
+// activate debug output
+//#define DEBUG_MDNS 
+
 /**
  * @class mdnsHandler
  * @brief A class that handles mDNS (Multicast DNS) functionality.

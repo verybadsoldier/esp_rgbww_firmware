@@ -75,13 +75,15 @@ void ApplicationWebserver::init() {
 }
 
 void ApplicationWebserver::wsConnected(WebsocketConnection& socket){
-    debug_i("wsConnected");
+    debug_i("===>wsConnected");
     webSockets.addElement(&socket);
+    debug_i("===>nr of websockets: %i", webSockets.size());
 }
 
 void ApplicationWebserver::wsDisconnected(WebsocketConnection& socket){
-    debug_i("wsDisconnected");
+    debug_i("<===wsDisconnected");
     webSockets.removeElement(&socket);
+    debug_i("===>nr of websockets: %i", webSockets.size());
 }
 
 void ApplicationWebserver::wsBroadcast(String message){
