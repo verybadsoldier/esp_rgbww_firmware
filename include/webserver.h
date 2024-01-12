@@ -91,7 +91,7 @@ private:
     void sendApiCode(HttpResponse &response, API_CODES code, String msg = "");
 
     void onUpload(HttpRequest &request, HttpResponse &response);
-
+    void onObject(HttpRequest &request, HttpResponse &response);
     bool checkHeap(HttpResponse &response);
 
     static bool isPrintable(String& str);
@@ -100,7 +100,7 @@ private:
 
     void wsConnected(WebsocketConnection& socket);
     void wsDisconnected(WebsocketConnection& socket);
-
+    String makeId();
 };
 
 #endif // APP_WEBSERVER_H_

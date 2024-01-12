@@ -3,21 +3,13 @@
     "base_config": "spiffs-two-roms",
     "options": [],
     "partitions": {
-        "rom0": {
-            "size": "512K"
-        },
-        "rom1": {
-            "size": "512K",
-            "address": "0x00082000"
-        },
         "spiffs0": {
-            "size": "1520K",
-            "address": "0x00102000"
+            "size": "768K"
         },
         "spiffs1": {
             "device": "spiFlash",
-            "address": "0x0027e000",
-            "size": "1520K",
+            "address": "0x002c0000",
+            "size": "768K",
             "type": "data",
             "subtype": "spiffs",
             "readonly": false,
