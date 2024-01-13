@@ -49,12 +49,16 @@ void mdnsHandler::start()
  */
 bool mdnsHandler::onMessage(mDNS::Message& message)
 {
-    //debug_i("onMessage handler called");
+    #ifdef DEBUG_MDNS
+        debug_i("onMessage handler called");
+    #endif
     using namespace mDNS;
    
     // Check if we're interested in this message
     if(!message.isReply()) {
-        //debug_i("Ignoring query");
+        #ifdef DEBUG_MDNS
+            debug_i("Ignoring query");
+        #endif
         return false;
     }
     
@@ -62,17 +66,23 @@ bool mdnsHandler::onMessage(mDNS::Message& message)
     
     auto answer = message[mDNS::ResourceType::SRV];
     if(answer == nullptr) {
-        //debug_i("Ignoring message: no SRV record");
+        #ifdef DEBUG_MDNS
+            debug_i("Ignoring message: no SRV record");
+        #endif
         return false;
     }
     //mDNS::printMessage(Serial, message);
     String answerName=String(answer->getName());
-    //debug_i("\nanswerName: %s\nsearchName: %s", answerName.c_str(),searchName.c_str());
+    #ifdef DEBUG_MDNS
+        debug_i("\nanswerName: %s\nsearchName: %s", answerName.c_str(),searchName.c_str());
+    #endif
     if(answerName!= searchName){
         //debug_i("Ignoring message: Name doesn't match");
         return false;
     }
-    debug_i("Found matching SRV record");
+    #ifdef DEBUG_MDNS
+        debug_i("Found matching SRV record");
+    #endif
     // Extract our required information from the message
     struct {
         String hostName;
@@ -87,7 +97,9 @@ bool mdnsHandler::onMessage(mDNS::Message& message)
         info.ipAddr=String(answer->getRecordString());
         info.ttl=answer->getTtl();
       }
-    debug_i("found Host %s with IP %s and TTL %i", info.hostName.c_str(), info.ipAddr.toString().c_str(), info.ttl);
+    #ifdef DEBUG_MDNS
+        debug_i("found Host %s with IP %s and TTL %i", info.hostName.c_str(), info.ipAddr.toString().c_str(), info.ttl);
+    #endif
     
     addHost(info.hostName, info.ipAddr.toString(), info.ttl); //add host to list
     return true;
@@ -103,7 +115,9 @@ void mdnsHandler::sendSearch()
 {
     // Search for the service
     bool ok = mDNS::server.search(service);
-    debug_i("search('%s'): %s", service.c_str(), ok ? "OK" : "FAIL");
+    #ifdef DEBUG_MDNS
+        debug_i("search('%s'): %s", service.c_str(), ok ? "OK" : "FAIL");
+    #endif
 
     //restart the timer
     _mdnsSearchTimer.startOnce();
@@ -127,7 +141,9 @@ void mdnsHandler::sendSearch()
 }
 
 void mdnsHandler::sendSearchCb(void* pTimerArg) {
-    debug_i("sendSearchCb called");
+    #ifdef DEBUG_MDNS
+        debug_i("sendSearchCb called");
+    #endif
     mdnsHandler* pThis = static_cast<mdnsHandler*>(pTimerArg);
     pThis->sendSearch();
 }
@@ -139,7 +155,9 @@ void mdnsHandler::addHost(const String& hostname, const String& ip_address, int 
      * however, it's the most convenient way to pass the list from here to the webserver
      * without having to pass object references around
      */
-    debug_i("Adding host %s with IP %s and ttl %i", hostname.c_str(), ip_address.c_str(), ttl);
+    #ifdef DEBUG_MDNS
+        debug_i("Adding host %s with IP %s and ttl %i", hostname.c_str(), ip_address.c_str(), ttl);
+    #endif
     String _hostname, _ip_address;
     int _ttl;
     _hostname=hostname;
@@ -149,7 +167,9 @@ void mdnsHandler::addHost(const String& hostname, const String& ip_address, int 
     bool knownHost=false;
     for (JsonVariant host : hosts) {
         if (host["hostname"] ==_hostname && host["ip_address"] == _ip_address) {
-            debug_i("Hostname %s already in list", _hostname.c_str());
+            #ifdef DEBUG_MDNS
+                debug_i("Hostname %s already in list", _hostname.c_str());
+            #endif
             if(_ttl!=-1)
                 host["ttl"] = _ttl; //reset ttl
             knownHost=true;
@@ -165,7 +185,9 @@ void mdnsHandler::addHost(const String& hostname, const String& ip_address, int 
         newHost["ttl"] = _ttl;
         String newHostString;
         serializeJsonPretty(newHost, newHostString);
-        debug_i("new host: %s", newHostString.c_str());
+        #ifdef DEBUG_MDNS
+            debug_i("new host: %s", newHostString.c_str());
+        #endif
     }
 }
 

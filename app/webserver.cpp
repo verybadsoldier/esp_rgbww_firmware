@@ -24,13 +24,14 @@
 #include <FlashString/Map.hpp>
 #include <FlashString/Stream.hpp>
 #include <Network/Http/Websocket/WebsocketResource.h>
+#include <Storage.h>
 
 ApplicationWebserver::ApplicationWebserver() {
     _running = false;
     // keep some heap space free
     // value is a good guess and tested to not crash when issuing multiple parallel requests
     HttpServerSettings settings;
-    settings.minHeapSize = _minimumHeapAccept;
+    settings.minHeapSize = _minimumHeapAccept;  
     settings.keepAliveSeconds = 5; // do not close instantly when no transmission occurs. some clients are a bit slow (like FHEM)
     configure(settings);
 
@@ -53,6 +54,7 @@ void ApplicationWebserver::init() {
     paths.set("/connect", HttpPathDelegate(&ApplicationWebserver::onConnect, this));
     paths.set("/ping", HttpPathDelegate(&ApplicationWebserver::onPing, this));
     paths.set("/hosts", HttpPathDelegate(&ApplicationWebserver::onHosts, this));
+    paths.set("/object", HttpPathDelegate(&ApplicationWebserver::onObject, this));
     // animation controls
     paths.set("/stop", HttpPathDelegate(&ApplicationWebserver::onStop, this));
     paths.set("/skip", HttpPathDelegate(&ApplicationWebserver::onSkip, this));
@@ -75,13 +77,15 @@ void ApplicationWebserver::init() {
 }
 
 void ApplicationWebserver::wsConnected(WebsocketConnection& socket){
-    debug_i("wsConnected");
+    debug_i("===>wsConnected");
     webSockets.addElement(&socket);
+    debug_i("===>nr of websockets: %i", webSockets.size());
 }
 
 void ApplicationWebserver::wsDisconnected(WebsocketConnection& socket){
-    debug_i("wsDisconnected");
+    debug_i("<===wsDisconnected");
     webSockets.removeElement(&socket);
+    debug_i("===>nr of websockets: %i", webSockets.size());
 }
 
 void ApplicationWebserver::wsBroadcast(String message){
@@ -696,6 +700,15 @@ void ApplicationWebserver::onInfo(HttpRequest &request, HttpResponse &response) 
     data["uptime"] = app.getUptime();
     data["heap_free"] = system_get_free_heap_size();
 
+/*
+    FileSystem::Info fsInfo;
+    app.getinfo(fsInfo);
+    JsonObject FS=data.createNestedObject("fs");
+    FS["mounted"] = fsInfo.partition?"true":"false";
+    FS["size"] = fsInfo.total;
+    FS["used"] = fsInfo.used;
+    FS["available"] = fsInfo.freeSpace;
+*/
     JsonObject rgbww = data.createNestedObject("rgbww");
     rgbww["version"] = RGBWW_VERSION;
     rgbww["queuesize"] = RGBWW_ANIMATIONQSIZE;
@@ -1225,4 +1238,265 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
 
     return;
 }
- 
+
+ void ApplicationWebserver::onObject(HttpRequest &request, HttpResponse &response){
+    if (request.method == HTTP_OPTIONS){
+        // probably a CORS request
+        response.setHeader("Access-Control-Allow-Origin", "*");
+        sendApiCode(response,API_CODES::API_SUCCESS,"");
+        debug_i("HTTP_OPTIONS Request, sent API_SUCCSSS");
+        return;
+    }
+    /******************************************************************************************************
+    *  valid object types are:
+    *
+    * g: group
+    * {id: <id>, name: <string>, hosts:[hostid, hostid, hostid, hostid, ...]}
+    * 
+    * p: preset
+    * {id: <id>, name: <string>, hsv:{h: <float>, s: <float>, v: <float>}}
+    * 
+    * p: preset
+    * {id: <id>, name: <string>, raw:{r: <float>, g: <float>, b: <float>, ww: <float>, cw: <float>}}
+    * 
+    * h: host
+    * {id: <id>, name: <string>, ip: <string>, active: <bool>}
+    * remarkt: the active field shall be added upon sending the file by checking, if the host is in the current mDNS hosts list
+    * 
+    * s: scene
+    * {id: <id>, name: <string>, hosts: [{id: <hostid>,hsv:{h: <float>, s: <float>, v: <float>},...]}
+    * 
+    * enumerating all objects of a type is done by first sending a GET request to /object?type=<type> which the 
+    * controller will reply to with a json array of all objects of the requested type in the following format:
+    * {"<type>":["2234585-1233362","2234585-0408750","2234585-9433038","2234585-7332130","2234585-7389644"]}
+    * it is then the job of the front end to request each object individually by sending a GET request to 
+    * /object?type=<type>&id=<id>
+    * 
+    * creating a new object is done by sending a POST request to /object?type=<type> with the json object as 
+    * described above as the body.
+    * The id field (both in the url as well as in the json object) should be omitted, in which case the 
+    * controller will generate a new id for the object.
+    * 
+    * updating an existing object is done by sending a POST request to /object?type=<type>&id=<id> with the fully populated
+    * json object as the body. In this case the id field in the json object must match the id in the url.
+    * 
+    * deleting an object is done by sending a DELETE request to /object?type=<type>&id=<id>. No checks are performed.
+    * 
+    * it's important to understand that the controller only stores the objects, the frontend is fully responsible
+    * for the cohesion of the data. If a non-existant host is added to a scene, the controller will not complain.
+    * 
+    * Since the id for the hosts is the actual ESP8266 it is possible to track controllers through ip address changes
+    * and keep their ids constant. This is not implemented yet.
+    ******************************************************************************************************/
+    String objectType = request.getQueryParameter("type");
+    String objectId = request.getQueryParameter("id");
+    #ifdef DEBUG_OBJECT_API
+    debug_i("got request with uri %s for object type %s with id %s.",String(request.uri).c_str(), objectType.c_str(), objectId.c_str());
+    #endif
+
+    if (objectType==""){
+        #ifdef DEBUG_OBJECT_API
+        debug_i("missing object type");        
+        #endif
+        response.setHeader("Access-Control-Allow-Origin", "*");
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "missing object type");
+        return;
+    }
+    String types=F("gphs");
+    if (types.indexOf(objectType)==-1||objectType.length()>1){
+        #ifdef DEBUG_OBJECT_API
+        debug_i("unsupported object type");
+        #endif
+        response.setHeader("Access-Control-Allow-Origin", "*");
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "unsupported object type");
+        return;
+    }
+    
+    if( request.method == HTTP_GET) {
+        if (objectId==""){
+        
+            //requested object type but no object id, list all objects of type
+            Directory dir;
+            if(!dir.open()) {
+                debug_i("could not open dir");
+                sendApiCode(response, API_CODES::API_BAD_REQUEST, "could not open dir");
+                return;
+            }else{
+                JsonObjectStream* stream = new JsonObjectStream(CONFIG_MAX_LENGTH);
+                JsonObject doc = stream->getRoot();
+
+                JsonArray objectsList;
+
+                switch (objectType.c_str()[0]) {
+                    case 'g':
+                        objectsList = doc.createNestedArray("groups"); // Assign value inside the case
+                        break;
+                        ;;
+                    case 'p':
+                        objectsList = doc.createNestedArray("presets"); // Assign value inside the case
+                        break;
+                        ;;
+                    case 'h':
+                        objectsList = doc.createNestedArray("hosts"); // Assign value inside the case
+                        break;
+                        ;;
+                    case 's':
+                        objectsList = doc.createNestedArray("scenes"); // Assign value inside the case
+                        break;
+                        ;;
+                }
+
+                while(dir.next()) {
+                    String fileName=String(dir.stat().name);
+                    #ifdef DEBUG_OBJECT_API
+                    debug_i("found file: %s",fileName.c_str());
+                    debug_i("file begins with %s",fileName.substring(1,2).c_str()); 
+                    #endif
+                    if(fileName.substring(1,2)==objectType){
+                        #ifdef DEBUG_OBJECT_API
+                        debug_i("adding file %s to list",fileName);
+                        debug_i("filename %s, extension starts at %i",fileName,fileName.indexOf(F(".")));
+                        #endif
+                        objectId=fileName.substring(2, fileName.indexOf(F(".")));
+                        objectsList.add(objectId);
+                    }
+                }
+                response.setContentType("application/json");
+                response.setAllowCrossDomainOrigin("*");
+                response.setHeader("Access-Control-Allow-Origin", "*");
+                response.sendString(Json::serialize(doc));
+                delete stream;
+            }
+        }else{
+            //got GET with object type and id, return object, if available
+            debug_i("HTTP GET request received, ");
+            String fileName = "_"+objectType+ objectId + ".json"; 
+            if (!fileName) {
+                #ifdef DEBUG_OBJECT_API
+                debug_i("file not found");
+                #endif
+                response.setHeader("Access-Control-Allow-Origin", "*");
+                sendApiCode(response, API_CODES::API_BAD_REQUEST, "file not found");
+                return;
+            }
+            response.setContentType("application/json");
+            response.setAllowCrossDomainOrigin("*");
+            #ifdef DEBUG_OBJECT_API
+            debug_i("sending file %s", fileName.c_str());
+            #endif
+            response.setHeader("Access-Control-Allow-Origin", "*");
+            response.sendFile(fileName);
+            return;
+        }
+    }
+    if (request.method==HTTP_POST){
+        debug_i(   "HTTP PUT request received, ");
+        String body = request.getBody();
+        #ifdef DEBUG_OBJECT_API
+        debug_i("request body: %s", body.c_str());
+        #endif
+        if (body == NULL || body.length()>FILE_MAX_SIZE) {
+            response.setHeader("Access-Control-Allow-Origin", "*");
+            sendApiCode(response, API_CODES::API_BAD_REQUEST, "could not parse HTTP body");
+            #ifdef DEBUG_OBJECT_API
+            debug_i("body is null or too long");
+            #endif
+            return;
+        }
+        StaticJsonDocument<FILE_MAX_SIZE> doc;
+        DeserializationError error = deserializeJson(doc, body);
+        if (error) {
+            response.setHeader("Access-Control-Allow-Origin", "*");
+            sendApiCode(response, API_CODES::API_BAD_REQUEST, "could not parse json from HTTP body");
+            #ifdef DEBUG_OBJECT_API
+            debug_i("could not parse json");
+            #endif
+            return;
+        }
+        #ifdef DEBUG_OBJECT_API
+        debug_i("parsed json, found name %s",String(doc["name"]).c_str());
+        #endif
+        if(objectId==""){
+            //no object id, create new object
+            if(doc["id"]!=""){
+                objectId=String(doc["id"]);
+            }else{
+               debug_i("no object id, creating new object");
+               objectId=makeId();
+               doc["id"]=objectId;
+            }
+
+        }
+        String fileName = "_"+objectType+objectId + ".json"; 
+        #ifdef DEBUG_OBJECT_API
+        debug_i("will save to file %s", fileName.c_str());
+        #endif
+        FileHandle file = fileOpen(fileName.c_str(), IFS::OpenFlag::Write|IFS::OpenFlag::Create|IFS::OpenFlag::Truncate);
+        if (!file) {
+            sendApiCode(response, API_CODES::API_BAD_REQUEST, "file not found");
+            #ifdef DEBUG_OBJECT_API
+            debug_i("couldn not open file for write");
+            #endif
+            return;
+        }
+        String bodyData;
+        serializeJson(doc, bodyData);
+        #ifdef DEBUG_OBJECT_API
+        debug_i("body length: %i", bodyData.length());
+        debug_i("data: %s", bodyData.c_str());
+        #endif
+        if(!fileWrite(file, bodyData.c_str(), bodyData.length())){
+            #ifdef DEBUG_OBJECT_API
+            debug_e("Saving config to file %s failed!", fileName.c_str());
+            //should probably also send some error message to the client
+            #endif
+        }
+        fileClose(file);
+        response.setAllowCrossDomainOrigin("*");
+        response.setContentType("application/json");
+        doc.clear();
+        doc["id"]=objectId;
+        bodyData="";
+        serializeJson(doc, bodyData);
+        response.sendString(bodyData.c_str());
+        //sendApiCode(response, API_CODES::API_SUCCESS);
+
+        return;       
+    }
+    if (request.method==HTTP_DELETE){
+        String fileName = "_"+objectType+objectId + ".json"; 
+        FileHandle file = fileDelete(fileName.c_str());
+        if (!file) {
+            sendApiCode(response, API_CODES::API_BAD_REQUEST, "file not found");
+            return;
+        }
+        fileClose(file);
+        response.setAllowCrossDomainOrigin("*");
+        sendApiCode(response, API_CODES::API_SUCCESS);
+        return;       
+    }
+
+}
+
+String ApplicationWebserver::makeId(){
+    /*
+     * generate ID for an object. The id is comprised of a letter, denoting the 
+     * class of the current object (preset, group, host or scene) the 7 digit  
+     * controller id, a dash and the seven lowest digits of the current microsecond 
+     * timestamp. There is a very small chance of collision, and in this case, an  
+     * existing preset with the colliding id will just be overwritten as if it had
+     * been updated. But as said, I recon the chance that a 2nd id will be generatd
+     * on the same controller with the exact same microsecond timestamp is very small
+     * names, on the other hand, are not relevant for the system, so they can be pickd
+     * freely and technically, objects can even be renamed.
+     */
+    char ___id[8];
+    sprintf(___id, "%07u",(uint32_t)micros()%10000000);
+    String __id=String(___id);
+    String chipId=String(system_get_chip_id());
+    String objectId=chipId+"-"+__id;
+    #ifdef DEBUG_OBJECT_API
+    debug_i("generated id %s ",objectId.c_str());
+    #endif
+    return objectId;
+}
