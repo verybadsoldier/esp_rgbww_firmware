@@ -255,7 +255,6 @@ void AppWIFI::_STAConnected(const String& ssid, MacAddress bssid, uint8_t channe
     }
     
     _con_ctr = 0;
-    //mdnsHandler.start(); // start mDNS responderF
     app.onWifiConnected(ssid);
 }
 
