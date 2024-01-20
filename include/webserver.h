@@ -65,12 +65,12 @@ private:
 
     void onFile(HttpRequest &request, HttpResponse &response);
     void onIndex(HttpRequest &request, HttpResponse &response);
-    void onWebapp(HttpRequest &request, HttpResponse &response);
     void onConfig(HttpRequest &request, HttpResponse &response);
     void onInfo(HttpRequest &request, HttpResponse &response);
     void onColor(HttpRequest &request, HttpResponse &response);
     void onNetworks(HttpRequest &request, HttpResponse &response);
     void onScanNetworks(HttpRequest &request, HttpResponse &response);
+    void onWifiConnected(HttpRequest &request, HttpResponse &response);
     void onSystemReq(HttpRequest &request, HttpResponse &response);
     void onUpdate(HttpRequest &request, HttpResponse &response);
     void onConnect(HttpRequest &request, HttpResponse &response);

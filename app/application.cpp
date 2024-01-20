@@ -139,6 +139,7 @@ void Application::init() {
     network.init();
 
     // initialize webserver
+
     app.webserver.init();
 
     if (cfg.ntp.enabled) {
@@ -287,6 +288,7 @@ void Application::switchRom() {
 
 void Application::onWifiConnected(const String& ssid) {
     debug_i("Application::onWifiConnected");
+    ApplicationWebserver.onWifiConnected
 }
 
 void Application::onCommandRelay(const String& method, const JsonObject& params) {
