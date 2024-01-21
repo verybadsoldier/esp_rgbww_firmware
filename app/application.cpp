@@ -218,6 +218,13 @@ bool Application::delayedCMD(String cmd, int delay) {
         network.stopAp(2000);
     } else if (cmd.equals("forget_wifi")) {
         _systimer.initializeMs(delay, TimerDelegate(&AppWIFI::forgetWifi, &network)).startOnce();
+    } else if (cmd.equals("forget_wifi_and_restart")) {
+        AppWIFI::forgetWIFI();
+        _systimer.initializeMs(delay, TimerDelegate(&Application::reset, this)).startOnce();
+    } else if (cmd.equals("umountfs")) {
+        umountfs();
+    } else if (cmd.equals("mountfs")) {
+        mountfs(getRomSlot());
     } else if (cmd.equals("switch_rom")) {
         switchRom();
         _systimer.initializeMs(delay, TimerDelegate(&Application::restart, this)).startOnce();
@@ -286,9 +293,9 @@ void Application::switchRom() {
 #endif
 }
 
-void Application::onWifiConnected(const String& ssid) {
-    debug_i("Application::onWifiConnected");
-    ApplicationWebserver.onWifiConnected
+void Application::wsBroadcast(String message) {
+    debug_i("Application::wsBroadcast");
+    app.webserver.wsBroadcast(message);
 }
 
 void Application::onCommandRelay(const String& method, const JsonObject& params) {

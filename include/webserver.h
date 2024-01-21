@@ -50,6 +50,8 @@ public:
 
     String getApiCodeMsg(API_CODES code);
 
+
+
 private:
 
     bool _init = false;
@@ -70,7 +72,6 @@ private:
     void onColor(HttpRequest &request, HttpResponse &response);
     void onNetworks(HttpRequest &request, HttpResponse &response);
     void onScanNetworks(HttpRequest &request, HttpResponse &response);
-    void onWifiConnected(HttpRequest &request, HttpResponse &response);
     void onSystemReq(HttpRequest &request, HttpResponse &response);
     void onUpdate(HttpRequest &request, HttpResponse &response);
     void onConnect(HttpRequest &request, HttpResponse &response);

@@ -822,7 +822,12 @@ void ApplicationWebserver::onNetworks(HttpRequest &request, HttpResponse &respon
         return;
     }
 #endif
-
+    if (request.method == HTTP_OPTIONS){
+        response.setHeader("Access-Control-Allow-Origin", "*"); // allow CORS temporarily for testing, probaly best to remove it later as
+                                                                // it may be a security risk to allow $world to scan for wifi networks
+        sendApiCode(response, API_CODES::API_SUCCESS);
+        return;
+    }
     if (request.method != HTTP_GET) {
         sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP GET");
         return;
@@ -860,6 +865,8 @@ void ApplicationWebserver::onNetworks(HttpRequest &request, HttpResponse &respon
                 break;
         }
     }
+    response.setHeader("Access-Control-Allow-Origin", "*"); // allow CORS temporarily for testing, probaly best to remove it later as
+                                                            // it may be a security risk to allow $world to scan for wifi networks
     sendApiResponse(response, stream);
 }
 
@@ -952,24 +959,8 @@ void ApplicationWebserver::onConnect(HttpRequest &request, HttpResponse &respons
     }
 }
 
-void ApplicationWebserver::onWifiConnected(HttpRequest &request, HttpResponse &response){
-    // wifi cstation connected
-    JsonRpcMessage msg("wifi_connected");
-        JsonObject root = msg.getParams();
-        root["connected"] = WifiStation.isConnected();
-        root["ssid"] = WifiStation.getSSID();
-        root["dhcp"] = WifiStation.isEnabledDHCP();
-        root["ip"] = WifiStation.getIP().toString();
-        root["netmask"] = WifiStation.getNetworkMask().toString();
-        root["gateway"] = WifiStation.getNetworkGateway().toString();
-        root["mac"] = WifiStation.getMAC();
-        debug_i("rpc: root =%s",Json::serialize(root).c_str());
-        debug_i("rpc: msg =%s",Json::serialize(msg.getRoot()).c_str());
-        
-        String jsonStr = Json::serialize(msg.getRoot());
 
-        wsBroadcast(jsonStr);
-}
+
 void ApplicationWebserver::onSystemReq(HttpRequest &request, HttpResponse &response) {
 
     if (!authenticated(request, response)) {
@@ -983,6 +974,12 @@ void ApplicationWebserver::onSystemReq(HttpRequest &request, HttpResponse &respo
     }
 #endif
 
+    if(request.method == HTTP_OPTIONS){
+        response.setHeader("Access-Control-Allow-Origin", "*"); // allow CORS temporarily for testing, probaly best to remove it later as
+                                                                // it may be a security risk to allow $world to scan for wifi networks
+        sendApiCode(response, API_CODES::API_SUCCESS);
+        return;
+    }
     if (request.method != HTTP_POST) {
         sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP POST");
         return;
@@ -1007,7 +1004,8 @@ void ApplicationWebserver::onSystemReq(HttpRequest &request, HttpResponse &respo
                 } else {
                     error = true;
                 }
-            } else if (!app.delayedCMD(cmd, 1500)) {
+
+            }else if (!app.delayedCMD(cmd, 1500)) {
                 error = true;
             }
 
@@ -1016,6 +1014,9 @@ void ApplicationWebserver::onSystemReq(HttpRequest &request, HttpResponse &respo
         }
 
     }
+        response.setHeader("Access-Control-Allow-Origin", "*"); // allow CORS temporarily for testing, probaly best to remove it later as
+                                                                // it may be a security risk to allow $world to scan for wifi networks
+    
     if (!error) {
         sendApiCode(response, API_CODES::API_SUCCESS);
     } else {

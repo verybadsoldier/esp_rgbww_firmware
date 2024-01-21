@@ -35,8 +35,7 @@ class AppWIFI {
 public:
     AppWIFI();
     virtual ~AppWIFI() {
-    }
-    ;
+    };
 
     void init();
 
@@ -75,10 +74,10 @@ private:
     void _STADisconnect(const String& ssid, MacAddress bssid, WifiDisconnectReason reason);
     void _STAConnected(const String& ssid, MacAddress bssid, uint8_t channel);
     void _STAGotIP(IpAddress ip, IpAddress mask, IpAddress gateway);
+    void broadcastWifiStatus();
+    void broadcastWifiStatus(String message);
     void scanCompleted(bool succeeded, BssList& list);
 };
-
-
 
 
 #endif //APP_NETWORKING_H_
