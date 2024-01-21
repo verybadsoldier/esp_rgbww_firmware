@@ -21,8 +21,11 @@
  */
 #include <RGBWWCtrl.h>
 #include "mdnshandler.cpp"
+#define DNS_PORT 53
 
 mdnsHandler mdnsHandler;
+
+DnsServer dnsServer;
 
 /**
  * @brief Constructor for the AppWIFI class.
@@ -74,6 +77,7 @@ void AppWIFI::scanCompleted(bool succeeded, BssList& list) {
             }
         }
     }
+    // TODO add wsBroadcast of available networks
     _networks.sort([](const BssInfo& a, const BssInfo& b) {return b.rssi - a.rssi;});
     _scanning = false;
 
@@ -232,6 +236,7 @@ void AppWIFI::_STADisconnect(const String& ssid, MacAddress bssid, WifiDisconnec
             startAp();
         }
     }
+    broadcastWifiStatus(_client_err_msg);
     _con_ctr++;
 }
 
@@ -255,8 +260,8 @@ void AppWIFI::_STAConnected(const String& ssid, MacAddress bssid, uint8_t channe
     }
     
     _con_ctr = 0;
-    //mdnsHandler.start(); // start mDNS responderF
-    app.onWifiConnected(ssid);
+    // wifi cstation connected
+ 
 }
 
 /**
@@ -292,6 +297,8 @@ void AppWIFI::_STAGotIP(IpAddress ip, IpAddress mask, IpAddress gateway) {
     String ipAddress=ip.toString();
 
     mdnsHandler.addHost(app.cfg.network.connection.mdnshostname, ipAddress, -1);
+
+    broadcastWifiStatus();
 
     if(app.cfg.network.mqtt.enabled) {
         app.mqttclient.start();
@@ -347,8 +354,55 @@ void AppWIFI::startAp() {
             //WifiAccessPoint.config(ssid, "", AUTH_OPEN);
         }
     }
+    //start dns server for captive portal
+    dnsServer.start(DNS_PORT, "*", WifiAccessPoint.getIP());
 }
 
 String AppWIFI::getMdnsHosts() {
     return mdnsHandler.getHosts();
+}
+
+/**
+ * @brief Broadcasts the WiFi status to all connected clients.
+ * 
+ * This function broadcasts the WiFi status to all connected clients.
+ * It creates a JSON-RPC message with the WiFi status and broadcasts it to all connected clients.
+ */
+void AppWIFI::broadcastWifiStatus(String message){
+    if(WifiStation.isConnected()||WifiAccessPoint.isEnabled()) {
+    
+        JsonRpcMessage msg("wifi_status");
+        JsonObject root = msg.getParams();
+
+        if(message!="") {
+            root["message"] = message;
+        }   
+
+        JsonObject station = root.createNestedObject("station");
+
+        station["connected"] = WifiStation.isConnected();
+        station["ssid"] = WifiStation.getSSID();
+        station["dhcp"] = WifiStation.isEnabledDHCP();
+        station["ip"] = WifiStation.getIP().toString();
+        station["netmask"] = WifiStation.getNetworkMask().toString();
+        station["gateway"] = WifiStation.getNetworkGateway().toString();
+        station["mac"] = WifiStation.getMAC();
+
+        JsonObject ap=root.createNestedObject("ap");
+        
+        ap["enabled"]=WifiAccessPoint.isEnabled();
+        ap["ssid"]=WifiAccessPoint.getSSID();
+        ap["ip"]=WifiAccessPoint.getIP().toString();
+
+        debug_i("rpc: root =%s",Json::serialize(root).c_str());
+        debug_i("rpc: msg =%s",Json::serialize(msg.getRoot()).c_str());
+        
+        String jsonStr = Json::serialize(msg.getRoot());
+        
+        app.wsBroadcast(jsonStr);
+    }
+}
+
+void AppWIFI::broadcastWifiStatus() {
+    broadcastWifiStatus("");
 }

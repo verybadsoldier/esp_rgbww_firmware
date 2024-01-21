@@ -26,13 +26,17 @@
 #include <Network/Http/Websocket/WebsocketResource.h>
 #include <Storage.h>
 
+
+#define DEBUG_OBJECT_API
+
 ApplicationWebserver::ApplicationWebserver() {
     _running = false;
     // keep some heap space free
     // value is a good guess and tested to not crash when issuing multiple parallel requests
     HttpServerSettings settings;
+    settings.maxActiveConnections=40;
     settings.minHeapSize = _minimumHeapAccept;  
-    settings.keepAliveSeconds = 5; // do not close instantly when no transmission occurs. some clients are a bit slow (like FHEM)
+    settings.keepAliveSeconds = 10; // do not close instantly when no transmission occurs. some clients are a bit slow (like FHEM)
     configure(settings);
 
     // workaround for bug in Sming 3.5.0
@@ -43,7 +47,6 @@ ApplicationWebserver::ApplicationWebserver() {
 void ApplicationWebserver::init() {
     paths.setDefault(HttpPathDelegate(&ApplicationWebserver::onFile, this));
     paths.set("/", HttpPathDelegate(&ApplicationWebserver::onIndex, this));
-    paths.set("/webapp", HttpPathDelegate(&ApplicationWebserver::onWebapp, this));
     paths.set("/config", HttpPathDelegate(&ApplicationWebserver::onConfig, this));
     paths.set("/info", HttpPathDelegate(&ApplicationWebserver::onInfo, this));
     paths.set("/color", HttpPathDelegate(&ApplicationWebserver::onColor, this));
@@ -90,6 +93,9 @@ void ApplicationWebserver::wsDisconnected(WebsocketConnection& socket){
 
 void ApplicationWebserver::wsBroadcast(String message){
     debug_i("=== Websocket Broadcast ===\n%s",message.c_str());
+    debug_i("===>nr of websockets: %i", webSockets.size());
+    auto tcpConnections=getConnections();
+    debug_i("===>nr of tcpConnections: %i", tcpConnections.size());
     for(auto& socket : webSockets) { // Iterate over all active sockets
         socket->send(message, WS_FRAME_TEXT); // Send the message to each socket
     }
@@ -249,31 +255,6 @@ void ApplicationWebserver::onIndex(HttpRequest &request, HttpResponse &response)
         response.code = HTTP_STATUS_SERVICE_UNAVAILABLE;
         response.sendString("OTA in progress");
         return;	void publishTransitionFinished(const String& name, bool requeued = false);
-
-    }
-#endif
-
-    if (WifiAccessPoint.isEnabled()) {
-        debug_i("adding AP headers");
-        response.headers[HTTP_HEADER_LOCATION] = "http://" + WifiAccessPoint.getIP().toString() + "/webapp";
-    } else {
-        response.headers[HTTP_HEADER_LOCATION] = "http://" + WifiStation.getIP().toString() + "/webapp";
-    }
-    response.code = HTTP_STATUS_PERMANENT_REDIRECT;
-}
-
-void ApplicationWebserver::onWebapp(HttpRequest &request, HttpResponse &response) {
-
-    if (!authenticated(request, response)) {
-        return;
-    }
-
-#ifdef ARCH_ESP8266
-    if (app.ota.isProccessing()) {
-        response.setContentType(MIME_TEXT);
-        response.code = HTTP_STATUS_SERVICE_UNAVAILABLE;
-        response.sendString("OTA in progress");
-        return;
     }
 #endif
 
@@ -288,15 +269,29 @@ void ApplicationWebserver::onWebapp(HttpRequest &request, HttpResponse &response
         response.sendString("No filesystem mounted");
         return;
     }
-    if (!WifiStation.isConnected()) {
-        // not yet connected - serve initial settings page
-        response.sendFile("init.html");
-    } else {
+    
+    if (WifiAccessPoint.isEnabled()&&!WifiStation.isConnected()&&request.getQueryParameter("init")!="true") {
+        // not yet connected - redirect to initial settings page
+        debug_i("activating query parameter");
+        response.headers[HTTP_HEADER_LOCATION]="http://" + WifiAccessPoint.getIP().toString()+"/?init=true";
+        response.code = HTTP_STATUS_PERMANENT_REDIRECT;
+
+    } else if(WifiStation.isConnected()&&(request.getQueryParameter("init")=="true")) {
+        // the controller is connected to a wifi network and the init parameter is set, needs clearing
+        // this should also redirect the browser if it has just been used to configure the wifi and now
+        // reconnected through the AP to the controller. The redirect points to the Station IP address
+        // so if that is reachable (depending on the client's connection), this should go directly to the app
+        debug_i("deactivating query parameter");
+        response.headers[HTTP_HEADER_LOCATION]="http://" + WifiStation.getIP().toString()+"/";
+        response.code = HTTP_STATUS_PERMANENT_REDIRECT;
+    }
+    // if neither of the two redirect cases is true, serve the index.html file
+    else {
         // we are connected to ap - serve normal settings page
         response.sendFile("index.html");
     }
+    
 }
-
 
 bool ApplicationWebserver::checkHeap(HttpResponse &response) {
     unsigned fh = system_get_free_heap_size();
@@ -827,7 +822,12 @@ void ApplicationWebserver::onNetworks(HttpRequest &request, HttpResponse &respon
         return;
     }
 #endif
-
+    if (request.method == HTTP_OPTIONS){
+        response.setHeader("Access-Control-Allow-Origin", "*"); // allow CORS temporarily for testing, probaly best to remove it later as
+                                                                // it may be a security risk to allow $world to scan for wifi networks
+        sendApiCode(response, API_CODES::API_SUCCESS);
+        return;
+    }
     if (request.method != HTTP_GET) {
         sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP GET");
         return;
@@ -865,6 +865,8 @@ void ApplicationWebserver::onNetworks(HttpRequest &request, HttpResponse &respon
                 break;
         }
     }
+    response.setHeader("Access-Control-Allow-Origin", "*"); // allow CORS temporarily for testing, probaly best to remove it later as
+                                                            // it may be a security risk to allow $world to scan for wifi networks
     sendApiResponse(response, stream);
 }
 
@@ -957,6 +959,8 @@ void ApplicationWebserver::onConnect(HttpRequest &request, HttpResponse &respons
     }
 }
 
+
+
 void ApplicationWebserver::onSystemReq(HttpRequest &request, HttpResponse &response) {
 
     if (!authenticated(request, response)) {
@@ -970,6 +974,12 @@ void ApplicationWebserver::onSystemReq(HttpRequest &request, HttpResponse &respo
     }
 #endif
 
+    if(request.method == HTTP_OPTIONS){
+        response.setHeader("Access-Control-Allow-Origin", "*"); // allow CORS temporarily for testing, probaly best to remove it later as
+                                                                // it may be a security risk to allow $world to scan for wifi networks
+        sendApiCode(response, API_CODES::API_SUCCESS);
+        return;
+    }
     if (request.method != HTTP_POST) {
         sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP POST");
         return;
@@ -994,7 +1004,8 @@ void ApplicationWebserver::onSystemReq(HttpRequest &request, HttpResponse &respo
                 } else {
                     error = true;
                 }
-            } else if (!app.delayedCMD(cmd, 1500)) {
+
+            }else if (!app.delayedCMD(cmd, 1500)) {
                 error = true;
             }
 
@@ -1003,6 +1014,9 @@ void ApplicationWebserver::onSystemReq(HttpRequest &request, HttpResponse &respo
         }
 
     }
+        response.setHeader("Access-Control-Allow-Origin", "*"); // allow CORS temporarily for testing, probaly best to remove it later as
+                                                                // it may be a security risk to allow $world to scan for wifi networks
+    
     if (!error) {
         sendApiCode(response, API_CODES::API_SUCCESS);
     } else {
@@ -1293,6 +1307,8 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
     #ifdef DEBUG_OBJECT_API
     debug_i("got request with uri %s for object type %s with id %s.",String(request.uri).c_str(), objectType.c_str(), objectId.c_str());
     #endif
+    auto tcpConnections=getConnections();
+    debug_i("===> (objEntry) nr of tcpConnections: %i", tcpConnections.size());
 
     if (objectType==""){
         #ifdef DEBUG_OBJECT_API
@@ -1425,7 +1441,6 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
                objectId=makeId();
                doc["id"]=objectId;
             }
-
         }
         String fileName = "_"+objectType+objectId + ".json"; 
         #ifdef DEBUG_OBJECT_API
@@ -1452,6 +1467,15 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
             #endif
         }
         fileClose(file);
+        JsonRpcMessage msg("preset");
+        JsonObject root = msg.getParams();
+        root.set(doc.as<JsonObject>());        
+        debug_i("rpc: root =%s",Json::serialize(root).c_str());
+        debug_i("rpc: msg =%s",Json::serialize(msg.getRoot()).c_str());
+        
+        String jsonStr = Json::serialize(msg.getRoot());
+
+        wsBroadcast(jsonStr);
         response.setAllowCrossDomainOrigin("*");
         response.setContentType("application/json");
         doc.clear();
@@ -1459,6 +1483,7 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
         bodyData="";
         serializeJson(doc, bodyData);
         response.sendString(bodyData.c_str());
+
         //sendApiCode(response, API_CODES::API_SUCCESS);
 
         return;       
