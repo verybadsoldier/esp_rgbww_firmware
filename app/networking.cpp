@@ -77,6 +77,7 @@ void AppWIFI::scanCompleted(bool succeeded, BssList& list) {
             }
         }
     }
+    // TODO add wsBroadcast of available networks
     _networks.sort([](const BssInfo& a, const BssInfo& b) {return b.rssi - a.rssi;});
     _scanning = false;
 
@@ -368,24 +369,38 @@ String AppWIFI::getMdnsHosts() {
  * It creates a JSON-RPC message with the WiFi status and broadcasts it to all connected clients.
  */
 void AppWIFI::broadcastWifiStatus(String message){
-    JsonRpcMessage msg("wifi_status");
-    JsonObject root = msg.getParams();
-    root["connected"] = WifiStation.isConnected();
-    root["ssid"] = WifiStation.getSSID();
-    root["dhcp"] = WifiStation.isEnabledDHCP();
-    root["ip"] = WifiStation.getIP().toString();
-    root["netmask"] = WifiStation.getNetworkMask().toString();
-    root["gateway"] = WifiStation.getNetworkGateway().toString();
-    root["mac"] = WifiStation.getMAC();
-    if(message!="") {
-        root["message"] = message;
-    }   
-    debug_i("rpc: root =%s",Json::serialize(root).c_str());
-    debug_i("rpc: msg =%s",Json::serialize(msg.getRoot()).c_str());
+    if(WifiStation.isConnected()||WifiAccessPoint.isEnabled()) {
     
-    String jsonStr = Json::serialize(msg.getRoot());
+        JsonRpcMessage msg("wifi_status");
+        JsonObject root = msg.getParams();
 
-    app.wsBroadcast(jsonStr);
+        if(message!="") {
+            root["message"] = message;
+        }   
+
+        JsonObject station = root.createNestedObject("station");
+
+        station["connected"] = WifiStation.isConnected();
+        station["ssid"] = WifiStation.getSSID();
+        station["dhcp"] = WifiStation.isEnabledDHCP();
+        station["ip"] = WifiStation.getIP().toString();
+        station["netmask"] = WifiStation.getNetworkMask().toString();
+        station["gateway"] = WifiStation.getNetworkGateway().toString();
+        station["mac"] = WifiStation.getMAC();
+
+        JsonObject ap=root.createNestedObject("ap");
+        
+        ap["enabled"]=WifiAccessPoint.isEnabled();
+        ap["ssid"]=WifiAccessPoint.getSSID();
+        ap["ip"]=WifiAccessPoint.getIP().toString();
+
+        debug_i("rpc: root =%s",Json::serialize(root).c_str());
+        debug_i("rpc: msg =%s",Json::serialize(msg.getRoot()).c_str());
+        
+        String jsonStr = Json::serialize(msg.getRoot());
+        
+        app.wsBroadcast(jsonStr);
+    }
 }
 
 void AppWIFI::broadcastWifiStatus() {

@@ -10,7 +10,7 @@
  * the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * WITHOUT ANY WARRANTY; without even the implied warranty of<
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * General Public License for more details at
  * https://www.gnu.org/copyleft/gpl.html
@@ -219,7 +219,7 @@ bool Application::delayedCMD(String cmd, int delay) {
     } else if (cmd.equals("forget_wifi")) {
         _systimer.initializeMs(delay, TimerDelegate(&AppWIFI::forgetWifi, &network)).startOnce();
     } else if (cmd.equals("forget_wifi_and_restart")) {
-        AppWIFI::forgetWIFI();
+        network.forgetWifi();
         _systimer.initializeMs(delay, TimerDelegate(&Application::reset, this)).startOnce();
     } else if (cmd.equals("umountfs")) {
         umountfs();
