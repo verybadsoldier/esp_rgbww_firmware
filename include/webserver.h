@@ -50,6 +50,8 @@ public:
 
     String getApiCodeMsg(API_CODES code);
 
+
+
 private:
 
     bool _init = false;
@@ -65,7 +67,6 @@ private:
 
     void onFile(HttpRequest &request, HttpResponse &response);
     void onIndex(HttpRequest &request, HttpResponse &response);
-    void onWebapp(HttpRequest &request, HttpResponse &response);
     void onConfig(HttpRequest &request, HttpResponse &response);
     void onInfo(HttpRequest &request, HttpResponse &response);
     void onColor(HttpRequest &request, HttpResponse &response);

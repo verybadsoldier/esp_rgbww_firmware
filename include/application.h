@@ -40,6 +40,8 @@ public:
     void restart();
     bool delayedCMD(String cmd, int delay);
 
+    void wsBroadcast(String message);
+
     //void listSpiffsPartitions();
     
     void mountfs(int slot);
@@ -57,7 +59,8 @@ public:
     void switchRom();
 
     void onCommandRelay(const String& method, const JsonObject& json);
-    void onWifiConnected(const String& ssid);
+    //void onWifiConnected(const String& ssid);
+    
     void onButtonTogglePressed(int pin);
 
     uint32_t getUptime();

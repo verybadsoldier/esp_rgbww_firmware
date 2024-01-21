@@ -1,0 +1,31 @@
+{
+    "name": "New Profile",
+    "base_config": "standard",
+    "devices": {
+        "spiFlash": {
+            "size": "4M"
+        }
+    },
+    "partitions": {
+        "rom1": {
+            "device": "spiFlash",
+            "address": "0x000fa000",
+            "size": "992K",
+            "type": "data",
+            "subtype": "ota",
+            "readonly": false,
+            "encrypted": false,
+            "filename": ""
+        },
+        "littlefs": {
+            "device": "spiFlash",
+            "address": "0x001f2000",
+            "size": "2080K",
+            "type": "data",
+            "subtype": "littlefs",
+            "readonly": false,
+            "encrypted": false,
+            "filename": ""
+        }
+    }
+}
