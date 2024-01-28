@@ -38,6 +38,7 @@ public:
 
     void reset();
     void restart();
+    void forget_wifi_and_restart();
     bool delayedCMD(String cmd, int delay);
 
     void wsBroadcast(String message);
