@@ -1467,6 +1467,17 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
             #endif
         }
         fileClose(file);
+
+        response.setAllowCrossDomainOrigin("*");
+        response.setContentType("application/json");
+        doc.clear();
+        doc["id"]=objectId;
+        bodyData="";
+        serializeJson(doc, bodyData);
+        response.sendString(bodyData.c_str());
+
+        // send websocket message to all connected clients to 
+        // update them about the new object
         JsonRpcMessage msg("preset");
         JsonObject root = msg.getParams();
         root.set(doc.as<JsonObject>());        
@@ -1476,14 +1487,6 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
         String jsonStr = Json::serialize(msg.getRoot());
 
         wsBroadcast(jsonStr);
-        response.setAllowCrossDomainOrigin("*");
-        response.setContentType("application/json");
-        doc.clear();
-        doc["id"]=objectId;
-        bodyData="";
-        serializeJson(doc, bodyData);
-        response.sendString(bodyData.c_str());
-
         //sendApiCode(response, API_CODES::API_SUCCESS);
 
         return;       

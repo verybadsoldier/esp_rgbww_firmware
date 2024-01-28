@@ -208,6 +208,12 @@ void Application::reset() {
     restart();
 }
 
+void Application::forget_wifi_and_restart() {
+    debug_i("Application::forget_wifi_and_restart");
+    network.forgetWifi();
+    restart();
+}
+
 bool Application::delayedCMD(String cmd, int delay) {
     debug_i("Application::delayedCMD cmd: %s - delay: %i", cmd.c_str(), delay);
     if (cmd.equals("reset")) {
@@ -220,7 +226,7 @@ bool Application::delayedCMD(String cmd, int delay) {
         _systimer.initializeMs(delay, TimerDelegate(&AppWIFI::forgetWifi, &network)).startOnce();
     } else if (cmd.equals("forget_wifi_and_restart")) {
         network.forgetWifi();
-        _systimer.initializeMs(delay, TimerDelegate(&Application::reset, this)).startOnce();
+        _systimer.initializeMs(delay, TimerDelegate(&Application::forget_wifi_and_restart, this)).startOnce();
     } else if (cmd.equals("umountfs")) {
         umountfs();
     } else if (cmd.equals("mountfs")) {

@@ -1,6 +1,7 @@
 #include <ArduinoJson.h>
 #include <mdnshandler.h>
 #include <RGBWWCtrl.h>
+#include "application.h"
 
 // ...
 
@@ -129,6 +130,14 @@ void mdnsHandler::sendSearch()
         host["ttl"] = (int)host["ttl"] - _mdnsTimerInterval/1000;
         if (host["ttl"].as<int>() < 0) {
             debug_i("Removing host %s from list", host["hostname"].as<const char*>());
+                
+            // notify websocket clients
+            JsonRpcMessage msg("removed_host");
+            JsonObject root = msg.getParams();   
+            root["hostname"] = host["hostname"];
+            String jsonStr = Json::serialize(msg.getRoot());
+
+            app.wsBroadcast(jsonStr);
             hosts.remove(i);
             --i;
         }
@@ -188,6 +197,13 @@ void mdnsHandler::addHost(const String& hostname, const String& ip_address, int 
         #ifdef DEBUG_MDNS
             debug_i("new host: %s", newHostString.c_str());
         #endif
+
+        JsonRpcMessage msg("new_host");
+        JsonObject root = msg.getParams();   
+        root.set(newHost);  
+        String jsonStr = Json::serialize(msg.getRoot());
+
+        app.wsBroadcast(jsonStr);
     }
 }
 
