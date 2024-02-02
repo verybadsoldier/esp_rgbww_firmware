@@ -96,6 +96,9 @@ void AppWIFI::forgetWifi() {
     debug_i("AppWIFI::forget_wifi");
     WifiStation.config("", "");
     WifiStation.disconnect();
+    if(!WifiAccessPoint.isEnabled()) {
+        startAp();
+    }
     _client_status = CONNECTION_STATUS::IDLE;
 }
 
@@ -113,7 +116,7 @@ void AppWIFI::forgetWifi() {
  */
 void AppWIFI::init() {
 
-    // ESP SDK function to disable wifi sleep
+    // ESP SDK function to disable  sleep
     wifi_set_sleep_type(NONE_SLEEP_T);
 
     //don`t enable/disable again to save eeprom cycles
@@ -204,6 +207,7 @@ void AppWIFI::connect(String ssid, String pass, bool new_con /* = false */) {
     
     WifiStation.config(ssid, pass);
     WifiStation.connect();
+    broadcastWifiStatus(F("Connecting to WiFi"));
 }
 
 /**
@@ -236,6 +240,7 @@ void AppWIFI::_STADisconnect(const String& ssid, MacAddress bssid, WifiDisconnec
             startAp();
         }
     }
+    debug_i("AppWIFI::_STADisconnect - _client_err_msg: %s", _client_err_msg.c_str());
     broadcastWifiStatus(_client_err_msg);
     _con_ctr++;
 }
@@ -258,7 +263,7 @@ void AppWIFI::_STAConnected(const String& ssid, MacAddress bssid, uint8_t channe
         debug_i("no device name configured, setting hostname to default %s",String(DEFAULT_AP_SSIDPREFIX) + String(system_get_chip_id()));
         app.cfg.network.connection.mdnshostname = String(DEFAULT_AP_SSIDPREFIX) + String(system_get_chip_id());
     }
-    
+    broadcastWifiStatus(F("Connected to WiFi"));
     _con_ctr = 0;
     // wifi cstation connected
  
@@ -328,6 +333,7 @@ void AppWIFI::stopAp(int delay) {
         debug_i("AppWIFI::stopAp WifiAP disable");
         WifiAccessPoint.enable(false, false);
     }
+    broadcastWifiStatus(F("AP stopping"));
 }
 
 /**
@@ -356,6 +362,7 @@ void AppWIFI::startAp() {
     }
     //start dns server for captive portal
     dnsServer.start(DNS_PORT, "*", WifiAccessPoint.getIP());
+    broadcastWifiStatus(F("AP started"));
 }
 
 String AppWIFI::getMdnsHosts() {

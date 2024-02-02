@@ -211,7 +211,7 @@ void Application::reset() {
 void Application::forget_wifi_and_restart() {
     debug_i("Application::forget_wifi_and_restart");
     network.forgetWifi();
-    restart();
+    _systimer.initializeMs(500, TimerDelegate(&Application::restart, this)).startOnce();
 }
 
 bool Application::delayedCMD(String cmd, int delay) {

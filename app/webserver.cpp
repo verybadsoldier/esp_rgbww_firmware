@@ -1470,7 +1470,7 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
 
         response.setAllowCrossDomainOrigin("*");
         response.setContentType("application/json");
-        doc.clear();
+        //doc.clear();
         doc["id"]=objectId;
         bodyData="";
         serializeJson(doc, bodyData);
