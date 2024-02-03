@@ -26,7 +26,7 @@
 #include <Network/Http/Websocket/WebsocketResource.h>
 #include <Storage.h>
 
-
+#define NOCACHE
 #define DEBUG_OBJECT_API
 
 ApplicationWebserver::ApplicationWebserver() {
@@ -214,8 +214,10 @@ void ApplicationWebserver::onFile(HttpRequest &request, HttpResponse &response) 
     }
 #endif
 	// Use client caching for better performance.
-	//	response->setCache(86400, true);
-
+	#ifndef NOCACHE
+    	response->setCache(86400, true);
+    #endif
+    
     if (!app.isFilesystemMounted()) {
         response.setContentType(MIME_TEXT);
         response.code = HTTP_STATUS_INTERNAL_SERVER_ERROR;
@@ -234,9 +236,11 @@ void ApplicationWebserver::onFile(HttpRequest &request, HttpResponse &response) 
     if (!fileExist(file) && !fileExist(file + ".gz") && WifiAccessPoint.isEnabled()) {
         //if accesspoint is active and we couldn`t find the file - redirect to index
         debug_d("ApplicationWebserver::onFile redirecting");
-        response.headers[HTTP_HEADER_LOCATION] = "http://" + WifiAccessPoint.getIP().toString() + "/webapp";
+        response.headers[HTTP_HEADER_LOCATION] = "http://" + WifiAccessPoint.getIP().toString() +"/";
     } else {
+        #ifndef NOCACHE
         response.setCache(86400, true); // It's important to use cache for better performance.
+        #endif
         response.code=HTTP_STATUS_OK;
         response.sendFile(file);
     }
@@ -1227,10 +1231,7 @@ void ApplicationWebserver::onStorage(HttpRequest &request, HttpResponse &respons
         return;       
     }
 }
-void ApplicationWebserver::attachWebsocket(WebsocketResource resource){
-    //if(!resource.onConnect) return; //no onConnect callback, websocket is not initialized, nothing to do
-    //paths.set("/ws",resource);
-}
+
 void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response){
     if (request.method != HTTP_GET && request.method!=HTTP_OPTIONS) {
         sendApiCode(response, API_CODES::API_BAD_REQUEST, "not GET or OPTIONS request");
