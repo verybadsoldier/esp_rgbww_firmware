@@ -46,7 +46,6 @@ public:
     inline bool isRunning() { return _running; };
 
     void wsBroadcast(String message);
-    void attachWebsocket(WebsocketResource resource);
 
     String getApiCodeMsg(API_CODES code);
 

@@ -301,7 +301,10 @@ void AppWIFI::_STAGotIP(IpAddress ip, IpAddress mask, IpAddress gateway) {
     mdnsHandler.start();
     String ipAddress=ip.toString();
 
-    mdnsHandler.addHost(app.cfg.network.connection.mdnshostname, ipAddress, -1);
+    
+    
+    
+    (app.cfg.network.connection.mdnshostname, ipAddress, -1);
 
     broadcastWifiStatus();
 
