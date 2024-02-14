@@ -1,0 +1,15 @@
+export rgbww=usb-1a86_USB2.0-Serial-if00-port0
+export second_devel=usb-1a86_USB_Single_Serial_5647014434-if00
+export main_devel=usb-Silicon_Labs_CP2104_USB_to_UART_Bridge_Controller_01A7B447-if00-port0
+
+COM_SPEED=$(grep -e "^COM_SPEED" component.mk |cut -d "=" -f 2)
+
+if [ "$1" == "1" ]
+then
+	COM_PORT=/dev/serial/by-id/$second_devel
+else
+	COM_PORT=/dev/serial/by-id/$rgbww
+fi
+#usb-Silicon_Labs_CP2104_USB_to_UART_Bridge_Controller_01A7B447-if00-port0
+python3 -m serial.tools.miniterm --raw --encoding ascii --rts 0 --dtr 0 $COM_PORT $COM_SPEED
+
