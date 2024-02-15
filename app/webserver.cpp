@@ -277,6 +277,14 @@ void ApplicationWebserver::onIndex(HttpRequest &request, HttpResponse &response)
         return;
     }
 
+    if (request.method == HTTP_OPTIONS){
+        // probably a CORS request
+        response.setHeader("Access-Control-Allow-Origin", "*");
+        sendApiCode(response,API_CODES::API_SUCCESS,"");
+        debug_i("HTTP_OPTIONS Request, sent API_SUCCSSS");
+        return;
+    }
+
     if (!app.isFilesystemMounted()) {
         response.setContentType(MIME_TEXT);
         response.code = HTTP_STATUS_INTERNAL_SERVER_ERROR;
@@ -284,6 +292,7 @@ void ApplicationWebserver::onIndex(HttpRequest &request, HttpResponse &response)
         return;
     }
     
+    /* removing the init redirect as this is now handled in the front end component
     if (WifiAccessPoint.isEnabled()&&!WifiStation.isConnected()&&request.getQueryParameter("init")!="true") {
         // not yet connected - redirect to initial settings page
         debug_i("activating query parameter");
@@ -301,10 +310,12 @@ void ApplicationWebserver::onIndex(HttpRequest &request, HttpResponse &response)
     }
     // if neither of the two redirect cases is true, serve the index.html file
     else {
+    */
         // we are connected to ap - serve normal settings page
+        response.setHeader("Access-Control-Allow-Origin", "*");
         response.sendFile("index.html");
-    }
-    
+    /*}
+    */
 }
 
 bool ApplicationWebserver::checkHeap(HttpResponse &response) {
@@ -345,6 +356,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
     */
     if (request.method == HTTP_OPTIONS){
         // probably a CORS request
+        response.setHeader("Access-Control-Allow-Origin", "*");
         sendApiCode(response,API_CODES::API_SUCCESS,"");
         debug_i("HTTP_OPTIONS Request, sent API_SUCCSSS");
         return;
