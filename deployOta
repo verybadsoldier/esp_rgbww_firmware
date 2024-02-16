@@ -1,0 +1,19 @@
+BASE_URL=http://192.168.29.10
+FW_VERSION=$(git describe --abbrev=4 --dirty --always --tags)
+WEBAPP_VERSION=$(cat ./spiffs/VERSION)
+
+cat <<EOF > version.json
+{
+	"rom":
+	{
+		"fw_version":"$FW_VERSION",
+		"url":"$BASE_URL/rom0.bin"
+	},
+	"spiffs":
+	{
+		"webapp_version":"$WEBAPP_VERSION",
+		"url":"$BASE_URL/spiff_rom.bin"
+	}
+}
+EOF
+
