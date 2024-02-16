@@ -1,0 +1,12 @@
+{
+	"rom":
+	{
+		"fw_version":"pj-1-72-gdcea",
+		"url":"http://192.168.29.10/rom0.bin"
+	},
+	"spiffs":
+	{
+		"webapp_version":"V5-pj-40-g4325-dirty",
+		"url":"http://192.168.29.10/spiff_rom.bin"
+	}
+}
