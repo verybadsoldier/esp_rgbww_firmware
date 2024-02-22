@@ -33,7 +33,7 @@ ENABLE_CUSTOM_PWM = 0
 COM_SPEED = 460800
 //COM_SPEED = 921600
 //COM_SPEED = 2000000
-COM_PORT=/dev/ttyUSB0
+COM_PORT=/dev/ttyUSB1
 
 #usb-1a86_USB2.0-Serial-if00-port0
 #usb-1a86_USB_Single_Serial_5647014434-if00
@@ -45,7 +45,7 @@ CUSTOM_TARGETS += check_versions
 GIT_VERSION = $(shell git describe --abbrev=4 --dirty --always --tags)
 GIT_DATE = $(firstword $(shell git --no-pager show --date=short --format="%ad" --name-only))
 WEBAPP_VERSION = `cat $(PROJECT_DIR)/spiffs/VERSION`
-USER_CFLAGS = -DGITVERSION=\"$(GIT_VERSION)\" -DGITDATE=\"$(GIT_DATE)\" -DWEBAPP_VERSION=\"$(WEBAPP_VERSION)\"
+USER_CFLAGS = -DGITVERSION=\"$(GIT_VERSION)\" -DGITDATE=\"$(GIT_DATE)\" -DWEBAPP_VERSION=\"$(WEBAPP_VERSION)\" -DPARTLAYOUT=\"$(PART_LAYOUT)\"
 
 .PHONY: check_versions
 check_versions:
@@ -59,4 +59,8 @@ ifndef GIT_DATE
 endif
 ifndef WEBAPP_VERSION
 	$(error can not find webapp/VERSION file - please ensure the source code is complete)
+endif
+ifndef PART_LAYOUT
+	$(info partition layout not defined, defaulting to v1)
+	PART_LAYOUT=v1
 endif

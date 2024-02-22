@@ -1,12 +1,67 @@
 {
 	"rom":
 	{
-		"fw_version":"pj-1-72-gdcea",
-		"url":"http://192.168.29.10/rom0.bin"
+		"fw_version":"pj-1-73-gd784-dirty",
+		"url":"http://192.168.29.10:8080/Esp8266/v1/rom0.bin"
 	},
 	"spiffs":
 	{
-		"webapp_version":"V5-pj-40-g4325-dirty",
-		"url":"http://192.168.29.10/spiff_rom.bin"
-	}
+		"webapp_version":"V5-pj-45-ga9e0-dirty",
+		"url":"http://192.168.29.10:8080/Esp8266/v1/spiff_rom.bin"
+	},
+	"firmware":
+	[
+		{
+			"partitioning":"v1",
+			"soc":"Esp8266",
+			"files":
+			{
+				"rom":
+				{
+					"fw_version":"pj-1-73-gd784-dirty",
+					"url":"http://192.168.29.10:8080/Esp8266/v1/rom0.bin"
+				},
+				"spiffs":
+				{
+					"webapp_version":"V5-pj-45-ga9e0-dirty",
+			                "url":"http://192.168.29.10:8080/Esp8266/v1/spiff_rom.bin"
+				}
+			}
+		},
+		{
+			"partitioning":"v2",
+			"soc":"Esp8266",
+			"files":
+			{
+				"rom":
+				{
+					"fw_version":"pj-1-73-gd784-dirty",
+					"url":"http://192.168.29.10:8080/Esp8266/v2/rom0.bin"
+				},
+				"spiffs":
+				{
+					"webapp_version":"V5-pj-45-ga9e0-dirty",
+			                "url":"http://192.168.29.10:8080/Esp8266/v2/spiff_rom.bin"
+				}
+			}
+		},
+		{
+			"partitioning":"v2",
+			"soc":"Esp32",
+			"files":
+			{
+				"rom":
+				{
+					"fw_version":"pj-1-73-gd784-dirty",
+					"url":"http://192.168.29.10:8080/Esp32/v2/rom0.bin"
+				},
+				"spiffs":
+				{
+					"webapp_version":"V5-pj-45-ga9e0-dirty",
+			                "url":"http://192.168.29.10:8080/Esp32/v2/spiff_rom.bin"
+				}
+			}	
+		}
+	]
 }
+

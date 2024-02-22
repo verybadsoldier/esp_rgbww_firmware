@@ -3,17 +3,22 @@
     "base_config": "spiffs-two-roms",
     "options": [],
     "partitions": {
-        "rom0": {
-            "size": "1M"
-        },
-        "rom1": {
-            "size": "1M",
-            "address": "0x00106000",
-            "encrypted": true
-        },
         "spiffs0": {
-            "size": "2000K",
-            "address": "0x00206000"
+            "size": "768K"
+        },
+        "spiffs1": {
+            "device": "spiFlash",
+            "address": "0x002c0000",
+            "size": "768K",
+            "type": "data",
+            "subtype": "spiffs",
+            "readonly": false,
+            "encrypted": false,
+            "filename": "$(SPIFF_BIN_OUT)",
+            "build": {
+                "target": "spiffsgen",
+                "files": "$(SPIFF_FILES)"
+            }
         }
     }
 }
