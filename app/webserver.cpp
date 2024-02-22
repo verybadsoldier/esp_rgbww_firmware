@@ -720,6 +720,16 @@ void ApplicationWebserver::onInfo(HttpRequest &request, HttpResponse &response) 
     data["event_num_clients"] = app.eventserver.activeClients;
     data["uptime"] = app.getUptime();
     data["heap_free"] = system_get_free_heap_size();
+    #ifdef ARCH_ESP8266
+        data["soc"]=F("Esp8266");
+    #elif ARCH_ESP32
+        data["soc"]=F("Esp32");
+    #endif   
+    #ifdef PART_LAYOUT
+        data["part_layout"]=PART_LAYOUT;
+    #else
+        data["part_layout"]=F("v1");
+    #endif
 
 /*
     FileSystem::Info fsInfo;
@@ -1060,7 +1070,13 @@ void ApplicationWebserver::onUpdate(HttpRequest &request, HttpResponse &response
     sendApiCode(response, API_CODES::API_BAD_REQUEST, "not supported on Host");
     return;
 #else
-    if (request.method != HTTP_POST && request.method != HTTP_GET) {
+    if (request.method == HTTP_OPTIONS){
+        // probably a CORS request
+        response.setHeader("Access-Control-Allow-Origin", "*");
+        sendApiCode(response,API_CODES::API_SUCCESS,"");
+        debug_i("/update HTTP_OPTIONS Request, sent API_SUCCSSS");
+        return;
+    }   if (request.method != HTTP_POST && request.method != HTTP_GET) {
         sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP POST or GET");
         return;
     }
@@ -1076,14 +1092,23 @@ void ApplicationWebserver::onUpdate(HttpRequest &request, HttpResponse &response
             sendApiCode(response, API_CODES::API_BAD_REQUEST, "could not parse HTTP body");
             return;
         }
-        DynamicJsonDocument doc(1024);
-        Json::deserialize(doc, body);
 
-        String romurl, spiffsurl;
-        if (!Json::getValue(doc["rom"]["url"], romurl) || !Json::getValue(doc["spiffs"]["url"], spiffsurl)) {
+        debug_i("body: %s", body.c_str());
+        DynamicJsonDocument doc(1024);
+            Json::deserialize(doc, body);
+
+        String romurl;
+        Json::getValue(doc["rom"]["url"],romurl);
+        
+        String spiffsurl;
+        Json::getValue(doc["spiffs"]["url"],spiffsurl);
+        
+        debug_i("starting update process with \n    webapp: %s\n    spiffs: %s", romurl.c_str(), spiffsurl.c_str());
+        if (! romurl || ! spiffsurl) {
             sendApiCode(response, API_CODES::API_MISSING_PARAM);
         } else {
             app.ota.start(romurl, spiffsurl);
+            response.setHeader("Access-Control-Allow-Origin", "*");
             sendApiCode(response, API_CODES::API_SUCCESS);
         }
         return;

@@ -46,4 +46,4 @@ sming.code-workspace
 flash.sh
 term.sh
 tflash
-spiffs/
+spiffs/*
