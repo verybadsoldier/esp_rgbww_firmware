@@ -92,10 +92,9 @@ cat <<EOF > $WEBROOT/version.json
 		}
 	]
 }
-
 EOF
 
-cd /esp_rgb_webapp
+cd /esp_rgb_webapp2
 git pull
 npx quasar build
 ./minifyFontnames.sh
