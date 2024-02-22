@@ -4,7 +4,7 @@ Wants=network.target
 
 [Service]
 WorkingDirectory=/home/pjakobs/devel/esp_rgbww_firmware/build
-Type=oneshot
+Type=forking
 ExecStartPre=/usr/bin/podman build \
     -f containerfile \
     -t esprgbww_build
