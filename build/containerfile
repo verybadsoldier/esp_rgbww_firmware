@@ -86,19 +86,21 @@ RUN git checkout devel
 RUN npm install
 
 # run actual quasar frontend build
-RUN git status
-RUN npx quasar build
-RUN ./minifyFontnames.sh
-RUN ./gzipSPA.sh
+#RUN git status
+#RUN npx quasar build
+#RUN ./minifyFontnames.sh
+#RUN ./gzipSPA.sh
 #RUN rm -rf /esp_rgbww_firmware/spiffs/*
-RUN echo $(git describe --abbrev=4 --dirty --always --tags) > dist/spa/VERSION
-RUN cp -a dist/spa/ /esp_rgbww_firmware/spiffs
+#RUN echo $(git describe --abbrev=4 --dirty --always --tags) > dist/spa/VERSION
+#RUN cp -a dist/spa/ /esp_rgbww_firmware/spiffs
 
 WORKDIR /esp_rgbww_firmware
 RUN git submodule update --remote --init Components/RGBWWLed
 
-WORKDIR /esp_rgbww_firmware
-RUN make -j8 SMING_SOC=esp8266 PART_LAYOUT=v1
+#RUN make -j8 SMING_SOC=esp8266 PART_LAYOUT=v1
+
+COPY build.sh .
+RUN chmod +x build.sh
 #RUN make clean
 #RUN make SMING_SOC=esp8266 PART_LAYOUT=v2
 #RUN make clean
