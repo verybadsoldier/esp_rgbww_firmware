@@ -140,18 +140,21 @@ cat <<EOF > $WEBROOT/version.json
 }
 EOF
 
-cd /esp_rgb_webapp2
-git pull
-npx quasar build
-./minifyFontnames.sh
-./gzipSPA.sh
-#RUN rm -rf /esp_rgbww_firmware/spiffs/*
-echo $(git describe --abbrev=4 --dirty --always --tags) > dist/spa/VERSION
-cp -a dist/spa/ /esp_rgbww_firmware/spiffs
-
 cd /esp_rgbww_firmware
 git pull
 
+cd /esp_rgb_webapp2
+git pull
+npx quasar build 
+./minifyFontnames.sh
+./gzipSPA.sh
+RUN rm -rf /esp_rgbww_firmware/spiffs/*
+echo $(git describe --abbrev=4 --dirty --always --tags) > dist/spa/VERSION
+cp -a dist/spa/ /esp_rgbww_firmware/spiffs
+
+du -sh /esp_rgbww_firmware/spiffs/*
+
+cd /esp_rgbww_firmware
 make clean
 make -j8 SMING_SOC=esp8266 PART_LAYOUT=v1
 
