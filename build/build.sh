@@ -148,7 +148,7 @@ git pull
 npx quasar build 
 ./minifyFontnames.sh
 ./gzipSPA.sh
-RUN rm -rf /esp_rgbww_firmware/spiffs/*
+rm -rf /esp_rgbww_firmware/spiffs/*
 echo $(git describe --abbrev=4 --dirty --always --tags) > dist/spa/VERSION
 cp -a dist/spa/ /esp_rgbww_firmware/spiffs
 
