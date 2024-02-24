@@ -36,11 +36,15 @@ void ApplicationOTA::start(String romurl, String spiffsurl) {
     rboot_config bootconf = rboot_get_config();
     rom_slot = app.getRomSlot();
 
+    debug_i("Current rom slot: %i", rom_slot);
+
     if (rom_slot == 0) {
         rom_slot = 1;
     } else {
         rom_slot = 0;
     }
+
+    debug_i("New rom slot: %i", rom_slot);
 
     auto part = OtaUpgrader::getPartitionForSlot(rom_slot);
     otaUpdater->addItem(romurl, part);
