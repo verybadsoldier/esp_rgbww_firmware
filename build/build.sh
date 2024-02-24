@@ -10,6 +10,7 @@ mkdir -p $WEBROOT/Esp32/v2
 cd /esp_rgb_webapp2
 git pull
 git checkout devel
+git tag nightly
 
 WEBAPP_VERSION=$(git describe --abbrev=4 --dirty --always --tags)
 
@@ -26,6 +27,7 @@ cp -a dist/spa/ /esp_rgbww_firmware/spiffs
 cd /esp_rgbww_firmware
 git pull
 git checkout devel
+git tag nightly
 
 FW_VERSION=$(git describe --abbrev=4 --dirty --always --tags)
 
