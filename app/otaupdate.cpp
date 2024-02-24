@@ -46,9 +46,11 @@ void ApplicationOTA::start(String romurl, String spiffsurl) {
 
     debug_i("New rom slot: %i", rom_slot);
 
+    debug_i("adding romurl: %s", romurl.c_str());
     auto part = OtaUpgrader::getPartitionForSlot(rom_slot);
     otaUpdater->addItem(romurl, part);
 
+    debug_i("adding spiffsurl: %s", spiffsurl.c_str());
     part = Storage::findPartition(F("spiffs") + rom_slot);
     otaUpdater->addItem(spiffsurl, part);
 
