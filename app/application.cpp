@@ -97,7 +97,7 @@ void Application::init() {
     }
 #endif
     // check file systems
-    // listSpiffsPartitions();
+    listSpiffsPartitions();
     // mount filesystem
     /**********************
     * old, two spiffs model 
@@ -240,7 +240,7 @@ bool Application::delayedCMD(String cmd, int delay) {
     return true;
 }
 
-/*
+
 void Application::listSpiffsPartitions()
 {
 	Serial.println(_F("** Enumerate registered SPIFFS partitions"));
@@ -260,7 +260,7 @@ void Application::listSpiffsPartitions()
 		}
 	}
 }
-*/
+
 void Application::mountfs(int slot) {
     debug_i("Application::mountfs rom slot: %i", slot);
     // auto part = OtaUpgrader::getPartitionForSlot(slot);
