@@ -43,7 +43,7 @@ public:
 
     void wsBroadcast(String message);
 
-    //void listSpiffsPartitions();
+    void listSpiffsPartitions();
     
     void mountfs(int slot);
     void umountfs();
