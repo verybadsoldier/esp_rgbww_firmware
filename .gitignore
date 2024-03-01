@@ -47,3 +47,4 @@ flash.sh
 term.sh
 tflash
 spiffs/*
+version.json
