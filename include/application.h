@@ -43,6 +43,8 @@ public:
     bool delayedCMD(String cmd, int delay);
 
     void wsBroadcast(String message);
+    void wsBroadcast(String cmd, String message);
+
 
     void listSpiffsPartitions();
     
