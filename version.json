@@ -1,7 +1,7 @@
 {
 	"rom":
 	{
-		"fw_version":"pj-1-90-g5acb",
+		"fw_version":"pj-1-91-g1d31",
 		"url":"http://192.168.29.10:8080/Esp8266/v1/rom0.bin"
 	},
 	"spiffs":
@@ -18,7 +18,7 @@
 			{
 				"rom":
 				{
-					"fw_version":"pj-1-90-g5acb",
+					"fw_version":"pj-1-91-g1d31",
 					"url":"http://192.168.29.10:8080/Esp8266/v1/rom0.bin"
 				},
 				"spiffs":
@@ -35,7 +35,7 @@
 			{
 				"rom":
 				{
-					"fw_version":"pj-1-90-g5acb",
+					"fw_version":"pj-1-91-g1d31",
 					"url":"http://192.168.29.10:8080/Esp8266/v2/rom0.bin"
 				},
 				"spiffs":
@@ -52,7 +52,7 @@
 			{
 				"rom":
 				{
-					"fw_version":"pj-1-90-g5acb",
+					"fw_version":"pj-1-91-g1d31",
 					"url":"http://192.168.29.10:8080/Esp32/v2/rom0.bin"
 				},
 				"spiffs":
