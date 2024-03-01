@@ -317,6 +317,14 @@ void Application::wsBroadcast(String message) {
     app.webserver.wsBroadcast(message);
 }
 
+void Application::wsBroadcast(String cmd, String message){
+     JsonRpcMessage msg(cmd);
+            JsonObject root = msg.getParams();   
+            root["hostname"] = host["hostname"];
+            String jsonStr = Json::serialize(msg.getRoot());
+            wsBroadcast(jsonStr);
+}
+
 void Application::onCommandRelay(const String& method, const JsonObject& params) {
     if (!cfg.sync.cmd_master_enabled)
         return;

@@ -26,6 +26,7 @@
 
 void ApplicationOTA::start(String romurl, String spiffsurl) {
     debug_i("ApplicationOTA::start");
+    app.wsBroadcast("ota_status","started");
     reset();
     status = OTASTATUS::OTA_PROCESSING;
     if (otaUpdater) {
