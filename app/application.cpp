@@ -73,8 +73,13 @@ void Application::init() {
         Serial.print("=");
         delay(200);
     }
+    Serial.print("\r\n");
     
     debug_i("RGBWW Controller v %s\r\n", fw_git_version);
+    #ifdef ARCH_ESP8266
+        debug_i("Platform: Esp8266\r\n");
+    #endif
+    debug_i("Application::init - partition scheme: %s\r\n", fw_part_layout);
 
     //load settings
     _uptimetimer.initializeMs(60000, TimerDelegate(&Application::uptimeCounter, this)).start();
@@ -82,7 +87,7 @@ void Application::init() {
 #ifdef ARCH_ESP8266
     // load boot information
     uint8 bootmode, bootslot;
-    debug_i("loading boot info");
+    debug_i("Application::init - loading boot info");
     if (rboot_get_last_boot_mode(&bootmode)) {
         if (bootmode == MODE_TEMP_ROM) {
             debug_i("Application::init - booting after OTA");
@@ -97,15 +102,19 @@ void Application::init() {
     }
 #endif
     // check file systems
-    listSpiffsPartitions();
+    // listSpiffsPartitions();
     // mount filesystem
-    /**********************
-    * old, two spiffs model 
-    * int romSlot=getRomSlot();
-    * debug_i("got rom slot %i", romSlot);
-    * mountfs(romSlot);
-    */
-    mountfs(_romslot);
+    if(fw_part_layout=="v1") 
+    {
+        // old, two spiffs model 
+        int romSlot=getRomSlot();
+        debug_i("Application::init - got rom slot %i", romSlot);
+        mountfs(romSlot);
+    } else {
+        // new, single spiffs model
+        mountfs(0); 
+    }
+    // mountfs(_romslot);
 
     // check if we need to reset settings
     if (digitalRead(CLEAR_PIN) < 1) {
@@ -264,7 +273,8 @@ void Application::listSpiffsPartitions()
 void Application::mountfs(int slot) {
     debug_i("Application::mountfs rom slot: %i", slot);
     // auto part = OtaUpgrader::getPartitionForSlot(slot);
-    auto part = Storage::findPartition(F("spiffs0"));
+    auto part=Storage::findPartition(F("spiffs")+String(slot));
+    //auto part = Storage::findPartition(F("spiffs0"));
     debug_i("Application::mountfs trying to mount spiffs at %x, length %d",
             part.address(), part.size());
     _fs_mounted = spiffs_mount(part);
@@ -289,13 +299,16 @@ void Application::umountfs() {
 void Application::switchRom() {
     debug_i("Application::switchRom");
     int slot = getRomSlot();
+    debug_i("    current ROM: %i", slot);
     if (slot == 0) {
         slot = 1;
     } else {
         slot = 0;
     }
 #ifdef ARCH_ESP8266
+    debug_i("    switching to ROM %i\r\n",slot);
     rboot_set_current_rom(slot);
+
 #endif
 }
 

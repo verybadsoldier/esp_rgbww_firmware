@@ -27,7 +27,8 @@ cp -a dist/spa/ /esp_rgbww_firmware/spiffs
 cd /esp_rgbww_firmware
 git pull
 git checkout devel
-git tag nightly $(git describe --abbrev=4 --dirty --always --tags)
+old_tags=$(git describe --abbrev=4 --dirty --always --tags)
+git tag nightly $old_tags
 
 FW_VERSION=$(git describe --abbrev=4 --dirty --always --tags)
 
