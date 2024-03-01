@@ -38,14 +38,66 @@
 #include <Storage/ProgMem.h>
 #include <Storage/Debug.h>
 
+#ifdef ARCH_ESP8266
+#include <Platform/OsMessageInterceptor.h>
+
+static OsMessageInterceptor osMessageInterceptor;
+
+/**
+ * @brief See if the OS debug message is something we're interested in.
+ * @param msg
+ * @retval bool true if we want to report this
+ */
+static bool __noinline parseOsMessage(OsMessage& msg)
+{
+	m_printf(_F("[OS] %s\r\n"), msg.getBuffer());
+	if(msg.startsWith(_F("E:M "))) {
+		Serial.println(_F("** OS Memory Error **"));
+		return true;
+	}
+	if(msg.contains(_F(" assert "))) {
+		Serial.println(_F("** OS Assert **"));
+		return true;
+	}
+	if(msg.contains(_F("vPortFree"))) {
+		Serial.println(_F("** vPortFree **"));
+		return true;
+	}
+	return false;
+}
+
+/**
+ * @brief Called when the OS outputs a debug message using os_printf, etc.
+ * @param msg The message
+ */
+static void onOsMessage(OsMessage& msg)
+{
+	// Note: We do the check in a separate function to avoid messing up the stack pointer
+	if(parseOsMessage(msg)) {
+		if(gdb_present() == eGDB_Attached) {
+			gdb_do_break();
+		} else {
+//#ifdef ARCH_ESP8266
+			register uint32_t sp __asm__("a1");
+			debug_print_stack(sp + 0x10, 0x3fffffb0);
+//#endif
+		}
+	}
+}
+#endif
+
 Application app;
 
 // Sming Framework INIT method - called during boot
 void init() {
-
     Serial.begin(SERIAL_BAUD_RATE); // 115200 by default
     Serial.systemDebugOutput(true); // Debug output to serial
     //System.setCpuFrequencye(CF_160MHz);
+
+#ifdef ARCH_ESP8266
+	osMessageInterceptor.begin(onOsMessage);
+    debug_i("starting os message interceptor");
+#endif
 
     // set CLR pin to input
     pinMode(CLEAR_PIN, INPUT);
@@ -104,7 +156,7 @@ void Application::init() {
     // check file systems
     // listSpiffsPartitions();
     // mount filesystem
-    if(fw_part_layout=="v1") 
+if (strcmp(fw_part_layout, "v1") == 0)
     {
         // old, two spiffs model 
         int romSlot=getRomSlot();
@@ -320,7 +372,7 @@ void Application::wsBroadcast(String message) {
 void Application::wsBroadcast(String cmd, String message){
      JsonRpcMessage msg(cmd);
             JsonObject root = msg.getParams();   
-            root["hostname"] = host["hostname"];
+            root["message"] = message;
             String jsonStr = Json::serialize(msg.getRoot());
             wsBroadcast(jsonStr);
 }
