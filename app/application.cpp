@@ -331,7 +331,19 @@ void Application::mountfs(int slot) {
             part.address(), part.size());
     _fs_mounted = spiffs_mount(part);
     _fs_mounted ? debug_i("OK, listing files:") : debug_i("Mount failed!");
+    
     if(_fs_mounted) {
+        if(FileHandle file = fileOpen(F("VERSION"), IFS::OpenFlag::Read)) {
+            debug_i("found VERSION file");
+            char buffer[64];
+            int bytesRead=fileRead(file,buffer,sizeof(buffer));
+            buffer[bytesRead]='\0';
+            debug_i("\nweb app version String: %s", buffer);
+            fileClose(file);
+        } else {
+            debug_i("Partition has no version file\n");
+        }
+
         Directory dir;
         if(dir.open()) {
             while(dir.next()) {
