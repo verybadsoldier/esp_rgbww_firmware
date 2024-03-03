@@ -57,6 +57,8 @@ void ApplicationOTA::start(String romurl, String spiffsurl) {
 
     otaUpdater->setCallback(Ota::Network::HttpUpgrader::CompletedDelegate(&ApplicationOTA::upgradeCallback, this));
     beforeOTA();
+    unsigned fh = system_get_free_heap_size();
+    debug_i("Free heap before OTA: %i", fh);
     debug_i("Starting OTA ...");
     otaUpdater->start();
 }
