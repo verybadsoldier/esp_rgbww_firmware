@@ -56,7 +56,20 @@ void ApplicationOTA::start(String romurl, String spiffsurl) {
     
     unsigned fh = system_get_free_heap_size();
     debug_i("Free heap before OTA: %i", fh);
+
+debug_i("configured OTA item list");
+debug_i("========================");
+    const auto& items = otaUpdater->getItems();
+    for(const auto& item : items) {
+        debug_i("  URL: %s", item.url.c_str());
+        debug_i("  Partition: %s", item.partition.name().c_str());
+        debug_i("  Size: %i", item.size);
+        debug_i("  ---------");
+        //debug_i("Stream: %p", item.getStream());
+    }
+
     debug_i("Starting OTA ...");
+
     otaUpdater->start();
 }
 
