@@ -20,61 +20,98 @@
  *
  */
 
-#ifdef ARCH_ESP8266
 
 #include <RGBWWCtrl.h>
 
+void ApplicationOTA::start(String romurl){
+    // we'll say an empty spiffsurl is indicative of a v2 partition layout
+    start(romurl, "");
+}
+
+// start OTA for v1 partition layout
 void ApplicationOTA::start(String romurl, String spiffsurl) {
     debug_i("ApplicationOTA::start");
     app.wsBroadcast("ota_status","started");
-    reset();
+	otaUpdater.reset(new Ota::Network::HttpUpgrader);
     status = OTASTATUS::OTA_PROCESSING;
-    if (otaUpdater) {
-        delete otaUpdater;
-    }
-    otaUpdater = new Ota::Network::HttpUpgrader();
 
-    rboot_config bootconf = rboot_get_config();
-    rom_slot = app.getRomSlot();
+    // debugging
+    // spiffsurl="";
+    auto part = ota.getNextBootPartition();
 
-    debug_i("Current rom slot: %i", rom_slot);
-
-    if (rom_slot == 0) {
-        rom_slot = 1;
-    } else {
-        rom_slot = 0;
-    }
-
-    debug_i("New rom slot: %i", rom_slot);
-
-    debug_i("adding romurl: %s", romurl.c_str());
-    auto part = OtaUpgrader::getPartitionForSlot(rom_slot);
+    // flash rom to position indicated in the rBoot config rom table
     otaUpdater->addItem(romurl, part);
 
-    debug_i("adding spiffsurl: %s", spiffsurl.c_str());
-    part = Storage::findPartition(F("spiffs") + rom_slot);
-    otaUpdater->addItem(spiffsurl, part);
+	ota.begin(part);
 
+    if(spiffsurl!=""){
+        auto spiffsPart=findSpiffsPartition(part);
+        debug_i("ApplicationOTA::start spiffspart: %s", spiffsPart.name());
+        if(spiffsPart){
+            otaUpdater->addItem(spiffsurl,spiffsPart, new Storage::PartitionStream(spiffsPart));
+        }
+        // ToDo: I guess I should do some error handling here - what if the partition can't be found?
+    }
     otaUpdater->setCallback(Ota::Network::HttpUpgrader::CompletedDelegate(&ApplicationOTA::upgradeCallback, this));
+    
     beforeOTA();
+    
     unsigned fh = system_get_free_heap_size();
     debug_i("Free heap before OTA: %i", fh);
+
+    debug_i("Current running partition: %s", ota.getRunningPartition().name());
+    debug_i("OTA target partition: %s", part.name());
+    debug_i("configured OTA item list");
+    debug_i("========================");
+    const auto& items = otaUpdater->getItems();
+    for(const auto& item : items) {
+        debug_i("  URL: %s", item.url.c_str());
+        debug_i("  Partition: %s", item.partition.name().c_str());
+        debug_i("  Size: %i", item.size);
+        debug_i("  ---------");
+        //debug_i("Stream: %p", item.getStream());
+    }
+
     debug_i("Starting OTA ...");
+
     otaUpdater->start();
 }
 
+void ApplicationOTA::doSwitch(){
+   	auto before = ota.getRunningPartition();
+	auto after = ota.getNextBootPartition();
+
+	debug_i("Swapping from %s @0x%s to %s @0x%s",before.name(),String(before.address(), HEX), after.name(), String(after.address(), HEX));
+	if(ota.setBootPartition(after)) {
+		debug_i("Restarting...\r\n");
+		System.restart();
+	} else {
+		debug_i("Switch failed.");
+	} 
+}
+
+/*
 void ApplicationOTA::reset() {
     debug_i("ApplicationOTA::reset");
     status = OTASTATUS::OTA_NOT_UPDATING;
     if (otaUpdater)
         delete otaUpdater;
 }
+*/
 
 void ApplicationOTA::beforeOTA() {
     debug_i("ApplicationOTA::beforeOTA");
 
     // save failed to old rom
-    saveStatus(OTASTATUS::OTA_FAILED);
+    // only in v1 partition layout, 
+    // that is: if there is a spiffsPartition
+    // which is only assigned if there's a spiffsurl
+    if(spiffsPartition.name()!=""){
+        debug_i("partition layout v1, saving status to old rom");
+        saveStatus(OTASTATUS::OTA_FAILED);
+    }
+    debug_i("stopping webserver during OTA");
+    app.webserver.stop();
 }
 
 void ApplicationOTA::afterOTA() {
@@ -82,46 +119,41 @@ void ApplicationOTA::afterOTA() {
     if (status == OTASTATUS::OTA_SUCCESS_REBOOT) {
 
         // unmount old Filesystem - mount new filesystem
-        app.umountfs();
-        app.mountfs(rom_slot);
+        // app.umountfs();
+        // app.mountfs(rom_slot);
 
         // save settings / color into new rom space
-        app.cfg.save();
-        app.rgbwwctrl.colorSave();
+        // app.cfg.save();
+        // app.rgbwwctrl.colorSave();
 
         // save success to new rom
         saveStatus(OTASTATUS::OTA_SUCCESS);
 
         // remount old filesystem
-        app.umountfs();
-        app.mountfs(app.getRomSlot());
-
+        // app.umountfs();
+        //app.mountfs(app.getRomSlot());
+        
+        
     }
 }
 
 void ApplicationOTA::upgradeCallback(Ota::Network::HttpUpgrader& client, bool result) {
     debug_i("ApplicationOTA::rBootCallback");
     if (result == true) {
+        ota.end();
 
-        // set new temporary boot rom
-        debug_i("ApplicationOTA::rBootCallback temp boot %i", rom_slot);
-        if (rboot_set_temp_rom(rom_slot)) {
-            status = OTASTATUS::OTA_SUCCESS_REBOOT;
-            debug_i("OTA successful");
-        } else {
-            status = OTASTATUS::OTA_FAILED;
-            debug_i("OTA failed - could not change the rom");
-        }
-        // restart after 10s - gives clients enough time
-        // to fetch status and init restart themselves
-        // don`t automatically restart
-        // app.delayedCMD("restart", 10000);
-    } else {
+        auto part=ota.getNextBootPartition();
+        debug_i("ApplicationOTA::rBootCallback next boot partition: %s", part.name());
+        ota.setBootPartition(part);
+        status = OTASTATUS::OTA_SUCCESS_REBOOT;
+    }else{
         status = OTASTATUS::OTA_FAILED;
+        ota.abort();
         debug_i("OTA failed");
     }
     afterOTA();
-
+    debug_i("OTA callback done, rebooting");
+    System.restart();
 }
 
 void ApplicationOTA::checkAtBoot() {
@@ -153,4 +185,13 @@ OTASTATUS ApplicationOTA::loadStatus() {
     }
 }
 
-#endif
+Storage::Partition ApplicationOTA::findSpiffsPartition(Storage::Partition appPart)
+{
+	String name = "spiffs";
+	name += ota.getSlot(appPart);
+	auto part = Storage::findPartition(name);
+	if(!part) {
+		debug_w("Partition '%s' not found", name.c_str());
+	}
+	return part;
+}
