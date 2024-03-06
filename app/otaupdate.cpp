@@ -34,7 +34,9 @@ void ApplicationOTA::start(String romurl, String spiffsurl) {
     app.wsBroadcast("ota_status","started");
 	otaUpdater.reset(new Ota::Network::HttpUpgrader);
     status = OTASTATUS::OTA_PROCESSING;
-    
+
+    // debugging
+    // spiffsurl="";
     auto part = ota.getNextBootPartition();
 
     // flash rom to position indicated in the rBoot config rom table
@@ -57,8 +59,10 @@ void ApplicationOTA::start(String romurl, String spiffsurl) {
     unsigned fh = system_get_free_heap_size();
     debug_i("Free heap before OTA: %i", fh);
 
-debug_i("configured OTA item list");
-debug_i("========================");
+    debug_i("Current running partition: %s", ota.getRunningPartition().name());
+    debug_i("OTA target partition: %s", part.name());
+    debug_i("configured OTA item list");
+    debug_i("========================");
     const auto& items = otaUpdater->getItems();
     for(const auto& item : items) {
         debug_i("  URL: %s", item.url.c_str());
@@ -102,8 +106,12 @@ void ApplicationOTA::beforeOTA() {
     // only in v1 partition layout, 
     // that is: if there is a spiffsPartition
     // which is only assigned if there's a spiffsurl
-    if(spiffsPartition.name()!="")
+    if(spiffsPartition.name()!=""){
+        debug_i("partition layout v1, saving status to old rom");
         saveStatus(OTASTATUS::OTA_FAILED);
+    }
+    debug_i("stopping webserver during OTA");
+    app.webserver.stop();
 }
 
 void ApplicationOTA::afterOTA() {
@@ -124,7 +132,8 @@ void ApplicationOTA::afterOTA() {
         // remount old filesystem
         // app.umountfs();
         //app.mountfs(app.getRomSlot());
-
+        
+        
     }
 }
 
@@ -137,13 +146,14 @@ void ApplicationOTA::upgradeCallback(Ota::Network::HttpUpgrader& client, bool re
         debug_i("ApplicationOTA::rBootCallback next boot partition: %s", part.name());
         ota.setBootPartition(part);
         status = OTASTATUS::OTA_SUCCESS_REBOOT;
-        System.restart();
     }else{
         status = OTASTATUS::OTA_FAILED;
         ota.abort();
         debug_i("OTA failed");
     }
     afterOTA();
+    debug_i("OTA callback done, rebooting");
+    System.restart();
 }
 
 void ApplicationOTA::checkAtBoot() {
