@@ -1,5 +1,6 @@
 #!/bin/bash
-BASE_URL=http://192.168.29.10:8080
+BASE_URL=.
+#BASE_URL=http://192.168.29.10:8080
 
 WEBROOT=/html
 mkdir -p $WEBROOT/Esp8266/v1

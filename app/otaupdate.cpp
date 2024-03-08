@@ -110,8 +110,6 @@ void ApplicationOTA::beforeOTA() {
         debug_i("partition layout v1, saving status to old rom");
         saveStatus(OTASTATUS::OTA_FAILED);
     }
-    debug_i("stopping webserver during OTA");
-    app.webserver.stop();
 }
 
 void ApplicationOTA::afterOTA() {
