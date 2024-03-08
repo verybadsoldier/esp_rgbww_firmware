@@ -47,19 +47,18 @@ WORKDIR /
 #cloning and installing current Sming version
 RUN git clone https://github.com/SmingHub/Sming.git
 workdir Sming
-RUN Tools/install.sh ESP8266
-RUN Tools/install.sh ESP32
+RUN git checkout develop
+RUN Tools/install.sh ESP8266 && Tools/install.sh ESP32
 
 WORKDIR /
 # Set environment variables
 ENV NODE_VERSION 18
 
-RUN npm install npm@latest -g
+RUN npm install npm@latest -g &&\
 
-RUN wget -qO- https://deb.nodesource.com/setup_$NODE_VERSION.x|/bin/bash - 
-RUN apt-get install nodejs -y
-
-RUN echo "nvm installed" 
+	wget -qO- https://deb.nodesource.com/setup_$NODE_VERSION.x|/bin/bash - && \
+	apt-get install nodejs -y && \ 
+	echo "nvm installed" 
 
 #ENV NODE_PATH=$NVM_DIR/v$NODE_VERSION/lib/node_modules
 #ENV PATH      $NVM_DIR/v$NODE_VERSION/bin:$PATH
