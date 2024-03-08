@@ -1,5 +1,5 @@
 #!/bin/bash
-BASE_URL=.
+BASE_URL=http://home.mobileme.de:8080
 #BASE_URL=http://192.168.29.10:8080
 
 WEBROOT=/html
