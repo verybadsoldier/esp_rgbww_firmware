@@ -1,5 +1,6 @@
 #!/bin/bash
-BASE_URL=http://192.168.29.10:8080
+BASE_URL=http://home.mobileme.de:8080
+#BASE_URL=http://192.168.29.10:8080
 
 WEBROOT=/html
 mkdir -p $WEBROOT/Esp8266/v1
@@ -10,7 +11,7 @@ mkdir -p $WEBROOT/Esp32/v2
 cd /esp_rgb_webapp2
 git pull
 git checkout devel
-git tag nightly $(git describe --abbrev=4 --dirty --always --tags)
+git tag nightly-$(date --iso)
 
 WEBAPP_VERSION=$(git describe --abbrev=4 --dirty --always --tags)
 
@@ -19,18 +20,17 @@ npx quasar build
 ./gzipSPA.sh
 
 echo $WEBAPP_VERSION > dist/spa/VERSION
-rf -rf /esp_rgbww_firmware/spiffs/*
-
-cp -a dist/spa/ /esp_rgbww_firmware/spiffs
-
 # pull and build the firmware
 cd /esp_rgbww_firmware
 git pull
 git checkout devel
-old_tags=$(git describe --abbrev=4 --dirty --always --tags)
-git tag nightly $old_tags
+git tag nightly-$(date --iso)
 
 FW_VERSION=$(git describe --abbrev=4 --dirty --always --tags)
+
+rm -rf /spiffs/*
+
+cp -a /esp_rgb_webapp2/dist/spa/ /spiffs
 
 make clean
 make -j8 SMING_SOC=esp8266 PART_LAYOUT=v1
