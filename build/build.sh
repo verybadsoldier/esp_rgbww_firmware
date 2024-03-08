@@ -11,6 +11,7 @@ mkdir -p $WEBROOT/Esp32/v2
 cd /esp_rgb_webapp2
 git pull
 git checkout devel
+
 git tag nightly-$(date --iso)
 
 WEBAPP_VERSION=$(git describe --abbrev=4 --dirty --always --tags)
@@ -19,6 +20,7 @@ npx quasar build
 ./minifyFontnames.sh
 ./gzipSPA.sh
 
+echo "Webapp: $WEBAPP_VERSION "
 echo $WEBAPP_VERSION > dist/spa/VERSION
 # pull and build the firmware
 cd /esp_rgbww_firmware
