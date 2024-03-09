@@ -2,8 +2,12 @@ COMPONENT_SEARCH_DIRS := $(PROJECT_DIR)/Components
 COMPONENT_DEPENDS += MDNS RGBWWLed
 ARDUINO_LIBRARIES := RGBWWLed ArduinoJson6 OtaNetwork
 
+# include partition file for initial OTA
+EXTRA_LDFLAGS := $(call Wrap,user_pre_init)
+USER_CFLAGS += -DPARTITION_TABLE_OFFSET=$(PARTITION_TABLE_OFFSET)
+
 #HWCONFIG := two-spiffs-two-roms
-HWCONFIG := hwconfig
+HWCONFIG := old_layout
 
 # These are defined in hardware config or no longer required
 # SPI_SIZE = 4M
@@ -34,8 +38,8 @@ COM_SPEED = 460800
 //COM_SPEED = 115200
 //COM_SPEED = 921600
 //COM_SPEED = 2000000
-COM_PORT=/dev/ttyUSB0
-
+//COM_PORT=/dev/ttyUSB2
+COM_PORT=/dev/ttyACM0
 #usb-1a86_USB2.0-Serial-if00-port0
 #usb-1a86_USB_Single_Serial_5647014434-if00
 #usb-Silicon_Labs_CP2104_USB_to_UART_Bridge_Controller_01A7B447-if00-port0

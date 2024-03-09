@@ -102,7 +102,7 @@ void ApplicationOTA::reset() {
 void ApplicationOTA::beforeOTA() {
     debug_i("ApplicationOTA::beforeOTA");
 
-    // save failed to old rom
+    // save files to old rom
     // only in v1 partition layout, 
     // that is: if there is a spiffsPartition
     // which is only assigned if there's a spiffsurl
