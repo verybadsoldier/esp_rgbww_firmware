@@ -86,6 +86,27 @@ static void onOsMessage(OsMessage& msg)
 }
 #endif
 
+// include partition file for initial OTA
+namespace
+{
+// Note: This file won't exist on initial build!
+IMPORT_FSTR(partitionTableData, PROJECT_DIR "/out/Esp8266/debug/firmware/partitions.bin")
+}
+
+extern "C" void __wrap_user_pre_init(void)
+{
+	static_assert(PARTITION_TABLE_OFFSET == 0x3fa000, "Bad PTO");
+	Storage::initialize();
+	if(!Storage::spiFlash->partitions()) {
+		LOAD_FSTR(data, partitionTableData)
+		Storage::spiFlash->write(PARTITION_TABLE_OFFSET, data, partitionTableData.size());
+		Storage::spiFlash->loadPartitions(PARTITION_TABLE_OFFSET);
+	}
+
+	extern void __real_user_pre_init(void);
+	__real_user_pre_init();
+}
+
 Application app;
 
 // Sming Framework INIT method - called during boot
