@@ -2,6 +2,7 @@ COMPONENT_SEARCH_DIRS := $(PROJECT_DIR)/Components
 COMPONENT_DEPENDS += MDNS RGBWWLed
 ARDUINO_LIBRARIES := RGBWWLed ArduinoJson6 OtaNetwork
 
+
 #HWCONFIG := two-spiffs-two-roms
 HWCONFIG := old_layout
 

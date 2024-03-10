@@ -87,6 +87,7 @@ static void onOsMessage(OsMessage& msg)
 #endif
 
 #ifdef ARCH_ESP8266
+
 // include partition file for initial OTA
 namespace
 {
@@ -171,7 +172,6 @@ void Application::init() {
         }
         _bootmode = bootmode;
     }
-    
 #endif
     auto romPartition=app.ota.getRomPartition();
 
