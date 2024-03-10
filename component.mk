@@ -2,10 +2,6 @@ COMPONENT_SEARCH_DIRS := $(PROJECT_DIR)/Components
 COMPONENT_DEPENDS += MDNS RGBWWLed
 ARDUINO_LIBRARIES := RGBWWLed ArduinoJson6 OtaNetwork
 
-# include partition file for initial OTA
-EXTRA_LDFLAGS := $(call Wrap,user_pre_init)
-USER_CFLAGS += -DPARTITION_TABLE_OFFSET=$(PARTITION_TABLE_OFFSET)
-
 #HWCONFIG := two-spiffs-two-roms
 HWCONFIG := old_layout
 
@@ -51,6 +47,10 @@ GIT_VERSION = $(shell git describe --abbrev=4 --dirty --always --tags)
 GIT_DATE = $(firstword $(shell git --no-pager show --date=short --format="%ad" --name-only))
 WEBAPP_VERSION = `cat $(PROJECT_DIR)/spiffs/VERSION`
 USER_CFLAGS = -DGITVERSION=\"$(GIT_VERSION)\" -DGITDATE=\"$(GIT_DATE)\" -DWEBAPP_VERSION=\"$(WEBAPP_VERSION)\" -DPARTLAYOUT=\"$(PART_LAYOUT)\"
+
+# include partition file for initial OTA
+EXTRA_LDFLAGS := $(call Wrap,user_pre_init)
+USER_CFLAGS += -DPARTITION_TABLE_OFFSET=$(PARTITION_TABLE_OFFSET)
 
 .PHONY: check_versions
 check_versions:

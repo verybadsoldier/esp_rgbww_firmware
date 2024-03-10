@@ -86,6 +86,7 @@ static void onOsMessage(OsMessage& msg)
 }
 #endif
 
+#ifdef ARCH_ESP8266
 // include partition file for initial OTA
 namespace
 {
@@ -106,6 +107,7 @@ extern "C" void __wrap_user_pre_init(void)
 	extern void __real_user_pre_init(void);
 	__real_user_pre_init();
 }
+#endif
 
 Application app;
 
@@ -170,24 +172,14 @@ void Application::init() {
         _bootmode = bootmode;
     }
     
-    if (rboot_get_last_boot_rom(&bootslot)) {
-        _romslot = bootslot;
-    }
 #endif
-    // check file systems
-    // listSpiffsPartitions();
+    auto romPartition=app.ota.getRomPartition();
+
     // mount filesystem
-if (strcmp(fw_part_layout, "v1") == 0)
-    {
-        // old, two spiffs model 
-        int romSlot=getRomSlot();
-        debug_i("Application::init - got rom slot %i", romSlot);
-        mountfs(romSlot);
-    } else {
-        // new, single spiffs model
-        mountfs(0); 
-    }
-    // mountfs(_romslot);
+    debug_i("Application::init - got rom partition %s", romPartition.name());
+    auto spiffsPartition=app.ota.findSpiffsPartition(romPartition);
+    debug_i("Application::init - mounting filesystem at %s",spiffsPartition.name());
+    _fs_mounted=spiffs_mount(spiffsPartition);
 
     // check if we need to reset settings
     if (digitalRead(CLEAR_PIN) < 1) {
@@ -382,7 +374,11 @@ void Application::umountfs() {
 }
 
 void Application::switchRom() {
+    //ToDo - rewrite to use ota.getRunningPartition() and ota.getNextBootPartition()
     debug_i("Application::switchRom");
+
+    /* old
+
     int slot = getRomSlot();
     debug_i("    current ROM: %i", slot);
     if (slot == 0) {
@@ -395,6 +391,8 @@ void Application::switchRom() {
     rboot_set_current_rom(slot);
 
 #endif
+    */
+   app.ota.doSwitch();
 }
 
 void Application::wsBroadcast(String message) {
