@@ -176,11 +176,25 @@ void Application::init() {
     auto romPartition=app.ota.getRomPartition();
 
     // mount filesystem
+    listSpiffsPartitions();
+
     debug_i("Application::init - got rom partition %s", romPartition.name());
     auto spiffsPartition=app.ota.findSpiffsPartition(romPartition);
     debug_i("Application::init - mounting filesystem at %s",spiffsPartition.name());
     _fs_mounted=spiffs_mount(spiffsPartition);
-
+    /*
+    if(_fs_mounted) {
+        Directory dir;
+        if(dir.open()) {
+            while(dir.next()) {
+                Serial.print("  ");
+                Serial.println(dir.stat().name);
+            }
+        }
+        Serial << dir.count() << _F(" files found") << endl << endl;
+    }
+    */
+   
     // check if we need to reset settings
     if (digitalRead(CLEAR_PIN) < 1) {
         debug_i("CLR button low - resetting settings");
@@ -302,9 +316,9 @@ bool Application::delayedCMD(String cmd, int delay) {
         network.forgetWifi();
         _systimer.initializeMs(delay, TimerDelegate(&Application::forget_wifi_and_restart, this)).startOnce();
     } else if (cmd.equals("umountfs")) {
-        umountfs();
+        //umountfs();
     } else if (cmd.equals("mountfs")) {
-        mountfs(getRomSlot());
+        //
     } else if (cmd.equals("switch_rom")) {
         switchRom();
         _systimer.initializeMs(delay, TimerDelegate(&Application::restart, this)).startOnce();
