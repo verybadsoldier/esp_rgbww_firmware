@@ -1,0 +1,29 @@
+{
+    "name": "New Profile",
+    "base_config": "spiffs-two-roms",
+    "options": [],
+    "devices": {
+        "spiFlash": {
+            "mode": "qio"
+        }
+    },
+    "partitions": {
+        "spiffs0": {
+            "size": "768K"
+        },
+        "spiffs1": {
+            "device": "spiFlash",
+            "address": "0x00300000",
+            "size": "768K",
+            "type": "data",
+            "subtype": "spiffs",
+            "readonly": false,
+            "encrypted": false,
+            "filename": "$(SPIFF_BIN_OUT)",
+            "build": {
+                "target": "spiffsgen",
+                "files": "$(SPIFF_FILES)"
+            }
+        }
+    }
+}

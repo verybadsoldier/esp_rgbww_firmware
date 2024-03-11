@@ -173,14 +173,16 @@ void Application::init() {
         _bootmode = bootmode;
     }
 #endif
-    auto romPartition=app.ota.getRomPartition();
 
-    // mount filesystem
+    // list spiffs partitions 
     listSpiffsPartitions();
 
-    debug_i("Application::init - got rom partition %s", romPartition.name());
+    // mount filesystem
+    auto romPartition=app.ota.getRomPartition();
+
+    debug_i("Application::init - got rom partition %s @0x%#08x", romPartition.name(),romPartition.address());
     auto spiffsPartition=app.ota.findSpiffsPartition(romPartition);
-    debug_i("Application::init - mounting filesystem at %s",spiffsPartition.name());
+    debug_i("Application::init - mounting filesystem  %s @0x%#08x",spiffsPartition.name(),spiffsPartition.address());
     _fs_mounted=spiffs_mount(spiffsPartition);
     /*
     if(_fs_mounted) {
@@ -333,7 +335,8 @@ void Application::listSpiffsPartitions()
 {
 	Serial.println(_F("** Enumerate registered SPIFFS partitions"));
 	for(auto part : Storage::findPartition(Storage::Partition::SubType::Data::spiffs)) {
-		Serial << _F(">> Mounting '") << part.name() << "' ..." << endl;
+        debug_i("checking filesystem  %s @0x%#08x",part.name(),part.address());
+
 		bool ok = spiffs_mount(part);
 		Serial.println(ok ? "OK, listing files:" : "Mount failed!");
 		if(ok) {

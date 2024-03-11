@@ -4,7 +4,7 @@ ARDUINO_LIBRARIES := RGBWWLed ArduinoJson6 OtaNetwork
 
 
 #HWCONFIG := two-spiffs-two-roms
-HWCONFIG := old_layout
+HWCONFIG := old_layout_qio
 
 # These are defined in hardware config or no longer required
 # SPI_SIZE = 4M

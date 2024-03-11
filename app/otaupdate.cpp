@@ -39,6 +39,7 @@ void ApplicationOTA::start(String romurl, String spiffsurl) {
     // spiffsurl="";
     auto part = ota.getNextBootPartition();
 
+    debug_i("ApplicationOTA::start nextBootPartition: %s %#06x", part.name(), part.address());
     // flash rom to position indicated in the rBoot config rom table
     otaUpdater->addItem(romurl, part);
 
@@ -48,7 +49,8 @@ void ApplicationOTA::start(String romurl, String spiffsurl) {
         auto spiffsPart=findSpiffsPartition(part);
         debug_i("ApplicationOTA::start spiffspart: %s", spiffsPart.name());
         if(spiffsPart){
-            otaUpdater->addItem(spiffsurl,spiffsPart, new Storage::PartitionStream(spiffsPart));
+            otaUpdater->addItem(spiffsurl,spiffsPart, new Storage::PartitionStream(spiffsPart, true));
+            debug_i("ApplicationOTA::start added spiffsurl: %s with blockerase=true", spiffsurl.c_str());
         }
         // ToDo: I guess I should do some error handling here - what if the partition can't be found?
     }
