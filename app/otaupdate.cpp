@@ -39,7 +39,7 @@ void ApplicationOTA::start(String romurl, String spiffsurl) {
     // spiffsurl="";
     auto part = ota.getNextBootPartition();
 
-    debug_i("ApplicationOTA::start nextBootPartition: %s %#06x", part.name(), part.address());
+    debug_i("ApplicationOTA::start nextBootPartition: %s %#06x at slot %i", part.name().c_str(), part.address(), rboot_get_current_rom());
     // flash rom to position indicated in the rBoot config rom table
     otaUpdater->addItem(romurl, part);
 
@@ -47,7 +47,7 @@ void ApplicationOTA::start(String romurl, String spiffsurl) {
 
     if(spiffsurl!=""){
         auto spiffsPart=findSpiffsPartition(part);
-        debug_i("ApplicationOTA::start spiffspart: %s", spiffsPart.name());
+        debug_i("ApplicationOTA::start spiffspart: %s", spiffsPart.name().c_str());
         if(spiffsPart){
             otaUpdater->addItem(spiffsurl,spiffsPart, new Storage::PartitionStream(spiffsPart, true));
             debug_i("ApplicationOTA::start added spiffsurl: %s with blockerase=true", spiffsurl.c_str());
@@ -62,7 +62,7 @@ void ApplicationOTA::start(String romurl, String spiffsurl) {
     debug_i("Free heap before OTA: %i", fh);
 
     debug_i("Current running partition: %s", ota.getRunningPartition().name());
-    debug_i("OTA target partition: %s", part.name());
+    debug_i("OTA target partition: %s", part.name().c_str());
     debug_i("configured OTA item list");
     debug_i("========================");
     const auto& items = otaUpdater->getItems();
@@ -143,7 +143,7 @@ void ApplicationOTA::upgradeCallback(Ota::Network::HttpUpgrader& client, bool re
         ota.end();
 
         auto part=ota.getNextBootPartition();
-        debug_i("ApplicationOTA::rBootCallback next boot partition: %s", part.name());
+        debug_i("ApplicationOTA::rBootCallback next boot partition: %s", part.name().c_str());
         ota.setBootPartition(part);
         status = OTASTATUS::OTA_SUCCESS_REBOOT;
     }else{
