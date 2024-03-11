@@ -47,6 +47,7 @@ ApplicationWebserver::ApplicationWebserver() {
 void ApplicationWebserver::init() {
     paths.setDefault(HttpPathDelegate(&ApplicationWebserver::onFile, this));
     paths.set("/", HttpPathDelegate(&ApplicationWebserver::onIndex, this));
+    paths.set("/webapp", HttpPathDelegate(&ApplicationWebserver::onWebapp, this));
     paths.set("/config", HttpPathDelegate(&ApplicationWebserver::onConfig, this));
     paths.set("/info", HttpPathDelegate(&ApplicationWebserver::onInfo, this));
     paths.set("/color", HttpPathDelegate(&ApplicationWebserver::onColor, this));
@@ -255,6 +256,17 @@ void ApplicationWebserver::onFile(HttpRequest &request, HttpResponse &response) 
         response.sendFile(file);
     }
 
+}
+void ApplicationWebserver::onWebapp(HttpRequest &request, HttpResponse &response) {
+    if (!authenticated(request, response)) {
+        return;
+    }
+
+    response.headers[HTTP_HEADER_LOCATION]="/index.html";
+    response.setHeader("Access-Control-Allow-Origin", "*");
+
+    response.code = HTTP_STATUS_PERMANENT_REDIRECT;
+    response.sendString("Redirecting to /index.html");
 }
 
 void ApplicationWebserver::onIndex(HttpRequest &request, HttpResponse &response) {

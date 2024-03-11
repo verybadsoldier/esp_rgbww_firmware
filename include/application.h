@@ -74,9 +74,10 @@ public:
     AppWIFI network;
     ApplicationWebserver webserver;
     APPLedCtrl rgbwwctrl;
-#ifdef ARCH_ESP8266
+
     ApplicationOTA ota;
-#endif
+
+
     ApplicationSettings cfg;
     EventServer eventserver;
     AppMqttClient mqttclient;

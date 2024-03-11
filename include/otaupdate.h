@@ -47,6 +47,9 @@ public:
     void checkAtBoot();
     inline OTASTATUS getStatus() { return status; };
     inline bool isProccessing() { return status == OTASTATUS::OTA_PROCESSING; };
+    Storage::Partition getRomPartition() { return ota.getRunningPartition();}
+    Storage::Partition getSpiffsPartition() { return findSpiffsPartition(ota.getBootPartition());}
+
 
 protected:
     std::unique_ptr<Ota::Network::HttpUpgrader> otaUpdater;

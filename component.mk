@@ -2,8 +2,9 @@ COMPONENT_SEARCH_DIRS := $(PROJECT_DIR)/Components
 COMPONENT_DEPENDS += MDNS RGBWWLed
 ARDUINO_LIBRARIES := RGBWWLed ArduinoJson6 OtaNetwork
 
+
 #HWCONFIG := two-spiffs-two-roms
-HWCONFIG := hwconfig
+HWCONFIG := old_layout
 
 # These are defined in hardware config or no longer required
 # SPI_SIZE = 4M
@@ -30,12 +31,12 @@ ENABLE_CUSTOM_PWM = 0
 #ENABLE_CUSTOM_PWM = 0
 
 //COM_SPEED = 230400
-COM_SPEED = 460800
-//COM_SPEED = 115200
+/&COM_SPEED = 460800
+COM_SPEED = 115200
 //COM_SPEED = 921600
 //COM_SPEED = 2000000
-COM_PORT=/dev/ttyUSB0
-
+//COM_PORT=/dev/ttyUSB2
+COM_PORT=/dev/ttyACM0
 #usb-1a86_USB2.0-Serial-if00-port0
 #usb-1a86_USB_Single_Serial_5647014434-if00
 #usb-Silicon_Labs_CP2104_USB_to_UART_Bridge_Controller_01A7B447-if00-port0
@@ -47,6 +48,10 @@ GIT_VERSION = $(shell git describe --abbrev=4 --dirty --always --tags)
 GIT_DATE = $(firstword $(shell git --no-pager show --date=short --format="%ad" --name-only))
 WEBAPP_VERSION = `cat $(PROJECT_DIR)/spiffs/VERSION`
 USER_CFLAGS = -DGITVERSION=\"$(GIT_VERSION)\" -DGITDATE=\"$(GIT_DATE)\" -DWEBAPP_VERSION=\"$(WEBAPP_VERSION)\" -DPARTLAYOUT=\"$(PART_LAYOUT)\"
+
+# include partition file for initial OTA
+EXTRA_LDFLAGS := $(call Wrap,user_pre_init)
+USER_CFLAGS += -DPARTITION_TABLE_OFFSET=$(PARTITION_TABLE_OFFSET)
 
 .PHONY: check_versions
 check_versions:

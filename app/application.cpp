@@ -86,6 +86,30 @@ static void onOsMessage(OsMessage& msg)
 }
 #endif
 
+#ifdef ARCH_ESP8266
+
+// include partition file for initial OTA
+namespace
+{
+// Note: This file won't exist on initial build!
+IMPORT_FSTR(partitionTableData, PROJECT_DIR "/out/Esp8266/debug/firmware/partitions.bin")
+}
+
+extern "C" void __wrap_user_pre_init(void)
+{
+	static_assert(PARTITION_TABLE_OFFSET == 0x3fa000, "Bad PTO");
+	Storage::initialize();
+	if(!Storage::spiFlash->partitions()) {
+		LOAD_FSTR(data, partitionTableData)
+		Storage::spiFlash->write(PARTITION_TABLE_OFFSET, data, partitionTableData.size());
+		Storage::spiFlash->loadPartitions(PARTITION_TABLE_OFFSET);
+	}
+
+	extern void __real_user_pre_init(void);
+	__real_user_pre_init();
+}
+#endif
+
 Application app;
 
 // Sming Framework INIT method - called during boot
@@ -148,26 +172,29 @@ void Application::init() {
         }
         _bootmode = bootmode;
     }
-    
-    if (rboot_get_last_boot_rom(&bootslot)) {
-        _romslot = bootslot;
-    }
 #endif
-    // check file systems
-    // listSpiffsPartitions();
-    // mount filesystem
-if (strcmp(fw_part_layout, "v1") == 0)
-    {
-        // old, two spiffs model 
-        int romSlot=getRomSlot();
-        debug_i("Application::init - got rom slot %i", romSlot);
-        mountfs(romSlot);
-    } else {
-        // new, single spiffs model
-        mountfs(0); 
-    }
-    // mountfs(_romslot);
+    auto romPartition=app.ota.getRomPartition();
 
+    // mount filesystem
+    listSpiffsPartitions();
+
+    debug_i("Application::init - got rom partition %s", romPartition.name());
+    auto spiffsPartition=app.ota.findSpiffsPartition(romPartition);
+    debug_i("Application::init - mounting filesystem at %s",spiffsPartition.name());
+    _fs_mounted=spiffs_mount(spiffsPartition);
+    /*
+    if(_fs_mounted) {
+        Directory dir;
+        if(dir.open()) {
+            while(dir.next()) {
+                Serial.print("  ");
+                Serial.println(dir.stat().name);
+            }
+        }
+        Serial << dir.count() << _F(" files found") << endl << endl;
+    }
+    */
+   
     // check if we need to reset settings
     if (digitalRead(CLEAR_PIN) < 1) {
         debug_i("CLR button low - resetting settings");
@@ -289,9 +316,9 @@ bool Application::delayedCMD(String cmd, int delay) {
         network.forgetWifi();
         _systimer.initializeMs(delay, TimerDelegate(&Application::forget_wifi_and_restart, this)).startOnce();
     } else if (cmd.equals("umountfs")) {
-        umountfs();
+        //umountfs();
     } else if (cmd.equals("mountfs")) {
-        mountfs(getRomSlot());
+        //
     } else if (cmd.equals("switch_rom")) {
         switchRom();
         _systimer.initializeMs(delay, TimerDelegate(&Application::restart, this)).startOnce();
@@ -361,7 +388,11 @@ void Application::umountfs() {
 }
 
 void Application::switchRom() {
+    //ToDo - rewrite to use ota.getRunningPartition() and ota.getNextBootPartition()
     debug_i("Application::switchRom");
+
+    /* old
+
     int slot = getRomSlot();
     debug_i("    current ROM: %i", slot);
     if (slot == 0) {
@@ -374,6 +405,8 @@ void Application::switchRom() {
     rboot_set_current_rom(slot);
 
 #endif
+    */
+   app.ota.doSwitch();
 }
 
 void Application::wsBroadcast(String message) {
