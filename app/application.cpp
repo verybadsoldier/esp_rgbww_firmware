@@ -166,7 +166,19 @@ void Application::init() {
     debug_i("Application::init - loading boot info");
     if (rboot_get_last_boot_mode(&bootmode)) {
         if (bootmode == MODE_TEMP_ROM) {
-            debug_i("Application::init - booting after OTA");
+            debug_i("Application::init - booting after OTA, restarting");
+            auto partition = app.ota.getRomPartition();
+            uint8_t slot;
+            if(partition.name()=="rom1"){
+                slot=1;
+            }else{
+                slot=0;
+            }
+            debug_i("Application::init - temporary partition %s, setting rBoot to start slot %i", partition.name().c_str(),slot);
+            rboot_set_current_rom(slot);
+            restart();
+            while(true); // don't continue, just reset
+            
         } else {
             debug_i("Application::init - normal boot");
         }
@@ -323,7 +335,7 @@ bool Application::delayedCMD(String cmd, int delay) {
         //
     } else if (cmd.equals("switch_rom")) {
         switchRom();
-        _systimer.initializeMs(delay, TimerDelegate(&Application::restart, this)).startOnce();
+        //_systimer.initializeMs(delay, TimerDelegate(&Application::restart, this)).startOnce();
     } else {
         return false;
     }

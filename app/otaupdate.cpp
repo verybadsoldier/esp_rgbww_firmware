@@ -83,6 +83,15 @@ void ApplicationOTA::doSwitch(){
    	auto before = ota.getRunningPartition();
 	auto after = ota.getNextBootPartition();
 
+    if (before==after){
+        if (before.name()="rom1"){
+            after=ota.getPartitionForSlot(1);
+        }else{
+            after=ota.getPartitionForSlot(0);
+        }
+    }
+        
+
 	debug_i("Swapping from %s @0x%s to %s @0x%s",before.name(),String(before.address(), HEX), after.name(), String(after.address(), HEX));
 	if(ota.setBootPartition(after)) {
 		debug_i("Restarting...\r\n");
