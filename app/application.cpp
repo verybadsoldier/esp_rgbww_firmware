@@ -93,7 +93,7 @@ namespace
 {
 // Note: This file won't exist on initial build!
 IMPORT_FSTR(partitionTableData, PROJECT_DIR "/out/Esp8266/debug/firmware/partitions.bin")
-IMPORT_FSTR(rbootData, PROJECT_DIR "/out/Esp8266/debug/firmware/rboot_patched.bin")
+IMPORT_FSTR(rbootData, PROJECT_DIR "/out/Esp8266/debug/firmware/rboot.bin")
 } // namespace
 
 extern "C" void __wrap_user_pre_init(void)
@@ -179,7 +179,7 @@ void Application::init() {
     debug_i("Application::init - loading boot info");
     if (rboot_get_last_boot_mode(&bootmode)) {
         if (bootmode == MODE_TEMP_ROM) {
-            debug_i("Application::init - booting after OTA");
+            debug_i("Application::init - temp boot, rebooting after OTA");
             System.restart();
         } else {
             debug_i("Application::init - normal boot");
