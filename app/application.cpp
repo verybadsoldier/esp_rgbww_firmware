@@ -88,26 +88,38 @@ static void onOsMessage(OsMessage& msg)
 
 #ifdef ARCH_ESP8266
 
-// include partition file for initial OTA
+// include partition file  and rboot for initial OTA
 namespace
 {
 // Note: This file won't exist on initial build!
 IMPORT_FSTR(partitionTableData, PROJECT_DIR "/out/Esp8266/debug/firmware/partitions.bin")
-}
+IMPORT_FSTR(rbootData, PROJECT_DIR "/out/Esp8266/debug/firmware/rboot.bin")
+} // namespace
 
 extern "C" void __wrap_user_pre_init(void)
 {
 	static_assert(PARTITION_TABLE_OFFSET == 0x3fa000, "Bad PTO");
 	Storage::initialize();
-	if(!Storage::spiFlash->partitions()) {
-		LOAD_FSTR(data, partitionTableData)
-		Storage::spiFlash->write(PARTITION_TABLE_OFFSET, data, partitionTableData.size());
-		Storage::spiFlash->loadPartitions(PARTITION_TABLE_OFFSET);
+	auto& flash = *Storage::spiFlash;
+	if(!flash.partitions()) {
+		{
+			LOAD_FSTR(data, partitionTableData)
+			flash.erase_range(PARTITION_TABLE_OFFSET, flash.getBlockSize());
+			flash.write(PARTITION_TABLE_OFFSET, data, partitionTableData.size());
+			flash.loadPartitions(PARTITION_TABLE_OFFSET);
+		}
+
+	    LOAD_FSTR(data, rbootData)
+        data[3] = (data[3] & 0x0F) | (4 << 4);
+		flash.erase_range(0, flash.getBlockSize());
+		flash.write(0, data, rbootData.size());
+       	
 	}
 
 	extern void __real_user_pre_init(void);
 	__real_user_pre_init();
 }
+
 #endif
 
 Application app;
@@ -145,6 +157,7 @@ void Application::uptimeCounter() {
 }
 
 void Application::init() {
+    app.ota.checkAtBoot();
     for(int i=0;i<10;i++){
         Serial.print("=");
         delay(200);
@@ -166,19 +179,8 @@ void Application::init() {
     debug_i("Application::init - loading boot info");
     if (rboot_get_last_boot_mode(&bootmode)) {
         if (bootmode == MODE_TEMP_ROM) {
-            debug_i("Application::init - booting after OTA, restarting");
-            auto partition = app.ota.getRomPartition();
-            uint8_t slot;
-            if(partition.name()=="rom1"){
-                slot=1;
-            }else{
-                slot=0;
-            }
-            debug_i("Application::init - temporary partition %s, setting rBoot to start slot %i", partition.name().c_str(),slot);
-            rboot_set_current_rom(slot);
+            debug_i("Application::init - booting after OTA");
             restart();
-            while(true); // don't continue, just reset
-            
         } else {
             debug_i("Application::init - normal boot");
         }
@@ -422,6 +424,17 @@ void Application::switchRom() {
 #endif
     */
    app.ota.doSwitch();
+}
+
+int Application::getRomSlot(){
+            auto partition = app.ota.getRomPartition();
+            uint8_t slot;
+            if(partition.name()=="rom1"){
+                slot=1;
+            }else{
+                slot=0;
+            }
+            return slot;
 }
 
 void Application::wsBroadcast(String message) {

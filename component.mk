@@ -4,7 +4,7 @@ ARDUINO_LIBRARIES := RGBWWLed ArduinoJson6 OtaNetwork
 
 
 #HWCONFIG := two-spiffs-two-roms
-HWCONFIG := old_layout_qio
+HWCONFIG := old_layout
 
 # These are defined in hardware config or no longer required
 # SPI_SIZE = 4M
@@ -19,13 +19,15 @@ SPIFF_FILES = spiffs
 
 #### rBoot options ####
 # use rboot build mode
-# RBOOT_ENABLED = 1
+RBOOT_ENABLED = 1
 
 #  enable tmp rom switching
 RBOOT_RTC_ENABLED = 1
 
 # two rom mode (where two roms sit in the same 1mb block of flash)
 RBOOT_TWO_ROMS  = 0
+
+RBOOT_BIG_FLASH = 1
 
 ENABLE_CUSTOM_PWM = 0
 #ENABLE_CUSTOM_PWM = 0
