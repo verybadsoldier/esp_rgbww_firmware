@@ -95,30 +95,47 @@ namespace
 IMPORT_FSTR(partitionTableData, PROJECT_DIR "/out/Esp8266/debug/firmware/partitions.bin")
 IMPORT_FSTR(rbootData, PROJECT_DIR "/out/Esp8266/debug/firmware/rboot.bin")
 } // namespace
+    // Support updating legacy devices without partition tables (Sming 4.2 and earlier)
+    #ifdef ARCH_ESP8266
 
-extern "C" void __wrap_user_pre_init(void)
-{
-	static_assert(PARTITION_TABLE_OFFSET == 0x3fa000, "Bad PTO");
-	Storage::initialize();
-	auto& flash = *Storage::spiFlash;
-	if(!flash.partitions()) {
-		{
-			LOAD_FSTR(data, partitionTableData)
-			flash.erase_range(PARTITION_TABLE_OFFSET, flash.getBlockSize());
-			flash.write(PARTITION_TABLE_OFFSET, data, partitionTableData.size());
-			flash.loadPartitions(PARTITION_TABLE_OFFSET);
-		}
+    #include <Storage/partition_info.h>
 
-	    LOAD_FSTR(data, rbootData)
-        //data[3] = (data[3] & 0x0F) | (4 << 4); // beware, hardcoding flash size to 4MB
-		flash.erase_range(0, flash.getBlockSize());
-		flash.write(0, data, rbootData.size());
-       	
-	}
+    extern "C" void __wrap_user_pre_init(void)
+    {
+        static_assert(PARTITION_TABLE_OFFSET == 0x3fa000, "Bad PTO");
 
-	extern void __real_user_pre_init(void);
-	__real_user_pre_init();
-}
+        Storage::initialize();
+
+        auto& flash = *Storage::spiFlash;
+        if(!flash.partitions()) {
+            using FullType = Storage::Partition::FullType;
+            using SubType = Storage::Partition::SubType;
+    #define PT_ENTRY(name, fulltype, offset, size) \
+        { Storage::ESP_PARTITION_MAGIC, FullType(fulltype).type, FullType(fulltype).subtype, offset, size, name, 0 }
+
+            static constexpr Storage::esp_partition_info_t partitionTableData[] PROGMEM{
+                PT_ENTRY("spiFlash", Storage::Device::Type::flash, 0, 0x400000),
+                PT_ENTRY("rom0", SubType::App::ota0, 0x2000, 0xf8000),
+                PT_ENTRY("spiffs0", SubType::Data::spiffs, 0x100000, 0xc0000),
+                PT_ENTRY("rom1", SubType::App::ota1, 0x202000, 0xf8000),
+                PT_ENTRY("spiffs1", SubType::Data::spiffs, 0x300000, 0xc0000),
+                PT_ENTRY("rf_cal", SubType::Data::rfCal, 0x3fb000, 0x1000),
+                PT_ENTRY("phy_init", SubType::Data::phy, 0x3fc000, 0x1000),
+                PT_ENTRY("sys_param", SubType::Data::sysParam, 0x3fd000, 0x3000),
+            };
+
+            uint8_t buffer[sizeof(partitionTableData)];
+            memcpy(buffer, partitionTableData, sizeof(partitionTableData));
+            flash.erase_range(PARTITION_TABLE_OFFSET, flash.getBlockSize());
+            flash.write(PARTITION_TABLE_OFFSET, buffer, sizeof(buffer));
+            flash.loadPartitions(PARTITION_TABLE_OFFSET);
+        }
+
+        extern void __real_user_pre_init(void);
+        __real_user_pre_init();
+    }
+
+    #endif // ARCH_ESP8266
 
 #endif
 
