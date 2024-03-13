@@ -93,7 +93,7 @@ namespace
 {
 // Note: This file won't exist on initial build!
 IMPORT_FSTR(partitionTableData, PROJECT_DIR "/out/Esp8266/debug/firmware/partitions.bin")
-IMPORT_FSTR(rbootData, PROJECT_DIR "/out/Esp8266/debug/firmware/rboot.bin")
+IMPORT_FSTR(rbootData, PROJECT_DIR "/out/Esp8266/debug/firmware/rboot_patched.bin")
 } // namespace
 
 extern "C" void __wrap_user_pre_init(void)
@@ -110,7 +110,7 @@ extern "C" void __wrap_user_pre_init(void)
 		}
 
 	    LOAD_FSTR(data, rbootData)
-        data[3] = (data[3] & 0x0F) | (4 << 4);
+        //data[3] = (data[3] & 0x0F) | (4 << 4); // beware, hardcoding flash size to 4MB
 		flash.erase_range(0, flash.getBlockSize());
 		flash.write(0, data, rbootData.size());
        	
@@ -180,7 +180,7 @@ void Application::init() {
     if (rboot_get_last_boot_mode(&bootmode)) {
         if (bootmode == MODE_TEMP_ROM) {
             debug_i("Application::init - booting after OTA");
-            restart();
+            System.restart();
         } else {
             debug_i("Application::init - normal boot");
         }
