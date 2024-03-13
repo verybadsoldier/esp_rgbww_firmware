@@ -2,9 +2,18 @@
     "name": "New Profile",
     "base_config": "spiffs-two-roms",
     "options": [],
+    "devices": {
+        "spiFlash": {
+            "mode": "qio"
+        }
+    },
     "partitions": {
+	"rom1":{
+	    "address": "0x00202000"
+	},
         "spiffs0": {
-            "size": "768K"
+            "size": "768K",
+	    "address": "0x00100000"
         },
         "spiffs1": {
             "device": "spiFlash",
