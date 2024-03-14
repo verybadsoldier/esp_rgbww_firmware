@@ -4,7 +4,7 @@
     "options": [],
     "devices": {
         "spiFlash": {
-            "mode": "qio"
+            "mode": "dio"
         }
     },
     "partitions": {
