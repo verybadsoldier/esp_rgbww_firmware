@@ -8,12 +8,8 @@
         }
     },
     "partitions": {
-	"rom1":{
-	    "address": "0x00202000"
-	},
         "spiffs0": {
-            "size": "768K",
-	    "address": "0x00100000"
+            "size": "768K"
         },
         "spiffs1": {
             "device": "spiFlash",

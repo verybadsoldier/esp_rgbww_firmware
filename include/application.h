@@ -58,8 +58,8 @@ public:
 #else
     bool isTempBoot() { return false; };
 #endif
-    inline int getRomSlot() { return _romslot; };
-    inline int getBootMode() { return _bootmode; };
+    int getRomSlot();
+    //inline int getBootMode() { return _bootmode; };
     void switchRom();
 
     void onCommandRelay(const String& method, const JsonObject& json);

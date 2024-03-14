@@ -88,26 +88,38 @@ static void onOsMessage(OsMessage& msg)
 
 #ifdef ARCH_ESP8266
 
-// include partition file for initial OTA
+// include partition file  and rboot for initial OTA
 namespace
 {
 // Note: This file won't exist on initial build!
 IMPORT_FSTR(partitionTableData, PROJECT_DIR "/out/Esp8266/debug/firmware/partitions.bin")
-}
+//IMPORT_FSTR(rbootData, PROJECT_DIR "/out/Esp8266/debug/firmware/rboot.bin")
+} // namespace
 
 extern "C" void __wrap_user_pre_init(void)
 {
 	static_assert(PARTITION_TABLE_OFFSET == 0x3fa000, "Bad PTO");
 	Storage::initialize();
-	if(!Storage::spiFlash->partitions()) {
-		LOAD_FSTR(data, partitionTableData)
-		Storage::spiFlash->write(PARTITION_TABLE_OFFSET, data, partitionTableData.size());
-		Storage::spiFlash->loadPartitions(PARTITION_TABLE_OFFSET);
+	auto& flash = *Storage::spiFlash;
+	if(!flash.partitions()) {
+		{
+			LOAD_FSTR(data, partitionTableData)
+			flash.erase_range(PARTITION_TABLE_OFFSET, flash.getBlockSize());
+			flash.write(PARTITION_TABLE_OFFSET, data, partitionTableData.size());
+			flash.loadPartitions(PARTITION_TABLE_OFFSET);
+		}
+
+	  //  LOAD_FSTR(data, rbootData)
+      //  //data[3] = (data[3] & 0x0F) | (4 << 4); // beware, hardcoding flash size to 4MB
+      //  flash.erase_range(0, flash.getBlockSize());
+	  //  flash.write(0, data, rbootData.size());
+       	
 	}
 
 	extern void __real_user_pre_init(void);
 	__real_user_pre_init();
 }
+
 #endif
 
 Application app;
@@ -145,6 +157,7 @@ void Application::uptimeCounter() {
 }
 
 void Application::init() {
+    app.ota.checkAtBoot();
     for(int i=0;i<10;i++){
         Serial.print("=");
         delay(200);
@@ -166,21 +179,24 @@ void Application::init() {
     debug_i("Application::init - loading boot info");
     if (rboot_get_last_boot_mode(&bootmode)) {
         if (bootmode == MODE_TEMP_ROM) {
-            debug_i("Application::init - booting after OTA");
+            debug_i("Application::init - temp boot, rebooting after OTA");
+            System.restart();
         } else {
             debug_i("Application::init - normal boot");
         }
         _bootmode = bootmode;
     }
 #endif
-    auto romPartition=app.ota.getRomPartition();
 
-    // mount filesystem
+    // list spiffs partitions 
     listSpiffsPartitions();
 
-    debug_i("Application::init - got rom partition %s", romPartition.name());
+    // mount filesystem
+    auto romPartition=app.ota.getRomPartition();
+
+    debug_i("Application::init - got rom partition %s @0x%#08x", romPartition.name(),romPartition.address());
     auto spiffsPartition=app.ota.findSpiffsPartition(romPartition);
-    debug_i("Application::init - mounting filesystem at %s",spiffsPartition.name());
+    debug_i("Application::init - mounting filesystem  %s @0x%#08x",spiffsPartition.name(),spiffsPartition.address());
     _fs_mounted=spiffs_mount(spiffsPartition);
     /*
     if(_fs_mounted) {
@@ -321,7 +337,7 @@ bool Application::delayedCMD(String cmd, int delay) {
         //
     } else if (cmd.equals("switch_rom")) {
         switchRom();
-        _systimer.initializeMs(delay, TimerDelegate(&Application::restart, this)).startOnce();
+        //_systimer.initializeMs(delay, TimerDelegate(&Application::restart, this)).startOnce();
     } else {
         return false;
     }
@@ -333,7 +349,8 @@ void Application::listSpiffsPartitions()
 {
 	Serial.println(_F("** Enumerate registered SPIFFS partitions"));
 	for(auto part : Storage::findPartition(Storage::Partition::SubType::Data::spiffs)) {
-		Serial << _F(">> Mounting '") << part.name() << "' ..." << endl;
+        debug_i("checking filesystem  %s @0x%#08x",part.name(),part.address());
+
 		bool ok = spiffs_mount(part);
 		Serial.println(ok ? "OK, listing files:" : "Mount failed!");
 		if(ok) {
@@ -407,6 +424,17 @@ void Application::switchRom() {
 #endif
     */
    app.ota.doSwitch();
+}
+
+int Application::getRomSlot(){
+            auto partition = app.ota.getRomPartition();
+            uint8_t slot;
+            if(partition.name()=="rom1"){
+                slot=1;
+            }else{
+                slot=0;
+            }
+            return slot;
 }
 
 void Application::wsBroadcast(String message) {
