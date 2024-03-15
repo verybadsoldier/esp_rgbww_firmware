@@ -33,7 +33,7 @@
 #define DEFAULT_API_SECURED false
 #define DEFAULT_API_PASSWORD "rgbwwctrl"
 #define DEFAULT_CONNECTION_RETRIES 10
-#define DEFAULT_OTA_URL "http://192.168.29.10:8080/version.json"
+#define DEFAULT_OTA_URL "http://home.mobileme.de:8080/version.json"
 
 // RGBWW related
 #define DEFAULT_COLORTEMP_WW 2700
