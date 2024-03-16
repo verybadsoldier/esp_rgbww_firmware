@@ -3,38 +3,51 @@ BASE_URL=http://home.mobileme.de:8080
 #BASE_URL=http://192.168.29.10:8080
 
 WEBROOT=/html
+BUIDROOT=/build
+
 mkdir -p $WEBROOT/Esp8266/v1
 mkdir -p $WEBROOT/Esp8266/v2
 mkdir -p $WEBROOT/Esp32/v2
 
 # pull and build the webapp
-cd /esp_rgb_webapp2
+if [ ! -d $BUILDROOT/esp_rgb_webapp2 ]
+then
+	prepare.sh
+fi
+echo "entering $BUILDROOT/esp_rgb_webapp2"
+cd $BUILDROOT/esp_rgb_webapp2
 git pull
 git checkout devel
 
 git tag nightly-$(date --iso)
+git push
 
 WEBAPP_VERSION=$(git describe --abbrev=4 --dirty --always --tags)
 
 npx quasar build
 ./minifyFontnames.sh
 ./gzipSPA.sh
-
+du -sh dist/spa
 echo "Webapp: $WEBAPP_VERSION "
 echo $WEBAPP_VERSION > dist/spa/VERSION
+
 # pull and build the firmware
-cd /esp_rgbww_firmware
+echo "entering $BUILDROOT/esp_rgbww_firmware"
+cd $BUILDROOT/esp_rgbww_firmware
 git pull
 git checkout devel
+git submodule update --remote --init Components/RGBWWLed
 git tag nightly-$(date --iso)
+git push
 
 FW_VERSION=$(git describe --abbrev=4 --dirty --always --tags)
 
-rm -rf /spiffs/*
+rm -rf ./spiffs/*
 
-cp -a /esp_rgb_webapp2/dist/spa/ /spiffs
+cp -a $BUILDROOT/esp_rgb_webapp2/dist/spa/ /spiffs
 
 make clean
+make partmap-build
 make -j8 SMING_SOC=esp8266 PART_LAYOUT=v1
 
 echo "deploying OTA ESP8266 v1 files to webserver"
