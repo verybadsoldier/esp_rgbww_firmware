@@ -34,6 +34,7 @@
 #define DEFAULT_API_PASSWORD "rgbwwctrl"
 #define DEFAULT_CONNECTION_RETRIES 10
 #define DEFAULT_OTA_URL "http://home.mobileme.de:8080/version.json"
+#define DEFAULT_PINCONFIG_URL "https://raw.githubusercontent.com/pljakobs/esp_rgb_webapp2/devel/public/config/pinconfig.json"
 
 // RGBWW relatedssh 192.
 #define DEFAULT_COLORTEMP_WW 2700

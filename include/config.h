@@ -127,6 +127,8 @@ struct ApplicationSettings {
         String api_password = DEFAULT_API_PASSWORD;
         String otaurl = DEFAULT_OTA_URL;
         String device_name;
+        String pin_config_url=DEFAULT_PINCONFIG_URL;
+        String current_pin_config;
         String pin_config = "13,12,14,5,4";
         String buttons_config;
         int buttons_debounce_ms = 50;

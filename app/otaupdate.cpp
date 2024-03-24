@@ -49,7 +49,7 @@ void ApplicationOTA::start(String romurl, String spiffsurl) {
         auto spiffsPart=findSpiffsPartition(part);
         debug_i("ApplicationOTA::start spiffspart: %s", spiffsPart.name().c_str());
         if(spiffsPart){
-            otaUpdater->addItem(spiffsurl,spiffsPart, new Storage::PartitionStream(spiffsPart, true));
+            otaUpdater->addItem(spiffsurl,spiffsPart, new Storage::PartitionStream(spiffsPart, Storage::Mode::BlockErase));
             debug_i("ApplicationOTA::start added spiffsurl: %s with blockerase=true", spiffsurl.c_str());
         }
         // ToDo: I guess I should do some error handling here - what if the partition can't be found?
