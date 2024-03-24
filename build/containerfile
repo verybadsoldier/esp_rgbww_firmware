@@ -41,6 +41,7 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     curl \
     libssl-dev \
+    apt-utils \
     libusb-1.0-0 &&\
     apt autoremove
 RUN mkdir /build

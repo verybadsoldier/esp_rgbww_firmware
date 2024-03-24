@@ -35,7 +35,7 @@
 #define DEFAULT_CONNECTION_RETRIES 10
 #define DEFAULT_OTA_URL "http://home.mobileme.de:8080/version.json"
 
-// RGBWW related
+// RGBWW relatedssh 192.
 #define DEFAULT_COLORTEMP_WW 2700
 #define DEFAULT_COLORTEMP_CW 6000
 

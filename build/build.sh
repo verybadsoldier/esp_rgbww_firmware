@@ -3,7 +3,9 @@ BASE_URL=http://home.mobileme.de:8080
 #BASE_URL=http://192.168.29.10:8080
 
 WEBROOT=/html
-BUIDROOT=/build
+BUILDROOT=/build
+
+export ESP_HOME=/opt/sming/Sming/esp-quick-toolchain
 
 mkdir -p $WEBROOT/Esp8266/v1
 mkdir -p $WEBROOT/Esp8266/v2
