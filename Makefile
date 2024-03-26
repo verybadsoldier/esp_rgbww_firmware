@@ -2,7 +2,8 @@
 #### Please don't change this file. Use component.mk instead ####
 #####################################################################
 
-override SMING_HOME := $(CURDIR)/Sming/Sming
+# removed to use global sming according to SMING_HOME
+#override SMING_HOME := $(CURDIR)/Sming/Sming
 
 ifndef SMING_HOME
 $(error SMING_HOME is not set: please configure it as an environment variable)
