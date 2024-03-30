@@ -30,6 +30,11 @@
 #define CONFIG_MAX_LENGTH 2048
 
 
+struct channel {
+    String name;
+    int pin;
+};
+
 struct ApplicationSettings {
     struct network {
         struct connection {
@@ -120,11 +125,6 @@ struct ApplicationSettings {
         colortemp colortemp;
         int outputmode = 0;
         String startup_color = "last";
-    };
-
-    struct channel {
-        String name;
-        int pin;
     };
 
     struct general {
@@ -394,5 +394,8 @@ struct ApplicationSettings {
             general.channels.push_back({ "coldwhite", 4 });
         }
         debug_i("added %i elements to channels array", general.channels.size());
+        for (int i=0;i<general.channels.size();i++) {
+            debug_i("channel %i: %s, %i", i, general.channels[i].name.c_str(), general.channels[i].pin);
+        }
     }
 };

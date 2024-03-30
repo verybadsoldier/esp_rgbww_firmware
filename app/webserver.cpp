@@ -390,7 +390,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         Json::deserialize(doc, body);
 
         // remove comment for debugging
-        Json::serialize(doc, Serial, Json::Pretty);
+        // Json::serialize(doc, Serial, Json::Pretty);
 
         bool ip_updated = false;
         bool color_updated = false;
@@ -545,6 +545,22 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
             Json::getValue(jgen["supported_color_models"], app.cfg.general.supported_color_models);
             Json::getValue(jgen["pin_config_name"],app.cfg.general.pin_config_name);
             Json::getValue(jgen["pin_config_url"],app.cfg.general.pin_config_url);
+            // read channels array from config and push it to app.cfg.general.channels
+            // if there are already channels in the vector, clear it first 
+            JsonArray jchannels = jgen["channels"];
+            if (app.cfg.general.channels.size()!=0){
+                app.cfg.general.channels.clear();
+            }
+            for (int i = 0; i < jchannels.size(); i++) {
+                JsonObject jchannel = jchannels[i];
+                if (!jchannel.isNull()) {
+                    channel channel;
+                    Json::getValue(jchannel["pin"], channel.pin);
+                    Json::getValue(jchannel["name"], channel.name);
+                    app.cfg.general.channels.push_back(channel);
+                }
+            }
+
         }
 
         JsonObject jntp = root["ntp"];
@@ -704,19 +720,15 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         general["pin_config_url"] = app.cfg.general.pin_config_url;
 
         auto channels = general.createNestedArray("channels");
-        StaticJsonDocument<64> channelConfig;
         for(int channel=0;channel<app.cfg.general.channels.size();channel++){
+            StaticJsonDocument<64> channelConfig;
             channelConfig["pin"] = app.cfg.general.channels[channel].pin;
             channelConfig["name"] = app.cfg.general.channels[channel].name;
+            String name=channelConfig["name"];
+            debug_i("channel %i: %s (should be %s), %i",channel,name.c_str(), app.cfg.general.channels[channel].name.c_str(), channelConfig["pin"]);
             channels.add(channelConfig);
         }
-        /*
-        pinConfig[app.cfg.general.pin_config_array.channel_1_name]=app.cfg.general.pin_config_array.channel_1_pin;
-        pinConfig[app.cfg.general.pin_config_array.channel_2_name]=app.cfg.general.pin_config_array.channel_2_pin;
-        pinConfig[app.cfg.general.pin_config_array.channel_3_name]=app.cfg.general.pin_config_array.channel_3_pin;
-        pinConfig[app.cfg.general.pin_config_array.channel_4_name]=app.cfg.general.pin_config_array.channel_4_pin;
-        pinConfig[app.cfg.general.pin_config_array.channel_5_name]=app.cfg.general.pin_config_array.channel_5_pin;
-        */
+
         sendApiResponse(response, stream);
     }
 }
