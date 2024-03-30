@@ -390,7 +390,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         Json::deserialize(doc, body);
 
         // remove comment for debugging
-        //Json::serialize(doc, Serial, Json::Pretty);
+        Json::serialize(doc, Serial, Json::Pretty);
 
         bool ip_updated = false;
         bool color_updated = false;
@@ -542,6 +542,9 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
             Json::getValue(jgen["pin_config"], app.cfg.general.pin_config);
         	Json::getValue(jgen["buttons_config"], app.cfg.general.buttons_config);
         	Json::getValue(jgen["buttons_debounce_ms"], app.cfg.general.buttons_debounce_ms);
+            Json::getValue(jgen["supported_color_models"], app.cfg.general.supported_color_models);
+            Json::getValue(jgen["pin_config_name"],app.cfg.general.pin_config_name);
+            Json::getValue(jgen["pin_config_url"],app.cfg.general.pin_config_url);
         }
 
         JsonObject jntp = root["ntp"];
@@ -696,7 +699,24 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         general["pin_config"] = app.cfg.general.pin_config;
         general["buttons_config"] = app.cfg.general.buttons_config;
         general["buttons_debounce_ms"] = app.cfg.general.buttons_debounce_ms;
+        general["supported_color_models"] = app.cfg.general.supported_color_models;
+        general["current_pin_config_name"] = app.cfg.general.pin_config_name;
+        general["pin_config_url"] = app.cfg.general.pin_config_url;
 
+        auto channels = general.createNestedArray("channels");
+        StaticJsonDocument<64> channelConfig;
+        for(int channel=0;channel<app.cfg.general.channels.size();channel++){
+            channelConfig["pin"] = app.cfg.general.channels[channel].pin;
+            channelConfig["name"] = app.cfg.general.channels[channel].name;
+            channels.add(channelConfig);
+        }
+        /*
+        pinConfig[app.cfg.general.pin_config_array.channel_1_name]=app.cfg.general.pin_config_array.channel_1_pin;
+        pinConfig[app.cfg.general.pin_config_array.channel_2_name]=app.cfg.general.pin_config_array.channel_2_pin;
+        pinConfig[app.cfg.general.pin_config_array.channel_3_name]=app.cfg.general.pin_config_array.channel_3_pin;
+        pinConfig[app.cfg.general.pin_config_array.channel_4_name]=app.cfg.general.pin_config_array.channel_4_pin;
+        pinConfig[app.cfg.general.pin_config_array.channel_5_name]=app.cfg.general.pin_config_array.channel_5_pin;
+        */
         sendApiResponse(response, stream);
     }
 }

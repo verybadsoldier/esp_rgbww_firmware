@@ -77,7 +77,6 @@ public:
 
     ApplicationOTA ota;
 
-
     ApplicationSettings cfg;
     EventServer eventserver;
     AppMqttClient mqttclient;

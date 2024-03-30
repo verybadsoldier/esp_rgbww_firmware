@@ -122,14 +122,41 @@ struct ApplicationSettings {
         String startup_color = "last";
     };
 
+    struct channel {
+        String name;
+        int pin;
+    };
+
     struct general {
         bool api_secured = DEFAULT_API_SECURED;
         String api_password = DEFAULT_API_PASSWORD;
         String otaurl = DEFAULT_OTA_URL;
         String device_name;
+        #ifdef ESP8266
+        String supported_color_models="[\"RGB\",\"RGBW\",\"RGBWW\",\"RAW\"}";
+        #endif
+        String pin_config_name="mrpj";
+        String pin_config_url="https://raw.githubusercontent.com/pljakobs/esp_rgb_webapp2/devel/public/config/pinconfig.json";
+        /*
+        struct pin_config_array {   
+            String channel_1_name = "red";
+            int channel_1_pin = 13;
+            String channel_2_name = "green";
+            int channel_2_pin = 12;
+            String channel_3_name = "blue";
+            int channel_3_pin = 14;
+            String channel_4_name = "warmwhite";
+            int channel_4_pin = 5;
+            String channel_5_name = "coldwhite";
+            int channel_5_pin = 4;
+        };
+        */
+        std::vector<channel> channels;
         String pin_config = "13,12,14,5,4";
         String buttons_config;
         int buttons_debounce_ms = 50;
+        //pin_config_array pin_config_array;
+
     };
 
     general general;
@@ -358,5 +385,14 @@ struct ApplicationSettings {
 
     void sanitizeValues() {
         sync.clock_master_interval = max(sync.clock_master_interval, 1);
+        debug_i("populating channels array");
+        if (general.channels.size() == 0 && general.pin_config_name == "mrpj") {
+            general.channels.push_back({ "red", 13 });
+            general.channels.push_back({ "green", 12 });
+            general.channels.push_back({ "blue", 14 });
+            general.channels.push_back({ "warmwhite", 5 });
+            general.channels.push_back({ "coldwhite", 4 });
+        }
+        debug_i("added %i elements to channels array", general.channels.size());
     }
 };
