@@ -101,7 +101,23 @@ PinConfig APPLedCtrl::parsePinConfigRGBWW(std::vector<channel> channels){
  * This function initializes the APPLedCtrl class by creating a StepSync object,
  * parsing the pin configuration string, initializing the RGBWWLed, setting up
  * the LED controller, and setting the startup color.
+ * 
+ * ToDo:
+ * in the future, this should be expanded to be able to use more pins than just five (some platforms make 12 or more pwm pins available)
+ * the idea is to introduce a layer of abstraction above the pins that can be configured as lights. This way, the user can define a light
+ * to be RGB, RGBW, RGBWW, WW or just a single channel and use one controller to drive multiple "virtual" lights.
+ * For now, however, we will stick to the current implementation. 
+ * 
+ * ToDo:
+ * a nearer term feature I'm, thinking about is named channels. Currently, the channels are named for the RGBWW colors the drive in the HSV 
+ * color model. Named channels would be an extension of the RAW API and allow the user to a) name a channel and b) use that name in the API
+ * to set the intensity for that channel. This will not require a change of the underlying code, but will necessitate a change to the PinConfig 
+ * structure, namely rather than having the color names hardcoded there, I'll switch to channel numbers. 
+ * Once named mode has been fully implemented and a controller has been configured with channel names other than [ red, green, blue, warmwhite, 
+ * coldwhite ], I believe the controller shall not allow calls to the /color api with the HSV or RAW structure but with a new, yet to define
+ * CHANNELS structure that will provide the channel name and the channel brightness.
  */
+
 void APPLedCtrl::init() {
     debug_i("APPLedCtrl::init");
 
@@ -109,8 +125,10 @@ void APPLedCtrl::init() {
 
     PinConfig pins;
     if(app.cfg.general.channels.size()!=0){
+        // prefer the channels config
         pins = APPLedCtrl::parsePinConfigRGBWW(app.cfg.general.channels);
     }else{
+        //fall back on the old pin config string if necessary
         pins = APPLedCtrl::parsePinConfigString(app.cfg.general.pin_config);
     }
 

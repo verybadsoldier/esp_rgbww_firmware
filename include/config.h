@@ -133,29 +133,17 @@ struct ApplicationSettings {
         String otaurl = DEFAULT_OTA_URL;
         String device_name;
         #ifdef ESP8266
-        String supported_color_models="[\"RGB\",\"RGBW\",\"RGBWW\",\"RAW\"}";
+        // String supported_color_models="[\"RGB\",\"RGBW\",\"RGBWW\",\"RAW\"]";
+        // can't just stuff a string in here and hope it'll be interpreted as an array, this has to be a vector, too
+        String supported_color_models = "['RGB','RGBW','RGBWW','RAW']";        
         #endif
         String pin_config_name="mrpj";
         String pin_config_url="https://raw.githubusercontent.com/pljakobs/esp_rgb_webapp2/devel/public/config/pinconfig.json";
-        /*
-        struct pin_config_array {   
-            String channel_1_name = "red";
-            int channel_1_pin = 13;
-            String channel_2_name = "green";
-            int channel_2_pin = 12;
-            String channel_3_name = "blue";
-            int channel_3_pin = 14;
-            String channel_4_name = "warmwhite";
-            int channel_4_pin = 5;
-            String channel_5_name = "coldwhite";
-            int channel_5_pin = 4;
-        };
-        */
+
         std::vector<channel> channels;
         String pin_config = "13,12,14,5,4";
         String buttons_config;
         int buttons_debounce_ms = 50;
-        //pin_config_array pin_config_array;
 
     };
 
