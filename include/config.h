@@ -135,7 +135,7 @@ struct ApplicationSettings {
         #ifdef ESP8266
         // String supported_color_models="[\"RGB\",\"RGBW\",\"RGBWW\",\"RAW\"]";
         // can't just stuff a string in here and hope it'll be interpreted as an array, this has to be a vector, too
-        String supported_color_models = "['RGB','RGBW','RGBWW','RAW']";        
+        std::vector<String> supported_color_models;
         #endif
         String pin_config_name="mrpj";
         String pin_config_url="https://raw.githubusercontent.com/pljakobs/esp_rgb_webapp2/devel/public/config/pinconfig.json";
@@ -371,8 +371,9 @@ struct ApplicationSettings {
         }
     }
 
-    void sanitizeValues() {
-        sync.clock_master_interval = max(sync.clock_master_interval, 1);
+    void initializeConfig(){
+        if(general.pin_config_name=="")
+            general.pin_config_name="mrpw"; //set a sensible default. Other configs can be read from the pinconfig json source either on github or in spiffs. 
         debug_i("populating channels array");
         if (general.channels.size() == 0 && general.pin_config_name == "mrpj") {
             general.channels.push_back({ "red", 13 });
@@ -385,5 +386,18 @@ struct ApplicationSettings {
         for (int i=0;i<general.channels.size();i++) {
             debug_i("channel %i: %s, %i", i, general.channels[i].name.c_str(), general.channels[i].pin);
         }
+        #ifdef ARCH_ESP8266
+        if (general.supported_color_models.size() == 0) {
+            general.supported_color_models.push_back("RGB");
+            general.supported_color_models.push_back("RGBW");
+            general.supported_color_models.push_back("RGBWW");
+            general.supported_color_models.push_back("RAW");
+        }
+        #endif
+
+    }
+    void sanitizeValues() {
+        sync.clock_master_interval = max(sync.clock_master_interval, 1);
+        
     }
 };

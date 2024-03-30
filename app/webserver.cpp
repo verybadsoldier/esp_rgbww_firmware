@@ -719,12 +719,19 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         general["current_pin_config_name"] = app.cfg.general.pin_config_name;
         general["pin_config_url"] = app.cfg.general.pin_config_url;
 
+
         auto channels = general.createNestedArray("channels");
         for(int channel=0;channel<app.cfg.general.channels.size();channel++){
             StaticJsonDocument<64> channelConfig;
             channelConfig["pin"] = app.cfg.general.channels[channel].pin;
             channelConfig["name"] = app.cfg.general.channels[channel].name;
             channels.add(channelConfig);
+        }
+
+        auto supported_color_models = general.createNestedArray("supported_color_models");
+        for(int i=0;i<app.cfg.general.supported_color_models.size();i++){
+            String color_model=app.cfg.general.supported_color_models[i];
+            supported_color_models.add(color_model);
         }
 
         sendApiResponse(response, stream);
