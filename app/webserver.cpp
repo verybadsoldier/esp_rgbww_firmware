@@ -724,8 +724,6 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
             StaticJsonDocument<64> channelConfig;
             channelConfig["pin"] = app.cfg.general.channels[channel].pin;
             channelConfig["name"] = app.cfg.general.channels[channel].name;
-            String name=channelConfig["name"];
-            debug_i("channel %i: %s (should be %s), %i",channel,name.c_str(), app.cfg.general.channels[channel].name.c_str(), channelConfig["pin"]);
             channels.add(channelConfig);
         }
 
@@ -760,6 +758,7 @@ void ApplicationWebserver::onInfo(HttpRequest &request, HttpResponse &response) 
     data["git_version"] = fw_git_version;
     data["git_date"] = fw_git_date;
     data["webapp_version"] = WEBAPP_VERSION;
+    data["api_version"]=F("2");
     data["sming"] = SMING_VERSION;
     data["event_num_clients"] = app.eventserver.activeClients;
     data["uptime"] = app.getUptime();

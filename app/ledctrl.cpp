@@ -75,6 +75,26 @@ PinConfig APPLedCtrl::parsePinConfigString(String& pinStr) {
     return cfg;
 }
 
+PinConfig APPLedCtrl::parsePinConfigRGBWW(std::vector<channel> channels){
+    PinConfig cfg;
+
+    debug_i("getting pin configuration from channels array");
+    for(int i=0;i<channels.size();i++){
+        if(channels[i].name == "red"){
+            cfg.red = channels[i].pin;
+        }else if(channels[i].name == "green"){
+            cfg.green = channels[i].pin;
+        }else  if(channels[i].name == "blue"){
+            cfg.blue = channels[i].pin;
+        }else if(channels[i].name == "warmwhite"){
+            cfg.warmwhite = channels[i].pin;
+        }else if(channels[i].name == "coldwhite"){
+            cfg.coldwhite = channels[i].pin;
+        }
+    }
+    return cfg;
+}
+
 /**
  * @brief Initializes the APPLedCtrl class.
  *
@@ -87,7 +107,12 @@ void APPLedCtrl::init() {
 
     _stepSync = new StepSync();
 
-    const PinConfig pins = APPLedCtrl::parsePinConfigString(app.cfg.general.pin_config);
+    PinConfig pins;
+    if(app.cfg.general.channels.size()!=0){
+        pins = APPLedCtrl::parsePinConfigRGBWW(app.cfg.general.channels);
+    }else{
+        pins = APPLedCtrl::parsePinConfigString(app.cfg.general.pin_config);
+    }
 
     RGBWWLed::init(pins.red, pins.green, pins.blue, pins.warmwhite, pins.coldwhite, PWM_FREQUENCY);
 
