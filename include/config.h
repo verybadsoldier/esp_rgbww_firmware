@@ -17,7 +17,23 @@
  *
  * @section DESCRIPTION
  *
- *
+ * @section PLAN
+ * holding the config struct in RAM seems wasteful. Also, having two entirely different
+ * sets of code to serialize/deserialize the config struct for the API and load store 
+ * is less than ideal. 
+ * Also, the json representation of the base struct can outgrow the 1370Bytes allowed 
+ * in a single http request and there may not be enough RAM to assemble multiple fragents 
+ * or tcp packets.
+ * 
+ * I believe a better way to enhance this would be to have a config class that abstracts 
+ * the json handling and avoids holding all data in RAM. 
+ * I envision a class that can be used like this:
+ * auto config.get("json path")
+ * config.set("json path", "value") with value being either of type String or JsonObject or JsonArray
+ * config.save()
+ * config.load()
+ * config.init()
+ * 
  */
 #pragma once
 

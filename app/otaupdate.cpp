@@ -30,7 +30,7 @@ void ApplicationOTA::start(String romurl){
 // start OTA for v1 partition layout
 void ApplicationOTA::start(String romurl, String spiffsurl) {
     debug_i("ApplicationOTA::start");
-    app.wsBroadcast("ota_status","started");
+    app.wsBroadcast(F("ota_status"),F("started"));
 	otaUpdater.reset(new Ota::Network::HttpUpgrader);
     status = OTASTATUS::OTA_PROCESSING;
 

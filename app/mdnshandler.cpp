@@ -28,7 +28,7 @@ void mdnsHandler::start()
     
     //serch for the esprgbwwAIP service. This is used in the onMessage handler to filter out unwanted messages.
     //to fulter for a number of services, this would have to be adapted a bit.
-    setSearchName("esprgbwwAPI."+service);
+    setSearchName(F("esprgbwwAPI.")+service);
 
     //query mDNS at regular intervals
     _mdnsSearchTimer.setCallback(mdnsHandler::sendSearchCb, this);
@@ -132,7 +132,7 @@ void mdnsHandler::sendSearch()
             debug_i("Removing host %s from list", host["hostname"].as<const char*>());
                 
             // notify websocket clients
-            JsonRpcMessage msg("removed_host");
+            JsonRpcMessage msg(F("removed_host"));
             JsonObject root = msg.getParams();   
             root["hostname"] = host["hostname"];
             String jsonStr = Json::serialize(msg.getRoot());
@@ -198,7 +198,7 @@ void mdnsHandler::addHost(const String& hostname, const String& ip_address, int 
             debug_i("new host: %s", newHostString.c_str());
         #endif
 
-        JsonRpcMessage msg("new_host");
+        JsonRpcMessage msg(F("new_host"));
         JsonObject root = msg.getParams();   
         root.set(newHost);  
         String jsonStr = Json::serialize(msg.getRoot());
