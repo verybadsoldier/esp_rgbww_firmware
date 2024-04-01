@@ -117,7 +117,7 @@ int AppMqttClient::onMessageReceived(MqttClient& client, mqtt_message_t* msg) {
     String message = MqttBuffer(msg->publish.content);
 
     if (app.cfg.sync.clock_slave_enabled && (topic == app.cfg.sync.clock_slave_topic)) {
-        if (message == "reset") {
+        if (message == F("reset")) {
             app.rgbwwctrl.onMasterClockReset();
         }
         else  {
@@ -162,17 +162,17 @@ void AppMqttClient::publishCurrentRaw(const ChannelOutput& raw) {
     StaticJsonDocument<200> doc;
     JsonObject root = doc.to<JsonObject>();
     JsonObject rawJson = root.createNestedObject("raw");
-    rawJson["r"] = raw.r;
-    rawJson["g"] = raw.g;
-    rawJson["b"] = raw.b;
-    rawJson["cw"] = raw.cw;
-    rawJson["ww"] = raw.ww;
+    rawJson[F("r")] = raw.r;
+    rawJson[F("g")] = raw.g;
+    rawJson[F("b")] = raw.b;
+    rawJson[F("cw")] = raw.cw;
+    rawJson[F("ww")] = raw.ww;
 
-    root["t"] = 0;
-    root["cmd"] = "solid";
+    root[F("t")] = 0;
+    root[F("cmd")] = "solid";
 
     String jsonMsg = Json::serialize(root);
-    publish(buildTopic("color"), jsonMsg, true);
+    publish(buildTopic(F("color")), jsonMsg, true);
 }
 
 void AppMqttClient::publishCurrentHsv(const HSVCT& color) {
@@ -189,16 +189,16 @@ void AppMqttClient::publishCurrentHsv(const HSVCT& color) {
     StaticJsonDocument<200> doc;
     JsonObject root = doc.to<JsonObject>();
     JsonObject hsv = root.createNestedObject("hsv");
-    hsv["h"] = h;
-    hsv["s"] = s;
-    hsv["v"] = v;
-    hsv["ct"] = ct;
+    hsv[F("h")] = h;
+    hsv[F("s")] = s;
+    hsv[F("v")] = v;
+    hsv[F("ct")] = ct;
 
-    root["t"] = 0;
-    root["cmd"] = "solid";
+    root[F("t")] = 0;
+    root[F("cmd")] = "solid";
 
     String jsonMsg = Json::serialize(root);
-    publish(buildTopic("color"), jsonMsg, true);
+    publish(buildTopic(F("color")), jsonMsg, true);
 }
 
 String AppMqttClient::buildTopic(const String& suffix) {
@@ -216,26 +216,26 @@ void AppMqttClient::publishClock(uint32_t steps) {
         String msg;
         msg += steps;
 
-        publish(buildTopic("clock"), msg, false);
+        publish(buildTopic(F("clock")), msg, false);
     }
 }
 
 void AppMqttClient::publishClockReset() {
-    publish(buildTopic("clock"), "reset", false);
+    publish(buildTopic(F("clock")), "reset", false);
 }
 
 void AppMqttClient::publishClockInterval(uint32_t curInterval) {
     String msg;
     msg += curInterval;
 
-    publish(buildTopic("clock_interval"), msg, false);
+    publish(buildTopic(F("clock_interval")), msg, false);
 }
 
 void AppMqttClient::publishClockSlaveOffset(int offset) {
     String msg;
     msg += offset;
 
-    publish(buildTopic("clock_slave_offset"), msg, false);
+    publish(buildTopic(F("clock_slave_offset")), msg, false);
 }
 
 void AppMqttClient::publishCommand(const String& method, const JsonObject& params) {
@@ -244,7 +244,7 @@ void AppMqttClient::publishCommand(const String& method, const JsonObject& param
     JsonRpcMessage msg(method);
 
     if (params.size() > 0)
-        msg.getRoot()["params"] = params;
+        msg.getRoot()[F("params")] = params;
 
     String msgStr = Json::serialize(msg.getRoot());
     publish(buildTopic(F("command")), msgStr, false);
@@ -255,9 +255,9 @@ void AppMqttClient::publishTransitionFinished(const String& name, bool requeued)
 
     StaticJsonDocument<200> doc;
     JsonObject root = doc.to<JsonObject>();
-    root["name"] = name;
-    root["requequed"] = requeued;
+    root[F("name")] = name;
+    root[F("requequed")] = requeued;
 
     String jsonMsg = Json::serialize(root);
-    publish(buildTopic("transition_finished"), jsonMsg, true);
+    publish(buildTopic(F("transition_finished")), jsonMsg, true);
 }

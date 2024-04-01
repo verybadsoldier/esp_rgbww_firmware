@@ -385,7 +385,7 @@ void AppWIFI::broadcastWifiStatus(String message){
         JsonObject root = msg.getParams();
 
         if(message!="") {
-            root["message"] = message;
+            root[F("message")] = message;
         }   
 
         JsonObject station = root.createNestedObject(F("station"));

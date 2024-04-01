@@ -371,6 +371,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
     if (request.method == HTTP_OPTIONS){
         // probably a CORS request
         response.setAllowCrossDomainOrigin("*");
+        response.setHeader("Access-Control-Allow-Headers", "Content-Type");
         sendApiCode(response,API_CODES::API_SUCCESS,"");
         debug_i("HTTP_OPTIONS Request, sent API_SUCCSSS");
         return;
@@ -393,7 +394,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
 
         // remove comment for debugging
         debug_i("serialized json object");
-        Json::serialize(doc, Serial, Json::Pretty);
+        //Json::serialize(doc, Serial, Json::Pretty);
 
         bool ip_updated = false;
         bool color_updated = false;
@@ -744,6 +745,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
             supported_color_models.add(color_model);
         }
         response.setAllowCrossDomainOrigin("*");
+        debug_i("sending config json of size %i",sizeof(stream));
         sendApiResponse(response, stream);
     }
 }
@@ -1474,7 +1476,7 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
                     String fileName=String(dir.stat().name);
                     #ifdef DEBUG_OBJECT_API
                     debug_i("found file: %s",fileName.c_str());
-                    debug_i("file begins with %s",fileName.substring(1,1).c_str()); 
+                    debug_i("file begins with %s",fileName.substring(0,1).c_str()); 
                     #endif
                     if(fileName.substring(1,1)==objectType){
                         #ifdef DEBUG_OBJECT_API

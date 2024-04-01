@@ -321,18 +321,18 @@ bool Application::delayedCMD(String cmd, int delay) {
         _systimer.initializeMs(delay, TimerDelegate(&Application::reset, this)).startOnce();
     } else if (cmd.equals(F("restart"))) {
         _systimer.initializeMs(delay, TimerDelegate(&Application::restart, this)).startOnce();
-    } else if (cmd.equals("stopap")) {
+    } else if (cmd.equals(F("stopap"))) {
         network.stopAp(2000);
-    } else if (cmd.equals("forget_wifi")) {
+    } else if (cmd.equals(F("forget_wifi"))) {
         _systimer.initializeMs(delay, TimerDelegate(&AppWIFI::forgetWifi, &network)).startOnce();
-    } else if (cmd.equals("forget_wifi_and_restart")) {
+    } else if (cmd.equals(F("forget_wifi_and_restart"))) {
         network.forgetWifi();
         _systimer.initializeMs(delay, TimerDelegate(&Application::forget_wifi_and_restart, this)).startOnce();
-    } else if (cmd.equals("umountfs")) {
+    } else if (cmd.equals(F("umountfs"))) {
         //umountfs();
-    } else if (cmd.equals("mountfs")) {
+    } else if (cmd.equals(F("mountfs"))) {
         //
-    } else if (cmd.equals("switch_rom")) {
+    } else if (cmd.equals(F("switch_rom"))) {
         switchRom();
         //_systimer.initializeMs(delay, TimerDelegate(&Application::restart, this)).startOnce();
     } else {
@@ -354,7 +354,7 @@ void Application::listSpiffsPartitions()
 			Directory dir;
 			if(dir.open()) {
 				while(dir.next()) {
-					Serial.print("  ");
+					Serial.print(F("  "));
 					Serial.println(dir.stat().name);
 				}
 			}
@@ -442,7 +442,7 @@ void Application::wsBroadcast(String message) {
 void Application::wsBroadcast(String cmd, String message){
      JsonRpcMessage msg(cmd);
             JsonObject root = msg.getParams();   
-            root["message"] = message;
+            root[F("message")] = message;
             String jsonStr = Json::serialize(msg.getRoot());
             wsBroadcast(jsonStr);
 }
