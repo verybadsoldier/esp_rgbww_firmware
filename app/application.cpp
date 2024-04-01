@@ -108,11 +108,6 @@ extern "C" void __wrap_user_pre_init(void)
 			flash.write(PARTITION_TABLE_OFFSET, data, partitionTableData.size());
 			flash.loadPartitions(PARTITION_TABLE_OFFSET);
 		}
-
-	  //  LOAD_FSTR(data, rbootData)
-      //  //data[3] = (data[3] & 0x0F) | (4 << 4); // beware, hardcoding flash size to 4MB
-      //  flash.erase_range(0, flash.getBlockSize());
-	  //  flash.write(0, data, rbootData.size());
        	
 	}
 
@@ -159,7 +154,7 @@ void Application::uptimeCounter() {
 void Application::init() {
     app.ota.checkAtBoot();
     for(int i=0;i<10;i++){
-        Serial.print("=");
+        Serial.print(_F("="));
         delay(200);
     }
     Serial.print("\r\n");
@@ -188,6 +183,8 @@ void Application::init() {
     }
 #endif
 
+    debug_i("going to initialize config");
+    config::initializeConfig(cfg); // initialize the config structure if necessary
     // list spiffs partitions 
     listSpiffsPartitions();
 
@@ -320,9 +317,9 @@ void Application::forget_wifi_and_restart() {
 
 bool Application::delayedCMD(String cmd, int delay) {
     debug_i("Application::delayedCMD cmd: %s - delay: %i", cmd.c_str(), delay);
-    if (cmd.equals("reset")) {
+    if (cmd.equals(F("reset"))) {
         _systimer.initializeMs(delay, TimerDelegate(&Application::reset, this)).startOnce();
-    } else if (cmd.equals("restart")) {
+    } else if (cmd.equals(F("restart"))) {
         _systimer.initializeMs(delay, TimerDelegate(&Application::restart, this)).startOnce();
     } else if (cmd.equals("stopap")) {
         network.stopAp(2000);

@@ -371,33 +371,36 @@ struct ApplicationSettings {
         }
     }
 
-    void initializeConfig(){
-        if(general.pin_config_name=="")
-            general.pin_config_name="mrpw"; //set a sensible default. Other configs can be read from the pinconfig json source either on github or in spiffs. 
-        debug_i("populating channels array");
-        if (general.channels.size() == 0 && general.pin_config_name == "mrpj") {
-            general.channels.push_back({ "red", 13 });
-            general.channels.push_back({ "green", 12 });
-            general.channels.push_back({ "blue", 14 });
-            general.channels.push_back({ "warmwhite", 5 });
-            general.channels.push_back({ "coldwhite", 4 });
-        }
-        debug_i("added %i elements to channels array", general.channels.size());
-        for (int i=0;i<general.channels.size();i++) {
-            debug_i("channel %i: %s, %i", i, general.channels[i].name.c_str(), general.channels[i].pin);
-        }
-        #ifdef ARCH_ESP8266
-        if (general.supported_color_models.size() == 0) {
-            general.supported_color_models.push_back("RGB");
-            general.supported_color_models.push_back("RGBW");
-            general.supported_color_models.push_back("RGBWW");
-            general.supported_color_models.push_back("RAW");
-        }
-        #endif
-
-    }
     void sanitizeValues() {
         sync.clock_master_interval = max(sync.clock_master_interval, 1);
         
     }
 };
+    namespace config{
+    inline void initializeConfig(ApplicationSettings& cfg){
+        debug_i("initializing vectors in config");
+        if(cfg.general.pin_config_name=="")
+            cfg.general.pin_config_name="mrpw"; //set a sensible default. Other configs can be read from the pinconfig json source either on github or in spiffs. 
+        debug_i("populating channels array");
+        if (cfg.general.channels.size() == 0 && cfg.general.pin_config_name == "mrpj") {
+            cfg.general.channels.push_back({ "red", 13 });
+            cfg.general.channels.push_back({ "green", 12 });
+            cfg.general.channels.push_back({ "blue", 14 });
+            cfg.general.channels.push_back({ "warmwhite", 5 });
+            cfg.general.channels.push_back({ "coldwhite", 4 });
+        }
+        debug_i("added %i elements to channels array", cfg.general.channels.size());
+        for (uint8_t i=0;i<cfg.general.channels.size();i++) {
+            debug_i("channel %i: %s, %i", i, cfg.general.channels[i].name.c_str(), cfg.general.channels[i].pin);
+        }
+        #ifdef ARCH_ESP8266
+        if (cfg.general.supported_color_models.size() == 0) {
+            cfg.general.supported_color_models.push_back("RGB");
+            cfg.general.supported_color_models.push_back("RGBW");
+            cfg.general.supported_color_models.push_back("RGBWW");
+            cfg.general.supported_color_models.push_back("RAW");
+        }
+        #endif
+    }
+}//namespace config
+  

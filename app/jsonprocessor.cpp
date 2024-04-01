@@ -59,7 +59,7 @@ bool JsonProcessor::onColor(JsonObject root, String& msg, bool relay) {
     }
 
     if (relay)
-        app.onCommandRelay("color", root);
+        app.onCommandRelay(F("color"), root);
 
     return result;
 }
@@ -102,7 +102,7 @@ bool JsonProcessor::onStop(JsonObject root, String& msg, bool relay) {
 
     if (relay) {
         addChannelStatesToCmd(root, params.channels);
-        app.onCommandRelay("stop", root);
+        app.onCommandRelay(F("stop"), root);
     }
 
     return true;
@@ -147,7 +147,7 @@ bool JsonProcessor::onSkip(JsonObject root, String& msg, bool relay) {
 
     if (relay) {
         addChannelStatesToCmd(root, params.channels);
-        app.onCommandRelay("skip", root);
+        app.onCommandRelay(F("skip"), root);
     }
 
     return true;
@@ -194,7 +194,7 @@ bool JsonProcessor::onPause(JsonObject root, String& msg, bool relay) {
 
     if (relay) {
         addChannelStatesToCmd(root, params.channels);
-        app.onCommandRelay("pause", root);
+        app.onCommandRelay(F("pause"), root);
     }
 
     return true;
@@ -234,7 +234,7 @@ bool JsonProcessor::onContinue(JsonObject root, String& msg, bool relay) {
     app.rgbwwctrl.continueAnimation(params.channels);
 
     if (relay)
-        app.onCommandRelay("continue", root);
+        app.onCommandRelay(F("continue"), root);
 
     return true;
 }
@@ -278,7 +278,7 @@ bool JsonProcessor::onBlink(JsonObject root, String& msg, bool relay) {
     app.rgbwwctrl.blink(params.channels, params.ramp.value, params.queue, params.requeue, params.name);
 
     if (relay)
-        app.onCommandRelay("blink", root);
+        app.onCommandRelay(F("blink"), root);
 
     return true;
 }
@@ -312,7 +312,7 @@ bool JsonProcessor::onToggle(JsonObject root, String& msg, bool relay) {
     app.rgbwwctrl.toggle();
 
     if (relay)
-        app.onCommandRelay("toggle", root);
+        app.onCommandRelay(F("toggle"), root);
 
     return true;
 }
@@ -409,7 +409,7 @@ bool JsonProcessor::onDirect(JsonObject root, String& msg, bool relay) {
     }
 
     if (relay)
-        app.onCommandRelay("direct", root);
+        app.onCommandRelay(F("direct"), root);
 
     return true;
 }
@@ -655,7 +655,7 @@ void JsonProcessor::addChannelStatesToCmd(JsonObject root, const RGBWWLed::Chann
     case RGBWWLed::ColorMode::Hsv:
     {
         const HSVCT& c = app.rgbwwctrl.getCurrentColor();
-        JsonObject obj = root.createNestedObject("hsv");
+        JsonObject obj = root.createNestedObject(F("hsv"));
         if (channels.count() == 0 || channels.contains(CtrlChannel::Hue))
             obj["h"] = (float(c.h) / float(RGBWW_CALC_HUEWHEELMAX)) * 360.0;
         if (channels.count() == 0 || channels.contains(CtrlChannel::Sat))
@@ -669,7 +669,7 @@ void JsonProcessor::addChannelStatesToCmd(JsonObject root, const RGBWWLed::Chann
     case RGBWWLed::ColorMode::Raw:
     {
         const ChannelOutput& c = app.rgbwwctrl.getCurrentOutput();
-        JsonObject obj = root.createNestedObject("raw");
+        JsonObject obj = root.createNestedObject(F("raw"));
         if (channels.count() == 0 || channels.contains(CtrlChannel::Red))
             obj["r"] = c.r;
         if (channels.count() == 0 || channels.contains(CtrlChannel::Green))

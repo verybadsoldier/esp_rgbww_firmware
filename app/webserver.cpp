@@ -47,29 +47,29 @@ ApplicationWebserver::ApplicationWebserver() {
 void ApplicationWebserver::init() {
     paths.setDefault(HttpPathDelegate(&ApplicationWebserver::onFile, this));
     paths.set("/", HttpPathDelegate(&ApplicationWebserver::onIndex, this));
-    paths.set("/webapp", HttpPathDelegate(&ApplicationWebserver::onWebapp, this));
-    paths.set("/config", HttpPathDelegate(&ApplicationWebserver::onConfig, this));
-    paths.set("/info", HttpPathDelegate(&ApplicationWebserver::onInfo, this));
-    paths.set("/color", HttpPathDelegate(&ApplicationWebserver::onColor, this));
-    paths.set("/networks", HttpPathDelegate(&ApplicationWebserver::onNetworks, this));
-    paths.set("/scan_networks", HttpPathDelegate(&ApplicationWebserver::onScanNetworks, this));
-    paths.set("/system", HttpPathDelegate(&ApplicationWebserver::onSystemReq, this));
-    paths.set("/update", HttpPathDelegate(&ApplicationWebserver::onUpdate, this));
-    paths.set("/connect", HttpPathDelegate(&ApplicationWebserver::onConnect, this));
-    paths.set("/ping", HttpPathDelegate(&ApplicationWebserver::onPing, this));
-    paths.set("/hosts", HttpPathDelegate(&ApplicationWebserver::onHosts, this));
-    paths.set("/object", HttpPathDelegate(&ApplicationWebserver::onObject, this));
+    paths.set(F("/webapp"), HttpPathDelegate(&ApplicationWebserver::onWebapp, this));
+    paths.set(F("/config"), HttpPathDelegate(&ApplicationWebserver::onConfig, this));
+    paths.set(F("/info"), HttpPathDelegate(&ApplicationWebserver::onInfo, this));
+    paths.set(F("/color"), HttpPathDelegate(&ApplicationWebserver::onColor, this));
+    paths.set(F("/networks"), HttpPathDelegate(&ApplicationWebserver::onNetworks, this));
+    paths.set(F("/scan_networks"), HttpPathDelegate(&ApplicationWebserver::onScanNetworks, this));
+    paths.set(F("/system"), HttpPathDelegate(&ApplicationWebserver::onSystemReq, this));
+    paths.set(F("/update"), HttpPathDelegate(&ApplicationWebserver::onUpdate, this));
+    paths.set(F("/connect"), HttpPathDelegate(&ApplicationWebserver::onConnect, this));
+    paths.set(F("/ping"), HttpPathDelegate(&ApplicationWebserver::onPing, this));
+    paths.set(F("/hosts"), HttpPathDelegate(&ApplicationWebserver::onHosts, this));
+    paths.set(F("/object"), HttpPathDelegate(&ApplicationWebserver::onObject, this));
     // animation controls
-    paths.set("/stop", HttpPathDelegate(&ApplicationWebserver::onStop, this));
-    paths.set("/skip", HttpPathDelegate(&ApplicationWebserver::onSkip, this));
-    paths.set("/pause", HttpPathDelegate(&ApplicationWebserver::onPause, this));
-    paths.set("/continue", HttpPathDelegate(&ApplicationWebserver::onContinue, this));
-    paths.set("/blink", HttpPathDelegate(&ApplicationWebserver::onBlink, this));
+    paths.set(F("/stop"), HttpPathDelegate(&ApplicationWebserver::onStop, this));
+    paths.set(F("/skip"), HttpPathDelegate(&ApplicationWebserver::onSkip, this));
+    paths.set(F("/pause"), HttpPathDelegate(&ApplicationWebserver::onPause, this));
+    paths.set(F("/continue"), HttpPathDelegate(&ApplicationWebserver::onContinue, this));
+    paths.set(F("/blink"), HttpPathDelegate(&ApplicationWebserver::onBlink, this));
 
-    paths.set("/toggle", HttpPathDelegate(&ApplicationWebserver::onToggle, this));
+    paths.set(F("/toggle"), HttpPathDelegate(&ApplicationWebserver::onToggle, this));
 
     // storage api
-    paths.set("/storage",HttpPathDelegate(&ApplicationWebserver::onStorage, this));
+    //paths.set("/storage",HttpPathDelegate(&ApplicationWebserver::onStorage, this));
 
     // websocket api
     wsResource= new WebsocketResource();
@@ -159,9 +159,9 @@ bool ICACHE_FLASH_ATTR ApplicationWebserver::authenticated(HttpRequest &request,
 
     if (!authenticated) {
         response.code = HTTP_STATUS_UNAUTHORIZED;
-        response.setHeader("WWW-Authenticate", "Basic realm=\"RGBWW Server\"");
-        response.setHeader("401 wrong credentials", "wrong credentials");
-        response.setHeader("Connection", "close");
+        response.setHeader(F("WWW-Authenticate"), F("Basic realm=\"RGBWW Server\""));
+        response.setHeader(F("401 wrong credentials"), F("wrong credentials"));
+        response.setHeader(F("Connection"), F("close"));
     }
 
     return authenticated;
@@ -170,13 +170,13 @@ bool ICACHE_FLASH_ATTR ApplicationWebserver::authenticated(HttpRequest &request,
 String ApplicationWebserver::getApiCodeMsg(API_CODES code) {
     switch (code) {
     case API_CODES::API_MISSING_PARAM:
-        return String("missing param");
+        return String(F("missing param"));
     case API_CODES::API_UNAUTHORIZED:
-        return String("authorization required");
+        return String(F("authorization required"));
     case API_CODES::API_UPDATE_IN_PROGRESS:
-        return String("update in progress");
+        return String(F("update in progress"));
     default:
-        return String("bad request");
+        return String(F("bad request"));
     }
 }
 
@@ -187,8 +187,8 @@ void ApplicationWebserver::sendApiResponse(HttpResponse &response, JsonObjectStr
     }
 
     response.setAllowCrossDomainOrigin("*");
-    response.setHeader("accept","GET, POST, OPTIONS");
-    response.setHeader("Access-Control-Allow-Headers","*");
+    response.setHeader(F("accept"),F("GET, POST, OPTIONS"));
+    response.setHeader(F("Access-Control-Allow-Headers"),"*");
     if (code != HTTP_STATUS_OK) {
         response.code = HTTP_STATUS_BAD_REQUEST;
     }
@@ -202,10 +202,10 @@ void ApplicationWebserver::sendApiCode(HttpResponse &response, API_CODES code, S
         msg = getApiCodeMsg(code);
     }
     if (code == API_CODES::API_SUCCESS) {
-        json["success"] = true;
+        json[F("success")] = true;
         sendApiResponse(response, stream, HTTP_STATUS_OK);
     } else {
-        json["error"] = msg;
+        json[F("error")] = msg;
         sendApiResponse(response, stream, HTTP_STATUS_BAD_REQUEST);
     }
 }
@@ -232,7 +232,7 @@ void ApplicationWebserver::onFile(HttpRequest &request, HttpResponse &response) 
     if (!app.isFilesystemMounted()) {
         response.setContentType(MIME_TEXT);
         response.code = HTTP_STATUS_INTERNAL_SERVER_ERROR;
-        response.sendString("No filesystem mounted");
+        response.sendString(F("No filesystem mounted"));
         return;
     }
 
@@ -247,7 +247,7 @@ void ApplicationWebserver::onFile(HttpRequest &request, HttpResponse &response) 
     if (!fileExist(file) && !fileExist(file + ".gz") && WifiAccessPoint.isEnabled()) {
         //if accesspoint is active and we couldn`t find the file - redirect to index
         debug_d("ApplicationWebserver::onFile redirecting");
-        response.headers[HTTP_HEADER_LOCATION] = "http://" + WifiAccessPoint.getIP().toString() +"/";
+        response.headers[HTTP_HEADER_LOCATION] = F("http://") + WifiAccessPoint.getIP().toString() +"/";
     } else {
         #ifndef NOCACHE
         response.setCache(86400, true); // It's important to use cache for better performance.
@@ -262,11 +262,11 @@ void ApplicationWebserver::onWebapp(HttpRequest &request, HttpResponse &response
         return;
     }
 
-    response.headers[HTTP_HEADER_LOCATION]="/index.html";
-    response.setHeader("Access-Control-Allow-Origin", "*");
+    response.headers[HTTP_HEADER_LOCATION]=F("/index.html");
+    response.setHeader(F("Access-Control-Allow-Origin"), "*");
 
     response.code = HTTP_STATUS_PERMANENT_REDIRECT;
-    response.sendString("Redirecting to /index.html");
+    response.sendString(F("Redirecting to /index.html"));
 }
 
 void ApplicationWebserver::onIndex(HttpRequest &request, HttpResponse &response) {
@@ -291,7 +291,7 @@ void ApplicationWebserver::onIndex(HttpRequest &request, HttpResponse &response)
 
     if (request.method == HTTP_OPTIONS){
         // probably a CORS request
-        response.setHeader("Access-Control-Allow-Origin", "*");
+        response.setHeader(F("Access-Control-Allow-Origin"), "*");
         sendApiCode(response,API_CODES::API_SUCCESS,"");
         debug_i("HTTP_OPTIONS Request, sent API_SUCCSSS");
         return;
@@ -300,7 +300,7 @@ void ApplicationWebserver::onIndex(HttpRequest &request, HttpResponse &response)
     if (!app.isFilesystemMounted()) {
         response.setContentType(MIME_TEXT);
         response.code = HTTP_STATUS_INTERNAL_SERVER_ERROR;
-        response.sendString("No filesystem mounted");
+        response.sendString(F("No filesystem mounted"));
         return;
     }
     
@@ -324,8 +324,8 @@ void ApplicationWebserver::onIndex(HttpRequest &request, HttpResponse &response)
     else {
     */
         // we are connected to ap - serve normal settings page
-        response.setHeader("Access-Control-Allow-Origin", "*");
-        response.sendFile("index.html");
+        response.setHeader(F("Access-Control-Allow-Origin"), "*");
+        response.sendFile(F("index.html"));
     /*}
     */
 }
@@ -334,7 +334,7 @@ bool ApplicationWebserver::checkHeap(HttpResponse &response) {
     unsigned fh = system_get_free_heap_size();
     if (fh < _minimumHeap) {
         response.code = HTTP_STATUS_TOO_MANY_REQUESTS;
-        response.setHeader("Retry-After", "2");
+        response.setHeader(F("Retry-After"), "2");
         return false;
     }
     return true;
@@ -358,7 +358,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
     
 
     if (request.method != HTTP_POST && request.method != HTTP_GET && request.method!=HTTP_OPTIONS) {
-        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not POST, GET or OPTIONS request");
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, F("not POST, GET or OPTIONS request"));
         return;
     }
     
@@ -368,7 +368,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
     */
     if (request.method == HTTP_OPTIONS){
         // probably a CORS request
-        response.setHeader("Access-Control-Allow-Origin", "*");
+        response.setHeader(F("Access-Control-Allow-Origin"), "*");
         sendApiCode(response,API_CODES::API_SUCCESS,"");
         debug_i("HTTP_OPTIONS Request, sent API_SUCCSSS");
         return;
@@ -377,10 +377,10 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
     if (request.method == HTTP_POST) {
         debug_i("======================\nHTTP POST request received, ");
         String body = request.getBody();
-        debug_i("body: \n", body);
+        debug_i("body length: %i",body.length());
+        debug_i("body: %s", body.c_str());
         if (body == NULL) {
-
-            sendApiCode(response, API_CODES::API_BAD_REQUEST, "could not parse HTTP body");
+            sendApiCode(response, API_CODES::API_BAD_REQUEST, F("could not parse HTTP body"));
             return;
         }
 
@@ -390,18 +390,20 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         Json::deserialize(doc, body);
 
         // remove comment for debugging
-        // Json::serialize(doc, Serial, Json::Pretty);
+        debug_i("serialized json object");
+        Json::serialize(doc, Serial, Json::Pretty);
 
         bool ip_updated = false;
         bool color_updated = false;
         bool ap_updated = false;
         JsonObject root = doc.as<JsonObject>();
         if (root.isNull()) {
-            sendApiCode(response, API_CODES::API_BAD_REQUEST, "no root object");
+            sendApiCode(response, API_CODES::API_BAD_REQUEST, F("no root object"));
             return;
         }
+        response.setHeader(F("Access-Control-Allow-Origin"), "*");
 
-        JsonObject jnet = root["network"];
+        JsonObject jnet = root[F("network")];
         if (!jnet.isNull()) {
   
             JsonObject con = jnet["connection"];
@@ -481,7 +483,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
             }
         }
 
-        JsonObject jcol = root["color"];
+        JsonObject jcol = root[F("color")];
         if (!jcol.isNull()) {
 
         	JsonObject jhsv = jcol["hsv"];
@@ -542,25 +544,29 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
             Json::getValue(jgen["pin_config"], app.cfg.general.pin_config);
         	Json::getValue(jgen["buttons_config"], app.cfg.general.buttons_config);
         	Json::getValue(jgen["buttons_debounce_ms"], app.cfg.general.buttons_debounce_ms);
-            Json::getValue(jgen["supported_color_models"], app.cfg.general.supported_color_models);
             Json::getValue(jgen["pin_config_name"],app.cfg.general.pin_config_name);
             Json::getValue(jgen["pin_config_url"],app.cfg.general.pin_config_url);
             // read channels array from config and push it to app.cfg.general.channels
             // if there are already channels in the vector, clear it first 
             JsonArray jchannels = jgen["channels"];
+            debug_i("populating channels");
+            Json::serialize(jchannels, Serial, Json::Pretty);
+
             if (app.cfg.general.channels.size()!=0){
                 app.cfg.general.channels.clear();
             }
+            uint8_t numChannels=jchannels.size();
+            debug_i("populating %i channels", numChannels);
             for (int i = 0; i < jchannels.size(); i++) {
                 JsonObject jchannel = jchannels[i];
                 if (!jchannel.isNull()) {
                     channel channel;
                     Json::getValue(jchannel["pin"], channel.pin);
                     Json::getValue(jchannel["name"], channel.name);
+                    debug_i("adding channel %i with name %s",channel.pin, channel.name);
                     app.cfg.general.channels.push_back(channel);
                 }
             }
-
         }
 
         JsonObject jntp = root["ntp"];
@@ -715,25 +721,27 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         general["pin_config"] = app.cfg.general.pin_config;
         general["buttons_config"] = app.cfg.general.buttons_config;
         general["buttons_debounce_ms"] = app.cfg.general.buttons_debounce_ms;
-        general["supported_color_models"] = app.cfg.general.supported_color_models;
         general["current_pin_config_name"] = app.cfg.general.pin_config_name;
         general["pin_config_url"] = app.cfg.general.pin_config_url;
 
-
         auto channels = general.createNestedArray("channels");
-        for(int channel=0;channel<app.cfg.general.channels.size();channel++){
+        debug_i("adding channels to json");
+        for(uint8_t channel=0;channel<app.cfg.general.channels.size();channel++){
             StaticJsonDocument<64> channelConfig;
+            debug_i("adding channel %i with name %s",app.cfg.general.channels[channel].pin, app.cfg.general.channels[channel].name.c_str());
             channelConfig["pin"] = app.cfg.general.channels[channel].pin;
             channelConfig["name"] = app.cfg.general.channels[channel].name;
             channels.add(channelConfig);
         }
 
         auto supported_color_models = general.createNestedArray("supported_color_models");
-        for(int i=0;i<app.cfg.general.supported_color_models.size();i++){
+        debug_i("adding color models");
+        for(uint8_t i=0;i<app.cfg.general.supported_color_models.size();i++){
+            debug_i("adding color model %s",app.cfg.general.supported_color_models[i].c_str());
             String color_model=app.cfg.general.supported_color_models[i];
             supported_color_models.add(color_model);
         }
-
+        response.setHeader("Access-Control-Allow-Origin", "*");
         sendApiResponse(response, stream);
     }
 }
