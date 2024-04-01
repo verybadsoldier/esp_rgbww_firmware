@@ -169,7 +169,7 @@ void ApplicationOTA::saveStatus(OTASTATUS status) {
     debug_i("ApplicationOTA::saveStatus");
     StaticJsonDocument<128> doc;
     JsonObject root = doc.to<JsonObject>();
-    root["status"] = int(status);
+    root[F("status")] = int(status);
     Json::saveToFile(root, OTA_STATUS_FILE);
 }
 
@@ -177,7 +177,7 @@ OTASTATUS ApplicationOTA::loadStatus() {
     debug_i("ApplicationOTA::loadStatus");
     StaticJsonDocument<128> doc;
     if (Json::loadFromFile(doc, OTA_STATUS_FILE)) {
-        OTASTATUS status = (OTASTATUS) doc["status"].as<int>();
+        OTASTATUS status = (OTASTATUS) doc[F("status")].as<int>();
         return status;
     } else {
         return OTASTATUS::OTA_NOT_UPDATING;
