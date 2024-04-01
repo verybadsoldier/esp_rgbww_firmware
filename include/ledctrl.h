@@ -42,10 +42,10 @@ struct ColorStorage {
     	StaticJsonDocument<128> doc;
         if (Json::loadFromFile(doc, APP_COLOR_FILE)) {
             JsonObject root = doc.as<JsonObject>();
-            current.h = root["h"];
-            current.s = root["s"];
-            current.v = root["v"];
-            current.ct = root["ct"];
+            current.h = root[F("h")];
+            current.s = root[F("s")];
+            current.v = root[F("v")];
+            current.ct = root[F("ct")];
             if (print) {
             	Json::serialize(root, Serial, Json::Pretty);
             }
@@ -56,10 +56,10 @@ struct ColorStorage {
         debug_d("Saving ColorStorage to file...");
         StaticJsonDocument<256> doc;
         JsonObject root = doc.to<JsonObject>();
-        root["h"] = current.h;
-        root["s"] = current.s;
-        root["v"] = current.v;
-        root["ct"] = current.ct;
+        root[F("h")] = current.h;
+        root[F("s")] = current.s;
+        root[F("v")] = current.v;
+        root[F("ct")] = current.ct;
         if (print) {
         	Json::serialize(root, Serial, Json::Pretty);
         }

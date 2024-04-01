@@ -124,17 +124,17 @@ void mdnsHandler::sendSearch()
     _mdnsSearchTimer.startOnce();
     for (size_t i = 0; i < hosts.size(); ++i) {
         JsonVariant host = hosts[i];
-        if((int)host["ttl"]==-1){
+        if((int)host[F("ttl")]==-1){
             continue;
         }
-        host["ttl"] = (int)host["ttl"] - _mdnsTimerInterval/1000;
-        if (host["ttl"].as<int>() < 0) {
-            debug_i("Removing host %s from list", host["hostname"].as<const char*>());
+        host[F("ttl")] = (int)host[F("ttl")] - _mdnsTimerInterval/1000;
+        if (host[F("ttl")].as<int>() < 0) {
+            debug_i("Removing host %s from list", host[F("hostname")].as<const char*>());
                 
             // notify websocket clients
             JsonRpcMessage msg(F("removed_host"));
             JsonObject root = msg.getParams();   
-            root["hostname"] = host["hostname"];
+            root[F("hostname")] = host[F("hostname")];
             String jsonStr = Json::serialize(msg.getRoot());
 
             app.wsBroadcast(jsonStr);
@@ -142,7 +142,7 @@ void mdnsHandler::sendSearch()
             --i;
         }
         
-        if (host["hostname"]== null){
+        if (host[F("hostname")]== null){
             hosts.remove(i);
         }
         
@@ -175,12 +175,12 @@ void mdnsHandler::addHost(const String& hostname, const String& ip_address, int 
     
     bool knownHost=false;
     for (JsonVariant host : hosts) {
-        if (host["hostname"] ==_hostname && host["ip_address"] == _ip_address) {
+        if (host[F("hostname")] ==_hostname && host[F("ip_address")] == _ip_address) {
             #ifdef DEBUG_MDNS
                 debug_i("Hostname %s already in list", _hostname.c_str());
             #endif
             if(_ttl!=-1)
-                host["ttl"] = _ttl; //reset ttl
+                host[F("ttl")] = _ttl; //reset ttl
             knownHost=true;
             break;
         }
@@ -189,9 +189,9 @@ void mdnsHandler::addHost(const String& hostname, const String& ip_address, int 
     if (!knownHost) {
         JsonObject newHost = hosts.createNestedObject();
 
-        newHost["hostname"] = _hostname;
-        newHost["ip_address"] = _ip_address;
-        newHost["ttl"] = _ttl;
+        newHost[F("hostname")] = _hostname;
+        newHost[F("ip_address")] = _ip_address;
+        newHost[F("ttl")] = _ttl;
         String newHostString;
         serializeJsonPretty(newHost, newHostString);
         #ifdef DEBUG_MDNS

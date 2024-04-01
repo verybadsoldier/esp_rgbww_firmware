@@ -149,7 +149,7 @@ struct ApplicationSettings {
         String otaurl = DEFAULT_OTA_URL;
         String device_name;
         #ifdef ESP8266
-        // String supported_color_models="[\"RGB\",\"RGBW\",\"RGBWW\",\"RAW\"]";
+        // String supported_color_models="[\"RGB\",\"RGBW\",\"RGBWW\",\"RAW\")]";
         // can't just stuff a string in here and hope it'll be interpreted as an array, this has to be a vector, too
         std::vector<String> supported_color_models;
         #endif
@@ -175,101 +175,101 @@ struct ApplicationSettings {
         DynamicJsonDocument doc(CONFIG_MAX_LENGTH);
         if (Json::loadFromFile(doc, APP_SETTINGS_FILE)) {
         	auto root = doc.as<JsonObject>();
-        	auto net = root["network"];
+        	auto net = root[F("network")];
 
             // connection
-        	JsonObject con = net["connection"];
-            network.connection.mdnshostname = con["hostname"].as<const char*>();
-            network.connection.dhcp = con["dhcp"];
-            network.connection.ip = con["ip"].as<String>();
-            network.connection.netmask = con["netmask"].as<String>();
-            network.connection.gateway = con["gateway"].as<String>();
+        	JsonObject con = net[F("connection")];
+            network.connection.mdnshostname = con[F("hostname")].as<const char*>();
+            network.connection.dhcp = con[F("dhcp")];
+            network.connection.ip = con[F("ip")].as<String>();
+            network.connection.netmask = con[F("netmask")].as<String>();
+            network.connection.gateway = con[F("gateway")].as<String>();
 
             // accesspoint
-            JsonObject jap = net["ap"];
-            network.ap.secured = jap["secured"];
-            network.ap.ssid = jap["ssid"].as<const char*>();
-            network.ap.password = jap["password"].as<String>();
+            JsonObject jap = net[F("ap")];
+            network.ap.secured = jap[F("secured")];
+            network.ap.ssid = jap[F("ssid")].as<const char*>();
+            network.ap.password = jap[F("password")].as<String>();
 
             // mqtt
-            JsonObject jmqtt = net["mqtt"];
+            JsonObject jmqtt = net[F("mqtt")];
             if (!jmqtt.isNull()) {
-                Json::getValue(jmqtt["enabled"], network.mqtt.enabled);
-                Json::getValue(jmqtt["server"], network.mqtt.server);
-                Json::getValue(jmqtt["port"], network.mqtt.port);
-                Json::getValue(jmqtt["username"], network.mqtt.username);
-                Json::getValue(jmqtt["password"], network.mqtt.password);
-                Json::getValue(jmqtt["topic_base"], network.mqtt.topic_base);
+                Json::getValue(jmqtt[F("enabled")], network.mqtt.enabled);
+                Json::getValue(jmqtt[F("server")], network.mqtt.server);
+                Json::getValue(jmqtt[F("port")], network.mqtt.port);
+                Json::getValue(jmqtt[F("username")], network.mqtt.username);
+                Json::getValue(jmqtt[F("password")], network.mqtt.password);
+                Json::getValue(jmqtt[F("topic_base")], network.mqtt.topic_base);
             }
 
             // color
-            JsonObject jcol = root["color"];
-            color.outputmode = jcol["outputmode"];
-            Json::getValue(jcol["startup_color"], color.startup_color);
+            JsonObject jcol = root[F("color")];
+            color.outputmode = jcol[F("outputmode")];
+            Json::getValue(jcol[F("startup_color")], color.startup_color);
 
             // hsv
-            JsonObject jhsv = jcol["hsv"];
-            color.hsv.model = jhsv["model"];
-            color.hsv.red = jhsv["red"];
-            color.hsv.yellow = jhsv["yellow"];
-            color.hsv.green = jhsv["green"];
-            color.hsv.cyan = jhsv["cyan"];
-            color.hsv.blue = jhsv["blue"];
-            color.hsv.magenta = jhsv["magenta"];
+            JsonObject jhsv = jcol[F("hsv")];
+            color.hsv.model = jhsv[F("model")];
+            color.hsv.red = jhsv[F("red")];
+            color.hsv.yellow = jhsv[F("yellow")];
+            color.hsv.green = jhsv[F("green")];
+            color.hsv.cyan = jhsv[F("cyan")];
+            color.hsv.blue = jhsv[F("blue")];
+            color.hsv.magenta = jhsv[F("magenta")];
 
             // brightness
-            JsonObject jbri = jcol["brightness"];
-            color.brightness.red = jbri["red"];
-            color.brightness.green = jbri["green"];
-            color.brightness.blue = jbri["blue"];
-            color.brightness.ww = jbri["ww"];
-            color.brightness.cw = jbri["cw"];
+            JsonObject jbri = jcol[F("brightness")];
+            color.brightness.red = jbri[F("red")];
+            color.brightness.green = jbri[F("green")];
+            color.brightness.blue = jbri[F("blue")];
+            color.brightness.ww = jbri[F("ww")];
+            color.brightness.cw = jbri[F("cw")];
 
             // general
-            auto jgen = root["general"];
+            auto jgen = root[F("general")];
             if (!jgen.isNull()) {
-                Json::getValue(jgen["api_password"], general.api_password);
-                Json::getValue(jgen["api_secured"], general.api_secured);
-                Json::getValue(jgen["otaurl"], general.otaurl);
-                Json::getValue(jgen["device_name"], general.device_name);
-                Json::getValue(jgen["pin_config"], general.pin_config);
-                Json::getValue(jgen["buttons_config"], general.buttons_config);
-                Json::getValue(jgen["buttons_debounce_ms"], general.buttons_debounce_ms);
+                Json::getValue(jgen[F("api_password")], general.api_password);
+                Json::getValue(jgen[F("api_secured")], general.api_secured);
+                Json::getValue(jgen[F("otaurl")], general.otaurl);
+                Json::getValue(jgen[F("device_name")], general.device_name);
+                Json::getValue(jgen[F("pin_config")], general.pin_config);
+                Json::getValue(jgen[F("buttons_config")], general.buttons_config);
+                Json::getValue(jgen[F("buttons_debounce_ms")], general.buttons_debounce_ms);
             }
 
             // ntp
-            auto jntp = root["ntp"];
+            auto jntp = root[F("ntp")];
             if (!jntp.isNull()) {
-                Json::getValue(jgen["enabled"], ntp.enabled);
-                Json::getValue(jgen["server"], ntp.server);
-                Json::getValue(jgen["interval"], ntp.interval);
+                Json::getValue(jgen[F("enabled")], ntp.enabled);
+                Json::getValue(jgen[F("server")], ntp.server);
+                Json::getValue(jgen[F("interval")], ntp.interval);
             }
 
             // sync
-            auto jsync = root["sync"];
+            auto jsync = root[F("sync")];
             if (!jsync.isNull()) {
-                Json::getValue(jsync["clock_master_enabled"], sync.clock_master_enabled);
-                Json::getValue(jsync["clock_master_interval"], sync.clock_master_interval);
-                Json::getValue(jsync["clock_slave_topic"], sync.clock_slave_topic);
-                Json::getValue(jsync["clock_slave_enabled"], sync.clock_slave_enabled);
+                Json::getValue(jsync[F("clock_master_enabled")], sync.clock_master_enabled);
+                Json::getValue(jsync[F("clock_master_interval")], sync.clock_master_interval);
+                Json::getValue(jsync[F("clock_slave_topic")], sync.clock_slave_topic);
+                Json::getValue(jsync[F("clock_slave_enabled")], sync.clock_slave_enabled);
 
-                Json::getValue(jsync["cmd_master_enabled"], sync.cmd_master_enabled);
-                Json::getValue(jsync["cmd_slave_enabled"], sync.cmd_slave_enabled);
-                Json::getValue(jsync["cmd_slave_topic"], sync.cmd_slave_topic);
+                Json::getValue(jsync[F("cmd_master_enabled")], sync.cmd_master_enabled);
+                Json::getValue(jsync[F("cmd_slave_enabled")], sync.cmd_slave_enabled);
+                Json::getValue(jsync[F("cmd_slave_topic")], sync.cmd_slave_topic);
 
-                Json::getValue(jsync["color_master_enabled"], sync.color_master_enabled);
-                Json::getValue(jsync["color_master_interval_ms"], sync.color_master_interval_ms);
-                Json::getValue(jsync["color_slave_enabled"], sync.color_slave_enabled);
-                Json::getValue(jsync["color_slave_topic"], sync.color_slave_topic);
+                Json::getValue(jsync[F("color_master_enabled")], sync.color_master_enabled);
+                Json::getValue(jsync[F("color_master_interval_ms")], sync.color_master_interval_ms);
+                Json::getValue(jsync[F("color_slave_enabled")], sync.color_slave_enabled);
+                Json::getValue(jsync[F("color_slave_topic")], sync.color_slave_topic);
             }
 
 
             // events
-            auto jevents = root["events"];
+            auto jevents = root[F("events")];
             if (!jevents.isNull()) {
-                Json::getValue(jevents["server_enabled"], events.server_enabled);
-                Json::getValue(jevents["color_interval_ms"], events.color_interval_ms);
-                Json::getValue(jevents["transfin_interval_ms"], events.transfin_interval_ms);
+                Json::getValue(jevents[F("server_enabled")], events.server_enabled);
+                Json::getValue(jevents[F("color_interval_ms")], events.color_interval_ms);
+                Json::getValue(jevents[F("transfin_interval_ms")], events.transfin_interval_ms);
             }
 
             if (print) {
@@ -290,83 +290,83 @@ struct ApplicationSettings {
 
         JsonObject net = root.createNestedObject("network");
         JsonObject con = net.createNestedObject("connection");
-        con["dhcp"] = network.connection.dhcp;
-        con["ip"] = network.connection.ip.toString();
-        con["netmask"] = network.connection.netmask.toString();
-        con["gateway"] = network.connection.gateway.toString();
-        con["mdnhostname"] = network.connection.mdnshostname;
+        con[F("dhcp")] = network.connection.dhcp;
+        con[F("ip")] = network.connection.ip.toString();
+        con[F("netmask")] = network.connection.netmask.toString();
+        con[F("gateway")] = network.connection.gateway.toString();
+        con[F("mdnhostname")] = network.connection.mdnshostname;
 
         JsonObject jap = net.createNestedObject("ap");
-        jap["secured"] = network.ap.secured;
-        jap["ssid"] = network.ap.ssid;
-        jap["password"] = network.ap.password;
+        jap[F("secured")] = network.ap.secured;
+        jap[F("ssid")] = network.ap.ssid;
+        jap[F("password")] = network.ap.password;
 
         JsonObject jmqtt = net.createNestedObject("mqtt");
-        jmqtt["enabled"] = network.mqtt.enabled;
-        jmqtt["server"] = network.mqtt.server;
-        jmqtt["port"] = network.mqtt.port;
-        jmqtt["username"] = network.mqtt.username;
-        jmqtt["password"] = network.mqtt.password;
-        jmqtt["topic_base"] = network.mqtt.topic_base;
+        jmqtt[F("enabled")] = network.mqtt.enabled;
+        jmqtt[F("server")] = network.mqtt.server;
+        jmqtt[F("port")] = network.mqtt.port;
+        jmqtt[F("username")] = network.mqtt.username;
+        jmqtt[F("password")] = network.mqtt.password;
+        jmqtt[F("topic_base")] = network.mqtt.topic_base;
 
         JsonObject c = root.createNestedObject("color");
-        c["outputmode"] = color.outputmode;
-        c["startup_color"] = color.startup_color.c_str();
+        c[F("outputmode")] = color.outputmode;
+        c[F("startup_color")] = color.startup_color.c_str();
 
         JsonObject h = c.createNestedObject("hsv");
-        h["model"] = color.hsv.model;
-        h["red"] = color.hsv.red;
-        h["yellow"] = color.hsv.yellow;
-        h["green"] = color.hsv.green;
-        h["cyan"] = color.hsv.cyan;
-        h["blue"] = color.hsv.blue;
-        h["magenta"] = color.hsv.magenta;
+        h[F("model")] = color.hsv.model;
+        h[F("red")] = color.hsv.red;
+        h[F("yellow")] = color.hsv.yellow;
+        h[F("green")] = color.hsv.green;
+        h[F("cyan")] = color.hsv.cyan;
+        h[F("blue")] = color.hsv.blue;
+        h[F("magenta")] = color.hsv.magenta;
 
         JsonObject b = c.createNestedObject("brightness");
-        b["red"] = color.brightness.red;
-        b["green"] = color.brightness.green;
-        b["blue"] = color.brightness.blue;
-        b["ww"] = color.brightness.ww;
-        b["cw"] = color.brightness.cw;
+        b[F("red")] = color.brightness.red;
+        b[F("green")] = color.brightness.green;
+        b[F("blue")] = color.brightness.blue;
+        b[F("ww")] = color.brightness.ww;
+        b[F("cw")] = color.brightness.cw;
 
         JsonObject t = c.createNestedObject("colortemp");
-        t["ww"] = color.colortemp.ww;
-        t["cw"] = color.colortemp.cw;
+        t[F("ww")] = color.colortemp.ww;
+        t[F("cw")] = color.colortemp.cw;
 
         JsonObject n = root.createNestedObject("ntp");
-        n["enabled"] = ntp.enabled;
-        n["server"] = ntp.server;
-        n["interval"] = ntp.interval;
+        n[F("enabled")] = ntp.enabled;
+        n[F("server")] = ntp.server;
+        n[F("interval")] = ntp.interval;
 
         JsonObject s = root.createNestedObject("sync");
-        s["clock_master_enabled"] = sync.clock_master_enabled;
-        s["clock_master_interval"] = sync.clock_master_interval;
-        s["clock_slave_enabled"] = sync.clock_slave_enabled;
-        s["clock_slave_topic"] = sync.clock_slave_topic.c_str();
+        s[F("clock_master_enabled")] = sync.clock_master_enabled;
+        s[F("clock_master_interval")] = sync.clock_master_interval;
+        s[F("clock_slave_enabled")] = sync.clock_slave_enabled;
+        s[F("clock_slave_topic")] = sync.clock_slave_topic.c_str();
 
-        s["cmd_master_enabled"] = sync.cmd_master_enabled;
-        s["cmd_slave_enabled"] = sync.cmd_slave_enabled;
-        s["cmd_slave_topic"] = sync.cmd_slave_topic.c_str();
+        s[F("cmd_master_enabled")] = sync.cmd_master_enabled;
+        s[F("cmd_slave_enabled")] = sync.cmd_slave_enabled;
+        s[F("cmd_slave_topic")] = sync.cmd_slave_topic.c_str();
 
-        s["color_master_enabled"] = sync.color_master_enabled;
-        s["color_master_interval_ms"] = sync.color_master_interval_ms;
-        s["color_slave_enabled"] = sync.color_slave_enabled;
-        s["color_slave_topic"] = sync.color_slave_topic.c_str();
+        s[F("color_master_enabled")] = sync.color_master_enabled;
+        s[F("color_master_interval_ms")] = sync.color_master_interval_ms;
+        s[F("color_slave_enabled")] = sync.color_slave_enabled;
+        s[F("color_slave_topic")] = sync.color_slave_topic.c_str();
 
         JsonObject e = root.createNestedObject("events");
-        e["color_interval_ms"] = events.color_interval_ms;
-        e["server_enabled"] = events.server_enabled;
-        e["transfin_interval_ms"] = events.transfin_interval_ms;
+        e[F("color_interval_ms")] = events.color_interval_ms;
+        e[F("server_enabled")] = events.server_enabled;
+        e[F("transfin_interval_ms")] = events.transfin_interval_ms;
 
         JsonObject g = root.createNestedObject("general");
-        g["api_secured"] = general.api_secured;
-        g["api_password"] = general.api_password.c_str();
-        g["otaurl"] = general.otaurl.c_str();
-        g["device_name"] = general.device_name.c_str();
-        g["pin_config"] = general.pin_config.c_str();
-        g["buttons_config"] = general.buttons_config.c_str();
-        g["buttons_debounce_ms"] = general.buttons_debounce_ms;
-        g["settings_ver"] = APP_SETTINGS_VERSION;
+        g[F("api_secured")] = general.api_secured;
+        g[F("api_password")] = general.api_password.c_str();
+        g[F("otaurl")] = general.otaurl.c_str();
+        g[F("device_name")] = general.device_name.c_str();
+        g[F("pin_config")] = general.pin_config.c_str();
+        g[F("buttons_config")] = general.buttons_config.c_str();
+        g[F("buttons_debounce_ms")] = general.buttons_debounce_ms;
+        g[F("settings_ver")] = APP_SETTINGS_VERSION;
 
         if (print) {
         	Json::serialize(root, Serial, Json::Pretty);
@@ -387,33 +387,36 @@ struct ApplicationSettings {
         }
     }
 
-    void initializeConfig(){
-        if(general.pin_config_name=="")
-            general.pin_config_name="mrpw"; //set a sensible default. Other configs can be read from the pinconfig json source either on github or in spiffs. 
-        debug_i("populating channels array");
-        if (general.channels.size() == 0 && general.pin_config_name == "mrpj") {
-            general.channels.push_back({ "red", 13 });
-            general.channels.push_back({ "green", 12 });
-            general.channels.push_back({ "blue", 14 });
-            general.channels.push_back({ "warmwhite", 5 });
-            general.channels.push_back({ "coldwhite", 4 });
-        }
-        debug_i("added %i elements to channels array", general.channels.size());
-        for (int i=0;i<general.channels.size();i++) {
-            debug_i("channel %i: %s, %i", i, general.channels[i].name.c_str(), general.channels[i].pin);
-        }
-        #ifdef ARCH_ESP8266
-        if (general.supported_color_models.size() == 0) {
-            general.supported_color_models.push_back("RGB");
-            general.supported_color_models.push_back("RGBW");
-            general.supported_color_models.push_back("RGBWW");
-            general.supported_color_models.push_back("RAW");
-        }
-        #endif
-
-    }
     void sanitizeValues() {
         sync.clock_master_interval = max(sync.clock_master_interval, 1);
         
     }
 };
+    namespace config{
+    inline void initializeConfig(ApplicationSettings& cfg){
+        debug_i("initializing vectors in config");
+        if(cfg.general.pin_config_name=="")
+            cfg.general.pin_config_name="mrpw"; //set a sensible default. Other configs can be read from the pinconfig json source either on github or in spiffs. 
+        debug_i("populating channels array");
+        if (cfg.general.channels.size() == 0 && cfg.general.pin_config_name == "mrpj") {
+            cfg.general.channels.push_back({ "red", 13 });
+            cfg.general.channels.push_back({ "green", 12 });
+            cfg.general.channels.push_back({ "blue", 14 });
+            cfg.general.channels.push_back({ "warmwhite", 5 });
+            cfg.general.channels.push_back({ "coldwhite", 4 });
+        }
+        debug_i("added %i elements to channels array", cfg.general.channels.size());
+        for (uint8_t i=0;i<cfg.general.channels.size();i++) {
+            debug_i("channel %i: %s, %i", i, cfg.general.channels[i].name.c_str(), cfg.general.channels[i].pin);
+        }
+        #ifdef ARCH_ESP8266
+        if (cfg.general.supported_color_models.size() == 0) {
+            cfg.general.supported_color_models.push_back("RGB");
+            cfg.general.supported_color_models.push_back("RGBW");
+            cfg.general.supported_color_models.push_back("RGBWW");
+            cfg.general.supported_color_models.push_back("RAW");
+        }
+        #endif
+    }
+}//namespace config
+  

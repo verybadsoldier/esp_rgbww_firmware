@@ -51,7 +51,7 @@ void AppMqttClient::connect() {
 
     debug_d("MQTT::connect ID: %s\n", _id.c_str());
 
-    if(!mqtt->setWill("last/will","The connection from this device is lost:(", MqttClient::getFlags(MQTT_QOS_AT_LEAST_ONCE, MQTT_RETAIN_TRUE))) {
+    if(!mqtt->setWill(F("last/will"),F("The connection from this device is lost:("), MqttClient::getFlags(MQTT_QOS_AT_LEAST_ONCE, MQTT_RETAIN_TRUE))) {
         debugf("Unable to set the last will and testament. Most probably there is not enough memory on the device.");
     }
 //    0);app.cfg.network.mqtt.username, app.cfg.network.mqtt.password);
@@ -247,7 +247,7 @@ void AppMqttClient::publishCommand(const String& method, const JsonObject& param
         msg.getRoot()["params"] = params;
 
     String msgStr = Json::serialize(msg.getRoot());
-    publish(buildTopic("command"), msgStr, false);
+    publish(buildTopic(F("command")), msgStr, false);
 }
 
 void AppMqttClient::publishTransitionFinished(const String& name, bool requeued) {

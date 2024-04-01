@@ -88,7 +88,7 @@ void EventServer::publishCurrentState(const ChannelOutput& raw, const HSVCT* pHs
         return;
     _lastRaw = raw;
 
-    JsonRpcMessage msg("color_event");
+    JsonRpcMessage msg(F("color_event"));
     JsonObject root = msg.getParams();
 
     root["mode"] = pHsv ? "hsv" : "raw";

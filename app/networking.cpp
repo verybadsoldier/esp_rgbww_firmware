@@ -381,28 +381,28 @@ String AppWIFI::getMdnsHosts() {
 void AppWIFI::broadcastWifiStatus(String message){
     if(WifiStation.isConnected()||WifiAccessPoint.isEnabled()) {
     
-        JsonRpcMessage msg("wifi_status");
+        JsonRpcMessage msg(F("wifi_status"));
         JsonObject root = msg.getParams();
 
         if(message!="") {
             root["message"] = message;
         }   
 
-        JsonObject station = root.createNestedObject("station");
+        JsonObject station = root.createNestedObject(F("station"));
 
-        station["connected"] = WifiStation.isConnected();
-        station["ssid"] = WifiStation.getSSID();
-        station["dhcp"] = WifiStation.isEnabledDHCP();
-        station["ip"] = WifiStation.getIP().toString();
-        station["netmask"] = WifiStation.getNetworkMask().toString();
-        station["gateway"] = WifiStation.getNetworkGateway().toString();
-        station["mac"] = WifiStation.getMAC();
+        station[F("connected")] = WifiStation.isConnected();
+        station[F("ssid")] = WifiStation.getSSID();
+        station[F("dhcp")] = WifiStation.isEnabledDHCP();
+        station[F("ip")] = WifiStation.getIP().toString();
+        station[F("netmask")] = WifiStation.getNetworkMask().toString();
+        station[F("gateway")] = WifiStation.getNetworkGateway().toString();
+        station[F("mac")] = WifiStation.getMAC();
 
         JsonObject ap=root.createNestedObject("ap");
         
-        ap["enabled"]=WifiAccessPoint.isEnabled();
-        ap["ssid"]=WifiAccessPoint.getSSID();
-        ap["ip"]=WifiAccessPoint.getIP().toString();
+        ap[F("enabled")]=WifiAccessPoint.isEnabled();
+        ap[F("ssid")]=WifiAccessPoint.getSSID();
+        ap[F("ip")]=WifiAccessPoint.getIP().toString();
 
         debug_i("rpc: root =%s",Json::serialize(root).c_str());
         debug_i("rpc: msg =%s",Json::serialize(msg.getRoot()).c_str());
