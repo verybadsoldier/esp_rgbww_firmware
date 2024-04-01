@@ -43,7 +43,7 @@
 #define APP_SETTINGS_FILE ".cfg"
 #define APP_SETTINGS_VERSION 1
 
-#define CONFIG_MAX_LENGTH 2048
+#define CONFIG_MAX_LENGTH 4096
 
 
 struct channel {
