@@ -131,7 +131,7 @@ bool ICACHE_FLASH_ATTR ApplicationWebserver::authenticateExec(HttpRequest &reque
 
     debug_d("ApplicationWebserver::authenticated - checking...");
 
-    String userPass = request.getHeader("Authorization");
+    String userPass = request.getHeader(F("Authorization"));
     if (userPass == String::nullstr) {
         debug_d("ApplicationWebserver::authenticated - No auth header");
         return false; // header missing
@@ -188,7 +188,8 @@ void ApplicationWebserver::sendApiResponse(HttpResponse &response, JsonObjectStr
 
     response.setAllowCrossDomainOrigin("*");
     response.setHeader(F("accept"),F("GET, POST, OPTIONS"));
-    response.setHeader(F("Access-Control-Allow-Headers"),"*");
+    response.setAllowCrossDomainOrigin("*");
+
     if (code != HTTP_STATUS_OK) {
         response.code = HTTP_STATUS_BAD_REQUEST;
     }
@@ -263,7 +264,7 @@ void ApplicationWebserver::onWebapp(HttpRequest &request, HttpResponse &response
     }
 
     response.headers[HTTP_HEADER_LOCATION]=F("/index.html");
-    response.setHeader(F("Access-Control-Allow-Origin"), "*");
+    response.setAllowCrossDomainOrigin("*");
 
     response.code = HTTP_STATUS_PERMANENT_REDIRECT;
     response.sendString(F("Redirecting to /index.html"));
@@ -279,7 +280,7 @@ void ApplicationWebserver::onIndex(HttpRequest &request, HttpResponse &response)
     if (app.ota.isProccessing()) {
         response.setContentType(MIME_TEXT);
         response.code = HTTP_STATUS_SERVICE_UNAVAILABLE;
-        response.sendString("OTA in progress");
+        response.sendString(F("OTA in progress"));
         return;	void publishTransitionFinished(const String& name, bool requeued = false);
     }
 #endif
@@ -291,7 +292,7 @@ void ApplicationWebserver::onIndex(HttpRequest &request, HttpResponse &response)
 
     if (request.method == HTTP_OPTIONS){
         // probably a CORS request
-        response.setHeader(F("Access-Control-Allow-Origin"), "*");
+        response.setAllowCrossDomainOrigin("*");
         sendApiCode(response,API_CODES::API_SUCCESS,"");
         debug_i("HTTP_OPTIONS Request, sent API_SUCCSSS");
         return;
@@ -324,7 +325,7 @@ void ApplicationWebserver::onIndex(HttpRequest &request, HttpResponse &response)
     else {
     */
         // we are connected to ap - serve normal settings page
-        response.setHeader(F("Access-Control-Allow-Origin"), "*");
+        response.setAllowCrossDomainOrigin("*");
         response.sendFile(F("index.html"));
     /*}
     */
@@ -368,7 +369,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
     */
     if (request.method == HTTP_OPTIONS){
         // probably a CORS request
-        response.setHeader(F("Access-Control-Allow-Origin"), "*");
+        response.setAllowCrossDomainOrigin("*");
         sendApiCode(response,API_CODES::API_SUCCESS,"");
         debug_i("HTTP_OPTIONS Request, sent API_SUCCSSS");
         return;
@@ -401,20 +402,20 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
             sendApiCode(response, API_CODES::API_BAD_REQUEST, F("no root object"));
             return;
         }
-        response.setHeader(F("Access-Control-Allow-Origin"), "*");
+        response.setAllowCrossDomainOrigin("*");
 
         JsonObject jnet = root[F("network")];
         if (!jnet.isNull()) {
   
-            JsonObject con = jnet["connection"];
+            JsonObject con = jnet[F("connection")];
             if (!con.isNull()) {
-                ip_updated |= Json::getBoolTolerantChanged(con["dhcp"], app.cfg.network.connection.dhcp);
+                ip_updated |= Json::getBoolTolerantChanged(con[F("dhcp")], app.cfg.network.connection.dhcp);
 
                 if (!app.cfg.network.connection.dhcp) {
                     //only change if dhcp is off - otherwise ignore
                     IpAddress ip, netmask, gateway;
                     const char* str;
-                    if (Json::getValue(con["ip"], str)) {
+                    if (Json::getValue(con[F("ip")], str)) {
                     	ip = str;
                         if (!(ip == app.cfg.network.connection.ip)) {
                             app.cfg.network.connection.ip = ip;
@@ -424,7 +425,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
                         error = true;
                         error_msg = "missing ip";
                     }
-                    if (Json::getValue(con["netmask"], str)) {
+                    if (Json::getValue(con[F("netmask")], str)) {
                         netmask = str;
                         if (!(netmask == app.cfg.network.connection.netmask)) {
                             app.cfg.network.connection.netmask = netmask;
@@ -432,9 +433,9 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
                         }
                     } else {
                         error = true;
-                        error_msg = "missing netmask";
+                        error_msg = F("missing netmask");
                     }
-                    if (Json::getValue(con["gateway"], str)) {
+                    if (Json::getValue(con[F("gateway")], str)) {
                         gateway = str;
                         if (!(gateway == app.cfg.network.connection.gateway)) {
                             app.cfg.network.connection.gateway = gateway;
@@ -442,21 +443,21 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
                         }
                     } else {
                         error = true;
-                        error_msg = "missing gateway";
+                        error_msg = F("missing gateway");
                     }
 
                 }
 
             }
-            if (!jnet["ap"].isNull()) {
+            if (!jnet[F("ap")].isNull()) {
 
             	String ssid;
-            	ap_updated |= Json::getValueChanged(jnet["ap"]["ssid"], app.cfg.network.ap.ssid);
+            	ap_updated |= Json::getValueChanged(jnet[F("ap")][F("ssid")], app.cfg.network.ap.ssid);
 
             	bool secured;
-                if (Json::getBoolTolerant(jnet["ap"]["secured"], secured)) {
+                if (Json::getBoolTolerant(jnet[F("ap")][F("secured")], secured)) {
                     if (secured) {
-                        if (Json::getValueChanged(jnet["ap"]["password"], app.cfg.network.ap.password)) {
+                        if (Json::getValueChanged(jnet[F("ap")][F("password")], app.cfg.network.ap.password)) {
 							app.cfg.network.ap.secured = true;
 							ap_updated = true;
                         } else {
@@ -471,56 +472,56 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
 
             }
 
-            JsonObject jmqtt = jnet["mqtt"];
+            JsonObject jmqtt = jnet[F("mqtt")];
             if (!jmqtt.isNull()) {
                 //TODO: what to do if changed?
-            	Json::getBoolTolerant(jmqtt["enabled"], app.cfg.network.mqtt.enabled);
-            	Json::getValue(jmqtt["server"], app.cfg.network.mqtt.server);
-            	Json::getValue(jmqtt["port"], app.cfg.network.mqtt.port);
-            	Json::getValue(jmqtt["username"], app.cfg.network.mqtt.username);
-            	Json::getValue(jmqtt["password"], app.cfg.network.mqtt.password);
-            	Json::getValue(jmqtt["topic_base"], app.cfg.network.mqtt.topic_base);
+            	Json::getBoolTolerant(jmqtt[F("enabled")], app.cfg.network.mqtt.enabled);
+            	Json::getValue(jmqtt[F("server")], app.cfg.network.mqtt.server);
+            	Json::getValue(jmqtt[F("port")], app.cfg.network.mqtt.port);
+            	Json::getValue(jmqtt[F("username")], app.cfg.network.mqtt.username);
+            	Json::getValue(jmqtt[F("password")], app.cfg.network.mqtt.password);
+            	Json::getValue(jmqtt[F("topic_base")], app.cfg.network.mqtt.topic_base);
             }
         }
 
         JsonObject jcol = root[F("color")];
         if (!jcol.isNull()) {
 
-        	JsonObject jhsv = jcol["hsv"];
+        	JsonObject jhsv = jcol[F("hsv")];
             if (!jhsv.isNull()) {
-            	color_updated |= Json::getValueChanged(jhsv["model"], app.cfg.color.hsv.model);
-            	color_updated |= Json::getValueChanged(jhsv["red"], app.cfg.color.hsv.red);
-            	color_updated |= Json::getValueChanged(jhsv["yellow"], app.cfg.color.hsv.yellow);
-            	color_updated |= Json::getValueChanged(jhsv["green"], app.cfg.color.hsv.green);
-            	color_updated |= Json::getValueChanged(jhsv["cyan"], app.cfg.color.hsv.cyan);
-            	color_updated |= Json::getValueChanged(jhsv["blue"], app.cfg.color.hsv.blue);
-            	color_updated |= Json::getValueChanged(jhsv["magenta"], app.cfg.color.hsv.magenta);
+            	color_updated |= Json::getValueChanged(jhsv[F("model")], app.cfg.color.hsv.model);
+            	color_updated |= Json::getValueChanged(jhsv[F("red")], app.cfg.color.hsv.red);
+            	color_updated |= Json::getValueChanged(jhsv[F("yellow")], app.cfg.color.hsv.yellow);
+            	color_updated |= Json::getValueChanged(jhsv[F("green")], app.cfg.color.hsv.green);
+            	color_updated |= Json::getValueChanged(jhsv[F("cyan")], app.cfg.color.hsv.cyan);
+            	color_updated |= Json::getValueChanged(jhsv[F("blue")], app.cfg.color.hsv.blue);
+            	color_updated |= Json::getValueChanged(jhsv[F("magenta")], app.cfg.color.hsv.magenta);
             }
-        	color_updated |= Json::getValueChanged(jcol["outputmode"], app.cfg.color.outputmode);
-        	Json::getValue(jcol["startup_color"], app.cfg.color.startup_color);
+        	color_updated |= Json::getValueChanged(jcol[F("outputmode")], app.cfg.color.outputmode);
+        	Json::getValue(jcol[F("startup_color")], app.cfg.color.startup_color);
 
-        	JsonObject jbri = jcol["brightness"];
+        	JsonObject jbri = jcol[F("brightness")];
         	if (!jbri.isNull()) {
-        		color_updated |= Json::getValueChanged(jbri["red"], app.cfg.color.brightness.red);
-        		color_updated |= Json::getValueChanged(jbri["green"], app.cfg.color.brightness.green);
-        		color_updated |= Json::getValueChanged(jbri["blue"], app.cfg.color.brightness.blue);
-        		color_updated |= Json::getValueChanged(jbri["ww"], app.cfg.color.brightness.ww);
-        		color_updated |= Json::getValueChanged(jbri["cw"], app.cfg.color.brightness.cw);
+        		color_updated |= Json::getValueChanged(jbri[F("red")], app.cfg.color.brightness.red);
+        		color_updated |= Json::getValueChanged(jbri[F("green")], app.cfg.color.brightness.green);
+        		color_updated |= Json::getValueChanged(jbri[F("blue")], app.cfg.color.brightness.blue);
+        		color_updated |= Json::getValueChanged(jbri[F("ww")], app.cfg.color.brightness.ww);
+        		color_updated |= Json::getValueChanged(jbri[F("cw")], app.cfg.color.brightness.cw);
             }
 
-        	JsonObject jcoltemp = jcol["colortemp"];
+        	JsonObject jcoltemp = jcol[F("colortemp")];
         	if (!jcoltemp.isNull()) {
-        		color_updated |= Json::getValueChanged(jcoltemp["ww"], app.cfg.color.colortemp.ww);
-        		color_updated |= Json::getValueChanged(jcoltemp["cw"], app.cfg.color.colortemp.cw);
+        		color_updated |= Json::getValueChanged(jcoltemp[F("ww")], app.cfg.color.colortemp.ww);
+        		color_updated |= Json::getValueChanged(jcoltemp[F("cw")], app.cfg.color.colortemp.cw);
             }
         }
 
-        JsonObject jsec = root["security"];
+        JsonObject jsec = root[F("security")];
         if (!jsec.isNull()) {
         	bool secured;
-        	if (Json::getBoolTolerant(jsec["api_secured"], secured)) {
+        	if (Json::getBoolTolerant(jsec[F("api_secured")], secured)) {
                 if (secured) {
-                    if (Json::getValue(jsec["api_password"], app.cfg.general.api_password)) {
+                    if (Json::getValue(jsec[F("api_password")], app.cfg.general.api_password)) {
                         app.cfg.general.api_secured = secured;
                     } else {
                         error = true;
@@ -534,21 +535,21 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
             }
         }
 
-        Json::getValue(root["ota"]["url"], app.cfg.general.otaurl);
+        Json::getValue(root[F("ota")][F("url")], app.cfg.general.otaurl);
 
-        JsonObject jgen = root["general"];
+        JsonObject jgen = root[F("general")];
         if (!jgen.isNull()) {
             debug_i("general settings found");
-        	Json::getValue(jgen["device_name"], app.cfg.general.device_name);
+        	Json::getValue(jgen[F("device_name")], app.cfg.general.device_name);
         	debug_i("device_name: %s", app.cfg.general.device_name.c_str());
-            Json::getValue(jgen["pin_config"], app.cfg.general.pin_config);
-        	Json::getValue(jgen["buttons_config"], app.cfg.general.buttons_config);
-        	Json::getValue(jgen["buttons_debounce_ms"], app.cfg.general.buttons_debounce_ms);
-            Json::getValue(jgen["pin_config_name"],app.cfg.general.pin_config_name);
-            Json::getValue(jgen["pin_config_url"],app.cfg.general.pin_config_url);
+            Json::getValue(jgen[F("pin_config")], app.cfg.general.pin_config);
+        	Json::getValue(jgen[F("buttons_config")], app.cfg.general.buttons_config);
+        	Json::getValue(jgen[F("buttons_debounce_ms")], app.cfg.general.buttons_debounce_ms);
+            Json::getValue(jgen[F("pin_config_name")],app.cfg.general.pin_config_name);
+            Json::getValue(jgen[F("pin_config_url")],app.cfg.general.pin_config_url);
             // read channels array from config and push it to app.cfg.general.channels
             // if there are already channels in the vector, clear it first 
-            JsonArray jchannels = jgen["channels"];
+            JsonArray jchannels = jgen[F("channels")];
             debug_i("populating channels");
             Json::serialize(jchannels, Serial, Json::Pretty);
 
@@ -561,62 +562,62 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
                 JsonObject jchannel = jchannels[i];
                 if (!jchannel.isNull()) {
                     channel channel;
-                    Json::getValue(jchannel["pin"], channel.pin);
-                    Json::getValue(jchannel["name"], channel.name);
+                    Json::getValue(jchannel[F("pin")], channel.pin);
+                    Json::getValue(jchannel[F("name")], channel.name);
                     debug_i("adding channel %i with name %s",channel.pin, channel.name);
                     app.cfg.general.channels.push_back(channel);
                 }
             }
         }
 
-        JsonObject jntp = root["ntp"];
+        JsonObject jntp = root[F("ntp")];
         if (!jntp.isNull()) {
-            Json::getBoolTolerant(jntp["enabled"], app.cfg.ntp.enabled);
-            Json::getValue(jntp["server"], app.cfg.ntp.server);
-            Json::getValue(jntp["interval"], app.cfg.ntp.interval);
+            Json::getBoolTolerant(jntp[F("enabled")], app.cfg.ntp.enabled);
+            Json::getValue(jntp[F("server")], app.cfg.ntp.server);
+            Json::getValue(jntp[F("interval")], app.cfg.ntp.interval);
         }
 
-        JsonObject jsync = root["sync"];
+        JsonObject jsync = root[F("sync")];
         if (!jsync.isNull()) {
-            Json::getBoolTolerant(jsync["clock_master_enabled"], app.cfg.sync.clock_master_enabled);
-        	Json::getValue(jsync["clock_master_interval"], app.cfg.sync.clock_master_interval);
-        	Json::getBoolTolerant(jsync["clock_slave_enabled"], app.cfg.sync.clock_slave_enabled);
-        	Json::getValue(jsync["clock_slave_topic"], app.cfg.sync.clock_slave_topic);
-        	Json::getBoolTolerant(jsync["cmd_master_enabled"], app.cfg.sync.cmd_master_enabled);
-        	Json::getBoolTolerant(jsync["cmd_slave_enabled"], app.cfg.sync.cmd_slave_enabled);
-        	Json::getValue(jsync["cmd_slave_topic"], app.cfg.sync.cmd_slave_topic);
+            Json::getBoolTolerant(jsync[F("clock_master_enabled")], app.cfg.sync.clock_master_enabled);
+        	Json::getValue(jsync[F("clock_master_interval")], app.cfg.sync.clock_master_interval);
+        	Json::getBoolTolerant(jsync[F("clock_slave_enabled")], app.cfg.sync.clock_slave_enabled);
+        	Json::getValue(jsync[F("clock_slave_topic")], app.cfg.sync.clock_slave_topic);
+        	Json::getBoolTolerant(jsync[F("cmd_master_enabled")], app.cfg.sync.cmd_master_enabled);
+        	Json::getBoolTolerant(jsync[F("cmd_slave_enabled")], app.cfg.sync.cmd_slave_enabled);
+        	Json::getValue(jsync[F("cmd_slave_topic")], app.cfg.sync.cmd_slave_topic);
 
-        	Json::getBoolTolerant(jsync["color_master_enabled"], app.cfg.sync.color_master_enabled);
-        	Json::getValue(jsync["color_master_interval_ms"], app.cfg.sync.color_master_interval_ms);
-        	Json::getBoolTolerant(jsync["color_slave_enabled"], app.cfg.sync.color_slave_enabled);
-        	Json::getValue(jsync["color_slave_topic"], app.cfg.sync.color_slave_topic);
+        	Json::getBoolTolerant(jsync[F("color_master_enabled")], app.cfg.sync.color_master_enabled);
+        	Json::getValue(jsync[F("color_master_interval_ms")], app.cfg.sync.color_master_interval_ms);
+        	Json::getBoolTolerant(jsync[F("color_slave_enabled")], app.cfg.sync.color_slave_enabled);
+        	Json::getValue(jsync[F("color_slave_topic")], app.cfg.sync.color_slave_topic);
         }
 
-        JsonObject jevents = root["events"];
+        JsonObject jevents = root[F("events")];
         if (!jevents.isNull()) {
-        	Json::getValue(jevents["color_interval_ms"], app.cfg.events.color_interval_ms);
-        	Json::getValue(jevents["color_mininterval_ms"], app.cfg.events.color_mininterval_ms);
-        	Json::getBoolTolerant(jevents["server_enabled"], app.cfg.events.server_enabled);
-        	Json::getValue(jevents["transfin_interval_ms"], app.cfg.events.transfin_interval_ms);
+        	Json::getValue(jevents[F("color_interval_ms")], app.cfg.events.color_interval_ms);
+        	Json::getValue(jevents[F("color_mininterval_ms")], app.cfg.events.color_mininterval_ms);
+        	Json::getBoolTolerant(jevents[F("server_enabled")], app.cfg.events.server_enabled);
+        	Json::getValue(jevents[F("transfin_interval_ms")], app.cfg.events.transfin_interval_ms);
         }
 
         app.cfg.sanitizeValues();
 
         // update and save settings if we haven`t received any error until now
         if (!error) {
-        	bool restart = root["restart"] | false;
+        	bool restart = root[F("restart")] | false;
             if (ip_updated) {
             	if (restart) {
 					debug_i("ApplicationWebserver::onConfig ip settings changed - rebooting");
-					app.delayedCMD("restart", 3000); // wait 3s to first send response
-					//json["data"] = "restart";
+					app.delayedCMD(F("restart"), 3000); // wait 3s to first send response
+					//json[F("data")] = "restart";
                 }
             }
             if (ap_updated) {
 				if (restart && WifiAccessPoint.isEnabled()) {
 					debug_i("ApplicationWebserver::onConfig wifiap settings changed - rebooting");
-					app.delayedCMD("restart", 3000); // wait 3s to first send response
-					//json["data"] = "restart";
+					app.delayedCMD(F("restart"), 3000); // wait 3s to first send response
+					//json[F("data")] = "restart";
 
 				}
             }
@@ -640,108 +641,108 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         JsonObjectStream* stream = new JsonObjectStream(CONFIG_MAX_LENGTH);
         JsonObject json = stream->getRoot();
         // returning settings
-        JsonObject net = json.createNestedObject("network");
-        JsonObject con = net.createNestedObject("connection");
-        con["dhcp"] = WifiStation.isEnabledDHCP();
+        JsonObject net = json.createNestedObject(F("network"));
+        JsonObject con = net.createNestedObject(F("connection"));
+        con[F("dhcp")] = WifiStation.isEnabledDHCP();
 
-        //con["ip"] = WifiStation.getIP().toString();
-        //con["netmask"] = WifiStation.getNetworkMask().toString();
-        //con["gateway"] = WifiStation.getNetworkGateway().toString();
+        //con[F("ip")] = WifiStation.getIP().toString();
+        //con[F("netmask")] = WifiStation.getNetworkMask().toString();
+        //con[F("gateway")] = WifiStation.getNetworkGateway().toString();
 
-        con["ip"] = app.cfg.network.connection.ip.toString();
-        con["netmask"] = app.cfg.network.connection.netmask.toString();
-        con["gateway"] = app.cfg.network.connection.gateway.toString();
+        con[F("ip")] = app.cfg.network.connection.ip.toString();
+        con[F("netmask")] = app.cfg.network.connection.netmask.toString();
+        con[F("gateway")] = app.cfg.network.connection.gateway.toString();
 
         JsonObject ap = net.createNestedObject("ap");
-        ap["secured"] = app.cfg.network.ap.secured;
-        ap["password"] = app.cfg.network.ap.password;
-        ap["ssid"] = app.cfg.network.ap.ssid;
+        ap[F("secured")] = app.cfg.network.ap.secured;
+        ap[F("password")] = app.cfg.network.ap.password;
+        ap[F("ssid")] = app.cfg.network.ap.ssid;
 
         JsonObject mqtt = net.createNestedObject("mqtt");
-        mqtt["enabled"] = app.cfg.network.mqtt.enabled;
-        mqtt["server"] = app.cfg.network.mqtt.server;
-        mqtt["port"] = app.cfg.network.mqtt.port;
-        mqtt["username"] = app.cfg.network.mqtt.username;
-        mqtt["password"] = app.cfg.network.mqtt.password;
-        mqtt["topic_base"] = app.cfg.network.mqtt.topic_base;
+        mqtt[F("enabled")] = app.cfg.network.mqtt.enabled;
+        mqtt[F("server")] = app.cfg.network.mqtt.server;
+        mqtt[F("port")] = app.cfg.network.mqtt.port;
+        mqtt[F("username")] = app.cfg.network.mqtt.username;
+        mqtt[F("password")] = app.cfg.network.mqtt.password;
+        mqtt[F("topic_base")] = app.cfg.network.mqtt.topic_base;
 
         JsonObject color = json.createNestedObject("color");
-        color["outputmode"] = app.cfg.color.outputmode;
-        color["startup_color"] = app.cfg.color.startup_color;
+        color[F("outputmode")] = app.cfg.color.outputmode;
+        color[F("startup_color")] = app.cfg.color.startup_color;
 
         JsonObject hsv = color.createNestedObject("hsv");
-        hsv["model"] = app.cfg.color.hsv.model;
+        hsv[F("model")] = app.cfg.color.hsv.model;
 
-        hsv["red"] = app.cfg.color.hsv.red;
-        hsv["yellow"] = app.cfg.color.hsv.yellow;
-        hsv["green"] = app.cfg.color.hsv.green;
-        hsv["cyan"] = app.cfg.color.hsv.cyan;
-        hsv["blue"] = app.cfg.color.hsv.blue;
-        hsv["magenta"] = app.cfg.color.hsv.magenta;
+        hsv[F("red")] = app.cfg.color.hsv.red;
+        hsv[F("yellow")] = app.cfg.color.hsv.yellow;
+        hsv[F("green")] = app.cfg.color.hsv.green;
+        hsv[F("cyan")] = app.cfg.color.hsv.cyan;
+        hsv[F("blue")] = app.cfg.color.hsv.blue;
+        hsv[F("magenta")] = app.cfg.color.hsv.magenta;
 
         JsonObject brighntess = color.createNestedObject("brightness");
-        brighntess["red"] = app.cfg.color.brightness.red;
-        brighntess["green"] = app.cfg.color.brightness.green;
-        brighntess["blue"] = app.cfg.color.brightness.blue;
-        brighntess["ww"] = app.cfg.color.brightness.ww;
-        brighntess["cw"] = app.cfg.color.brightness.cw;
+        brighntess[F("red")] = app.cfg.color.brightness.red;
+        brighntess[F("green")] = app.cfg.color.brightness.green;
+        brighntess[F("blue")] = app.cfg.color.brightness.blue;
+        brighntess[F("ww")] = app.cfg.color.brightness.ww;
+        brighntess[F("cw")] = app.cfg.color.brightness.cw;
 
         JsonObject ctmp = color.createNestedObject("colortemp");
-        ctmp["ww"] = app.cfg.color.colortemp.ww;
-        ctmp["cw"] = app.cfg.color.colortemp.cw;
+        ctmp[F("ww")] = app.cfg.color.colortemp.ww;
+        ctmp[F("cw")] = app.cfg.color.colortemp.cw;
 
         JsonObject s = json.createNestedObject("security");
-        s["api_secured"] = app.cfg.general.api_secured;
+        s[F("api_secured")] = app.cfg.general.api_secured;
 
         JsonObject ota = json.createNestedObject("ota");
-        ota["url"] = app.cfg.general.otaurl;
+        ota[F("url")] = app.cfg.general.otaurl;
 
         JsonObject sync = json.createNestedObject("sync");
-        sync["clock_master_enabled"] = app.cfg.sync.clock_master_enabled;
-        sync["clock_master_interval"] = app.cfg.sync.clock_master_interval;
-        sync["clock_slave_enabled"] = app.cfg.sync.clock_slave_enabled;
-        sync["clock_slave_topic"] = app.cfg.sync.clock_slave_topic;
-        sync["cmd_master_enabled"] = app.cfg.sync.cmd_master_enabled;
-        sync["cmd_slave_enabled"] = app.cfg.sync.cmd_slave_enabled;
-        sync["cmd_slave_topic"] = app.cfg.sync.cmd_slave_topic;
+        sync[F("clock_master_enabled")] = app.cfg.sync.clock_master_enabled;
+        sync[F("clock_master_interval")] = app.cfg.sync.clock_master_interval;
+        sync[F("clock_slave_enabled")] = app.cfg.sync.clock_slave_enabled;
+        sync[F("clock_slave_topic")] = app.cfg.sync.clock_slave_topic;
+        sync[F("cmd_master_enabled")] = app.cfg.sync.cmd_master_enabled;
+        sync[F("cmd_slave_enabled")] = app.cfg.sync.cmd_slave_enabled;
+        sync[F("cmd_slave_topic")] = app.cfg.sync.cmd_slave_topic;
 
-        sync["color_master_enabled"] = app.cfg.sync.color_master_enabled;
-        sync["color_master_interval_ms"] = app.cfg.sync.color_master_interval_ms;
-        sync["color_slave_enabled"] = app.cfg.sync.color_slave_enabled;
-        sync["color_slave_topic"] = app.cfg.sync.color_slave_topic;
+        sync[F("color_master_enabled")] = app.cfg.sync.color_master_enabled;
+        sync[F("color_master_interval_ms")] = app.cfg.sync.color_master_interval_ms;
+        sync[F("color_slave_enabled")] = app.cfg.sync.color_slave_enabled;
+        sync[F("color_slave_topic")] = app.cfg.sync.color_slave_topic;
 
         JsonObject events = json.createNestedObject("events");
-        events["color_interval_ms"] = app.cfg.events.color_interval_ms;
-        events["color_mininterval_ms"] = app.cfg.events.color_mininterval_ms;
-        events["server_enabled"] = app.cfg.events.server_enabled;
-        events["transfin_interval_ms"] = app.cfg.events.transfin_interval_ms;
+        events[F("color_interval_ms")] = app.cfg.events.color_interval_ms;
+        events[F("color_mininterval_ms")] = app.cfg.events.color_mininterval_ms;
+        events[F("server_enabled")] = app.cfg.events.server_enabled;
+        events[F("transfin_interval_ms")] = app.cfg.events.transfin_interval_ms;
 
         JsonObject general = json.createNestedObject("general");
-        general["device_name"] = app.cfg.general.device_name;
-        general["pin_config"] = app.cfg.general.pin_config;
-        general["buttons_config"] = app.cfg.general.buttons_config;
-        general["buttons_debounce_ms"] = app.cfg.general.buttons_debounce_ms;
-        general["current_pin_config_name"] = app.cfg.general.pin_config_name;
-        general["pin_config_url"] = app.cfg.general.pin_config_url;
+        general[F("device_name")] = app.cfg.general.device_name;
+        general[F("pin_config")] = app.cfg.general.pin_config;
+        general[F("buttons_config")] = app.cfg.general.buttons_config;
+        general[F("buttons_debounce_ms")] = app.cfg.general.buttons_debounce_ms;
+        general[F("current_pin_config_name")] = app.cfg.general.pin_config_name;
+        general[F("pin_config_url")] = app.cfg.general.pin_config_url;
 
         auto channels = general.createNestedArray("channels");
         debug_i("adding channels to json");
         for(uint8_t channel=0;channel<app.cfg.general.channels.size();channel++){
             StaticJsonDocument<64> channelConfig;
             debug_i("adding channel %i with name %s",app.cfg.general.channels[channel].pin, app.cfg.general.channels[channel].name.c_str());
-            channelConfig["pin"] = app.cfg.general.channels[channel].pin;
-            channelConfig["name"] = app.cfg.general.channels[channel].name;
+            channelConfig[F("pin")] = app.cfg.general.channels[channel].pin;
+            channelConfig[F("name")] = app.cfg.general.channels[channel].name;
             channels.add(channelConfig);
         }
 
-        auto supported_color_models = general.createNestedArray("supported_color_models");
+        auto supported_color_models = general.createNestedArray(F("supported_color_models"));
         debug_i("adding color models");
         for(uint8_t i=0;i<app.cfg.general.supported_color_models.size();i++){
             debug_i("adding color model %s",app.cfg.general.supported_color_models[i].c_str());
             String color_model=app.cfg.general.supported_color_models[i];
             supported_color_models.add(color_model);
         }
-        response.setHeader("Access-Control-Allow-Origin", "*");
+        response.setAllowCrossDomainOrigin("*");
         sendApiResponse(response, stream);
     }
 }
@@ -768,49 +769,49 @@ void ApplicationWebserver::onInfo(HttpRequest &request, HttpResponse &response) 
 
     JsonObjectStream* stream = new JsonObjectStream();
     JsonObject data = stream->getRoot();
-    data["deviceid"] = String(system_get_chip_id());
-    data["current_rom"] = String(app.ota.getRomPartition().name());
-    data["git_version"] = fw_git_version;
-    data["git_date"] = fw_git_date;
-    data["webapp_version"] = WEBAPP_VERSION;
-    data["api_version"]=F("2");
-    data["sming"] = SMING_VERSION;
-    data["event_num_clients"] = app.eventserver.activeClients;
-    data["uptime"] = app.getUptime();
-    data["heap_free"] = system_get_free_heap_size();
+    data[F("deviceid")] = String(system_get_chip_id());
+    data[F("current_rom")] = String(app.ota.getRomPartition().name());
+    data[F("git_version")] = fw_git_version;
+    data[F("git_date")] = fw_git_date;
+    data[F("webapp_version")] = WEBAPP_VERSION;
+    data[F("api_version")]=F("2");
+    data[F("sming")] = SMING_VERSION;
+    data[F("event_num_clients")] = app.eventserver.activeClients;
+    data[F("uptime")] = app.getUptime();
+    data[F("heap_free")] = system_get_free_heap_size();
     #ifdef ARCH_ESP8266
-        data["soc"]=F("Esp8266");
+        data[F("soc")]=F("Esp8266");
     #elif ARCH_ESP32
-        data["soc"]=F("Esp32");
+        data[F("soc")]=F("Esp32");
     #endif   
     #ifdef PART_LAYOUT
-        data["part_layout"]=PART_LAYOUT;
+        data[F("part_layout")]=PART_LAYOUT;
     #else
-        data["part_layout"]=F("v1");
+        data[F("part_layout")]=F("v1");
     #endif
 
 /*
     FileSystem::Info fsInfo;
     app.getinfo(fsInfo);
     JsonObject FS=data.createNestedObject("fs");
-    FS["mounted"] = fsInfo.partition?"true":"false";
-    FS["size"] = fsInfo.total;
-    FS["used"] = fsInfo.used;
-    FS["available"] = fsInfo.freeSpace;
+    FS[F("mounted")] = fsInfo.partition?"true":"false";
+    FS[F("size")] = fsInfo.total;
+    FS[F("used")] = fsInfo.used;
+    FS[F("available")] = fsInfo.freeSpace;
 */
     JsonObject rgbww = data.createNestedObject("rgbww");
-    rgbww["version"] = RGBWW_VERSION;
-    rgbww["queuesize"] = RGBWW_ANIMATIONQSIZE;
+    rgbww[F("version")] = RGBWW_VERSION;
+    rgbww[F("queuesize")] = RGBWW_ANIMATIONQSIZE;
 
     JsonObject con = data.createNestedObject("connection");
-    con["connected"] = WifiStation.isConnected();
-    con["ssid"] = WifiStation.getSSID();
-    con["dhcp"] = WifiStation.isEnabledDHCP();
-    con["ip"] = WifiStation.getIP().toString();
-    con["netmask"] = WifiStation.getNetworkMask().toString();
-    con["gateway"] = WifiStation.getNetworkGateway().toString();
-    con["mac"] = WifiStation.getMAC();
-    //con["mdnshostname"] = app.cfg.network.connection.mdnshostname.c_str();
+    con[F("connected")] = WifiStation.isConnected();
+    con[F("ssid")] = WifiStation.getSSID();
+    con[F("dhcp")] = WifiStation.isEnabledDHCP();
+    con[F("ip")] = WifiStation.getIP().toString();
+    con[F("netmask")] = WifiStation.getNetworkMask().toString();
+    con[F("gateway")] = WifiStation.getNetworkGateway().toString();
+    con[F("mac")] = WifiStation.getMAC();
+    //con[F("mdnshostname")] = app.cfg.network.connection.mdnshostname.c_str();
 
     sendApiResponse(response, stream);
 }
@@ -825,21 +826,21 @@ void ApplicationWebserver::onColorGet(HttpRequest &request, HttpResponse &respon
 
     JsonObject raw = json.createNestedObject("raw");
     ChannelOutput output = app.rgbwwctrl.getCurrentOutput();
-    raw["r"] = output.r;
-    raw["g"] = output.g;
-    raw["b"] = output.b;
-    raw["ww"] = output.ww;
-    raw["cw"] = output.cw;
+    raw[F("r")] = output.r;
+    raw[F("g")] = output.g;
+    raw[F("b")] = output.b;
+    raw[F("ww")] = output.ww;
+    raw[F("cw")] = output.cw;
 
     JsonObject hsv = json.createNestedObject("hsv");
     float h, s, v;
     int ct;
     HSVCT c = app.rgbwwctrl.getCurrentColor();
     c.asRadian(h, s, v, ct);
-    hsv["h"] = h;
-    hsv["s"] = s;
-    hsv["v"] = v;
-    hsv["ct"] = ct;
+    hsv[F("h")] = h;
+    hsv[F("s")] = s;
+    hsv[F("v")] = v;
+    hsv[F("ct")] = ct;
 
     sendApiResponse(response, stream);
 }
@@ -917,8 +918,8 @@ void ApplicationWebserver::onNetworks(HttpRequest &request, HttpResponse &respon
     }
 #endif
     if (request.method == HTTP_OPTIONS){
-        response.setHeader("Access-Control-Allow-Origin", "*"); // allow CORS temporarily for testing, probaly best to remove it later as
-                                                                // it may be a security risk to allow $world to scan for wifi networks
+        response.setAllowCrossDomainOrigin("*");
+
         sendApiCode(response, API_CODES::API_SUCCESS);
         return;
     }
@@ -933,9 +934,9 @@ void ApplicationWebserver::onNetworks(HttpRequest &request, HttpResponse &respon
     bool error = false;
 
     if (app.network.isScanning()) {
-        json["scanning"] = true;
+        json[F("scanning")] = true;
     } else {
-        json["scanning"] = false;
+        json[F("scanning")] = false;
         JsonArray netlist = json.createNestedArray("available");
         BssList networks = app.network.getAvailableNetworks();
         for (unsigned int i = 0; i < networks.count(); i++) {
@@ -950,18 +951,17 @@ void ApplicationWebserver::onNetworks(HttpRequest &request, HttpResponse &respon
             }
 
             JsonObject item = netlist.createNestedObject();
-            item["id"] = (int) networks[i].getHashId();
-            item["ssid"] = networks[i].ssid;
-            item["signal"] = networks[i].rssi;
-            item["encryption"] = networks[i].getAuthorizationMethodName();
+            item[F("id")] = (int) networks[i].getHashId();
+            item[F("ssid")] = networks[i].ssid;
+            item[F("signal")] = networks[i].rssi;
+            item[F("encryption")] = networks[i].getAuthorizationMethodName();
             //limit to max 25 networks
             if (i >= 25)
                 break;
         }
     }
-    response.setHeader("Access-Control-Allow-Origin", "*"); // allow CORS temporarily for testing, probaly best to remove it later as
-                                                            // it may be a security risk to allow $world to scan for wifi networks
-    sendApiResponse(response, stream);
+            response.setAllowCrossDomainOrigin("*");
+            sendApiResponse(response, stream);
 }
 
 void ApplicationWebserver::onScanNetworks(HttpRequest &request, HttpResponse &response) {
@@ -1019,8 +1019,8 @@ void ApplicationWebserver::onConnect(HttpRequest &request, HttpResponse &respons
         Json::deserialize(doc, body);
         String ssid;
         String password;
-        if (Json::getValue(doc["ssid"], ssid)) {
-        	password = doc["password"].as<const char*>();
+        if (Json::getValue(doc[F("ssid")], ssid)) {
+        	password = doc[F("password")].as<const char*>();
             debug_d("ssid %s - pass %s", ssid.c_str(), password.c_str());
             app.network.connect(ssid, password, true);
             sendApiCode(response, API_CODES::API_SUCCESS);
@@ -1035,18 +1035,18 @@ void ApplicationWebserver::onConnect(HttpRequest &request, HttpResponse &respons
         JsonObject json = stream->getRoot();
 
         CONNECTION_STATUS status = app.network.get_con_status();
-        json["status"] = int(status);
+        json[F("status")] = int(status);
         if (status == CONNECTION_STATUS::ERROR) {
-            json["error"] = app.network.get_con_err_msg();
+            json[F("error")] = app.network.get_con_err_msg();
         } else if (status == CONNECTION_STATUS::CONNECTED) {
             // return connected
             if (app.cfg.network.connection.dhcp) {
-                json["ip"] = WifiStation.getIP().toString();
+                json[F("ip")] = WifiStation.getIP().toString();
             } else {
-                json["ip"] = app.cfg.network.connection.ip.toString();
+                json[F("ip")] = app.cfg.network.connection.ip.toString();
             }
-            json["dhcp"] = app.cfg.network.connection.dhcp;
-            json["ssid"] = WifiStation.getSSID();
+            json[F("dhcp")] = app.cfg.network.connection.dhcp;
+            json[F("ssid")] = WifiStation.getSSID();
 
         }
         sendApiResponse(response, stream);
@@ -1069,8 +1069,8 @@ void ApplicationWebserver::onSystemReq(HttpRequest &request, HttpResponse &respo
 #endif
 
     if(request.method == HTTP_OPTIONS){
-        response.setHeader("Access-Control-Allow-Origin", "*"); // allow CORS temporarily for testing, probaly best to remove it later as
-                                                                // it may be a security risk to allow $world to scan for wifi networks
+        response.setAllowCrossDomainOrigin("*");
+
         sendApiCode(response, API_CODES::API_SUCCESS);
         return;
     }
@@ -1089,11 +1089,11 @@ void ApplicationWebserver::onSystemReq(HttpRequest &request, HttpResponse &respo
         DynamicJsonDocument doc(1024);
         Json::deserialize(doc, body);
 
-        String cmd = doc["cmd"].as<const char*>();
+        String cmd = doc[F("cmd")].as<const char*>();
         if (cmd) {
             if (cmd.equals("debug")) {
             	bool enable;
-            	if (Json::getValue(doc["enable"], enable)) {
+            	if (Json::getValue(doc[F("enable")], enable)) {
                     Serial.systemDebugOutput(enable);
                 } else {
                     error = true;
@@ -1108,8 +1108,8 @@ void ApplicationWebserver::onSystemReq(HttpRequest &request, HttpResponse &respo
         }
 
     }
-        response.setHeader("Access-Control-Allow-Origin", "*"); // allow CORS temporarily for testing, probaly best to remove it later as
-                                                                // it may be a security risk to allow $world to scan for wifi networks
+    response.setAllowCrossDomainOrigin("*");
+
     
     if (!error) {
         sendApiCode(response, API_CODES::API_SUCCESS);
@@ -1130,7 +1130,7 @@ void ApplicationWebserver::onUpdate(HttpRequest &request, HttpResponse &response
 #else
     if (request.method == HTTP_OPTIONS){
         // probably a CORS request
-        response.setHeader("Access-Control-Allow-Origin", "*");
+        response.setAllowCrossDomainOrigin("*");
         sendApiCode(response,API_CODES::API_SUCCESS,"");
         debug_i("/update HTTP_OPTIONS Request, sent API_SUCCSSS");
         return;
@@ -1156,24 +1156,24 @@ void ApplicationWebserver::onUpdate(HttpRequest &request, HttpResponse &response
             Json::deserialize(doc, body);
 
         String romurl;
-        Json::getValue(doc["rom"]["url"],romurl);
+        Json::getValue(doc[F("rom")][F("url")],romurl);
         
         String spiffsurl;
-        Json::getValue(doc["spiffs"]["url"],spiffsurl);
+        Json::getValue(doc[F("spiffs")][F("url")],spiffsurl);
         
         debug_i("starting update process with \n    webapp: %s\n    spiffs: %s", romurl.c_str(), spiffsurl.c_str());
         if (! romurl || ! spiffsurl) {
             sendApiCode(response, API_CODES::API_MISSING_PARAM);
         } else {
             app.ota.start(romurl, spiffsurl);
-            response.setHeader("Access-Control-Allow-Origin", "*");
+            response.setAllowCrossDomainOrigin("*");
             sendApiCode(response, API_CODES::API_SUCCESS);
         }
         return;
     }
     JsonObjectStream* stream = new JsonObjectStream();
     JsonObject json = stream->getRoot();
-    json["status"] = int(app.ota.getStatus());
+    json[F("status")] = int(app.ota.getStatus());
     sendApiResponse(response, stream);
 #endif
 }
@@ -1186,7 +1186,7 @@ void ApplicationWebserver::onPing(HttpRequest &request, HttpResponse &response) 
     }
     JsonObjectStream* stream = new JsonObjectStream();
     JsonObject json = stream->getRoot();
-    json["ping"] = "pong";
+    json[F("ping")] = "pong";
     sendApiResponse(response, stream);
 }
 
@@ -1316,14 +1316,14 @@ void ApplicationWebserver::onStorage(HttpRequest &request, HttpResponse &respons
         debug_i("body length: %i", body.length());
         DynamicJsonDocument doc(body.length()+32);
         Json::deserialize(doc, body);
-        String fileName=doc["filename"];
+        String fileName=doc[F("filename")];
         
         //DynamicJsonDocument data(body.length()+32);
-        //Json::deserialize(data, Json::serialize(doc["data"]));
+        //Json::deserialize(data, Json::serialize(doc[F("data")]));
         //doc.clear(); //clearing the original document to save RAM
         debug_i("will save to file %s", fileName.c_str());
         debug_i("original document uses %i bytes", doc.memoryUsage());
-        String data=doc["data"];
+        String data=doc[F("data")];
         debug_i("data: %s", data.c_str());
         
         FileHandle file=fileOpen(fileName.c_str(),IFS::OpenFlag::Write|IFS::OpenFlag::Create|IFS::OpenFlag::Truncate);
@@ -1352,8 +1352,8 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
     
     String myHosts;
     // Set the response body with the JSON
-    response.setHeader("Access-Control-Allow-Origin", "*");
-    response.setContentType("application/json");
+    response.setAllowCrossDomainOrigin("*");
+    response.setContentType(F("application/json"));
     response.sendString(app.network.getMdnsHosts());
 
     return;
@@ -1362,7 +1362,7 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
  void ApplicationWebserver::onObject(HttpRequest &request, HttpResponse &response){
     if (request.method == HTTP_OPTIONS){
         // probably a CORS request
-        response.setHeader("Access-Control-Allow-Origin", "*");
+        response.setAllowCrossDomainOrigin("*");
         sendApiCode(response,API_CODES::API_SUCCESS,"");
         debug_i("HTTP_OPTIONS Request, sent API_SUCCSSS");
         return;
@@ -1388,7 +1388,7 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
     * 
     * enumerating all objects of a type is done by first sending a GET request to /object?type=<type> which the 
     * controller will reply to with a json array of all objects of the requested type in the following format:
-    * {"<type>":["2234585-1233362","2234585-0408750","2234585-9433038","2234585-7332130","2234585-7389644"]}
+    * {"<type>":[F("2234585-1233362","2234585-0408750","2234585-9433038","2234585-7332130","2234585-7389644")]}
     * it is then the job of the front end to request each object individually by sending a GET request to 
     * /object?type=<type>&id=<id>
     * 
@@ -1420,7 +1420,7 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
         #ifdef DEBUG_OBJECT_API
         debug_i("missing object type");        
         #endif
-        response.setHeader("Access-Control-Allow-Origin", "*");
+        response.setAllowCrossDomainOrigin("*");
         sendApiCode(response, API_CODES::API_BAD_REQUEST, "missing object type");
         return;
     }
@@ -1429,8 +1429,8 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
         #ifdef DEBUG_OBJECT_API
         debug_i("unsupported object type");
         #endif
-        response.setHeader("Access-Control-Allow-Origin", "*");
-        sendApiCode(response, API_CODES::API_BAD_REQUEST, "unsupported object type");
+        response.setAllowCrossDomainOrigin("*");
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, F("unsupported object type"));
         return;
     }
     
@@ -1441,7 +1441,7 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
             Directory dir;
             if(!dir.open()) {
                 debug_i("could not open dir");
-                sendApiCode(response, API_CODES::API_BAD_REQUEST, "could not open dir");
+                sendApiCode(response, API_CODES::API_BAD_REQUEST, F("could not open dir"));
                 return;
             }else{
                 JsonObjectStream* stream = new JsonObjectStream(CONFIG_MAX_LENGTH);
@@ -1451,19 +1451,19 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
 
                 switch (objectType.c_str()[0]) {
                     case 'g':
-                        objectsList = doc.createNestedArray("groups"); // Assign value inside the case
+                        objectsList = doc.createNestedArray(F("groups")); // Assign value inside the case
                         break;
                         ;;
                     case 'p':
-                        objectsList = doc.createNestedArray("presets"); // Assign value inside the case
+                        objectsList = doc.createNestedArray(F("presets")); // Assign value inside the case
                         break;
                         ;;
                     case 'h':
-                        objectsList = doc.createNestedArray("hosts"); // Assign value inside the case
+                        objectsList = doc.createNestedArray(F("hosts")); // Assign value inside the case
                         break;
                         ;;
                     case 's':
-                        objectsList = doc.createNestedArray("scenes"); // Assign value inside the case
+                        objectsList = doc.createNestedArray(F("scenes")); // Assign value inside the case
                         break;
                         ;;
                 }
@@ -1483,9 +1483,8 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
                         objectsList.add(objectId);
                     }
                 }
-                response.setContentType("application/json");
+                response.setContentType(F("application/json"));
                 response.setAllowCrossDomainOrigin("*");
-                response.setHeader("Access-Control-Allow-Origin", "*");
                 response.sendString(Json::serialize(doc));
                 delete stream;
             }
@@ -1497,16 +1496,16 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
                 #ifdef DEBUG_OBJECT_API
                 debug_i("file not found");
                 #endif
-                response.setHeader("Access-Control-Allow-Origin", "*");
-                sendApiCode(response, API_CODES::API_BAD_REQUEST, "file not found");
+                response.setAllowCrossDomainOrigin("*");
+                sendApiCode(response, API_CODES::API_BAD_REQUEST, F("file not found"));
                 return;
             }
-            response.setContentType("application/json");
+            response.setContentType(F("application/json"));
             response.setAllowCrossDomainOrigin("*");
             #ifdef DEBUG_OBJECT_API
             debug_i("sending file %s", fileName.c_str());
             #endif
-            response.setHeader("Access-Control-Allow-Origin", "*");
+            response.setAllowCrossDomainOrigin("*");
             response.sendFile(fileName);
             return;
         }
@@ -1518,8 +1517,8 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
         debug_i("request body: %s", body.c_str());
         #endif
         if (body == NULL || body.length()>FILE_MAX_SIZE) {
-            response.setHeader("Access-Control-Allow-Origin", "*");
-            sendApiCode(response, API_CODES::API_BAD_REQUEST, "could not parse HTTP body");
+            response.setAllowCrossDomainOrigin("*");
+            sendApiCode(response, API_CODES::API_BAD_REQUEST, F("could not parse HTTP body"));
             #ifdef DEBUG_OBJECT_API
             debug_i("body is null or too long");
             #endif
@@ -1528,24 +1527,24 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
         StaticJsonDocument<FILE_MAX_SIZE> doc;
         DeserializationError error = deserializeJson(doc, body);
         if (error) {
-            response.setHeader("Access-Control-Allow-Origin", "*");
-            sendApiCode(response, API_CODES::API_BAD_REQUEST, "could not parse json from HTTP body");
+            response.setAllowCrossDomainOrigin("*");
+            sendApiCode(response, API_CODES::API_BAD_REQUEST, F("could not parse json from HTTP body"));
             #ifdef DEBUG_OBJECT_API
             debug_i("could not parse json");
             #endif
             return;
         }
         #ifdef DEBUG_OBJECT_API
-        debug_i("parsed json, found name %s",String(doc["name"]).c_str());
+        debug_i("parsed json, found name %s",String(doc[F("name")]).c_str());
         #endif
         if(objectId==""){
             //no object id, create new object
-            if(doc["id"]!=""){
-                objectId=String(doc["id"]);
+            if(doc[F("id")]!=""){
+                objectId=String(doc[F("id")]);
             }else{
                debug_i("no object id, creating new object");
                objectId=makeId();
-               doc["id"]=objectId;
+               doc[F("id")]=objectId;
             }
         }
         String fileName = "_"+objectType+objectId + ".json"; 
@@ -1554,7 +1553,7 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
         #endif
         FileHandle file = fileOpen(fileName.c_str(), IFS::OpenFlag::Write|IFS::OpenFlag::Create|IFS::OpenFlag::Truncate);
         if (!file) {
-            sendApiCode(response, API_CODES::API_BAD_REQUEST, "file not found");
+            sendApiCode(response, API_CODES::API_BAD_REQUEST, F("file not found"));
             #ifdef DEBUG_OBJECT_API
             debug_i("couldn not open file for write");
             #endif
@@ -1575,9 +1574,9 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
         fileClose(file);
 
         response.setAllowCrossDomainOrigin("*");
-        response.setContentType("application/json");
+        response.setContentType(F("application/json"));
         //doc.clear();
-        doc["id"]=objectId;
+        doc[F("id")]=objectId;
         bodyData="";
         serializeJson(doc, bodyData);
         response.sendString(bodyData.c_str());
@@ -1598,10 +1597,10 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
         return;       
     }
     if (request.method==HTTP_DELETE){
-        String fileName = "_"+objectType+objectId + ".json"; 
+        String fileName = "_"+objectType+objectId + F(".json"); 
         FileHandle file = fileDelete(fileName.c_str());
         if (!file) {
-            sendApiCode(response, API_CODES::API_BAD_REQUEST, "file not found");
+            sendApiCode(response, API_CODES::API_BAD_REQUEST, F("file not found"));
             return;
         }
         fileClose(file);
