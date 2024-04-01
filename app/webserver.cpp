@@ -334,6 +334,7 @@ void ApplicationWebserver::onIndex(HttpRequest &request, HttpResponse &response)
 bool ApplicationWebserver::checkHeap(HttpResponse &response) {
     unsigned fh = system_get_free_heap_size();
     if (fh < _minimumHeap) {
+        response.setAllowCrossDomainOrigin("*");
         response.code = HTTP_STATUS_TOO_MANY_REQUESTS;
         response.setHeader(F("Retry-After"), "2");
         return false;
