@@ -544,8 +544,8 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         	Json::getValue(jgen[F("device_name")], app.cfg.general.device_name);
         	debug_i("device_name: %s", app.cfg.general.device_name.c_str());
             Json::getValue(jgen[F("pin_config")], app.cfg.general.pin_config);
-        	Json::getValue(jgen[F("buttons_config")], app.cfg.general.buttons_config);
-        	Json::getValue(jgen[F("buttons_debounce_ms")], app.cfg.general.buttons_debounce_ms);
+          	Json::getValue(jgen[F("buttons_config")], app.cfg.general.buttons_config);
+        	  Json::getValue(jgen[F("buttons_debounce_ms")], app.cfg.general.buttons_debounce_ms);
             Json::getValue(jgen[F("pin_config_name")],app.cfg.general.pin_config_name);
             Json::getValue(jgen[F("pin_config_url")],app.cfg.general.pin_config_url);
             // read channels array from config and push it to app.cfg.general.channels
@@ -780,6 +780,7 @@ void ApplicationWebserver::onInfo(HttpRequest &request, HttpResponse &response) 
     data[F("event_num_clients")] = app.eventserver.activeClients;
     data[F("uptime")] = app.getUptime();
     data[F("heap_free")] = system_get_free_heap_size();
+    data[F("config_size")]=sizeof(app.cfg);
     #ifdef ARCH_ESP8266
         data[F("soc")]=F("Esp8266");
     #elif ARCH_ESP32
@@ -1473,9 +1474,9 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
                     String fileName=String(dir.stat().name);
                     #ifdef DEBUG_OBJECT_API
                     debug_i("found file: %s",fileName.c_str());
-                    debug_i("file begins with %s",fileName.substring(1,2).c_str()); 
+                    debug_i("file begins with %s",fileName.substring(1,1).c_str()); 
                     #endif
-                    if(fileName.substring(1,2)==objectType){
+                    if(fileName.substring(1,1)==objectType){
                         #ifdef DEBUG_OBJECT_API
                         debug_i("adding file %s to list",fileName);
                         debug_i("filename %s, extension starts at %i",fileName,fileName.indexOf(F(".")));
