@@ -379,22 +379,21 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
     
     if (request.method == HTTP_POST) {
         debug_i("======================\nHTTP POST request received, ");
-        String body = request.getBody();
-        debug_i("body length: %i",body.length());
-        debug_i("body: %s", body.c_str());
-        if (body == NULL) {
+
+        StaticJsonDocument<CONFIG_MAX_LENGTH> doc;
+    	
+        String error_msg;
+        bool error;
+        
+        if(!Json::deserialize(doc, request.getBodyStream())) {
             sendApiCode(response, API_CODES::API_BAD_REQUEST, F("could not parse HTTP body"));
+            error_msg = getApiCodeMsg(API_CODES::API_BAD_REQUEST);
             return;
         }
 
-        bool error = false;
-        String error_msg = getApiCodeMsg(API_CODES::API_BAD_REQUEST);
-        DynamicJsonDocument doc(CONFIG_MAX_LENGTH); //TODO: CONFIG_MAX_LENGTH is 2048, that would not fit into one package, not sure what happens then
-        Json::deserialize(doc, body);
-
         // remove comment for debugging
         debug_i("serialized json object");
-        //Json::serialize(doc, Serial, Json::Pretty);
+        Json::serialize(doc, Serial, Json::Pretty);
 
         bool ip_updated = false;
         bool color_updated = false;
@@ -405,7 +404,6 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
             return;
         }
         response.setAllowCrossDomainOrigin("*");
-
         JsonObject jnet = root[F("network")];
         if (!jnet.isNull()) {
   
@@ -546,8 +544,9 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         	debug_i("device_name: %s", app.cfg.general.device_name.c_str());
             Json::getValue(jgen[F("pin_config")], app.cfg.general.pin_config);
           	Json::getValue(jgen[F("buttons_config")], app.cfg.general.buttons_config);
-        	  Json::getValue(jgen[F("buttons_debounce_ms")], app.cfg.general.buttons_debounce_ms);
-            Json::getValue(jgen[F("pin_config_name")],app.cfg.general.pin_config_name);
+        	Json::getValue(jgen[F("buttons_debounce_ms")], app.cfg.general.buttons_debounce_ms);
+            Json::getValue(jgen[F("current_pin_config_name")],app.cfg.general.pin_config_name);
+            debug_i("pin_config_name: %s", app.cfg.general.pin_config_name.c_str());
             Json::getValue(jgen[F("pin_config_url")],app.cfg.general.pin_config_url);
             // read channels array from config and push it to app.cfg.general.channels
             // if there are already channels in the vector, clear it first 

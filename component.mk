@@ -2,9 +2,21 @@ COMPONENT_SEARCH_DIRS := $(PROJECT_DIR)/Components
 COMPONENT_DEPENDS += MDNS RGBWWLed
 ARDUINO_LIBRARIES := RGBWWLed ArduinoJson6 OtaNetwork
 
+GLOBAL_CFLAGS += \
+  -DIP_REASSEMBLY=1 \
+  -DIP_FRAG=1 \
+  -DIP_REASS_MAXAGE=3 \
+  -DLWIP_NETIF_TX_SINGLE_PBUF=0 \
+  -DIP_REASS_DEBUG=1 \
+  -DIP_DEBUG=1 \
+  -DTCP_DEBUG=1 \
+  -DTCP_INPUT_DEBUG=1
+
 
 #HWCONFIG := two-spiffs-two-roms
 HWCONFIG := old_layout
+#ENABLE_CUSTOM_LWIP = 0
+#ENABLE_LWIP_DEBUG = 1
 
 # These are defined in hardware config or no longer required
 # SPI_SIZE = 4M
