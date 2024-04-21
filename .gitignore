@@ -48,3 +48,6 @@ term.sh
 tflash
 spiffs/*
 version.json
+
+# don't include the webapp files, they need to come from the deployment
+webapp/

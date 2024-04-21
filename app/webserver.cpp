@@ -29,6 +29,44 @@
 #define NOCACHE
 #define DEBUG_OBJECT_API
 
+#define FILE_LIST(XX)                                 \
+    XX(index_html,      "index.html.gz")              \
+    XX(VERSION,         "VERSION")                    \
+    XX(index_jss,       "assets/index.css.gz")        \
+    XX(index_js,        "assets/index.js.gz")         \
+    XX(RgbwwLayout_css, "assets/RgbwwLayout.css.gz")  \
+    XX(RgbwwLayout_js,  "assets/RgbwwLayout.js.gz")   \
+    XX(i18n_js,         "assets/i18n.js.gz")          \
+    XX(pinconfig_json,  "config/pinconfig.json")      \
+    XX(favicon_ico,     "icons/favicon.ico")          \
+    XX(network_wifi_3_bar_locked_FILL0_wght400_GRAD0_opsz24, "icons/network_wifi_3_bar_locked_FILL0_wght400_GRAD0_opsz24.svg") \
+    XX(network_wifi_1_bar_FILL0_wght400_GRAD0_opsz24,        "icons/network_wifi_1_bar_FILL0_wght400_GRAD0_opsz24.svg")        \
+    XX(network_wifi_FILL0_wght400_GRAD0_opsz24,              "icons/network_wifi_FILL0_wght400_GRAD0_opsz24.svg")              \
+    XX(network_wifi_1_bar_locked_FILL0_wght400_GRAD0_opsz24, "icons/network_wifi_1_bar_locked_FILL0_wght400_GRAD0_opsz24.svg") \
+    XX(network_wifi_locked_FILL0_wght400_GRAD0_opsz24,       "icons/network_wifi_locked_FILL0_wght400_GRAD0_opsz24.svg")       \
+    XX(network_wifi_2_bar_FILL0_wght400_GRAD0_opsz24,        "icons/network_wifi_2_bar_FILL0_wght400_GRAD0_opsz24.svg")        \
+    XX(signal_wifi_statusbar_null_FILL0_wght400_GRAD0_opsz24,"icons/signal_wifi_statusbar_null_FILL0_wght400_GRAD0_opsz24.svg")\
+    XX(network_wifi_2_bar_locked_FILL0_wght400_GRAD0_opsz24, "icons/network_wifi_2_bar_locked_FILL0_wght400_GRAD0_opsz24.svg") \
+    XX(wifi_lock_FILL0_wght400_GRAD0_opsz24,                 "icons/wifi_lock_FILL0_wght400_GRAD0_opsz24.svg")                 \
+    XX(network_wifi_3_bar_FILL0_wght400_GRAD0_opsz24,        "icons/network_wifi_3_bar_FILL0_wght400_GRAD0_opsz24.svg")
+
+    
+
+// Define the names for each file
+#define XX(name, file) DEFINE_FSTR_LOCAL(KEY_##name, file)
+FILE_LIST(XX)
+#undef XX
+
+// Import content for each file
+#define XX(name, file) IMPORT_FSTR_LOCAL(CONTENT_##name, PROJECT_DIR "/webapp/" file);
+FILE_LIST(XX)
+#undef XX
+
+// Define the table structure linking key => content
+#define XX(name, file) {&KEY_##name, &CONTENT_##name},
+DEFINE_FSTR_MAP_LOCAL(fileMap, FlashString, FlashString, FILE_LIST(XX));
+#undef XX
+
 ApplicationWebserver::ApplicationWebserver() {
     _running = false;
     // keep some heap space free
@@ -229,33 +267,50 @@ void ApplicationWebserver::onFile(HttpRequest &request, HttpResponse &response) 
 	#ifndef NOCACHE
     	response->setCache(86400, true);
     #endif
-    
-    if (!app.isFilesystemMounted()) {
-        response.setContentType(MIME_TEXT);
-        response.code = HTTP_STATUS_INTERNAL_SERVER_ERROR;
-        response.sendString(F("No filesystem mounted"));
-        return;
-    }
 
-    String file = request.uri.Path;
-    if (file[0] == '/')
-        file = file.substring(1);
-    if (file[0] == '.') {
+    String fileName = request.uri.Path;
+    if (fileName[0] == '/')
+        fileName = fileName.substring(1);
+    if (fileName[0] == '.') {
         response.code = HTTP_STATUS_FORBIDDEN;
         return;
     }
 
-    if (!fileExist(file) && !fileExist(file + ".gz") && WifiAccessPoint.isEnabled()) {
-        //if accesspoint is active and we couldn`t find the file - redirect to index
-        debug_d("ApplicationWebserver::onFile redirecting");
-        response.headers[HTTP_HEADER_LOCATION] = F("http://") + WifiAccessPoint.getIP().toString() +"/";
-    } else {
-        #ifndef NOCACHE
-        response.setCache(86400, true); // It's important to use cache for better performance.
-        #endif
-        response.code=HTTP_STATUS_OK;
-        response.sendFile(file);
-    }
+    String compressed = fileName + ".gz";
+	auto v = fileMap[compressed];
+	if(v) {
+		response.headers[HTTP_HEADER_CONTENT_ENCODING] = _F("gzip");
+	} else {
+		v = fileMap[fileName];
+		if(!v) {
+			    if (!app.isFilesystemMounted()) {
+                response.setContentType(MIME_TEXT);
+                response.code = HTTP_STATUS_INTERNAL_SERVER_ERROR;
+                response.sendString(F("No filesystem mounted"));
+                return;
+            }
+
+
+            if (!fileExist(fileName) && !fileExist(fileName + ".gz") && WifiAccessPoint.isEnabled()) {
+                //if accesspoint is active and we couldn`t find the file - redirect to index
+                debug_d("ApplicationWebserver::onFile redirecting");
+                response.headers[HTTP_HEADER_LOCATION] = F("http://") + WifiAccessPoint.getIP().toString() +"/";
+            } else {
+                #ifndef NOCACHE
+                response.setCache(86400, true); // It's important to use cache for better performance.
+                #endif
+                response.code=HTTP_STATUS_OK;
+                response.sendFile(fileName);
+            }
+
+			return;
+		}
+	}
+
+	debug_i("found %s in fileMap", String(v.key()).c_str());
+	auto stream = new FSTR::Stream(v.content());
+	response.sendDataStream(stream, ContentType::fromFullFileName(fileName));
+    
 
 }
 void ApplicationWebserver::onWebapp(HttpRequest &request, HttpResponse &response) {
@@ -369,7 +424,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
     / has been for years) this is just to reply to that request in order to pass the CORS test
     */
     if (request.method == HTTP_OPTIONS){
-        // probably a CORS request
+        // probably a CORS preflight request
         response.setAllowCrossDomainOrigin("*");
         response.setHeader("Access-Control-Allow-Headers", "Content-Type");
         sendApiCode(response,API_CODES::API_SUCCESS,"");
@@ -398,6 +453,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         bool ip_updated = false;
         bool color_updated = false;
         bool ap_updated = false;
+
         JsonObject root = doc.as<JsonObject>();
         if (root.isNull()) {
             sendApiCode(response, API_CODES::API_BAD_REQUEST, F("no root object"));
@@ -633,8 +689,10 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
 
             }
             app.cfg.save();
+            JsonObject root = doc.as<JsonObject>();
             sendApiCode(response, API_CODES::API_SUCCESS);
         } else {
+            JsonObject root = doc.as<JsonObject>();
             sendApiCode(response, API_CODES::API_MISSING_PARAM, error_msg);
         }
 
