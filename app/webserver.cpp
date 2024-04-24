@@ -275,22 +275,24 @@ void ApplicationWebserver::onFile(HttpRequest &request, HttpResponse &response) 
         response.code = HTTP_STATUS_FORBIDDEN;
         return;
     }
-
+    
     String compressed = fileName + ".gz";
+    debug_i("searching file name %s", compressed.c_str());
 	auto v = fileMap[compressed];
 	if(v) {
+        debug_i("found");
 		response.headers[HTTP_HEADER_CONTENT_ENCODING] = _F("gzip");
 	} else {
-		v = fileMap[fileName];
-		if(!v) {
-			    if (!app.isFilesystemMounted()) {
+	    debug_i("searching file name %s", fileName.c_str());
+        v = fileMap[fileName];
+		if(!v){ 
+            debug_i("file %s not found in filemap", fileName.c_str());
+            if (!app.isFilesystemMounted()) {
                 response.setContentType(MIME_TEXT);
                 response.code = HTTP_STATUS_INTERNAL_SERVER_ERROR;
                 response.sendString(F("No filesystem mounted"));
                 return;
             }
-
-
             if (!fileExist(fileName) && !fileExist(fileName + ".gz") && WifiAccessPoint.isEnabled()) {
                 //if accesspoint is active and we couldn`t find the file - redirect to index
                 debug_d("ApplicationWebserver::onFile redirecting");
@@ -302,7 +304,6 @@ void ApplicationWebserver::onFile(HttpRequest &request, HttpResponse &response) 
                 response.code=HTTP_STATUS_OK;
                 response.sendFile(fileName);
             }
-
 			return;
 		}
 	}
@@ -340,50 +341,12 @@ void ApplicationWebserver::onIndex(HttpRequest &request, HttpResponse &response)
     }
 #endif
 
-    if (request.method != HTTP_GET) {
-        response.code = HTTP_STATUS_BAD_REQUEST;
-        return;
-    }
+response.headers[HTTP_HEADER_LOCATION]=F("/index.html");
+    response.setAllowCrossDomainOrigin("*");
 
-    if (request.method == HTTP_OPTIONS){
-        // probably a CORS request
-        response.setAllowCrossDomainOrigin("*");
-        sendApiCode(response,API_CODES::API_SUCCESS,"");
-        debug_i("HTTP_OPTIONS Request, sent API_SUCCSSS");
-        return;
-    }
+    response.code = HTTP_STATUS_PERMANENT_REDIRECT;
+    response.sendString(F("Redirecting to /index.html"));
 
-    if (!app.isFilesystemMounted()) {
-        response.setContentType(MIME_TEXT);
-        response.code = HTTP_STATUS_INTERNAL_SERVER_ERROR;
-        response.sendString(F("No filesystem mounted"));
-        return;
-    }
-    
-    /* removing the init redirect as this is now handled in the front end component
-    if (WifiAccessPoint.isEnabled()&&!WifiStation.isConnected()&&request.getQueryParameter("init")!="true") {
-        // not yet connected - redirect to initial settings page
-        debug_i("activating query parameter");
-        response.headers[HTTP_HEADER_LOCATION]="http://" + WifiAccessPoint.getIP().toString()+"/?init=true";
-        response.code = HTTP_STATUS_PERMANENT_REDIRECT;
-
-    } else if(WifiStation.isConnected()&&(request.getQueryParameter("init")=="true")) {
-        // the controller is connected to a wifi network and the init parameter is set, needs clearing
-        // this should also redirect the browser if it has just been used to configure the wifi and now
-        // reconnected through the AP to the controller. The redirect points to the Station IP address
-        // so if that is reachable (depending on the client's connection), this should go directly to the app
-        debug_i("deactivating query parameter");
-        response.headers[HTTP_HEADER_LOCATION]="http://" + WifiStation.getIP().toString()+"/";
-        response.code = HTTP_STATUS_PERMANENT_REDIRECT;
-    }
-    // if neither of the two redirect cases is true, serve the index.html file
-    else {
-    */
-        // we are connected to ap - serve normal settings page
-        response.setAllowCrossDomainOrigin("*");
-        response.sendFile(F("index.html"));
-    /*}
-    */
 }
 
 bool ApplicationWebserver::checkHeap(HttpResponse &response) {
