@@ -193,6 +193,7 @@ void Application::init() {
 
     debug_i("Application::init - got rom partition %s @0x%#08x", romPartition.name(),romPartition.address());
     auto spiffsPartition=app.ota.findSpiffsPartition(romPartition);
+    
     debug_i("Application::init - mounting filesystem  %s @0x%#08x",spiffsPartition.name(),spiffsPartition.address());
     _fs_mounted=spiffs_mount(spiffsPartition);
     /*

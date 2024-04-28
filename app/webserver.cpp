@@ -578,7 +578,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
             }
             uint8_t numChannels=jchannels.size();
             debug_i("populating %i channels", numChannels);
-            for (int i = 0; i < jchannels.size(); i++) {
+            for (uint8_t i = 0; i < jchannels.size(); i++) {
                 JsonObject jchannel = jchannels[i];
                 if (!jchannel.isNull()) {
                     channel channel;
@@ -1182,14 +1182,14 @@ void ApplicationWebserver::onUpdate(HttpRequest &request, HttpResponse &response
         String romurl;
         Json::getValue(doc[F("rom")][F("url")],romurl);
         
-        String spiffsurl;
-        Json::getValue(doc[F("spiffs")][F("url")],spiffsurl);
+        //String spiffsurl;
+        //Json::getValue(doc[F("spiffs")][F("url")],spiffsurl);
         
-        debug_i("starting update process with \n    webapp: %s\n    spiffs: %s", romurl.c_str(), spiffsurl.c_str());
-        if (! romurl || ! spiffsurl) {
+        debug_i("starting update process with \n    romurl: %s", romurl.c_str());
+        if (! romurl ) {
             sendApiCode(response, API_CODES::API_MISSING_PARAM);
         } else {
-            app.ota.start(romurl, spiffsurl);
+            app.ota.start(romurl);
             response.setAllowCrossDomainOrigin("*");
             sendApiCode(response, API_CODES::API_SUCCESS);
         }
