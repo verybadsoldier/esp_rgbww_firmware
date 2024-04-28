@@ -63,7 +63,7 @@
 	}
 
  */
-
+#include <otaupdate.h>
 #include <RGBWWCtrl.h>
 
 void ApplicationOTA::start(String romurl){
@@ -180,6 +180,9 @@ void ApplicationOTA::reset() {
 
 void ApplicationOTA::beforeOTA() {
     debug_i("ApplicationOTA::beforeOTA");
+    /*
+    * this is being executed before otaUpdater->start
+    */
 
     // save files to old rom
     // only in v1 partition layout, 
@@ -193,14 +196,20 @@ void ApplicationOTA::beforeOTA() {
 
 void ApplicationOTA::afterOTA() {
     debug_i("ApplicationOTA::afterOTA");
+    /*
+    * this is being executed after otaUpdater->stert but before System.restart
+    * so this is still the old firmware running
+    */
+
     if (status == OTASTATUS::OTA_SUCCESS_REBOOT) {
+        debug_i("afterOta, rom Slot=%i",app.getRomSlot());
+
         #ifdef ARCH_ESP8266
-        debug_i("afterOta, rom Slot=",app.getRomSlot());
         if(app.getRomSlot()==1){
             /* getRomSlot returns the current (OTA pre reboot) slot
             * slot 0 means we will be booting into ROM slot 1 next
             * but the most current information is in spiffs0
-            */
+            * */
             // unmount old Filesystem - mount new filesystem
             app.umountfs();
             app.mountfs(rom_slot);
@@ -250,10 +259,51 @@ void ApplicationOTA::upgradeCallback(Ota::Network::HttpUpgrader& client, bool re
 void ApplicationOTA::checkAtBoot() {
     debug_i("ApplicationOTA::checkAtBoot");
     status = loadStatus();
+    /*
+    * after a successful OTA reboot, this should be
+    * OTA_SUCCESS_REBOOT, so this could be used to 
+    * then change the file systems if necessary.
+    */
+    int rom=app.getRomSlot();
+    Serial.systemDebugOutput(true);
+    debug_i("ApplicationOTA::checkAtBoot status: %i", status);
+    debug_i("after reboot, checking partition layout");
+    debug_i("current active rom is: %i",rom);
+    Storage::Debug::listDevices(Serial);
+
     if (app.isTempBoot()) {
         debug_i("ApplicationOTA::checkAtBoot permanently enabling rom %i", app.getRomSlot());
         rboot_set_current_rom(app.getRomSlot());
         saveStatus(OTASTATUS::OTA_NOT_UPDATING);
+    }
+
+    /*
+    * After OTA reboot, both spiffs filesystems should have identical content
+    * Next step should be to change the partition layout. 
+    * The primary partition should be in place of spiffs0, the secondary in place of spiffs1
+    * If we're currently running in rom0, the active spiffs partition is spiffs0, so we should
+    * re-boot into rom1 to release spiffs0
+    */
+    if(rom==0){
+        debug_i("ApplicationOTA::checkAtBoot rom0, switching to rom1");
+        doSwitch();
+        // doSwitch restarts the system after switching roms, so next time, we should be running on rom1
+    }
+    auto spiffsPart= Storage::findPartition(F("spiffs0"));
+    if(spiffsPart){
+        std::vector<Storage::esp_partition_info_t> partitionTable=getEditablePartitionTable();
+        if (!delPartition(partitionTable, "spiffs0")) {
+            debug_i("ApplicationOTA::checkAtBoot failed to delete spiffs0");
+        }else{
+            if(!addPartition(partitionTable, "littlefs0",static_cast<uint8_t>(Storage::Partition::Type::data), static_cast<uint8_t>(Storage::Partition::SubType::Data::littlefs), 0x100000, 0x100000, 0x00)){
+                debug_i("ApplicationOTA::checkAtBoot failed to add littlefs0");
+            }else{
+                if(!savePartitionTable(partitionTable)){
+                    debug_i("ApplicationOTA::checkAtBoot failed to save partition table");
+                }
+            }
+        }
+        Storage::Debug::listDevices(Serial);
     }
 }
 
@@ -398,6 +448,7 @@ bool ApplicationOTA::savePartitionTable(std::vector<Storage::esp_partition_info_
             printf("\n");
         }
     }
+    debug_i("all partitions added, going to compute md5 sum");
     // Compute the MD5 hash of the entries
     crypto_md5_context_t md5Context;
     crypto_md5_init(&md5Context);
@@ -414,8 +465,9 @@ bool ApplicationOTA::savePartitionTable(std::vector<Storage::esp_partition_info_
     entries.insert(entries.end(), md5sum, md5sum + MD5_SIZE);
 
     // which this, the partiton table is complete. Write it to flash:
-
+    debug_i("Writing partition table to flash to %0xi",PARTITION_TABLE_OFFSET);
     flash.erase_range(PARTITION_TABLE_OFFSET, flash.getBlockSize());
     flash.write(PARTITION_TABLE_OFFSET, entries.data(), entries.size());
+    debug_i("done updating partition table");
 #endif
 }

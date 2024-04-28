@@ -28,9 +28,11 @@
 #include <Storage/SpiFlash.h>
 #include <Ota/Upgrader.h>
 #include <Storage.h>
+
 #ifdef ARCH_ESP8266
 #include <Crypto/Md5.h>
 #include <Storage/partition_info.h>
+#include <Storage/Debug.h>
 #endif
 
 
