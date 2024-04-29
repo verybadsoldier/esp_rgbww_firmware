@@ -33,6 +33,14 @@
 #include <Crypto/Md5.h>
 #include <Storage/partition_info.h>
 #include <Storage/Debug.h>
+#include <LittleFS.h>
+#include <IFS/FileCopier.h>
+
+enum class MigrateResult {
+	failure,
+	alreadyUpgraded,
+	success,
+};
 #endif
 
 
@@ -41,7 +49,12 @@ enum class OTASTATUS {
     OTA_PROCESSING = 1,
     OTA_SUCCESS_REBOOT = 2,
     OTA_SUCCESS = 3,
-    OTA_FAILED = 4
+    OTA_FAILED = 4,
+#ifdef ARCH_ESP8266
+    OTA_PART_UPDATE_1 = 5,
+    OTA_PART_UPDATE_2 = 6,
+    OTA_PART_UPDATE_DONE = 6,
+#endif
 };
 
 class Application;
@@ -73,7 +86,6 @@ public:
     std::vector<Storage::esp_partition_info_t> getEditablePartitionTable();
     bool addPartition(std::vector<Storage::esp_partition_info_t>& partitionTable, String partitionName,uint8_t type, uint8_t subType, uint32_t start, uint32_t size, uint8_t flags);
     bool delPartition(std::vector<Storage::esp_partition_info_t>& partitionTable, String partitionName);
-    bool savePartitionTable(std::vector<Storage::esp_partition_info_t>& partitionTable);
 #endif
 
 protected:
@@ -82,8 +94,12 @@ protected:
     OTASTATUS status = OTASTATUS::OTA_NOT_UPDATING;
 
 #ifdef ARCH_ESP8266
+    bool copyContent(std::unique_ptr<IFS::FileSystem> src, std::unique_ptr<IFS::FileSystem> dst);
+    bool savePartitionTable(std::vector<Storage::esp_partition_info_t>& partitionTable);
     uint8_t getPartitionIndex(std::vector<Storage::esp_partition_info_t>& partitionTable, String partitionName);
+    bool createLFS(uint8_t slot);
 #endif 
+
 protected:
     Storage::Partition spiffsPartition;
     OtaUpgrader ota;
@@ -95,6 +111,7 @@ protected:
     void saveStatus(OTASTATUS status);
     OTASTATUS loadStatus();
     Storage::Partition findSpiffsPartition(Storage::Partition appPart);
+    bool switchPartition(uint8_t slot);
 
     friend Application;
 };
