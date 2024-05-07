@@ -186,7 +186,7 @@ void Application::init() {
     debug_i("going to initialize config");
     config::initializeConfig(cfg); // initialize the config structure if necessary
     // list spiffs partitions 
-    listSpiffsPartitions();
+    //listSpiffsPartitions();
 
     // mount filesystem
     auto romPartition=app.ota.getRomPartition();
@@ -194,8 +194,8 @@ void Application::init() {
     debug_i("Application::init - got rom partition %s @0x%#08x", romPartition.name(),romPartition.address());
     auto spiffsPartition=app.ota.findSpiffsPartition(romPartition);
     
-    debug_i("Application::init - mounting filesystem  %s @0x%#08x",spiffsPartition.name(),spiffsPartition.address());
-    _fs_mounted=spiffs_mount(spiffsPartition);
+    mountfs(getRomSlot());
+    
     /*
     if(_fs_mounted) {
         Directory dir;
@@ -346,60 +346,77 @@ bool Application::delayedCMD(String cmd, int delay) {
 void Application::listSpiffsPartitions()
 {
 	Serial.println(_F("** Enumerate registered SPIFFS partitions"));
-	for(auto part : Storage::findPartition(Storage::Partition::SubType::Data::spiffs)) {
-        debug_i("checking filesystem  %s @0x%#08x",part.name(),part.address());
-
-		bool ok = spiffs_mount(part);
-		Serial.println(ok ? "OK, listing files:" : "Mount failed!");
-		if(ok) {
-			Directory dir;
-			if(dir.open()) {
-				while(dir.next()) {
-					Serial.print(F("  "));
-					Serial.println(dir.stat().name);
-				}
-			}
-			Serial << dir.count() << _F(" files found") << endl << endl;
-		}
-	}
+	mountfs(0);
+    listFiles();
+    mountfs(1);
+    listFiles();
 }
 
-void Application::mountfs(int slot) {
-    debug_i("Application::mountfs rom slot: %i", slot);
-    // auto part = OtaUpgrader::getPartitionForSlot(slot);
-    auto part=Storage::findPartition(F("spiffs")+String(slot));
-    //auto part = Storage::findPartition(F("spiffs0"));
-    debug_i("Application::mountfs trying to mount spiffs at %x, length %d",
-            part.address(), part.size());
-    _fs_mounted = spiffs_mount(part);
-    _fs_mounted ? debug_i("OK, listing files:") : debug_i("Mount failed!");
+bool Application::mountfs(int slot) {
+    /*
+    *
+    * need a new mount method for the transitional time when the data file 
+    * system could be spiffs or LitleFS
+    * 
+    */
+
+    auto part = Storage::findPartition("spiffs"+String(slot));
+    if (part){
+        debug_i("mouting spiffs partition %i at %x, length %d", slot,part.address(), part.size());
+        return spiffs_mount(part);
+    }else{
+        part = Storage::findPartition("littlefs"+String(slot));
+        if(part){
+            debug_i("mouting littlefs partition %i at %x, length %d", slot,part.address(), part.size());
+            return lfs_mount(part);
+        }
+        debug_i("partition is neither spiffs nor lfs");
+        return false;
+    }
+}
+
+void Application::listFiles(){ 
     
-    if(_fs_mounted) {
-        if(FileHandle file = fileOpen(F("VERSION"), IFS::OpenFlag::Read)) {
-            debug_i("found VERSION file");
-            char buffer[64];
-            int bytesRead=fileRead(file,buffer,sizeof(buffer));
-            buffer[bytesRead]='\0';
-            debug_i("\nweb app version String: %s", buffer);
-            fileClose(file);
-        } else {
-            debug_i("Partition has no version file\n");
-        }
+    if(FileHandle file = fileOpen(F("VERSION"), IFS::OpenFlag::Read)) {
+        debug_i("found VERSION file");
+        char buffer[64];
+        int bytesRead=fileRead(file,buffer,sizeof(buffer));
+        buffer[bytesRead]='\0';
+        debug_i("\nweb app version String: %s", buffer);
+        fileClose(file);
+    } else {
+        debug_i("Partition has no version file\n");
+    }
 
-        Directory dir;
-        if(dir.open()) {
-            while(dir.next()) {
-                Serial.print("  ");
-                Serial.println(dir.stat().name);
-            }
+    Directory dir;
+    if(dir.open()) {
+        while(dir.next()) {
+            Serial.print("  ");
+            Serial.println(dir.stat().name);
         }
-        debug_i("%i files found", dir.count());
-    }       
-}
+    }
+    debug_i("%i files found", dir.count());
+}       
+
 
 void Application::umountfs() {
+    /*
     debug_i("Application::umountfs");
-    //spiffs_unmount();
+    auto part = Storage::findPartition(F("spiffs")+String(slot));
+    if (part){
+        debug_i("unmouting spiffs partition %i at %x, length %d", slot,part.address(), part.size());
+        return spiffs_unmount(part);
+    }else{
+        part = Storage::findPartition(F("littlefs")+String(slot));
+        if(part){
+            debug_i("mouting littlefs partition %i at %x, length %d", slot,part.address(), part.size());
+            return true;
+            //lfs doesn't seem to define umount
+            //return lfs_umount(part);
+        }
+        debug_i("partition is neither spiffs nor lfs");
+    }
+    */
 }
 
 void Application::switchRom() {

@@ -410,7 +410,7 @@ bool ApplicationOTA::switchPartition(uint8_t slot){
     }
 }
 void ApplicationOTA::saveStatus(OTASTATUS status) {
-    debug_i("ApplicationOTA::saveStatus");
+    debug_i("ApplicationOTA::saveStatus %i to rom partition rom%i\n",status,app.getRomSlot());
     StaticJsonDocument<128> doc;
     JsonObject root = doc.to<JsonObject>();
     root[F("status")] = int(status);

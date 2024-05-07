@@ -48,7 +48,7 @@ public:
 
     void listSpiffsPartitions();
     
-    void mountfs(int slot);
+    bool mountfs(int slot);
     void umountfs();
 
     inline bool isFilesystemMounted() { return _fs_mounted; };
@@ -85,6 +85,7 @@ public:
 
 private:
     void loadbootinfo();
+    void listFiles();
 
     Timer _systimer;
     int _bootmode = 0;
