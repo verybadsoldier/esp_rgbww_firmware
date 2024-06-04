@@ -112,7 +112,7 @@ protected:
     OTASTATUS loadStatus();
     Storage::Partition findSpiffsPartition(Storage::Partition appPart);
     bool switchPartition(uint8_t slot);
-
+    bool switchPartitions();
     friend Application;
 };
 

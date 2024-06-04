@@ -152,13 +152,16 @@ void Application::uptimeCounter() {
 }
 
 void Application::init() {
-    app.ota.checkAtBoot();
     for(int i=0;i<10;i++){
         Serial.print(_F("="));
         delay(200);
     }
     Serial.print("\r\n");
-    
+    debug_i("going to initialize config");
+    config::initializeConfig(cfg); // initialize the config structure if necessary
+
+    app.ota.checkAtBoot();
+
     debug_i("RGBWW Controller v %s\r\n", fw_git_version);
     #ifdef ARCH_ESP8266
         debug_i("Platform: Esp8266\r\n");
@@ -183,16 +186,14 @@ void Application::init() {
     }
 #endif
 
-    debug_i("going to initialize config");
-    config::initializeConfig(cfg); // initialize the config structure if necessary
     // list spiffs partitions 
     //listSpiffsPartitions();
 
     // mount filesystem
-    auto romPartition=app.ota.getRomPartition();
+    //auto romPartition=app.ota.getRomPartition();
 
-    debug_i("Application::init - got rom partition %s @0x%#08x", romPartition.name(),romPartition.address());
-    auto spiffsPartition=app.ota.findSpiffsPartition(romPartition);
+    //debug_i("Application::init - got rom partition %s @0x%#08x", romPartition.name(),romPartition.address());
+    //auto spiffsPartition=app.ota.findSpiffsPartition(romPartition);
     
     mountfs(getRomSlot());
     
@@ -346,9 +347,9 @@ bool Application::delayedCMD(String cmd, int delay) {
 void Application::listSpiffsPartitions()
 {
 	Serial.println(_F("** Enumerate registered SPIFFS partitions"));
-	mountfs(0);
+	mountfs(1);
     listFiles();
-    mountfs(1);
+    mountfs(0);
     listFiles();
 }
 
@@ -365,7 +366,7 @@ bool Application::mountfs(int slot) {
         debug_i("mouting spiffs partition %i at %x, length %d", slot,part.address(), part.size());
         return spiffs_mount(part);
     }else{
-        part = Storage::findPartition("littlefs"+String(slot));
+        part = Storage::findPartition("lfs"+String(slot));
         if(part){
             debug_i("mouting littlefs partition %i at %x, length %d", slot,part.address(), part.size());
             return lfs_mount(part);

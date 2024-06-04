@@ -419,4 +419,3 @@ struct ApplicationSettings {
         #endif
     }
 }//namespace config
-  
