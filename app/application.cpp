@@ -168,9 +168,33 @@ void Application::init() {
     #endif
     debug_i("Application::init - partition scheme: %s\r\n", fw_part_layout);
 
+#ifdef ARCH_ESP8266
+    /*
+    * verify for new partition layout
+    */
+    debug_i("application init, \nspiffs0 found: %s\nspiffs1 found: %s ",Storage::findPartition(F("spiffs0"))?F("true"):F("false"),Storage::findPartition(F("spiffs1"))?F("true"):F("false"));
+    if (Storage::findPartition(F("spiffs0")) && Storage::findPartition(F("spiffs1"))) {
+        
+        // mount existing data partition
+        debug_i("application init => Mounting file system and reading config");
+        mountfs(app.getRomSlot());
+        if (cfg.exist()) {
+            cfg.load(); 
+        }
+
+        /*
+        * now, app.cfg is the valid full configuration
+        * next step is to change the partition layout
+        */
+        debug_i("application init => switching file systems - partition 1");
+        ota.switchPartitions();
+        debug_i("application init => saving config");
+        cfg.save();
+    }
+#endif
+
     //load settings
     _uptimetimer.initializeMs(60000, TimerDelegate(&Application::uptimeCounter, this)).start();
-
 #ifdef ARCH_ESP8266
     // load boot information
     uint8 bootmode, bootslot;
@@ -197,7 +221,6 @@ void Application::init() {
     
     mountfs(getRomSlot());
     
-    /*
     if(_fs_mounted) {
         Directory dir;
         if(dir.open()) {
@@ -208,8 +231,7 @@ void Application::init() {
         }
         Serial << dir.count() << _F(" files found") << endl << endl;
     }
-    */
-   
+    
     // check if we need to reset settings
     if (digitalRead(CLEAR_PIN) < 1) {
         debug_i("CLR button low - resetting settings");

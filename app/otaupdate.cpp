@@ -340,42 +340,7 @@ void ApplicationOTA::checkAtBoot() {
         rboot_set_current_rom(app.getRomSlot());
         saveStatus(OTASTATUS::OTA_NOT_UPDATING);
     }
-    debug_i("OTA post => ota status is %i\nspiffs0 found: %s\nspiffs1 found: %s ",status,Storage::findPartition(F("spiffs0"))?F("true"):F("false"),Storage::findPartition(F("spiffs0"))?F("true"):F("false"));
-    if (Storage::findPartition(F("spiffs0")) && Storage::findPartition(F("spiffs1"))) {
-        /*
-        * first OTA into this version, start updating the partition table
-        * we will need to
-        *|- initialize the config strucure
-        *| -     config::initializeConfig(cfg); (not sure if this needs to be done here or in application)
-        * (the config initialization has been moved to before checkOnBoot, I believe there are no side effects)
-        * - mount the existing spiffs partition
-        * - read the config from spiffs
-        *       if (cfg.exist()) {
-        *           cfg.load(); 
-        *       }
-        */
-        
-        // mount existing data partition
-        debug_i("OTA post => Mounting file system and reading config");
-        app.mountfs(app.getRomSlot());
-        if (app.cfg.exist()) {
-            app.cfg.load(); 
-        }
-
-        /*
-        * now, app.cfg is the valid full configuration
-        * next step is to change the partition layout
-        */
-        debug_i("OTA post => switching file systems - partition 1");
-        switchPartitions();
-        createLFS(1);
-        createLFS(0);
-        debug_i("OTA post => saving config");
-        app.cfg.save();
-
         saveStatus(OTASTATUS::OTA_SUCCESS);
-        
-    }
 }
 
 bool ApplicationOTA::createLFS(uint8_t slot){
@@ -425,35 +390,43 @@ bool ApplicationOTA::copyContent(std::unique_ptr<IFS::FileSystem> src, std::uniq
     return true;
 }
 bool ApplicationOTA::switchPartitions(){
-    if(Storage::findPartition(F("spiffs1"))&&Storage::findPartition(F("spiffs0"))){
+    if(!Storage::findPartition(F("lfs1"))&&!Storage::findPartition(F("lfs0"))){
         std::vector<Storage::esp_partition_info_t> partitionTable=getEditablePartitionTable();
-        if(!delPartition(partitionTable, F("spiffs1"))) {
-            debug_i("ApplicationOTA::checkAtBoot failed to delete spiffs1");
-            return false;
+        //if present, delete spiffs1 to make space
+        if(Storage::findPartition(F("spiffs1"))){
+            if(!delPartition(partitionTable, F("spiffs1"))) {
+                debug_i("ApplicationOTA::checkAtBoot failed to delete spiffs1");
+                return false;
+            }
         }
-        if(!delPartition(partitionTable, F("spiffs0"))) {
-            debug_i("ApplicationOTA::checkAtBoot failed to delete spiffs0");
-            return false;
+        if(Storage::findPartition(F("spiffs0"))){
+            if(!delPartition(partitionTable, F("spiffs0"))) {
+                debug_i("ApplicationOTA::checkAtBoot failed to delete spiffs0");
+                return false;
+            }
         }
+
         int offset=0x300000;
         if(!addPartition(partitionTable, F("lfs1"),static_cast<uint8_t>(Storage::Partition::Type::data), static_cast<uint8_t>(Storage::Partition::SubType::Data::littlefs), offset, 0x0f8000, 0x00)){
-                debug_i("ApplicationOTA::checkAtBoot failed to add lfs1");
-                return false;
+            debug_i("ApplicationOTA::checkAtBoot failed to add lfs1");
+            return false;
         }
         offset=0x100000;
         if(!addPartition(partitionTable, F("lfs0"),static_cast<uint8_t>(Storage::Partition::Type::data), static_cast<uint8_t>(Storage::Partition::SubType::Data::littlefs), offset, 0x0f8000, 0x00)){
-                debug_i("ApplicationOTA::checkAtBoot failed to add lfs0");
-                return false;
+            debug_i("ApplicationOTA::checkAtBoot failed to add lfs0");
+            return false;
         }
             
         if(!savePartitionTable(partitionTable)){
-                debug_i("ApplicationOTA::checkAtBoot failed to save partition table");
-                return false;
+            debug_i("ApplicationOTA::checkAtBoot failed to save partition table");
+            return false;
         }
             
         debug_i("OTA post, switchPartition => reloading partition table");
         Storage::spiFlash->loadPartitions(PARTITION_TABLE_OFFSET); // load partition table from storage
-        //Storage::Debug::listDevices(Serial);
+        
+        Storage::Debug::listDevices(Serial);
+        
         debug_i("OTA_post, create new file system");
         createLFS(1);
         createLFS(0);
@@ -465,9 +438,6 @@ bool ApplicationOTA::switchPartitions(){
         debug_i("OTA_post, switchPartitions => restart");
         app.restart();
         return true;
-    }else{
-        debug_i("OTA post switchPartition => no spiffs partitions found");
-        return false;
     }
 }
 bool ApplicationOTA::switchPartition(uint8_t slot){
@@ -492,8 +462,10 @@ bool ApplicationOTA::switchPartition(uint8_t slot){
         Storage::spiFlash->loadPartitions(PARTITION_TABLE_OFFSET); // load partition table from storage
         debug_i("OTA post, switchPartition => reloading partition table");
         Storage::Debug::listDevices(Serial);
+        return true;
     }else{
         debug_i("OTA post switchPartition => Partition %s not found",spiffsPartName.c_str());
+        return false;
     }
 }
 void ApplicationOTA::saveStatus(OTASTATUS status) {
