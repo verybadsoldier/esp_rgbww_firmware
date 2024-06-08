@@ -1477,34 +1477,34 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
 
                 switch (objectType.c_str()[0]) {
                     case 'g':
-                        objectsList = doc.createNestedArray(F("groups")); // Assign value inside the case
+                        objectsList = doc.createNestedArray(F("groups")); 
                         break;
                         ;;
                     case 'p':
-                        objectsList = doc.createNestedArray(F("presets")); // Assign value inside the case
+                        objectsList = doc.createNestedArray(F("presets"));
                         break;
                         ;;
                     case 'h':
-                        objectsList = doc.createNestedArray(F("hosts")); // Assign value inside the case
+                        objectsList = doc.createNestedArray(F("hosts")); 
                         break;
                         ;;
                     case 's':
-                        objectsList = doc.createNestedArray(F("scenes")); // Assign value inside the case
+                        objectsList = doc.createNestedArray(F("scenes"));
                         break;
                         ;;
                 }
 
                 while(dir.next()) {
                     String fileName=String(dir.stat().name);
-                    if(fileName.substring(0,1)!="_"){
+                    if(fileName.substring(0,1)=="_"){
                         #ifdef DEBUG_OBJECT_API
                         debug_i("found file: %s",fileName.c_str());
-                        debug_i("file has object type %s",fileName.substring(1,1).c_str()); 
+                        debug_i("file has object type %s",fileName.substring(1,2).c_str()); 
                         #endif
-                        if(fileName.substring(1,1)==objectType){
+                        if(fileName.substring(1,2)==objectType){
                             #ifdef DEBUG_OBJECT_API
                             debug_i("adding file %s to list",fileName);
-                            debug_i("filename %s, extension starts at %i",fileName,fileName.indexOf(F(".")));
+                            debug_i("filename %s, extension starts at %i",fileName.c_str(),fileName.indexOf(F(".")));
                             #endif
                             objectId=fileName.substring(2, fileName.indexOf(F(".")));
                             objectsList.add(objectId);
