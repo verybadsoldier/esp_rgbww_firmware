@@ -1496,17 +1496,19 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
 
                 while(dir.next()) {
                     String fileName=String(dir.stat().name);
-                    #ifdef DEBUG_OBJECT_API
-                    debug_i("found file: %s",fileName.c_str());
-                    debug_i("file begins with %s",fileName.substring(0,1).c_str()); 
-                    #endif
-                    if(fileName.substring(1,1)==objectType){
+                    if(fileName.substring(0,1)!="_"){
                         #ifdef DEBUG_OBJECT_API
-                        debug_i("adding file %s to list",fileName);
-                        debug_i("filename %s, extension starts at %i",fileName,fileName.indexOf(F(".")));
+                        debug_i("found file: %s",fileName.c_str());
+                        debug_i("file has object type %s",fileName.substring(1,1).c_str()); 
                         #endif
-                        objectId=fileName.substring(2, fileName.indexOf(F(".")));
-                        objectsList.add(objectId);
+                        if(fileName.substring(1,1)==objectType){
+                            #ifdef DEBUG_OBJECT_API
+                            debug_i("adding file %s to list",fileName);
+                            debug_i("filename %s, extension starts at %i",fileName,fileName.indexOf(F(".")));
+                            #endif
+                            objectId=fileName.substring(2, fileName.indexOf(F(".")));
+                            objectsList.add(objectId);
+                        }
                     }
                 }
                 response.setContentType(F("application/json"));
