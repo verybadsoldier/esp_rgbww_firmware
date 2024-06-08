@@ -153,6 +153,7 @@ struct ApplicationSettings {
         // can't just stuff a string in here and hope it'll be interpreted as an array, this has to be a vector, too
         std::vector<String> supported_color_models;
         #endif
+        
         String pin_config_name="mrpj";
         String pin_config_url="https://raw.githubusercontent.com/pljakobs/esp_rgb_webapp2/devel/public/config/pinconfig.json";
 
@@ -235,6 +236,20 @@ struct ApplicationSettings {
                 Json::getValue(jgen[F("pin_config")], general.pin_config);
                 Json::getValue(jgen[F("buttons_config")], general.buttons_config);
                 Json::getValue(jgen[F("buttons_debounce_ms")], general.buttons_debounce_ms);
+                Json::getValue(jgen[F("pin_config_name")], general.pin_config_name);
+                Json::getValue(jgen[F("pin_config_url")], general.pin_config_url);
+            }
+            auto jchan=root[F("general.channels")];
+            if(!jchan.isNull()) {
+                // update the channels vector, clear it first
+                general.channels.clear();
+                for (auto channel : jchan.as<JsonArray>()) {
+                    general.channels.push_back( { 
+                        jchan[F("name")],
+                        jchan[F("pin")]
+                        } 
+                    );
+                }
             }
 
             // ntp
@@ -263,7 +278,6 @@ struct ApplicationSettings {
                 Json::getValue(jsync[F("color_slave_topic")], sync.color_slave_topic);
             }
 
-
             // events
             auto jevents = root[F("events")];
             if (!jevents.isNull()) {
@@ -284,7 +298,7 @@ struct ApplicationSettings {
         sanitizeValues();
     }
 
-    void save(bool print = false) {
+    void save(bool print = true) {
         DynamicJsonDocument doc(CONFIG_MAX_LENGTH);
         JsonObject root = doc.to<JsonObject>();
 
@@ -366,7 +380,16 @@ struct ApplicationSettings {
         g[F("pin_config")] = general.pin_config.c_str();
         g[F("buttons_config")] = general.buttons_config.c_str();
         g[F("buttons_debounce_ms")] = general.buttons_debounce_ms;
+        g[F("pin_config_name")] = general.pin_config_name.c_str();
+        g[F("pin_config_url")] = general.pin_config_url.c_str();
+        g[F("pin_config_name")]=general.pin_config_name.c_str();
         g[F("settings_ver")] = APP_SETTINGS_VERSION;
+
+        auto j=g.createNestedArray("channels");
+        for (uint8_t i=0;i<general.channels.size();i++) {
+            j[i][F("name")]=general.channels[i].name.c_str();
+            j[i][F("pin")]=general.channels[i].pin;
+        }
 
         if (print) {
         	Json::serialize(root, Serial, Json::Pretty);

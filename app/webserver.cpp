@@ -401,7 +401,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         StaticJsonDocument<CONFIG_MAX_LENGTH> doc;
     	
         String error_msg;
-        bool error;
+        bool error=false;
         
         if(!Json::deserialize(doc, request.getBodyStream())) {
             sendApiCode(response, API_CODES::API_BAD_REQUEST, F("could not parse HTTP body"));
@@ -651,10 +651,12 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
                 app.rgbwwctrl.refresh();
 
             }
+            debug_i("saving config");
             app.cfg.save();
             JsonObject root = doc.as<JsonObject>();
             sendApiCode(response, API_CODES::API_SUCCESS);
         } else {
+            debug_i("config api error %s",error_msg.c_str());
             JsonObject root = doc.as<JsonObject>();
             sendApiCode(response, API_CODES::API_MISSING_PARAM, error_msg);
         }

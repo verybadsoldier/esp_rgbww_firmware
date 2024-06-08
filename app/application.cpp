@@ -176,11 +176,17 @@ void Application::init() {
     if (Storage::findPartition(F("spiffs0")) && Storage::findPartition(F("spiffs1"))) {
         
         // mount existing data partition
-        debug_i("application init => Mounting file system and reading config");
+        debug_i("application init (with spiffs) => Mounting file system");
         mountfs(app.getRomSlot());
         if (cfg.exist()) {
+            debug_i("application init (with spiffs) => reading config");
             cfg.load(); 
+            debug_i("application init (with spiffs) => config loaded, pin config %s",cfg.general.pin_config_name.c_str());
+        }else{
+            debug_i("application init (with spiffs) => failed to find config file");
         }
+
+        
 
         /*
         * now, app.cfg is the valid full configuration
@@ -246,8 +252,10 @@ void Application::init() {
 
     // load config
     if (cfg.exist()) {
-        cfg.load();
-    } else {
+            debug_i("application init => reading config");
+            cfg.load(); 
+            debug_i("application init => config loaded, pin config %s",cfg.general.pin_config_name.c_str());  
+        } else {
         debug_i("Application::init - first run");
         _first_run = true;
         cfg.save();
@@ -368,7 +376,7 @@ bool Application::delayedCMD(String cmd, int delay) {
 
 void Application::listSpiffsPartitions()
 {
-	Serial.println(_F("** Enumerate registered SPIFFS partitions"));
+	Serial.println(_F("** Enumerate registered partitions"));
 	mountfs(1);
     listFiles();
     mountfs(0);
@@ -388,10 +396,16 @@ bool Application::mountfs(int slot) {
         debug_i("mouting spiffs partition %i at %x, length %d", slot,part.address(), part.size());
         return spiffs_mount(part);
     }else{
-        part = Storage::findPartition("lfs"+String(slot));
+        part = Storage::findPartition(F("lfs0"));
         if(part){
-            debug_i("mouting littlefs partition %i at %x, length %d", slot,part.address(), part.size());
-            return lfs_mount(part);
+            debug_i("mouting primary littlefs partition at %x, length %d", part.address(), part.size());
+            if(lfs_mount(part)){
+                return true;
+            }else{
+                part = Storage::findPartition(F("lfs1"));
+                debug_e("primary partition mount failed, mounting secondary lfs partition  at %x, length %d", part.address(), part.size());
+                return lfs_mount(part);
+            };
         }
         debug_i("partition is neither spiffs nor lfs");
         return false;

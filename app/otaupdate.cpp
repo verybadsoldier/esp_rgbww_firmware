@@ -389,6 +389,8 @@ bool ApplicationOTA::copyContent(std::unique_ptr<IFS::FileSystem> src, std::uniq
 	}
     return true;
 }
+
+#ifdef ARCH_ESP8266
 bool ApplicationOTA::switchPartitions(){
     if(!Storage::findPartition(F("lfs1"))&&!Storage::findPartition(F("lfs0"))){
         std::vector<Storage::esp_partition_info_t> partitionTable=getEditablePartitionTable();
@@ -440,6 +442,9 @@ bool ApplicationOTA::switchPartitions(){
         return true;
     }
 }
+#endif
+
+#ifdef ARCH_ESP8266
 bool ApplicationOTA::switchPartition(uint8_t slot){
     String spiffsPartName=F("spiffs")+String(slot);
     String lfsPartName=F("lfs")+String(slot);
@@ -468,6 +473,8 @@ bool ApplicationOTA::switchPartition(uint8_t slot){
         return false;
     }
 }
+#endif
+
 void ApplicationOTA::saveStatus(OTASTATUS status) {
     debug_i("ApplicationOTA::saveStatus %i to rom partition rom%i\n",status,app.getRomSlot());
     StaticJsonDocument<128> doc;
