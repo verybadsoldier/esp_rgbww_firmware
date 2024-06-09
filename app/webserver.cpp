@@ -236,7 +236,7 @@ void ApplicationWebserver::sendApiCode(HttpResponse &response, API_CODES code, S
     response.setAllowCrossDomainOrigin("*");
     response.setHeader(F("accept"),F("GET, POST, OPTIONS"));
     response.setHeader(F("Access-Control-Allow-Headers"),F("Content-Type"));
-    
+
     if (msg == "") {
         msg = getApiCodeMsg(code);
     }
@@ -388,7 +388,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
     if (request.method == HTTP_OPTIONS){
         // probably a CORS preflight request
         response.setAllowCrossDomainOrigin("*");
-        response.setHeader("Access-Control-Allow-Headers", "Content-Type");
+        response.setHeader(F("Access-Control-Allow-Headers"), F("Content-Type"));
         sendApiCode(response,API_CODES::API_SUCCESS,"");
         debug_i("HTTP_OPTIONS Request, sent API_SUCCSSS");
         return;
@@ -872,7 +872,7 @@ void ApplicationWebserver::onColorGet(HttpRequest &request, HttpResponse &respon
     hsv[F("ct")] = ct;
 
     response.setAllowCrossDomainOrigin("*");
-    response.setHeader("Access-Control-Allow-Origin", "*");
+    response.setHeader(F("Access-Control-Allow-Origin"), "*");
 
     sendApiResponse(response, stream);
 }
@@ -891,9 +891,9 @@ void ApplicationWebserver::onColorGet(HttpRequest &request, HttpResponse &respon
 void ApplicationWebserver::onColorPost(HttpRequest &request, HttpResponse &response) {
     String body = request.getBody();
     response.setAllowCrossDomainOrigin("*");
-    response.setHeader("Access-Control-Allow-Origin", "*");
-    response.setHeader("Access-Control-Allow-Methods","GET, PUT, POST, OPTIONS");
-    response.setHeader("Access-Control-Allow-Credentials","true");
+    response.setHeader(F("Access-Control-Allow-Origin"), F("*"));
+    response.setHeader(F("Access-Control-Allow-Methods"),F("GET, PUT, POST, OPTIONS"));
+    response.setHeader(F("Access-Control-Allow-Credentials"),F("true"));
 
     if (body == NULL) {
         sendApiCode(response, API_CODES::API_BAD_REQUEST, "no body");
@@ -934,17 +934,17 @@ void ApplicationWebserver::onColor(HttpRequest &request, HttpResponse &response)
 #endif
     debug_i("received /color request");
     response.setAllowCrossDomainOrigin("*");
-    response.setHeader("Access-Control-Allow-Origin", "*");
-    response.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    response.setHeader(F("Access-Control-Allow-Origin"), F("*"));
+    response.setHeader(F("Access-Control-Allow-Headers"), F("Content-Type"));
 
     if (request.method != HTTP_POST && request.method != HTTP_GET && request.method!=HTTP_OPTIONS) {
-        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not POST, GET or OPTIONS");
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, F("not POST, GET or OPTIONS"));
         debug_i("not POST, GET or OPTIONS");
         return;
     }
 
     if (request.method==HTTP_OPTIONS){
-        response.setHeader("Access-Control-Allow-Methods","GET, PUT, POST, OPTIONS");
+        response.setHeader(F("Access-Control-Allow-Methods"),F("GET, PUT, POST, OPTIONS"));
 
         debug_i("OPTIONS");
         sendApiCode(response, API_CODES::API_SUCCESS);
@@ -1004,6 +1004,7 @@ void ApplicationWebserver::onNetworks(HttpRequest &request, HttpResponse &respon
 #endif
     if (request.method == HTTP_OPTIONS){
         response.setAllowCrossDomainOrigin("*");
+        response.setHeader(F("Access-Control-Allow-Headers"),F("Content-Type"));
 
         sendApiCode(response, API_CODES::API_SUCCESS);
         return;
