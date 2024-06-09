@@ -887,17 +887,21 @@ void ApplicationWebserver::onColorPost(HttpRequest &request, HttpResponse &respo
     String body = request.getBody();
     response.setAllowCrossDomainOrigin("*");
     response.setHeader("Access-Control-Allow-Origin", "*");
+    response.setHeader("Access-Control-Allow-Methods","PUT");
+    response.setHeader("Access-Control-Allow-Credentials","true");
+
     if (body == NULL) {
         sendApiCode(response, API_CODES::API_BAD_REQUEST, "no body");
         return;
     }
 
     String msg;
-    debug_i("received color update wirh message %s", msg.c_str());
     
     if (!app.jsonproc.onColor(body, msg)) {
+        debug_i("received color update with message %s", msg.c_str());
         sendApiCode(response, API_CODES::API_BAD_REQUEST, msg);
     } else {
+        debug_i("received color update with message %s", msg.c_str());
         sendApiCode(response, API_CODES::API_SUCCESS);
     }
 }
@@ -933,6 +937,8 @@ void ApplicationWebserver::onColor(HttpRequest &request, HttpResponse &response)
     }
 
     if (request.method==HTTP_OPTIONS){
+            response.setHeader("Access-Control-Allow-Methods","OPTIONS");
+
         sendApiCode(response, API_CODES::API_SUCCESS);
         return;
     }
