@@ -221,7 +221,7 @@ void ApplicationWebserver::sendApiResponse(HttpResponse &response, JsonObjectStr
 
     response.setAllowCrossDomainOrigin("*");
     response.setHeader(F("accept"),F("GET, POST, OPTIONS"));
-    response.setAllowCrossDomainOrigin("*");
+    response.setHeader(F("Access-Control-Allow-Headers"),F("Content-Type"));
 
     if (code != HTTP_STATUS_OK) {
         response.code = HTTP_STATUS_BAD_REQUEST;
@@ -232,6 +232,11 @@ void ApplicationWebserver::sendApiResponse(HttpResponse &response, JsonObjectStr
 void ApplicationWebserver::sendApiCode(HttpResponse &response, API_CODES code, String msg /* = "" */) {
     JsonObjectStream* stream = new JsonObjectStream();
     JsonObject json = stream->getRoot();
+
+    response.setAllowCrossDomainOrigin("*");
+    response.setHeader(F("accept"),F("GET, POST, OPTIONS"));
+    response.setHeader(F("Access-Control-Allow-Headers"),F("Content-Type"));
+    
     if (msg == "") {
         msg = getApiCodeMsg(code);
     }
@@ -930,6 +935,7 @@ void ApplicationWebserver::onColor(HttpRequest &request, HttpResponse &response)
     debug_i("received /color request");
     response.setAllowCrossDomainOrigin("*");
     response.setHeader("Access-Control-Allow-Origin", "*");
+    response.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
     if (request.method != HTTP_POST && request.method != HTTP_GET && request.method!=HTTP_OPTIONS) {
         sendApiCode(response, API_CODES::API_BAD_REQUEST, "not POST, GET or OPTIONS");
@@ -939,8 +945,7 @@ void ApplicationWebserver::onColor(HttpRequest &request, HttpResponse &response)
 
     if (request.method==HTTP_OPTIONS){
         response.setHeader("Access-Control-Allow-Methods","GET, PUT, POST, OPTIONS");
-        response.setAllowCrossDomainOrigin("*");    
-        response.setHeader("Access-Control-Allow-Origin", "*");
+
         debug_i("OPTIONS");
         sendApiCode(response, API_CODES::API_SUCCESS);
         return;
