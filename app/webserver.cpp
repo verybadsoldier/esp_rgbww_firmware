@@ -887,7 +887,7 @@ void ApplicationWebserver::onColorPost(HttpRequest &request, HttpResponse &respo
     String body = request.getBody();
     response.setAllowCrossDomainOrigin("*");
     response.setHeader("Access-Control-Allow-Origin", "*");
-    response.setHeader("Access-Control-Allow-Methods","PUT");
+    response.setHeader("Access-Control-Allow-Methods","GET, PUT, POST, OPTIONS");
     response.setHeader("Access-Control-Allow-Credentials","true");
 
     if (body == NULL) {
@@ -937,7 +937,7 @@ void ApplicationWebserver::onColor(HttpRequest &request, HttpResponse &response)
     }
 
     if (request.method==HTTP_OPTIONS){
-            response.setHeader("Access-Control-Allow-Methods","OPTIONS");
+            response.setHeader("Access-Control-Allow-Methods","GET, PUT, POST, OPTIONS");
 
         sendApiCode(response, API_CODES::API_SUCCESS);
         return;
