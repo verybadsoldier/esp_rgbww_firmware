@@ -927,7 +927,7 @@ void ApplicationWebserver::onColor(HttpRequest &request, HttpResponse &response)
         return;
     }
 #endif
-
+    debug_i("received /color request");
     response.setAllowCrossDomainOrigin("*");
     response.setHeader("Access-Control-Allow-Origin", "*");
 
