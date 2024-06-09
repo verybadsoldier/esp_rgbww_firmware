@@ -869,13 +869,16 @@ void ApplicationWebserver::onColorGet(HttpRequest &request, HttpResponse &respon
     hsv[F("ct")] = ct;
 
     response.setAllowCrossDomainOrigin("*");
+    response.setHeader("Access-Control-Allow-Origin", "*");
+
     sendApiResponse(response, stream);
 }
 
 void ApplicationWebserver::onColorPost(HttpRequest &request, HttpResponse &response) {
     String body = request.getBody();
     response.setAllowCrossDomainOrigin("*");
-    if (body == NULL) {
+    response.setHeader("Access-Control-Allow-Origin", "*");
+if (body == NULL) {
         sendApiCode(response, API_CODES::API_BAD_REQUEST, "no body");
         return;
     }
@@ -903,6 +906,7 @@ void ApplicationWebserver::onColor(HttpRequest &request, HttpResponse &response)
     }
 #endif
     response.setAllowCrossDomainOrigin("*");
+    response.setHeader("Access-Control-Allow-Origin", "*");
 
     if (request.method != HTTP_POST && request.method != HTTP_GET && request.method!=HTTP_OPTIONS) {
         sendApiCode(response, API_CODES::API_BAD_REQUEST, "not POST, GET or OPTIONS");
