@@ -17,7 +17,6 @@
  *
  * @section DESCRIPTION
  *
- *
  */
 #include <RGBWWCtrl.h>
 #include <Data/WebHelpers/base64.h> 
@@ -48,9 +47,7 @@
     XX(signal_wifi_statusbar_null_FILL0_wght400_GRAD0_opsz24,"icons/signal_wifi_statusbar_null_FILL0_wght400_GRAD0_opsz24.svg")\
     XX(network_wifi_2_bar_locked_FILL0_wght400_GRAD0_opsz24, "icons/network_wifi_2_bar_locked_FILL0_wght400_GRAD0_opsz24.svg") \
     XX(wifi_lock_FILL0_wght400_GRAD0_opsz24,                 "icons/wifi_lock_FILL0_wght400_GRAD0_opsz24.svg")                 \
-    XX(network_wifi_3_bar_FILL0_wght400_GRAD0_opsz24,        "icons/network_wifi_3_bar_FILL0_wght400_GRAD0_opsz24.svg")
-
-    
+    XX(network_wifi_3_bar_FILL0_wght400_GRAD0_opsz24,        "icons/network_wifi_3_bar_FILL0_wght400_GRAD0_opsz24.svg")    
 
 // Define the names for each file
 #define XX(name, file) DEFINE_FSTR_LOCAL(KEY_##name, file)
@@ -188,7 +185,6 @@ bool ICACHE_FLASH_ATTR ApplicationWebserver::authenticateExec(HttpRequest &reque
     if (userPass.endsWith(app.cfg.general.api_password)) {
         return true;
     }
-
     return false;
 }
 
@@ -201,7 +197,6 @@ bool ICACHE_FLASH_ATTR ApplicationWebserver::authenticated(HttpRequest &request,
         response.setHeader(F("401 wrong credentials"), F("wrong credentials"));
         response.setHeader(F("Connection"), F("close"));
     }
-
     return authenticated;
 }
 
@@ -250,7 +245,6 @@ void ApplicationWebserver::sendApiCode(HttpResponse &response, API_CODES code, S
 }
 
 void ApplicationWebserver::onFile(HttpRequest &request, HttpResponse &response) {
-
     if (!authenticated(request, response)) {
         return;
     }
@@ -464,12 +458,9 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
                         error = true;
                         error_msg = F("missing gateway");
                     }
-
                 }
-
             }
             if (!jnet[F("ap")].isNull()) {
-
             	String ssid;
             	ap_updated |= Json::getValueChanged(jnet[F("ap")][F("ssid")], app.cfg.network.ap.ssid);
 
@@ -488,7 +479,6 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
                         ap_updated = true;
                     }
                 }
-
             }
 
             JsonObject jmqtt = jnet[F("mqtt")];
@@ -842,7 +832,15 @@ void ApplicationWebserver::onInfo(HttpRequest &request, HttpResponse &response) 
     sendApiResponse(response, stream);
 }
 
-
+/**
+ * @brief Handles the HTTP GET request for retrieving the current color information.
+ *
+ * This function is responsible for handling the HTTP GET request and returning the current color information
+ * in JSON format. The color information includes the raw RGBWW values and the corresponding HSV values.
+ *
+ * @param request The HTTP request object.
+ * @param response The HTTP response object.
+ */
 void ApplicationWebserver::onColorGet(HttpRequest &request, HttpResponse &response) {
     if (!checkHeap(response))
         return;
@@ -874,11 +872,22 @@ void ApplicationWebserver::onColorGet(HttpRequest &request, HttpResponse &respon
     sendApiResponse(response, stream);
 }
 
+/**
+ * @brief Handles the HTTP POST request for updating the color.
+ * 
+ * This function is responsible for processing the HTTP POST request and updating the color based on the received body.
+ * If the body is empty, it sends a bad request response with the message "no body".
+ * If the color update is successful, it sends a success response.
+ * If the color update fails, it sends a bad request response with the corresponding error message.
+ * 
+ * @param request The HTTP request object.
+ * @param response The HTTP response object.
+ */
 void ApplicationWebserver::onColorPost(HttpRequest &request, HttpResponse &response) {
     String body = request.getBody();
     response.setAllowCrossDomainOrigin("*");
     response.setHeader("Access-Control-Allow-Origin", "*");
-if (body == NULL) {
+    if (body == NULL) {
         sendApiCode(response, API_CODES::API_BAD_REQUEST, "no body");
         return;
     }
@@ -888,12 +897,21 @@ if (body == NULL) {
     
     if (!app.jsonproc.onColor(body, msg)) {
         sendApiCode(response, API_CODES::API_BAD_REQUEST, msg);
-    }
-    else {
+    } else {
         sendApiCode(response, API_CODES::API_SUCCESS);
     }
 }
 
+/**
+ * @brief Handles the color request from the client.
+ *
+ * This function is responsible for handling the color request from the client.
+ * It checks for authentication, handles OTA update in progress, sets the necessary headers,
+ * and delegates the request to the appropriate handler based on the HTTP method.
+ *
+ * @param request The HTTP request object.
+ * @param response The HTTP response object.
+ */
 void ApplicationWebserver::onColor(HttpRequest &request, HttpResponse &response) {
     if (!authenticated(request, response)) {
         return;
@@ -905,6 +923,7 @@ void ApplicationWebserver::onColor(HttpRequest &request, HttpResponse &response)
         return;
     }
 #endif
+
     response.setAllowCrossDomainOrigin("*");
     response.setHeader("Access-Control-Allow-Origin", "*");
 
@@ -924,9 +943,17 @@ void ApplicationWebserver::onColor(HttpRequest &request, HttpResponse &response)
     } else {
         ApplicationWebserver::onColorGet(request, response);
     }
-
 }
 
+/**
+ * @brief Checks if a string is printable.
+ *
+ * This function checks if a given string is printable, i.e., if all characters in the string
+ * have ASCII values greater than or equal to 0x20 (space character).
+ *
+ * @param str The string to be checked.
+ * @return True if the string is printable, false otherwise.
+ */
 bool ApplicationWebserver::isPrintable(String& str) {
     for (unsigned int i=0; i < str.length(); ++i)
     {
@@ -937,8 +964,17 @@ bool ApplicationWebserver::isPrintable(String& str) {
     return true;
 }
 
+/**
+ * @brief Handles the HTTP request for retrieving network information.
+ *
+ * This function is responsible for handling the HTTP GET request for retrieving network information.
+ * It checks if the request is authenticated and if OTA update is in progress. If not, it returns the
+ * available networks along with their details such as SSID, signal strength, and encryption method.
+ *
+ * @param request The HTTP request object.
+ * @param response The HTTP response object.
+ */
 void ApplicationWebserver::onNetworks(HttpRequest &request, HttpResponse &response) {
-
     if (!authenticated(request, response)) {
         return;
     }
@@ -996,6 +1032,16 @@ void ApplicationWebserver::onNetworks(HttpRequest &request, HttpResponse &respon
             sendApiResponse(response, stream);
 }
 
+/**
+ * @brief Handles the "onScanNetworks" request from the webserver.
+ *
+ * This function is responsible for handling the "onScanNetworks" request from the webserver.
+ * It checks if the request is authenticated, if OTA update is in progress, and if the request method is HTTP POST.
+ * If all conditions are met, it initiates a network scan and sends a success response.
+ *
+ * @param request The HTTP request object.
+ * @param response The HTTP response object.
+ */
 void ApplicationWebserver::onScanNetworks(HttpRequest &request, HttpResponse &response) {
 
     if (!authenticated(request, response)) {
@@ -1020,6 +1066,15 @@ void ApplicationWebserver::onScanNetworks(HttpRequest &request, HttpResponse &re
     sendApiCode(response, API_CODES::API_SUCCESS);
 }
 
+/**
+ * @brief Handles the HTTP connection event.
+ *
+ * This function is called when a client connects to the web server.
+ * It performs authentication, checks for ongoing OTA updates, and handles HTTP requests.
+ *
+ * @param request The HTTP request object.
+ * @param response The HTTP response object.
+ */
 void ApplicationWebserver::onConnect(HttpRequest &request, HttpResponse &response) {
 
     if (!authenticated(request, response)) {
@@ -1085,8 +1140,19 @@ void ApplicationWebserver::onConnect(HttpRequest &request, HttpResponse &respons
     }
 }
 
-
-
+/**
+ * @brief Handles the system request from the client.
+ *
+ * This function is responsible for handling the system request from the client. It performs the following tasks:
+ * - Checks if the client is authenticated.
+ * - Checks if an OTA update is in progress (only for ESP8266 architecture).
+ * - Handles HTTP OPTIONS request by setting the cross-domain origin header and sending a success API code.
+ * - Handles HTTP POST request by processing the request body and executing the specified command.
+ * - Sends the appropriate API code response based on the success or failure of the request.
+ *
+ * @param request The HTTP request object.
+ * @param response The HTTP response object.
+ */
 void ApplicationWebserver::onSystemReq(HttpRequest &request, HttpResponse &response) {
 
     if (!authenticated(request, response)) {
@@ -1151,6 +1217,15 @@ void ApplicationWebserver::onSystemReq(HttpRequest &request, HttpResponse &respo
 
 }
 
+/**
+ * @brief Handles the update request from the client.
+ *
+ * This function is responsible for handling the update request from the client.
+ * It performs authentication, checks the request method, and processes the update request.
+ *
+ * @param request The HTTP request object.
+ * @param response The HTTP response object.
+ */
 void ApplicationWebserver::onUpdate(HttpRequest &request, HttpResponse &response) {
     if (!authenticated(request, response)) {
         return;
@@ -1210,7 +1285,19 @@ void ApplicationWebserver::onUpdate(HttpRequest &request, HttpResponse &response
 #endif
 }
 
-//simple call-response to check if we can reach server
+/**
+ * @brief Handles the HTTP GET request for the ping endpoint.
+ *
+ * simple call-response to check if we can reach server
+ * 
+ * This function is responsible for handling the HTTP GET request for the ping endpoint.
+ * It checks if the request method is GET, and if not, it sends a bad request response.
+ * If the request method is GET, it creates a JSON object with the key "ping" and value "pong",
+ * and sends the JSON response using the sendApiResponse function.
+ *
+ * @param request The HTTP request object.
+ * @param response The HTTP response object.
+ */
 void ApplicationWebserver::onPing(HttpRequest &request, HttpResponse &response) {
     if (request.method != HTTP_GET) {
         sendApiCode(response, API_CODES::API_BAD_REQUEST, "not HTTP GET");
