@@ -933,22 +933,28 @@ void ApplicationWebserver::onColor(HttpRequest &request, HttpResponse &response)
 
     if (request.method != HTTP_POST && request.method != HTTP_GET && request.method!=HTTP_OPTIONS) {
         sendApiCode(response, API_CODES::API_BAD_REQUEST, "not POST, GET or OPTIONS");
+        debug_i("not POST, GET or OPTIONS");
         return;
     }
 
     if (request.method==HTTP_OPTIONS){
-            response.setHeader("Access-Control-Allow-Methods","GET, PUT, POST, OPTIONS");
-
+        response.setHeader("Access-Control-Allow-Methods","GET, PUT, POST, OPTIONS");
+        response.setAllowCrossDomainOrigin("*");    
+        response.setHeader("Access-Control-Allow-Origin", "*");
+        debug_i("OPTIONS");
         sendApiCode(response, API_CODES::API_SUCCESS);
         return;
     }
 
     bool error = false;
     if (request.method == HTTP_POST) {
+        debug_i("POST");
         ApplicationWebserver::onColorPost(request, response);
     } else {
+        debug_i("GET");
         ApplicationWebserver::onColorGet(request, response);
     }
+    debug_i("all methods failed");
 }
 
 /**
