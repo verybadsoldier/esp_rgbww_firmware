@@ -868,24 +868,25 @@ void ApplicationWebserver::onColorGet(HttpRequest &request, HttpResponse &respon
     hsv[F("v")] = v;
     hsv[F("ct")] = ct;
 
+    response.setAllowCrossDomainOrigin("*");
     sendApiResponse(response, stream);
 }
 
 void ApplicationWebserver::onColorPost(HttpRequest &request, HttpResponse &response) {
     String body = request.getBody();
+    response.setAllowCrossDomainOrigin("*");
     if (body == NULL) {
         sendApiCode(response, API_CODES::API_BAD_REQUEST, "no body");
         return;
-
     }
 
     String msg;
     debug_i("received color update wirh message %s", msg.c_str());
+    
     if (!app.jsonproc.onColor(body, msg)) {
         sendApiCode(response, API_CODES::API_BAD_REQUEST, msg);
     }
     else {
-
         sendApiCode(response, API_CODES::API_SUCCESS);
     }
 }
@@ -901,6 +902,7 @@ void ApplicationWebserver::onColor(HttpRequest &request, HttpResponse &response)
         return;
     }
 #endif
+    response.setAllowCrossDomainOrigin("*");
 
     if (request.method != HTTP_POST && request.method != HTTP_GET && request.method!=HTTP_OPTIONS) {
         sendApiCode(response, API_CODES::API_BAD_REQUEST, "not POST, GET or OPTIONS");
