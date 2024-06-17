@@ -219,9 +219,8 @@ void ApplicationWebserver::sendApiResponse(HttpResponse &response, JsonObjectStr
         return;
     }
 
-    response.setAllowCrossDomainOrigin("*");
+    setCorsHeaders(response);
     response.setHeader(F("accept"),F("GET, POST, OPTIONS"));
-    response.setHeader(F("Access-Control-Allow-Headers"),F("Content-Type"));
 
     if (code != HTTP_STATUS_OK) {
         response.code = HTTP_STATUS_BAD_REQUEST;
@@ -233,9 +232,8 @@ void ApplicationWebserver::sendApiCode(HttpResponse &response, API_CODES code, S
     JsonObjectStream* stream = new JsonObjectStream();
     JsonObject json = stream->getRoot();
 
-    response.setAllowCrossDomainOrigin("*");
+    setCorsHeaders(response);
     response.setHeader(F("accept"),F("GET, POST, OPTIONS"));
-    response.setHeader(F("Access-Control-Allow-Headers"),F("Content-Type"));
 
     if (msg == "") {
         msg = getApiCodeMsg(code);
@@ -319,7 +317,7 @@ void ApplicationWebserver::onWebapp(HttpRequest &request, HttpResponse &response
     }
 
     response.headers[HTTP_HEADER_LOCATION]=F("/index.html");
-    response.setAllowCrossDomainOrigin("*");
+    setCorsHeaders(response);
 
     response.code = HTTP_STATUS_PERMANENT_REDIRECT;
     response.sendString(F("Redirecting to /index.html"));
@@ -341,7 +339,7 @@ void ApplicationWebserver::onIndex(HttpRequest &request, HttpResponse &response)
 #endif
 
 response.headers[HTTP_HEADER_LOCATION]=F("/index.html");
-    response.setAllowCrossDomainOrigin("*");
+    setCorsHeaders(response);
 
     response.code = HTTP_STATUS_PERMANENT_REDIRECT;
     response.sendString(F("Redirecting to /index.html"));
@@ -351,7 +349,7 @@ response.headers[HTTP_HEADER_LOCATION]=F("/index.html");
 bool ApplicationWebserver::checkHeap(HttpResponse &response) {
     unsigned fh = system_get_free_heap_size();
     if (fh < _minimumHeap) {
-        response.setAllowCrossDomainOrigin("*");
+        setCorsHeaders(response);
         response.code = HTTP_STATUS_TOO_MANY_REQUESTS;
         response.setHeader(F("Retry-After"), "2");
         return false;
@@ -387,7 +385,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
     */
     if (request.method == HTTP_OPTIONS){
         // probably a CORS preflight request
-        response.setAllowCrossDomainOrigin("*");
+        setCorsHeaders(response);
         response.setHeader(F("Access-Control-Allow-Headers"), F("Content-Type"));
         sendApiCode(response,API_CODES::API_SUCCESS,"");
         debug_i("HTTP_OPTIONS Request, sent API_SUCCSSS");
@@ -421,7 +419,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
             sendApiCode(response, API_CODES::API_BAD_REQUEST, F("no root object"));
             return;
         }
-        response.setAllowCrossDomainOrigin("*");
+        setCorsHeaders(response);
         JsonObject jnet = root[F("network")];
         if (!jnet.isNull()) {
   
@@ -761,7 +759,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
             String color_model=app.cfg.general.supported_color_models[i];
             supported_color_models.add(color_model);
         }
-        response.setAllowCrossDomainOrigin("*");
+        setCorsHeaders(response);
         debug_i("sending config json of size %i",sizeof(stream));
         sendApiResponse(response, stream);
     }
@@ -871,8 +869,7 @@ void ApplicationWebserver::onColorGet(HttpRequest &request, HttpResponse &respon
     hsv[F("v")] = v;
     hsv[F("ct")] = ct;
 
-    response.setAllowCrossDomainOrigin("*");
-    response.setHeader(F("Access-Control-Allow-Origin"), "*");
+    setCorsHeaders(response);
 
     sendApiResponse(response, stream);
 }
@@ -890,8 +887,7 @@ void ApplicationWebserver::onColorGet(HttpRequest &request, HttpResponse &respon
  */
 void ApplicationWebserver::onColorPost(HttpRequest &request, HttpResponse &response) {
     String body = request.getBody();
-    response.setAllowCrossDomainOrigin("*");
-    response.setHeader(F("Access-Control-Allow-Origin"), F("*"));
+    setCorsHeaders(response);
     response.setHeader(F("Access-Control-Allow-Methods"),F("GET, PUT, POST, OPTIONS"));
     response.setHeader(F("Access-Control-Allow-Credentials"),F("true"));
 
@@ -933,9 +929,8 @@ void ApplicationWebserver::onColor(HttpRequest &request, HttpResponse &response)
     }
 #endif
     debug_i("received /color request");
-    response.setAllowCrossDomainOrigin("*");
+    setCorsHeaders(response);
     response.setHeader(F("Access-Control-Allow-Origin"), F("*"));
-    response.setHeader(F("Access-Control-Allow-Headers"), F("Content-Type"));
 
     if (request.method != HTTP_POST && request.method != HTTP_GET && request.method!=HTTP_OPTIONS) {
         sendApiCode(response, API_CODES::API_BAD_REQUEST, F("not POST, GET or OPTIONS"));
@@ -959,7 +954,7 @@ void ApplicationWebserver::onColor(HttpRequest &request, HttpResponse &response)
         debug_i("GET");
         ApplicationWebserver::onColorGet(request, response);
     }
-    debug_i("all methods failed");
+    debug_i("found method %i",(int)request.method);
 }
 
 /**
@@ -1003,8 +998,7 @@ void ApplicationWebserver::onNetworks(HttpRequest &request, HttpResponse &respon
     }
 #endif
     if (request.method == HTTP_OPTIONS){
-        response.setAllowCrossDomainOrigin("*");
-        response.setHeader(F("Access-Control-Allow-Headers"),F("Content-Type"));
+        setCorsHeaders(response);
 
         sendApiCode(response, API_CODES::API_SUCCESS);
         return;
@@ -1046,7 +1040,7 @@ void ApplicationWebserver::onNetworks(HttpRequest &request, HttpResponse &respon
                 break;
         }
     }
-            response.setAllowCrossDomainOrigin("*");
+            setCorsHeaders(response);
             sendApiResponse(response, stream);
 }
 
@@ -1185,7 +1179,7 @@ void ApplicationWebserver::onSystemReq(HttpRequest &request, HttpResponse &respo
 #endif
 
     if(request.method == HTTP_OPTIONS){
-        response.setAllowCrossDomainOrigin("*");
+        setCorsHeaders(response);
 
         sendApiCode(response, API_CODES::API_SUCCESS);
         return;
@@ -1224,7 +1218,7 @@ void ApplicationWebserver::onSystemReq(HttpRequest &request, HttpResponse &respo
         }
 
     }
-    response.setAllowCrossDomainOrigin("*");
+    setCorsHeaders(response);
 
     
     if (!error) {
@@ -1255,7 +1249,7 @@ void ApplicationWebserver::onUpdate(HttpRequest &request, HttpResponse &response
 #else
     if (request.method == HTTP_OPTIONS){
         // probably a CORS request
-        response.setAllowCrossDomainOrigin("*");
+        setCorsHeaders(response);
         sendApiCode(response,API_CODES::API_SUCCESS,"");
         debug_i("/update HTTP_OPTIONS Request, sent API_SUCCSSS");
         return;
@@ -1291,7 +1285,7 @@ void ApplicationWebserver::onUpdate(HttpRequest &request, HttpResponse &response
             sendApiCode(response, API_CODES::API_MISSING_PARAM);
         } else {
             app.ota.start(romurl);
-            response.setAllowCrossDomainOrigin("*");
+            setCorsHeaders(response);
             sendApiCode(response, API_CODES::API_SUCCESS);
         }
         return;
@@ -1468,7 +1462,7 @@ void ApplicationWebserver::onStorage(HttpRequest &request, HttpResponse &respons
             debug_e("Saving config to file %s failed!", fileName.c_str());
         }
         fileClose(file);
-        response.setAllowCrossDomainOrigin("*");
+        setCorsHeaders(response);
         sendApiCode(response, API_CODES::API_SUCCESS);
         return;       
     }
@@ -1489,7 +1483,7 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
     
     String myHosts;
     // Set the response body with the JSON
-    response.setAllowCrossDomainOrigin("*");
+    setCorsHeaders(response);
     response.setContentType(F("application/json"));
     response.sendString(app.network.getMdnsHosts());
 
@@ -1499,7 +1493,7 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
  void ApplicationWebserver::onObject(HttpRequest &request, HttpResponse &response){
     if (request.method == HTTP_OPTIONS){
         // probably a CORS request
-        response.setAllowCrossDomainOrigin("*");
+        setCorsHeaders(response);
         sendApiCode(response,API_CODES::API_SUCCESS,"");
         debug_i("HTTP_OPTIONS Request, sent API_SUCCSSS");
         return;
@@ -1557,7 +1551,7 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
         #ifdef DEBUG_OBJECT_API
         debug_i("missing object type");        
         #endif
-        response.setAllowCrossDomainOrigin("*");
+        setCorsHeaders(response);
         sendApiCode(response, API_CODES::API_BAD_REQUEST, "missing object type");
         return;
     }
@@ -1566,7 +1560,7 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
         #ifdef DEBUG_OBJECT_API
         debug_i("unsupported object type");
         #endif
-        response.setAllowCrossDomainOrigin("*");
+        setCorsHeaders(response);
         sendApiCode(response, API_CODES::API_BAD_REQUEST, F("unsupported object type"));
         return;
     }
@@ -1623,7 +1617,7 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
                     }
                 }
                 response.setContentType(F("application/json"));
-                response.setAllowCrossDomainOrigin("*");
+                setCorsHeaders(response);
                 response.sendString(Json::serialize(doc));
                 delete stream;
             }
@@ -1635,16 +1629,16 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
                 #ifdef DEBUG_OBJECT_API
                 debug_i("file not found");
                 #endif
-                response.setAllowCrossDomainOrigin("*");
+                setCorsHeaders(response);
                 sendApiCode(response, API_CODES::API_BAD_REQUEST, F("file not found"));
                 return;
             }
             response.setContentType(F("application/json"));
-            response.setAllowCrossDomainOrigin("*");
+            setCorsHeaders(response);
             #ifdef DEBUG_OBJECT_API
             debug_i("sending file %s", fileName.c_str());
             #endif
-            response.setAllowCrossDomainOrigin("*");
+            setCorsHeaders(response);
             response.sendFile(fileName);
             return;
         }
@@ -1656,7 +1650,7 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
         debug_i("request body: %s", body.c_str());
         #endif
         if (body == NULL || body.length()>FILE_MAX_SIZE) {
-            response.setAllowCrossDomainOrigin("*");
+            setCorsHeaders(response);
             sendApiCode(response, API_CODES::API_BAD_REQUEST, F("could not parse HTTP body"));
             #ifdef DEBUG_OBJECT_API
             debug_i("body is null or too long");
@@ -1666,7 +1660,7 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
         StaticJsonDocument<FILE_MAX_SIZE> doc;
         DeserializationError error = deserializeJson(doc, body);
         if (error) {
-            response.setAllowCrossDomainOrigin("*");
+            setCorsHeaders(response);
             sendApiCode(response, API_CODES::API_BAD_REQUEST, F("could not parse json from HTTP body"));
             #ifdef DEBUG_OBJECT_API
             debug_i("could not parse json");
@@ -1712,7 +1706,7 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
         }
         fileClose(file);
 
-        response.setAllowCrossDomainOrigin("*");
+        setCorsHeaders(response);
         response.setContentType(F("application/json"));
         //doc.clear();
         doc[F("id")]=objectId;
@@ -1743,7 +1737,7 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
             return;
         }
         fileClose(file);
-        response.setAllowCrossDomainOrigin("*");
+        setCorsHeaders(response);
         sendApiCode(response, API_CODES::API_SUCCESS);
         return;       
     }
@@ -1771,4 +1765,9 @@ String ApplicationWebserver::makeId(){
     debug_i("generated id %s ",objectId.c_str());
     #endif
     return objectId;
+}
+
+void ApplicationWebserver::setCorsHeaders(HttpResponse &response){
+    response.setAllowCrossDomainOrigin("*");
+    response.setHeader(F("Access-Control-Allow-Headers"),F("Content-Type"));
 }

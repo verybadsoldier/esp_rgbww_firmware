@@ -99,6 +99,8 @@ private:
 
     void onStorage(HttpRequest &request, HttpResponse &response);
 
+    void setCorsHeaders(HttpResponse &response);
+
     void wsConnected(WebsocketConnection& socket);
     void wsDisconnected(WebsocketConnection& socket);
     String makeId();

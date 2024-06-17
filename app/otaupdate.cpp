@@ -145,8 +145,6 @@
  *      -  save config and color to the new lfs1
  *      -  start OTA for the other rom slot
  * 
- * I don't know if I can read the .config 
- * 
  * 
  * - if two spiffs partitions are present, that's a sign of a v1 layout
  *   - if the current spiffs partition as per OTA is spiffs1 (the 2nd), 
@@ -216,6 +214,58 @@ void ApplicationOTA::start(String romurl){
     otaUpdater->start();
 }
 
+// start OTA for v1 partition layout
+/*
+  void ApplicationOTA::start(String romurl, String spiffsurl) {
+    debug_i("ApplicationOTA::start");
+    app.wsBroadcast(F("ota_status"),F("started"));
+	otaUpdater.reset(new Ota::Network::HttpUpgrader);
+    status = OTASTATUS::OTA_PROCESSING;
+
+    // debugging
+    // spiffsurl="";
+    auto part = ota.getNextBootPartition();
+
+    debug_i("ApplicationOTA::start nextBootPartition: %s %#06x at slot %i", part.name().c_str(), part.address(), rboot_get_current_rom());
+    // flash rom to position indicated in the rBoot config rom table
+    otaUpdater->addItem(romurl, part);
+
+	ota.begin(part);
+
+    if(spiffsurl!=""){
+        auto spiffsPart=findSpiffsPartition(part);
+        debug_i("ApplicationOTA::start spiffspart: %s", spiffsPart.name().c_str());
+        if(spiffsPart){
+            otaUpdater->addItem(spiffsurl,spiffsPart, new Storage::PartitionStream(spiffsPart, Storage::Mode::BlockErase));
+            debug_i("ApplicationOTA::start added spiffsurl: %s with blockerase=true", spiffsurl.c_str());
+        }
+        // ToDo: I guess I should do some error handling here - what if the partition can't be found?
+    }
+    otaUpdater->setCallback(Ota::Network::HttpUpgrader::CompletedDelegate(&ApplicationOTA::upgradeCallback, this));
+    
+    beforeOTA();
+    
+    unsigned fh = system_get_free_heap_size();
+    debug_i("Free heap before OTA: %i", fh);
+
+    debug_i("Current running partition: %s", ota.getRunningPartition().name());
+    debug_i("OTA target partition: %s", part.name().c_str());
+    debug_i("configured OTA item list");
+    debug_i("========================");
+    const auto& items = otaUpdater->getItems();
+    for(const auto& item : items) {
+        debug_i("  URL: %s", item.url.c_str());
+        debug_i("  Partition: %s", item.partition.name().c_str());
+        debug_i("  Size: %i", item.size);
+        debug_i("  ---------");
+        //debug_i("Stream: %p", item.getStream());
+    }
+
+    debug_i("Starting OTA ...");
+
+    otaUpdater->start();
+}
+*/
 void ApplicationOTA::doSwitch(){
    	auto before = ota.getRunningPartition();
 	auto after = ota.getNextBootPartition();
@@ -257,7 +307,6 @@ void ApplicationOTA::beforeOTA() {
 void ApplicationOTA::afterOTA() {
     debug_i("ApplicationOTA::afterOTA");
     /*
-    * called by upgradeCallback
     * this is being executed after otaUpdater->start but before System.restart
     * so this is still the old firmware running
     */
@@ -298,9 +347,6 @@ void ApplicationOTA::afterOTA() {
     }
 }
 
-/*
-* OTA callback - after the new rom has been written but before restart
-*/
 void ApplicationOTA::upgradeCallback(Ota::Network::HttpUpgrader& client, bool result) {
     debug_i("ApplicationOTA::rBootCallback");
     if (result == true) {
@@ -340,7 +386,68 @@ void ApplicationOTA::checkAtBoot() {
         rboot_set_current_rom(app.getRomSlot());
         saveStatus(OTASTATUS::OTA_NOT_UPDATING);
     }
-        saveStatus(OTASTATUS::OTA_SUCCESS);
+
+    if (status == OTASTATUS::OTA_SUCCESS_REBOOT && Storage::findPartition(F("spiffs0")) && Storage::findPartition(F("spiffs1"))) {
+        /*
+        * first OTA into this version, start updating the partition table
+        
+        if(rom==0){
+            //
+            // if we've booted into rom0, we would be running on spiffs0.
+            // however, that's were we want our first littlefs partition to be
+            // so we should switch to rom1 first to be able to manipulate the
+            // partition in the place where spiffs0 sits
+            //
+            debug_i("ApplicationOTA::checkAtBoot rom0, switching to rom1");
+            saveStatus(OTASTATUS::OTA_PART_UPDATE_1); // OTA_PART_UPDATE_1 indicates that we're about to switch partition 0
+            doSwitch();
+            // doSwitch restarts the system after switching roms, so next time, we should be running on rom1
+        }else{
+            saveStatus(OTASTATUS::OTA_PART_UPDATE_1);
+        }
+        */
+       
+    }
+    if (status == OTASTATUS::OTA_PART_UPDATE_1) {
+        /*
+        * we're at step 1 of the partition update process, the first step is to re-write spiffs0 to littlefs0
+        */
+        debug_i("ApplicationOTA::checkAtBoot rom1, switching partitions");
+        switchPartition(0);
+        createLFS(0);
+        /*
+        * done up to here
+        */
+        saveStatus(OTASTATUS::OTA_PART_UPDATE_2);
+        doSwitch();
+        
+        debug_i("ApplicationOTA::checkAtBoot OTA_SUCCESS_REBOOT");
+        // doSwitch();
+        
+        /*
+        * After OTA reboot, both spiffs filesystems should have identical content
+        * Next step should be to change the partition layout. 
+        * The primary partition should be in place of spiffs0, the secondary in place of spiffs1
+        * If we're currently running in rom0, the active spiffs partition is spiffs0, so we should
+        * re-boot into rom1 to release spiffs0
+        */
+        /*
+        if(Storage::findPartition(F("spiffs0"))){
+       
+            }else if(rom==1){
+            }
+        }else if(Storage::findPartition(F("spiffs1"))){
+            if(rom==0){
+                debug_i("ApplicationOTA::checkAtBoot rom0, switching partitions");
+                switchPartition(1);
+                saveStatus(OTASTATUS::OTA_SUCCESS_REBOOT);
+                System.restart();
+            }
+        }else{
+            debug_i("we're done, both partitions have been switched to littlefs");
+        }
+        */
+    }
 }
 
 bool ApplicationOTA::createLFS(uint8_t slot){
@@ -390,64 +497,9 @@ bool ApplicationOTA::copyContent(std::unique_ptr<IFS::FileSystem> src, std::uniq
     return true;
 }
 
-#ifdef ARCH_ESP8266
-bool ApplicationOTA::switchPartitions(){
-    if(!Storage::findPartition(F("lfs1"))&&!Storage::findPartition(F("lfs0"))){
-        std::vector<Storage::esp_partition_info_t> partitionTable=getEditablePartitionTable();
-        //if present, delete spiffs1 to make space
-        if(Storage::findPartition(F("spiffs1"))){
-            if(!delPartition(partitionTable, F("spiffs1"))) {
-                debug_i("ApplicationOTA::checkAtBoot failed to delete spiffs1");
-                return false;
-            }
-        }
-        if(Storage::findPartition(F("spiffs0"))){
-            if(!delPartition(partitionTable, F("spiffs0"))) {
-                debug_i("ApplicationOTA::checkAtBoot failed to delete spiffs0");
-                return false;
-            }
-        }
-
-        int offset=0x300000;
-        if(!addPartition(partitionTable, F("lfs1"),static_cast<uint8_t>(Storage::Partition::Type::data), static_cast<uint8_t>(Storage::Partition::SubType::Data::littlefs), offset, 0x0f8000, 0x00)){
-            debug_i("ApplicationOTA::checkAtBoot failed to add lfs1");
-            return false;
-        }
-        offset=0x100000;
-        if(!addPartition(partitionTable, F("lfs0"),static_cast<uint8_t>(Storage::Partition::Type::data), static_cast<uint8_t>(Storage::Partition::SubType::Data::littlefs), offset, 0x0f8000, 0x00)){
-            debug_i("ApplicationOTA::checkAtBoot failed to add lfs0");
-            return false;
-        }
-            
-        if(!savePartitionTable(partitionTable)){
-            debug_i("ApplicationOTA::checkAtBoot failed to save partition table");
-            return false;
-        }
-            
-        debug_i("OTA post, switchPartition => reloading partition table");
-        Storage::spiFlash->loadPartitions(PARTITION_TABLE_OFFSET); // load partition table from storage
-        
-        Storage::Debug::listDevices(Serial);
-        
-        debug_i("OTA_post, create new file system");
-        createLFS(1);
-        createLFS(0);
-        
-        debug_i("OTA_post, saving config");
-        app.cfg.save();
-
-
-        debug_i("OTA_post, switchPartitions => restart");
-        app.restart();
-        return true;
-    }
-}
-#endif
-
-#ifdef ARCH_ESP8266
 bool ApplicationOTA::switchPartition(uint8_t slot){
     String spiffsPartName=F("spiffs")+String(slot);
-    String lfsPartName=F("lfs")+String(slot);
+    String lfsPartName=F("littlefs")+String(slot);
     if(Storage::findPartition(spiffsPartName)){
         std::vector<Storage::esp_partition_info_t> partitionTable=getEditablePartitionTable();
         if(!delPartition(partitionTable, spiffsPartName)) {
@@ -465,16 +517,10 @@ bool ApplicationOTA::switchPartition(uint8_t slot){
             debug_i("partition update saved");
         }
         Storage::spiFlash->loadPartitions(PARTITION_TABLE_OFFSET); // load partition table from storage
-        debug_i("OTA post, switchPartition => reloading partition table");
         Storage::Debug::listDevices(Serial);
-        return true;
-    }else{
-        debug_i("OTA post switchPartition => Partition %s not found",spiffsPartName.c_str());
-        return false;
+
     }
 }
-#endif
-
 void ApplicationOTA::saveStatus(OTASTATUS status) {
     debug_i("ApplicationOTA::saveStatus %i to rom partition rom%i\n",status,app.getRomSlot());
     StaticJsonDocument<128> doc;
@@ -637,6 +683,5 @@ bool ApplicationOTA::savePartitionTable(std::vector<Storage::esp_partition_info_
     flash.erase_range(PARTITION_TABLE_OFFSET, flash.getBlockSize());
     flash.write(PARTITION_TABLE_OFFSET, entries.data(), entries.size());
     debug_i("done updating partition table");
-    return true;
 #endif
 }

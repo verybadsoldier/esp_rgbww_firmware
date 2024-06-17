@@ -397,7 +397,11 @@ struct ApplicationSettings {
 
         debug_i("Saving config to file: %s", APP_SETTINGS_FILE);
         if (!Json::saveToFile(root, APP_SETTINGS_FILE))
-            debug_e("Saving config to file failed!");
+            {
+                debug_e("Saving config to file failed!");
+            }else{
+                debug_i("success");
+            }
     }
 
     bool exist() {
