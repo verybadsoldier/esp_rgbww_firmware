@@ -43,9 +43,96 @@
 #define APP_SETTINGS_FILE ".cfg"
 #define APP_SETTINGS_VERSION 1
 
-#define CONFIG_MAX_LENGTH 4096
+#define CONFIG_MAX_LENGTH 2560
 
+#define configDB_PATH "/config.db"
+/*
+class configDB {
+public:
+    configDB(const String& filePath) : filePath_(filePath) {
+        
+    }
 
+    String get(const String& key) {
+        File file = open(filePath_, "r");
+        if (!file) {
+            return "";
+        }
+
+        String line;
+        while (file.available()) {
+            line = file.readStringUntil('\n');
+            if (line.startsWith(key + "=")) {
+                file.close();
+                return line.substring(line.indexOf('=') + 1);
+            }
+        }
+
+        file.close();
+        return ""; // Key not found
+    }
+
+    void set(const String& key, const String& value) {
+        String tempPath = filePath_ + ".tmp";
+        File srcFile = fileOpen(filePath_.c_str(), IFS::OpenFlag::Read);
+        File tempFile = fileOpen(tempPath_.c_str(), IFS::OpenFlag::Write|IFS::OpenFlag::Create|IFS::OpenFlag::Truncate);
+
+        bool keySet = false;
+        String line;
+        while (srcFile.available()) {
+            line = srcFile.readStringUntil('\n');
+            int delimiterPos = line.indexOf('=');
+            if (line.substring(0, delimiterPos) == key) {
+                tempFile.println(key + "=" + value);
+                keySet = true;
+            } else {
+                tempFile.println(line);
+            }
+        }
+        if (!keySet) {
+            tempFile.println(key + "=" + value);
+        }
+
+        srcFile.close();
+        tempFile.close();
+
+        SPIFFS.remove(filePath_);
+        SPIFFS.rename(tempPath, filePath_);
+    }
+
+    bool del(const String& key) {
+        bool keyFound = false;
+        String content = "";
+        File file = SPIFFS.open(filePath_, "r");
+        if (file) {
+            String line;
+            while (file.available()) {
+                line = file.readStringUntil('\n');
+                if (!line.startsWith(key + "=")) {
+                    content += line + "\n";
+                } else {
+                    keyFound = true;
+                }
+            }
+            file.close();
+        }
+
+        if (keyFound) {
+            file = SPIFFS.open(filePath_, "w");
+            if (!file) {
+                return false;
+            }
+            file.print(content);
+            file.close();
+        }
+
+        return keyFound;
+    }
+
+private:
+    String filePath_;
+};
+*/
 struct channel {
     String name;
     int pin;
@@ -395,7 +482,7 @@ struct ApplicationSettings {
         	Json::serialize(root, Serial, Json::Pretty);
         }
 
-        debug_i("Saving config to file: %s", APP_SETTINGS_FILE);
+        debug_i("Saving config to file: %s, free heap: %i, json size %i", APP_SETTINGS_FILE,system_get_free_heap_size(), root.memoryUsage());
         if (!Json::saveToFile(root, APP_SETTINGS_FILE))
             {
                 debug_e("Saving config to file failed!");

@@ -93,7 +93,6 @@ namespace
 {
 // Note: This file won't exist on initial build!
 IMPORT_FSTR(partitionTableData, PROJECT_DIR "/out/Esp8266/debug/firmware/partitions.bin")
-//IMPORT_FSTR(rbootData, PROJECT_DIR "/out/Esp8266/debug/firmware/rboot.bin")
 } // namespace
 
 extern "C" void __wrap_user_pre_init(void)
@@ -172,21 +171,20 @@ void Application::init() {
     /*
     * verify for new partition layout
     */
-    debug_i("application init, \nspiffs0 found: %s\nspiffs1 found: %s ",Storage::findPartition(F("spiffs0"))?F("true"):F("false"),Storage::findPartition(F("spiffs1"))?F("true"):F("false"));
-    if (Storage::findPartition(F("spiffs0")) && Storage::findPartition(F("spiffs1"))) {
+    debug_i("application init, \nspiffs0 found: %s\nspiffs1 found: %s\nlfs1 found: %s\nlfs1 found: %s ",Storage::findPartition(F("spiffs0"))?F("true"):F("false"),Storage::findPartition(F("spiffs1"))?F("true"):F("false"),Storage::findPartition(F("lfs0"))?F("true"):F("false"),Storage::findPartition(F("lfs1"))?F("true"):F("false"));
+    if (!Storage::findPartition(F("lfs0")) && !Storage::findPartition(F("lfs1"))) {
         
         // mount existing data partition
         debug_i("application init (with spiffs) => Mounting file system");
-        mountfs(app.getRomSlot());
-        if (cfg.exist()) {
-            debug_i("application init (with spiffs) => reading config");
-            cfg.load(); 
-            debug_i("application init (with spiffs) => config loaded, pin config %s",cfg.general.pin_config_name.c_str());
+        if(mountfs(app.getRomSlot())){
+            if (cfg.exist()) {
+                debug_i("application init (with spiffs) => reading config");
+                cfg.load(); 
+                debug_i("application init (with spiffs) => config loaded, pin config %s",cfg.general.pin_config_name.c_str());
+            }
         }else{
             debug_i("application init (with spiffs) => failed to find config file");
         }
-
-        
 
         /*
         * now, app.cfg is the valid full configuration

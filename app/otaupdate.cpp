@@ -395,6 +395,7 @@ bool ApplicationOTA::switchPartitions(){
     if(!Storage::findPartition(F("lfs1"))&&!Storage::findPartition(F("lfs0"))){
         std::vector<Storage::esp_partition_info_t> partitionTable=getEditablePartitionTable();
         //if present, delete spiffs1 to make space
+
         if(Storage::findPartition(F("spiffs1"))){
             if(!delPartition(partitionTable, F("spiffs1"))) {
                 debug_i("ApplicationOTA::checkAtBoot failed to delete spiffs1");

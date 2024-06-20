@@ -1114,7 +1114,7 @@ void ApplicationWebserver::onConnect(HttpRequest &request, HttpResponse &respons
             return;
 
         }
-        DynamicJsonDocument doc(1024);
+        StaticJsonDocument<CONFIG_MAX_LENGTH> doc;
         Json::deserialize(doc, body);
         String ssid;
         String password;
@@ -1196,7 +1196,7 @@ void ApplicationWebserver::onSystemReq(HttpRequest &request, HttpResponse &respo
         return;
     } else {
         debug_i("ApplicationWebserver::onSystemReq: %s", body.c_str());
-        DynamicJsonDocument doc(1024);
+        StaticJsonDocument<CONFIG_MAX_LENGTH> doc;
         Json::deserialize(doc, body);
 
         String cmd = doc[F("cmd")].as<const char*>();
@@ -1271,7 +1271,7 @@ void ApplicationWebserver::onUpdate(HttpRequest &request, HttpResponse &response
         }
 
         debug_i("body: %s", body.c_str());
-        DynamicJsonDocument doc(1024);
+        StaticJsonDocument<CONFIG_MAX_LENGTH> doc;
             Json::deserialize(doc, body);
 
         String romurl;
@@ -1445,7 +1445,7 @@ void ApplicationWebserver::onStorage(HttpRequest &request, HttpResponse &respons
         bool error = false;
         
         debug_i("body length: %i", body.length());
-        DynamicJsonDocument doc(body.length()+32);
+        StaticJsonDocument<CONFIG_MAX_LENGTH> doc;
         Json::deserialize(doc, body);
         String fileName=doc[F("filename")];
         

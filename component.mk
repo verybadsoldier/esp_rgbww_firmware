@@ -14,7 +14,8 @@ GLOBAL_CFLAGS += \
 
 
 #HWCONFIG := two-spiffs-two-roms
-HWCONFIG := old_layout
+#HWCONFIG := old_layout
+HWCONFIG := flash_only
 #ENABLE_CUSTOM_LWIP = 0
 #ENABLE_LWIP_DEBUG = 1
 
