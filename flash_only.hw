@@ -1,0 +1,19 @@
+{
+    "name": "flash only",
+    "base_config": "two-rom-mode",
+    "options": [],
+    "devices": {
+        "spiFlash": {
+            "size": "4M"
+        }
+    },
+    "partitions": {
+        "rom0": {
+            "size": "1016K"
+        },
+        "rom1": {
+            "address": "0x00202000",
+            "size": "1016K"
+        }
+    }
+}
