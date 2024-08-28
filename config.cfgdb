@@ -1,0 +1,256 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "store":"json",
+  "properties": {
+    "general": {
+      "type": "object",
+      "store":"json",
+      "properties": {
+        "device_name": {
+          "type": "string"
+        },
+        "pin_config_url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "channels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "pin": {
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "current_pin_config_name": {
+          "type": "string"
+        },
+        "buttons_debounce_ms": {
+          "type": "integer"
+        },
+        "supported_color_models": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "pin_config": {
+          "type": "string"
+        },
+        "buttons_config": {
+          "type": "string"
+        }
+      }
+    },
+    "security": {
+      "type": "object",
+      "properties": {
+        "api_secured": {
+          "type": "boolean"
+        }
+      }
+    },
+    "color": {
+      "type": "object",
+      "store":"json",
+      "properties": {
+        "startup_color": {
+          "type": "string"
+        },
+        "brightness": {
+          "type": "object",
+          "properties": {
+            "red": {
+              "type": "integer"
+            },
+            "ww": {
+              "type": "integer"
+            },
+            "green": {
+              "type": "integer"
+            },
+            "blue": {
+              "type": "integer"
+            },
+            "cw": {
+              "type": "integer"
+            }
+          }
+        },
+        "colortemp": {
+          "type": "object",
+          "properties": {
+            "ww": {
+              "type": "integer"
+            },
+            "cw": {
+              "type": "integer"
+            }
+          }
+        },
+        "outputmode": {
+          "type": "integer"
+        },
+        "hsv": {
+          "type": "object",
+          "properties": {
+            "red": {
+              "type": "integer"
+            },
+            "magenta": {
+              "type": "integer"
+            },
+            "green": {
+              "type": "integer"
+            },
+            "blue": {
+              "type": "integer"
+            },
+            "yellow": {
+              "type": "integer"
+            },
+            "model": {
+              "type": "integer"
+            },
+            "cyan": {
+              "type": "integer"
+            }
+          }
+        }
+      }
+    },
+    "ota": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "format": "uri"
+        }
+      }
+    },
+    "sync": {
+      "type": "object",
+      "properties": {
+        "cmd_master_enabled": {
+          "type": "boolean"
+        },
+        "color_slave_enabled": {
+          "type": "boolean"
+        },
+        "color_slave_topic": {
+          "type": "string"
+        },
+        "clock_master_enabled": {
+          "type": "boolean"
+        },
+        "color_master_interval_ms": {
+          "type": "integer"
+        },
+        "clock_slave_enabled": {
+          "type": "boolean"
+        },
+        "cmd_slave_enabled": {
+          "type": "boolean"
+        },
+        "clock_master_interval": {
+          "type": "integer"
+        },
+        "clock_slave_topic": {
+          "type": "string"
+        },
+        "cmd_slave_topic": {
+          "type": "string"
+        },
+        "color_master_enabled": {
+          "type": "boolean"
+        }
+      }
+    },
+    "events": {
+      "type": "object",
+      "properties": {
+        "color_interval_ms": {
+          "type": "integer"
+        },
+        "color_mininterval_ms": {
+          "type": "integer"
+        },
+        "transfin_interval_ms": {
+          "type": "integer"
+        },
+        "server_enabled": {
+          "type": "boolean"
+        }
+      }
+    },
+    "network": {
+      "type": "object",
+      "store":"json",
+      "properties": {
+        "mqtt": {
+          "type": "object",
+          "properties": {
+            "server": {
+              "type": "string"
+            },
+            "password": {
+              "type": "string"
+            },
+            "port": {
+              "type": "integer"
+            },
+            "topic_base": {
+              "type": "string"
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "username": {
+              "type": "string"
+            }
+          }
+        },
+        "connection": {
+          "type": "object",
+          "properties": {
+            "netmask": {
+              "type": "string",
+              "format": "ipv4"
+            },
+            "ip": {
+              "type": "string",
+              "format": "ipv4"
+            },
+            "dhcp": {
+              "type": "boolean"
+            },
+            "gateway": {
+              "type": "string",
+              "format": "ipv4"
+            }
+          }
+        },
+        "ap": {
+          "type": "object",
+          "properties": {
+            "password": {
+              "type": "string"
+            },
+            "secured": {
+              "type": "boolean"
+            },
+            "ssid": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}
