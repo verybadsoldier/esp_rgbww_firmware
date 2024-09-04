@@ -1,18 +1,131 @@
 {
-  "$schema": "http://json-schema.org/draft-04/schema#",
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "store":"json",
+  "$defs": {
+    "Pin": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 63
+    },
+    "Milliseconds": {
+      "type": "integer",
+      "default": 0,
+      "minimum": 0
+    },
+    "Timestamp": {
+      "type":"integer",
+      "default": 0,
+      "minimum":0
+    },
+    "FileSystemType": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 32,
+      "ctype": "IFS::FileSystem::Type"
+    },
+    "IpAddress": {
+      "type": "string",
+      "ctype": "IpAddress",
+      "default": "0.0.0.0"
+    },
+    "Url": {
+      "type": "string",
+      "ctype": "Url"
+    },
+    "Port": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 65535
+    },
+    "RGB": {
+      "r":{
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1023
+      },
+      "g":{
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1023
+      },
+      "b":{
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1023
+      }
+    },
+    "HSV":{
+      "h":{
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 359
+      },
+      "s":{
+        "type": "number",
+        "minimum": 0,
+        "maximum": 100
+      },
+      "v":{
+        "type": "number",
+        "minimum": 0,
+        "maximum": 100
+      }
+    },
+    "RAW": {
+      "r": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1023
+      },
+      "g": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1023
+      },
+      "b": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1023
+      },
+      "cw": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1023
+      },
+      "ww": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 1023
+      }
+    },
+    "color":{
+      "oneOf": [
+      {"$ref":"#/$defs/RGB"},
+      {"$ref":"#/$defs/HSV"},
+      {"$ref":"#/$defs/RAW"}
+      ]
+    },
+    "preset":{
+      "name":"string",
+      "ts":{
+        "$ref":"#/$defs/Timestamp"
+        },
+      "color":{
+        "$ref":"#/$defs/color"
+      }
+    }
+  },
   "properties": {
     "general": {
-      "type": "object",
       "store":"json",
+      "type": "object",
       "properties": {
         "device_name": {
           "type": "string"
         },
         "pin_config_url": {
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "channels": {
           "type": "array",
@@ -56,9 +169,57 @@
         }
       }
     },
+    "presets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "color": {
+            "type": "object",
+            "properties": {
+              "ww": {
+                "type": "integer"
+              },
+              "r": {
+                "type": "integer"
+              },
+              "b": {
+                "type": "integer"
+              },
+              "s": {
+                "type": "integer"
+              },
+              "cw": {
+                "type": "integer"
+              },
+              "v": {
+                "type": "integer"
+              },
+              "g": {
+                "type": "integer"
+              },
+              "h": {
+                "type": "integer"
+              }
+            }
+          },
+          "name": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer"
+          },
+          "type": {
+            "type": "string"
+          },
+          "ts": {
+            "type": "integer"
+          }
+        }
+      }
+    },
     "color": {
       "type": "object",
-      "store":"json",
       "properties": {
         "startup_color": {
           "type": "string"
@@ -66,10 +227,10 @@
         "brightness": {
           "type": "object",
           "properties": {
-            "red": {
+            "ww": {
               "type": "integer"
             },
-            "ww": {
+            "r": {
               "type": "integer"
             },
             "green": {
@@ -100,10 +261,10 @@
         "hsv": {
           "type": "object",
           "properties": {
-            "red": {
+            "magenta": {
               "type": "integer"
             },
-            "magenta": {
+            "r": {
               "type": "integer"
             },
             "green": {
@@ -125,12 +286,82 @@
         }
       }
     },
+    "controllers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "ip": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer"
+          },
+          "last-seen": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "groups": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "ids": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "ts": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "group-presets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "presets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "controller": {
+                  "type": "integer"
+                },
+                "preset": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "name": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer"
+          },
+          "ts": {
+            "type": "integer"
+          }
+        }
+      }
+    },
     "ota": {
       "type": "object",
       "properties": {
         "url": {
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         }
       }
     },
@@ -191,7 +422,6 @@
     },
     "network": {
       "type": "object",
-      "store":"json",
       "properties": {
         "mqtt": {
           "type": "object",
@@ -220,19 +450,16 @@
           "type": "object",
           "properties": {
             "netmask": {
-              "type": "string",
-              "format": "ipv4"
+              "type": "string"
             },
             "ip": {
-              "type": "string",
-              "format": "ipv4"
+              "type": "string"
             },
             "dhcp": {
               "type": "boolean"
             },
             "gateway": {
-              "type": "string",
-              "format": "ipv4"
+              "type": "string"
             }
           }
         },
@@ -254,3 +481,4 @@
     }
   }
 }
+
