@@ -57,8 +57,8 @@ void AppMqttClient::connect() {
 //    0);app.cfg.network.mqtt.username, app.cfg.network.mqtt.password);
     //debug_i("MqttClient: Server: %s Port: %d\n", app.cfg.network.mqtt.server.c_str(), app.cfg.network.mqtt.port);
     {
-        AppConfig::Network network(app.cfg.get());
-    Url url = "mqtt://" + network.mqtt.username + ":" + network.mqtt.password + "@" + network.mqtt.server + ":" + String(network.mqtt.port);
+        AppConfig::Network network(*app.cfg);
+    Url url = "mqtt://" + network.mqtt.getUsername() + ":" + network.mqtt.getPassword() + "@" + network.mqtt.getServer() + ":" + String(network.mqtt.getPort());
     }
     mqtt->connect(url, _id);
 #ifdef ENABLE_SSL
@@ -72,26 +72,29 @@ void AppMqttClient::connect() {
 #endif
     // Assign a disconnect callback function
     mqtt->setCompleteDelegate(TcpClientCompleteDelegate(&AppMqttClient::onComplete, this));
-
-    if (app.cfg.sync.clock_slave_enabled) {
-        mqtt->subscribe(app.cfg.sync.clock_slave_topic);
-    }
-    if (app.cfg.sync.cmd_slave_enabled) {
-        mqtt->subscribe(app.cfg.sync.cmd_slave_topic);
-    }
-    if (app.cfg.sync.color_slave_enabled) {
-        debug_d("Subscribe: %s\n", app.cfg.sync.color_slave_topic.c_str());
-        mqtt->subscribe(app.cfg.sync.color_slave_topic);
-    }
+    {
+        AppConfig::Sync sync(*app.cfg);
+        if (sync.getClockSlaveEnabled()) {
+            mqtt->subscribe(sync.getClockSlaveTopic());
+        }
+        if (sync.getCmdSlaveEnabled()) {
+            mqtt->subscribe(sync.getCmdSlaveTopic());
+        }
+        if (sync.getColorSlaveEnabled()) {
+            debug_d("Subscribe: %s\n", sync.getColorSlaveTopic().c_str());
+            mqtt->subscribe(sync.getColorSlaveTopic());
+        }
+    }// end ConfigDB sync context
 }
 
 void AppMqttClient::init() {
-    if (app.cfg.general.device_name.length() > 0) {
-        debug_w("AppMqttClient::init: building MQTT ID from device name: '%s'\n", app.cfg.general.device_name.c_str());
-        _id = app.cfg.general.device_name;
+    AppConfig::General general(*app.cfg);
+    if (general.getServiceName().length() > 0) {
+        debug_w("AppMqttClient::init: building MQTT ID from device name: '%s'\n", general.getDeviceName().c_str());
+        _id = general.getDeviceName();
     }
     else {
-        debug_w("AppMqttClient::init: building MQTT ID from MAC (device name is: '%s')\n", app.cfg.general.device_name.c_str());
+        debug_w("AppMqttClient::init: building MQTT ID from MAC (device name is: '%s')\n", general.getDeviceName().c_str());
         _id = String("rgbww_") + WifiStation.getMAC();
     }
 }
@@ -118,7 +121,8 @@ int AppMqttClient::onMessageReceived(MqttClient& client, mqtt_message_t* msg) {
     String topic = MqttBuffer(msg->publish.topic_name);
     String message = MqttBuffer(msg->publish.content);
 
-    if (app.cfg.sync.clock_slave_enabled && (topic == app.cfg.sync.clock_slave_topic)) {
+    AppConfig::Sync sync(*app.cfg);
+    if (sync.getClockSlaveEnabled() && (topic == sync.getClockSlaveTopic())) {
         if (message == F("reset")) {
             app.rgbwwctrl.onMasterClockReset();
         }
@@ -127,10 +131,10 @@ int AppMqttClient::onMessageReceived(MqttClient& client, mqtt_message_t* msg) {
             app.rgbwwctrl.onMasterClock(clock);
         }
     }
-    else if (app.cfg.sync.cmd_slave_enabled && topic == app.cfg.sync.cmd_slave_topic) {
+    else if (sync.getCmdSlaveEnabled() && topic == sync.getCmdSlaveTopic()) {
         app.jsonproc.onJsonRpc(message);
     }
-    else if (app.cfg.sync.color_slave_enabled && (topic == app.cfg.sync.color_slave_topic)) {
+    else if (sync.getColorSlaveEnabled() && (topic == sync.getColorSlaveTopic())) {
         String error;
         app.jsonproc.onColor(message, error, false);
     }
@@ -204,7 +208,8 @@ void AppMqttClient::publishCurrentHsv(const HSVCT& color) {
 }
 
 String AppMqttClient::buildTopic(const String& suffix) {
-    String topic = app.cfg.network.mqtt.topic_base;
+    AppConfig::Network network(*app.cfg);
+    String topic = network.mqtt.getTopicBase();
     topic += _id + "/";
     return topic + suffix;
 }

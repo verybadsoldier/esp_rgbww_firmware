@@ -265,13 +265,14 @@ void Application::init() {
         if (general.getIsInitialized()) {
             debug_i("application init => reading config");
             //cfg.load(); 
-            debug_i("application init => config loaded, pin config %s",general.pin_config_name.c_str());  
+            debug_i("application init => config loaded, pin config %s",general.getPinConfig().c_str());  
         } else {
             debug_i("Application::init - first run");
             _first_run = true;
             //cfg.save();
         }
     }
+
     mqttclient.init();
 
     // initialize led ctrl
@@ -285,10 +286,11 @@ void Application::init() {
     // initialize webserver
 
     app.webserver.init();
+
     {
         AppConfig::Network network(*cfg);
         if (network.ntp.getEnabled()) {
-            String server = network.ntp.getServer().length() > 0 ? network.ntp.getSserver() : NTP_DEFAULT_SERVER;
+            String server = network.ntp.getServer().length() > 0 ? network.ntp.getServer() : NTP_DEFAULT_SERVER;
             unsigned interval = network.ntp.getInterval() > 0 ? network.ntp.getInterval() : NTP_DEFAULT_AUTOQUERY_SECONDS;
             debug_i("Enabling NTP server '%s' with interval %d s", server.c_str(), interval);
             pNtpclient = new NtpClient(server, interval);
@@ -296,35 +298,33 @@ void Application::init() {
         else {
             debug_i("Disabling NTP server");
         }
-    }
+    } // end of ConfigDB network context
 }
-{
+void Application::initButtons(){
     AppConfig::General general(*cfg);
-    void Application::initButtons() {
-        if (general.getButtons_config().length() <= 0)
-            return;
+    if (general.getButtonsConfig().length() <= 0)
+        return;
 
-        debug_i("Configuring buttons using string: '%s'", general.getButtons_config().c_str());
+    debug_i("Configuring buttons using string: '%s'", general.getButtonsConfig().c_str());
 
-        Vector<String> buttons;
-        splitString(general.buttons_config(), ',', buttons);
+    Vector<String> buttons;
+    splitString(general.getButtonsConfig(), ',', buttons);
 
-        for(uint32_t i=0; i < buttons.count(); ++i) {
-            if (buttons[i].length() == 0)
-                continue;
+    for(uint32_t i=0; i < buttons.count(); ++i) {
+        if (buttons[i].length() == 0)
+            continue;
 
-            uint32_t pin = buttons[i].toInt();
-            if (pin >= _lastToggles.size()) {
-                debug_i("Pin %d is invalid. Max is %d", pin, _lastToggles.size() - 1);
-                continue;
-            }
-            debug_i("Configuring button: '%s'", buttons[i].c_str());
-
-            _lastToggles[pin] = 0ul;
-
-            attachInterrupt(pin,  std::bind(&Application::onButtonTogglePressed, this, pin), FALLING);
-            pinMode(pin, INPUT_PULLUP);
+        uint32_t pin = buttons[i].toInt();
+        if (pin >= _lastToggles.size()) {
+            debug_i("Pin %d is invalid. Max is %d", pin, _lastToggles.size() - 1);
+            continue;
         }
+        debug_i("Configuring button: '%s'", buttons[i].c_str());
+
+        _lastToggles[pin] = 0ul;
+
+        attachInterrupt(pin,  std::bind(&Application::onButtonTogglePressed, this, pin), FALLING);
+        pinMode(pin, INPUT_PULLUP);
     }
 }
 
@@ -335,10 +335,10 @@ void Application::startServices() {
     webserver.start();
 
     {  
-        AppConfig::Events events(*cfg);
-        if (events.getServer_enabled())
+        AppConfig::Root appcfg(*cfg);
+        if (appcfg.events.getServerEnabled())
             eventserver.start(app.webserver);
-    }
+    } // end of ConfigDB root context
 }
 
 void Application::restart() {
@@ -521,26 +521,24 @@ void Application::wsBroadcast(String cmd, String message){
 }
 
 void Application::onCommandRelay(const String& method, const JsonObject& params) {
-    if (!cfg->sync.getCmd_master_enabled)
+    AppConfig::Sync sync(*cfg);
+    if (!sync.getCmdMasterEnabled())
         return;
-
     mqttclient.publishCommand(method, params);
 }
 
 void Application::onButtonTogglePressed(int pin) {
     uint32_t now = millis();
     uint32_t diff = now - _lastToggles[pin];
-    {
-        AppConfig::General general(cfg);
-        if (diff > (uint32_t) cfg->general.buttons_debounce_ms) {  // debounce
-            debug_i("Button %d pressed - toggle", pin);
-            rgbwwctrl.toggle();
-            _lastToggles[pin] = now;
-        }
-        else {
-            debug_d("Button press ignored by debounce. Diff: %d Debounce: %d", diff, cfg.general.buttons_debounce_ms);
- 
-        }
+    AppConfig::General general(*cfg);
+    if (diff > (uint32_t) general.getButtonsDebounceMs()) {  // debounce
+        debug_i("Button %d pressed - toggle", pin);
+        rgbwwctrl.toggle();
+        _lastToggles[pin] = now;
+    }
+    else {
+        debug_d("Button press ignored by debounce. Diff: %d Debounce: %d", diff, cfg.general.buttons_debounce_ms);
+
     }
 }
 
