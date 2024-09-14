@@ -86,7 +86,37 @@
         "device_name": "LED_So1",
         "pin_config": "13,12,14,5,4",
         "buttons_config": "",
-        "buttons_debounce_ms": 50
+        "buttons_debounce_ms": 50,
+        "pin_config_url":"https://raw.githubusercontent.com/pljakobs/esp_rgb_webapp2/devel/public/config/pinconfig.json",
+        "channels":[	
+            {
+                "pin":	13,
+                "name":	"red"
+            },
+            {
+                "pin":	12,
+                "name":	"green"
+            },
+            {
+                "pin":	14,
+                "name":	"blue"
+            },
+            {
+                "pin":	5,
+                "name":	"warmwhite"
+            },
+            {
+                "pin":	4,
+                "name":	"coldwhite"
+            }
+        ],
+        "supported_color_models":
+        [
+            "RGB",
+            "RGBW",
+            "RGBWW",
+            "RAW"
+        ]
     },
     "presets":
     [

@@ -45,7 +45,6 @@ public:
     void wsBroadcast(String message);
     void wsBroadcast(String cmd, String message);
 
-
     void listSpiffsPartitions();
     
     bool mountfs(int slot);
@@ -77,7 +76,8 @@ public:
 
     ApplicationOTA ota;
 
-    ApplicationSettings cfg;
+    std::unique_ptr<AppConfig> cfg;
+    std::unique_ptr<AppData> data;
     EventServer eventserver;
     AppMqttClient mqttclient;
     JsonProcessor jsonproc;

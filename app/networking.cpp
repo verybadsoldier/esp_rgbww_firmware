@@ -132,6 +132,7 @@ void AppWIFI::init() {
 
     _con_ctr = 0;
 
+    // ConfigDB adapt
     if (app.isFirstRun()) {
         debug_i("AppWIFI::init initial run - setting up AP, ssid: ");
         String SSID=String(DEFAULT_AP_SSIDPREFIX) + String(system_get_chip_id());

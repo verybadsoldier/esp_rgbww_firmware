@@ -156,8 +156,8 @@ void Application::init() {
         delay(200);
     }
     Serial.print("\r\n");
-    debug_i("going to initialize config");
-    config::initializeConfig(cfg); // initialize the config structure if necessary
+    // ConfigDB obsoleted debug_i("going to initialize config");
+    // ConfigDB obsoleted config::initializeConfig(cfg); // initialize the config structure if necessary
 
     app.ota.checkAtBoot();
 
@@ -176,6 +176,7 @@ void Application::init() {
         
         // mount existing data partition
         debug_i("application init (with spiffs) => Mounting file system");
+        /* ConfigDB - may need rework
         if(mountfs(app.getRomSlot())){
             if (cfg.exist()) {
                 debug_i("application init (with spiffs) => reading config");
@@ -185,6 +186,7 @@ void Application::init() {
         }else{
             debug_i("application init (with spiffs) => failed to find config file");
         }
+        */
 
         /*
         * now, app.cfg is the valid full configuration
@@ -193,7 +195,8 @@ void Application::init() {
         debug_i("application init => switching file systems - partition 1");
         ota.switchPartitions();
         debug_i("application init => saving config");
-        cfg.save();
+        // ConfigDB - not needed
+        // cfg.save();
     }
 #endif
 
@@ -224,7 +227,7 @@ void Application::init() {
     //auto spiffsPartition=app.ota.findSpiffsPartition(romPartition);
     
     mountfs(getRomSlot());
-    
+    // ToDo - rework mounting filesystem
     if(_fs_mounted) {
         Directory dir;
         if(dir.open()) {
@@ -235,11 +238,17 @@ void Application::init() {
         }
         Serial << dir.count() << _F(" files found") << endl << endl;
     }
+
+    // initialize config and data
+    cfg = std::make_unique<AppConfig>(configDB_PATH);
+    data = std::make_unique<AppData>(dataDB_PATH);
     
     // check if we need to reset settings
     if (digitalRead(CLEAR_PIN) < 1) {
         debug_i("CLR button low - resetting settings");
-        cfg.reset();
+        // ConfigDB - decide i f to reload defaults or load a specific saved version
+        // perhaps by holding the clear pin low for a certain time along with blink codes?
+        // cfg.reset();
         network.forgetWifi();
     }
 
@@ -249,16 +258,20 @@ void Application::init() {
 #endif
 
     // load config
-    if (cfg.exist()) {
+    // ConfigDB obsoleted cfg.load(), either the config is defined by defaults or initially loaded from a default config.json
+    // once the database is initialized, the config is loaded from the database
+    {
+        AppConfig::General general(*cfg);
+        if (general.getIsInitialized()) {
             debug_i("application init => reading config");
-            cfg.load(); 
-            debug_i("application init => config loaded, pin config %s",cfg.general.pin_config_name.c_str());  
+            //cfg.load(); 
+            debug_i("application init => config loaded, pin config %s",general.pin_config_name.c_str());  
         } else {
-        debug_i("Application::init - first run");
-        _first_run = true;
-        cfg.save();
+            debug_i("Application::init - first run");
+            _first_run = true;
+            //cfg.save();
+        }
     }
-
     mqttclient.init();
 
     // initialize led ctrl
@@ -272,42 +285,46 @@ void Application::init() {
     // initialize webserver
 
     app.webserver.init();
-
-    if (cfg.ntp.enabled) {
-        String server = cfg.ntp.server.length() > 0 ? cfg.ntp.server : NTP_DEFAULT_SERVER;
-        unsigned interval = cfg.ntp.interval > 0 ? cfg.ntp.interval : NTP_DEFAULT_AUTOQUERY_SECONDS;
-        debug_i("Enabling NTP server '%s' with interval %d s", server.c_str(), interval);
-        pNtpclient = new NtpClient(server, interval);
-    }
-    else {
-        debug_i("Disabling NTP server");
+    {
+        AppConfig::Network network(*cfg);
+        if (network.ntp.getEnabled()) {
+            String server = network.ntp.getServer().length() > 0 ? network.ntp.getSserver() : NTP_DEFAULT_SERVER;
+            unsigned interval = network.ntp.getInterval() > 0 ? network.ntp.getInterval() : NTP_DEFAULT_AUTOQUERY_SECONDS;
+            debug_i("Enabling NTP server '%s' with interval %d s", server.c_str(), interval);
+            pNtpclient = new NtpClient(server, interval);
+        }
+        else {
+            debug_i("Disabling NTP server");
+        }
     }
 }
+{
+    AppConfig::General general(*cfg);
+    void Application::initButtons() {
+        if (general.getButtons_config().length() <= 0)
+            return;
 
-void Application::initButtons() {
-    if (cfg.general.buttons_config.length() <= 0)
-        return;
+        debug_i("Configuring buttons using string: '%s'", general.getButtons_config().c_str());
 
-    debug_i("Configuring buttons using string: '%s'", cfg.general.buttons_config.c_str());
+        Vector<String> buttons;
+        splitString(general.buttons_config(), ',', buttons);
 
-    Vector<String> buttons;
-    splitString(cfg.general.buttons_config, ',', buttons);
+        for(uint32_t i=0; i < buttons.count(); ++i) {
+            if (buttons[i].length() == 0)
+                continue;
 
-    for(uint32_t i=0; i < buttons.count(); ++i) {
-        if (buttons[i].length() == 0)
-            continue;
+            uint32_t pin = buttons[i].toInt();
+            if (pin >= _lastToggles.size()) {
+                debug_i("Pin %d is invalid. Max is %d", pin, _lastToggles.size() - 1);
+                continue;
+            }
+            debug_i("Configuring button: '%s'", buttons[i].c_str());
 
-        uint32_t pin = buttons[i].toInt();
-        if (pin >= _lastToggles.size()) {
-            debug_i("Pin %d is invalid. Max is %d", pin, _lastToggles.size() - 1);
-            continue;
+            _lastToggles[pin] = 0ul;
+
+            attachInterrupt(pin,  std::bind(&Application::onButtonTogglePressed, this, pin), FALLING);
+            pinMode(pin, INPUT_PULLUP);
         }
-        debug_i("Configuring button: '%s'", buttons[i].c_str());
-
-        _lastToggles[pin] = 0ul;
-
-        attachInterrupt(pin,  std::bind(&Application::onButtonTogglePressed, this, pin), FALLING);
-        pinMode(pin, INPUT_PULLUP);
     }
 }
 
@@ -317,8 +334,11 @@ void Application::startServices() {
     rgbwwctrl.start();
     webserver.start();
 
-    if (cfg.events.server_enabled)
-        eventserver.start(app.webserver);
+    {  
+        AppConfig::Events events(*cfg);
+        if (events.getServer_enabled())
+            eventserver.start(app.webserver);
+    }
 }
 
 void Application::restart() {
@@ -332,7 +352,7 @@ void Application::restart() {
 
 void Application::reset() {
     debug_i("Application::reset");
-    cfg.reset();
+    //cfg.reset();
     rgbwwctrl.colorReset();
     network.forgetWifi();
     delay(500);
@@ -501,7 +521,7 @@ void Application::wsBroadcast(String cmd, String message){
 }
 
 void Application::onCommandRelay(const String& method, const JsonObject& params) {
-    if (!cfg.sync.cmd_master_enabled)
+    if (!cfg->sync.getCmd_master_enabled)
         return;
 
     mqttclient.publishCommand(method, params);
@@ -510,13 +530,17 @@ void Application::onCommandRelay(const String& method, const JsonObject& params)
 void Application::onButtonTogglePressed(int pin) {
     uint32_t now = millis();
     uint32_t diff = now - _lastToggles[pin];
-    if (diff > (uint32_t) cfg.general.buttons_debounce_ms) {  // debounce
-        debug_i("Button %d pressed - toggle", pin);
-        rgbwwctrl.toggle();
-        _lastToggles[pin] = now;
-    }
-    else {
-        debug_d("Button press ignored by debounce. Diff: %d Debounce: %d", diff, cfg.general.buttons_debounce_ms);
+    {
+        AppConfig::General general(cfg);
+        if (diff > (uint32_t) cfg->general.buttons_debounce_ms) {  // debounce
+            debug_i("Button %d pressed - toggle", pin);
+            rgbwwctrl.toggle();
+            _lastToggles[pin] = now;
+        }
+        else {
+            debug_d("Button press ignored by debounce. Diff: %d Debounce: %d", diff, cfg.general.buttons_debounce_ms);
+ 
+        }
     }
 }
 

@@ -56,8 +56,10 @@ void AppMqttClient::connect() {
     }
 //    0);app.cfg.network.mqtt.username, app.cfg.network.mqtt.password);
     //debug_i("MqttClient: Server: %s Port: %d\n", app.cfg.network.mqtt.server.c_str(), app.cfg.network.mqtt.port);
-
-    Url url = "mqtt://" + app.cfg.network.mqtt.username + ":" + app.cfg.network.mqtt.password + "@" + app.cfg.network.mqtt.server + ":" + String(app.cfg.network.mqtt.port);
+    {
+        AppConfig::Network network(app.cfg.get());
+    Url url = "mqtt://" + network.mqtt.username + ":" + network.mqtt.password + "@" + network.mqtt.server + ":" + String(network.mqtt.port);
+    }
     mqtt->connect(url, _id);
 #ifdef ENABLE_SSL
     // not need i guess? mqtt->addSslOptions(SSL_SERVER_VERIFY_LATER);

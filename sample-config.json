@@ -18,6 +18,11 @@
             "username": "",
             "password": "",
             "topic_base": "home/"
+        },
+        "ntp":{
+            "enabled": false,
+            "server": "pool.ntp.org",
+            "interval": 3600
         }
     },
     "color": {
@@ -25,7 +30,7 @@
         "startup_color": "last",
         "hsv": {
             "model": 0,
-            "r": 0,
+            "red": 0,
             "yellow": 0,
             "green": 0,
             "cyan": 0,
@@ -33,7 +38,7 @@
             "magenta": 0
         },
         "brightness": {
-            "r": 100,
+            "red": 100,
             "green": 100,
             "blue": 100,
             "ww": 100,

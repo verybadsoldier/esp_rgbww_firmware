@@ -17,7 +17,11 @@ void mdnsHandler::start()
     static LEDControllerWSService ledControllerWSService;
 
     //start the mDNS responder with the configured services, using the configured hostname
-	responder.begin(app.cfg.network.connection.mdnshostname.c_str());
+	{
+        ConfigDB::Network network(app.cfg.get());
+        responder.begin(network.connection.getMdnshostname().c_str());
+    }
+    //responder.begin(app.cfg.network.connection.mdnshostname.c_str());
 	responder.addService(ledControllerAPIService);
     responder.addService(ledControllerWebAppService);
     responder.addService(ledControllerWSService);
