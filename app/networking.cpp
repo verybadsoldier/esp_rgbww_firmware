@@ -140,8 +140,8 @@ void AppWIFI::init() {
 
         AppConfig::Network network(*app.cfg);
         if(auto networkUpdate = network.update()){
-            networkUpdate.connection.getMdnshostname = String(DEFAULT_AP_SSIDPREFIX) + String(system_get_chip_id());
-            networkUpdate.ap.getSsid = String(DEFAULT_AP_SSIDPREFIX) + String(system_get_chip_id());
+            networkUpdate.mdns.setName(String(DEFAULT_AP_SSIDPREFIX) + String(system_get_chip_id()));
+            networkUpdate.ap.setSsid(String(DEFAULT_AP_SSIDPREFIX) + String(system_get_chip_id()));
         }//this should never fail as it is during system startup, there are no asynchronous things here. I think
         WifiAccessPoint.setIP(_ApIP);
     }
@@ -166,7 +166,7 @@ void AppWIFI::init() {
         //configure WifiClient
         {
             AppConfig::Network network(*app.cfg);
-            if (!network.connection.getDhcp() && !network.connection.getIp().isNull()) {
+            if (!network.connection.getDhcp() && !network.connection.getIp().length()==0) {
                 debug_i("AppWIFI::init setting static ip");
                 if (WifiStation.isEnabledDHCP()) {
                     debug_i("AppWIFI::init disabled dhcp");
@@ -270,12 +270,12 @@ void AppWIFI::_STAConnected(const String& ssid, MacAddress bssid, uint8_t channe
             WifiStation.setHostname(device_name);
             {
                 AppConfig::Network::OuterUpdater network(*app.cfg);
-                network.connection.setMdnshostname(device_name);
+                network.mdns.setName(device_name);
             } // end ConfigDB network updater context
         }else{
             debug_i("no device name configured, setting hostname to default %s",String(DEFAULT_AP_SSIDPREFIX) + String(system_get_chip_id()));
             AppConfig::Network::OuterUpdater network(*app.cfg);
-            network.connection.setMdnshostname(String(DEFAULT_AP_SSIDPREFIX) + String(system_get_chip_id()));
+            network.mdns.setName(String(DEFAULT_AP_SSIDPREFIX) + String(system_get_chip_id()));
         }
     } // end ConfigDB general context
     broadcastWifiStatus(F("Connected to WiFi"));
@@ -307,25 +307,33 @@ void AppWIFI::_STAGotIP(IpAddress ip, IpAddress mask, IpAddress gateway) {
     } else {
         stopAp(1000);
     }
-
-    debug_i("AppWIFI::_STAGotIP - device_name %s mdnshostname %s", app.cfg.general.device_name.c_str(),app.cfg.network.connection.mdnshostname.c_str());
-    if(app.cfg.network.connection.mdnshostname.length() > 0) {
-        debug_i("AppWIFI::_STAGotIP - setting mdns hostname to %s", app.cfg.network.connection.mdnshostname.c_str());
-    }
+    
+    {
+        AppConfig::General general(*app.cfg);  
+        AppConfig::Network network(*app.cfg);
+        debug_i("AppWIFI::_STAGotIP - device_name %s mdnshostname %s", general.getDeviceName().c_str(),network.mdns.getName().c_str());
+        if(network.mdns.getName().length() > 0) {
+            debug_i("AppWIFI::_STAGotIP - setting mdns hostname to %s", network.mdns.getName().c_str());
+        }
+    } //end ConfigDB general and network context
 
     mdnsHandler.start();
     String ipAddress=ip.toString();
 
+    {
+        AppConfig::Network network(*app.cfg);
+        if(network.connection.getDhcp()) {
+            ipAddress="dhcp";
+        }
+        mdnsHandler.addHost(network.mdns.getName(), ipAddress, -1);
     
     
-    
-    mdnsHandler.addHost(app.cfg.network.connection.mdnshostname, ipAddress, -1);
+        broadcastWifiStatus();
 
-    broadcastWifiStatus();
-
-    if(app.cfg.network.mqtt.enabled) {
-        app.mqttclient.start();
-    }
+        if(network.mqtt.getEnabled()) {
+            app.mqttclient.start();
+        }
+    } // end ConfigDB network context
 }
 
 /**
@@ -371,12 +379,14 @@ void AppWIFI::startAp() {
         WifiAccessPoint.enable(true, false);
         debug_i("AP enabled");
         //debug_i("AP SSID: %s", app.cfg.network.ap.ssid);
-        if (app.cfg.network.ap.secured) {
-            WifiAccessPoint.config(app.cfg.network.ap.ssid, app.cfg.network.ap.password, AUTH_WPA2_PSK);
-        } else {
-            WifiAccessPoint.config(app.cfg.network.ap.ssid, "", AUTH_OPEN);
-            //WifiAccessPoint.config(ssid, "", AUTH_OPEN);
-        }
+        {
+            AppConfig::Network network(*app.cfg);
+            if (network.ap.getSecured()) {
+                WifiAccessPoint.config(network.ap.getSsid(), network.ap.getPassword(), AUTH_WPA2_PSK);
+            } else {
+                WifiAccessPoint.config(network.ap.getSsid(), "", AUTH_OPEN);
+            }
+        } // end AppConfig network context
     }
     //start dns server for captive portal
     dnsServer.start(DNS_PORT, "*", WifiAccessPoint.getIP());

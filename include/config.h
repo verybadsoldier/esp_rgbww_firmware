@@ -46,7 +46,7 @@
 #define configDB_PATH "config"
 #define dataDB_PATH "data"
 
-
+/*
 void save(bool print = true) {
     //save config to storage 
 }
@@ -66,7 +66,7 @@ void sanitizeValues() {
     //sync.clock_master_interval = max(sync.clock_master_interval, 1);
     
 }
-
+*/
 namespace config{
 inline void initializeConfig(AppConfig& cfg){
 //this may not even be needed, initialization is done by either defaults or by loading from storage

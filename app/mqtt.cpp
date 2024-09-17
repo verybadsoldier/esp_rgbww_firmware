@@ -58,9 +58,9 @@ void AppMqttClient::connect() {
     //debug_i("MqttClient: Server: %s Port: %d\n", app.cfg.network.mqtt.server.c_str(), app.cfg.network.mqtt.port);
     {
         AppConfig::Network network(*app.cfg);
-    Url url = "mqtt://" + network.mqtt.getUsername() + ":" + network.mqtt.getPassword() + "@" + network.mqtt.getServer() + ":" + String(network.mqtt.getPort());
-    }
-    mqtt->connect(url, _id);
+        Url url = "mqtt://" + network.mqtt.getUsername() + ":" + network.mqtt.getPassword() + "@" + network.mqtt.getServer() + ":" + String(network.mqtt.getPort());
+        mqtt->connect(url, _id);
+    } // end ConfigDB network context
 #ifdef ENABLE_SSL
     // not need i guess? mqtt->addSslOptions(SSL_SERVER_VERIFY_LATER);
 
@@ -89,7 +89,7 @@ void AppMqttClient::connect() {
 
 void AppMqttClient::init() {
     AppConfig::General general(*app.cfg);
-    if (general.getServiceName().length() > 0) {
+    if (general.getDeviceName().length() > 0) {
         debug_w("AppMqttClient::init: building MQTT ID from device name: '%s'\n", general.getDeviceName().c_str());
         _id = general.getDeviceName();
     }

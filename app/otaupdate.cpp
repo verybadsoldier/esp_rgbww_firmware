@@ -276,7 +276,7 @@ void ApplicationOTA::afterOTA() {
             app.mountfs(rom_slot);
 
             // save settings / color into new rom space
-            app.cfg.save();
+            // app.cfg.save();
             app.rgbwwctrl.colorSave();           
         }
         // unmount old Filesystem - mount new filesystem
@@ -434,8 +434,8 @@ bool ApplicationOTA::switchPartitions(){
         createLFS(1);
         createLFS(0);
         
-        debug_i("OTA_post, saving config");
-        app.cfg.save();
+        //debug_i("OTA_post, saving config");
+        //app.cfg.save();
 
 
         debug_i("OTA_post, switchPartitions => restart");

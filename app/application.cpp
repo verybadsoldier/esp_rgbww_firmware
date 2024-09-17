@@ -301,14 +301,19 @@ void Application::init() {
     } // end of ConfigDB network context
 }
 void Application::initButtons(){
-    AppConfig::General general(*cfg);
-    if (general.getButtonsConfig().length() <= 0)
-        return;
-
-    debug_i("Configuring buttons using string: '%s'", general.getButtonsConfig().c_str());
-
     Vector<String> buttons;
-    splitString(general.getButtonsConfig(), ',', buttons);
+    {   
+        AppConfig::General general(*cfg);
+    
+        if (general.getButtonsConfig().length() <= 0)
+            return;
+        
+        String buttonsConfig = general.getButtonsConfig();
+    
+        debug_i("Configuring buttons using string: '%s'", buttonsConfig.c_str());
+
+        splitString(buttonsConfig, ',', buttons);
+    } // end of ConfigDB general context
 
     for(uint32_t i=0; i < buttons.count(); ++i) {
         if (buttons[i].length() == 0)

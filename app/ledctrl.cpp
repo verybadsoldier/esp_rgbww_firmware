@@ -48,7 +48,11 @@ APPLedCtrl::~APPLedCtrl() {
  */
 PinConfig APPLedCtrl::parsePinConfigString(const String& pinStr) {
     Vector<int> pins;
-    splitString(pinStr, ',', pins);
+    {
+        String _pinStr=pinStr;
+    
+    splitString(_pinStr, ',', pins);
+    }
 
     bool isCorrect = true;
     // sanity check

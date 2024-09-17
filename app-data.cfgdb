@@ -1,0 +1,114 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "store":"json",
+  "$defs":{
+    "RAW": {
+        "type": "object",
+        "properties": {
+            "ww": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1023
+            },
+            "r": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1023
+            },
+            "b": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1023
+            },
+            "cw": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1023
+            },
+            "g": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1023
+            }
+        }
+    },
+    "HSV": {
+        "type": "object",
+        "properties": {
+            "s": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+            },
+            "v": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+            },
+            "h": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 359
+            }
+        }
+    },
+    "channel": {
+        "type":"object",
+        "properties":{
+            "pin":{
+                "type":"integer",
+                "minimum":0,
+                "maximum":255
+            },
+            "name":{
+                "type":"string"
+            }
+        }
+    }
+  },
+  "properties": {
+    "presets": {
+      "type": "array",
+      "store":"json",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "color":{
+            "oneOf":
+              [
+                {"$ref":"#/$defs/HSV"},
+                {"$ref":"#/$defs/RAW"}
+            ]
+            
+          },
+          "ts": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "controllers": {
+      "type": "array",
+      "store":"json",
+      "items": {
+        "type": "object",
+        "properties": {
+          "ip": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "last-seen": {
+            "type": "integer"
+          }
+        }
+      }
+    }
+  }
+}
+
