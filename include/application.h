@@ -52,6 +52,8 @@ public:
 
     inline bool isFilesystemMounted() { return _fs_mounted; };
     inline bool isFirstRun() { return _first_run; };
+
+    void checkRam();
 #ifdef ARCH_ESP8266
     inline bool isTempBoot() { return _bootmode == MODE_TEMP_ROM; };
 #else
@@ -95,6 +97,7 @@ private:
     bool _run_after_ota = false;
 
     Timer _uptimetimer;
+    Timer _checkRamTimer;
     uint32_t _uptimeMinutes;
     std::array<int, 17> _lastToggles;
 };
