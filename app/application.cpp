@@ -151,6 +151,10 @@ void Application::uptimeCounter() {
     ++_uptimeMinutes;
 }
 
+void Application::checkRam() {
+    debug_i("Free heap: %d", system_get_free_heap_size());
+}
+
 void Application::init() {
     for(int i=0;i<10;i++){
         Serial.print(_F("="));
@@ -203,6 +207,7 @@ void Application::init() {
 
     //load settings
     _uptimetimer.initializeMs(60000, TimerDelegate(&Application::uptimeCounter, this)).start();
+    _checkRamTimer.initializeMs(500, TimerDelegate(&Application::checkRam, this)).start();
 #ifdef ARCH_ESP8266
     // load boot information
     uint8 bootmode, bootslot;
@@ -262,12 +267,13 @@ void Application::init() {
     // ConfigDB obsoleted cfg.load(), either the config is defined by defaults or initially loaded from a default config.json
     // once the database is initialized, the config is loaded from the database
     {
+        debug_i("application init => checking ConfigDB");
         AppConfig::General general(*cfg);
         if (!general.getIsInitialized()) {
             debug_i("application init => reading config");
             //cfg.load(); 
 
-            Serial << "reading default config flash string" << endl << default_config << endl;
+            Serial << "* reading default config flash string *" << endl << default_config << endl;
            	//auto configStream = new FSTR::Stream(CONTENT_default_config);
             //cfg->importFromStream(ConfigDB::Json::format, *configStream);
             debug_i("application init => config loaded, pin config %s",general.getPinConfig().c_str());  
@@ -280,6 +286,7 @@ void Application::init() {
             
         } else {
             //cfg.save();
+            debug_i("ConfigDB already initialized. starting");
         }
     }
 
