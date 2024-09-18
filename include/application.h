@@ -73,9 +73,9 @@ public:
     AppWIFI network;
     ApplicationWebserver webserver;
     APPLedCtrl rgbwwctrl;
-
+#ifdef ARCH_ESP8266 || ARCH_ESP32
     ApplicationOTA ota;
-
+#endif
     std::unique_ptr<AppConfig> cfg;
     std::unique_ptr<AppData> data;
     EventServer eventserver;

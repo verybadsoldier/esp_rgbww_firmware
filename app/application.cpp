@@ -159,8 +159,9 @@ void Application::init() {
     Serial.print("\r\n");
     // ConfigDB obsoleted debug_i("going to initialize config");
     // ConfigDB obsoleted config::initializeConfig(cfg); // initialize the config structure if necessary
-
+#ifdef ARCH_ESP8266 || ARCH_ESP32
     app.ota.checkAtBoot();
+#endif
 
     debug_i("RGBWW Controller v %s\r\n", fw_git_version);
     #ifdef ARCH_ESP8266
@@ -168,7 +169,7 @@ void Application::init() {
     #endif
     debug_i("Application::init - partition scheme: %s\r\n", fw_part_layout);
 
-#ifdef ARCH_ESP8266
+#ifdef ARCH_ESP8266 || ARCH_ESP32
     /*
     * verify for new partition layout
     */
@@ -479,7 +480,7 @@ void Application::umountfs() {
     }
     */
 }
-
+#ifdef ARCH_ESP8266 || ARCH_ESP32
 void Application::switchRom() {
     //ToDo - rewrite to use ota.getRunningPartition() and ota.getNextBootPartition()
     debug_i("Application::switchRom");
@@ -501,9 +502,11 @@ void Application::switchRom() {
     */
    app.ota.doSwitch();
 }
+#endif
 
+#ifdef ARCH_ESP8266 || ARCH_ESP32
 int Application::getRomSlot(){
-            auto partition = app.ota.getRomPartition();
+            auto partition = app.getRomPartition();
             uint8_t slot;
             if(partition.name()=="rom1"){
                 slot=1;
@@ -512,6 +515,7 @@ int Application::getRomSlot(){
             }
             return slot;
 }
+#endif
 
 void Application::wsBroadcast(String message) {
     debug_i("Application::wsBroadcast");
