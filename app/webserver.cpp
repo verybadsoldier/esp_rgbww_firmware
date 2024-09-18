@@ -20,10 +20,13 @@
  */
 #include <RGBWWCtrl.h>
 #include <Data/WebHelpers/base64.h> 
-#include <FlashString/Map.hpp>
-#include <FlashString/Stream.hpp>
+
 #include <Network/Http/Websocket/WebsocketResource.h>
 #include <Storage.h>
+#include <config.h>
+
+#include <FlashString/Map.hpp>
+#include <FlashString/Stream.hpp>
 
 #define NOCACHE
 #define DEBUG_OBJECT_API
@@ -163,7 +166,7 @@ void ApplicationWebserver::stop() {
 bool ICACHE_FLASH_ATTR ApplicationWebserver::authenticateExec(HttpRequest &request, HttpResponse &response) {
     {
         AppConfig::Root config(*app.cfg);
-        if (config.security.getApiSecured())
+        if (!config.security.getApiSecured())
             return true;
     } // end AppConfig general context
 
@@ -182,15 +185,16 @@ bool ICACHE_FLASH_ATTR ApplicationWebserver::authenticateExec(HttpRequest &reque
     if (userPass.length() > 50) {
         return false;
     }
-
-    userPass = base64_decode(userPass);
-    debug_d("ApplicationWebserver::authenticated Password: '%s' - Expected password: '%s'", userPass.c_str(), app.cfg.general.api_password.c_str());
     {
-        AppConfig::Root root(*app.cfg);
-        if (userPass.endsWith(root.security.getApiPassword())) {
+        AppConfig::Root config(*app.cfg);
+        userPass = base64_decode(userPass);
+        debug_d("ApplicationWebserver::authenticated Password: '%s' - Expected password: '%s'", userPass.c_str(), config.security.getApiPassword.c_str());
+        
+        if (userPass.endsWith(config.security.getApiPassword())) {
             return true;
         }
         return false;
+        
     } //end AppConfig general context
 
 }

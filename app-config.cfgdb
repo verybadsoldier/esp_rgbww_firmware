@@ -74,16 +74,19 @@
       "properties": {
           "is_initialized":{
           "type":"boolean",
-          "default":"false"
+          "default":false
         },
         "device_name": {
-          "type": "string"
+          "type": "string",
+          "default":"mrpj"
         },
         "buttons_debounce_ms": {
-          "type": "integer"
+          "type": "integer",
+          "default":50
         },
         "pin_config": {
-          "type": "string"
+          "type": "string",
+          "default":"13,12,14,5,4"
         },
         "buttons_config": {
           "type": "string"
@@ -104,6 +107,10 @@
                 "type":"string"
             },
             "default":["RGB", "RGBW", "RGBWW", "RAW"]
+        },
+        "current_pin_config_name":{
+          "type":"string",
+          "default":"mrpj"
         }
       }
     },
@@ -111,7 +118,8 @@
       "type": "object",
       "properties": {
         "api_secured": {
-          "type": "boolean"
+          "type": "boolean",
+          "default":false
         },
         "api_password": {
           "type":"string"
@@ -123,25 +131,31 @@
       "store":"json",
       "properties": {
         "startup_color": {
-          "type": "string"
+          "type": "string",
+          "default": "last"
         },
         "brightness": {
           "type": "object",
           "properties": {
             "red": {
-              "type": "integer"
+              "type": "integer",
+              "default":100
             },
             "ww": {
-              "type": "integer"
+              "type": "integer",
+              "default":100
             },
             "green": {
-              "type": "integer"
+              "type": "integer",
+              "default":100
             },
             "blue": {
-              "type": "integer"
+              "type": "integer",
+              "default":100
             },
             "cw": {
-              "type": "integer"
+              "type": "integer",
+              "default":100
             }
           }
         },
@@ -149,39 +163,49 @@
           "type": "object",
           "properties": {
             "ww": {
-              "type": "integer"
+              "type": "integer",
+              "default":2700
             },
             "cw": {
-              "type": "integer"
+              "type": "integer",
+              "default":6000
             }
           }
         },
         "outputmode": {
-          "type": "integer"
+          "type": "integer",
+          "default":0
         },
         "hsv": {
           "type": "object",
           "properties": {
             "red": {
-              "type": "integer"
+              "type": "integer",
+              "default":0
             },
             "magenta": {
-              "type": "integer"
+              "type": "integer",
+              "default":0
             },
             "green": {
-              "type": "integer"
+              "type": "integer",
+              "default":0
             },
             "blue": {
-              "type": "integer"
+              "type": "integer",
+              "default":0
             },
             "yellow": {
-              "type": "integer"
+              "type": "integer",
+              "default":0
             },
             "model": {
-              "type": "integer"
+              "type": "integer",
+              "default":0
             },
             "cyan": {
-              "type": "integer"
+              "type": "integer",
+              "default":0
             }
           }
         }
@@ -200,37 +224,48 @@
       "store":"json",
       "properties": {
         "cmd_master_enabled": {
-          "type": "boolean"
+          "type": "boolean",
+          "default":false
         },
         "color_slave_enabled": {
-          "type": "boolean"
+          "type": "boolean",
+          "default": false
         },
         "color_slave_topic": {
-          "type": "string"
+          "type": "string",
+          "default":"home/led1/command"
         },
         "clock_master_enabled": {
-          "type": "boolean"
+          "type": "boolean",
+          "default":false
         },
         "color_master_interval_ms": {
-          "type": "integer"
+          "type": "integer",
+          "default":0
         },
         "clock_slave_enabled": {
-          "type": "boolean"
+          "type": "boolean",
+          "default":false
         },
         "cmd_slave_enabled": {
-          "type": "boolean"
+          "type": "boolean",
+          "default":false
         },
         "clock_master_interval": {
-          "type": "integer"
+          "type": "integer",
+          "default":30
         },
         "clock_slave_topic": {
-          "type": "string"
+          "type": "string",
+          "default":"home/led1/clock"
         },
         "cmd_slave_topic": {
-          "type": "string"
+          "type": "string",
+          "default":"home/led/command"
         },
         "color_master_enabled": {
-          "type": "boolean"
+          "type": "boolean",
+          "default":false
         }
       }
     },
@@ -238,16 +273,20 @@
       "type": "object",
       "properties": {
         "color_interval_ms": {
-          "type": "integer"
+          "type": "integer",
+          "default":500
         },
         "color_mininterval_ms": {
-          "type": "integer"
+          "type": "integer",
+          "default":500
         },
         "transfin_interval_ms": {
-          "type": "integer"
+          "type": "integer",
+          "default":1000
         },
         "server_enabled": {
-          "type": "boolean"
+          "type": "boolean",
+          "default":true
         }
       }
     },
@@ -259,22 +298,28 @@
           "type": "object",
           "properties": {
             "server": {
-              "type": "string"
+              "type": "string",
+              "default":"mqtt.local"
             },
             "password": {
-              "type": "string"
+              "type": "string",
+              "default":""
             },
             "port": {
-              "type": "integer"
+              "type": "integer",
+              "default":1883
             },
             "topic_base": {
-              "type": "string"
+              "type": "string",
+              "default":"home/"
             },
             "enabled": {
-              "type": "boolean"
+              "type": "boolean",
+              "default":false
             },
             "username": {
-              "type": "string"
+              "type": "string",
+              "default":""
             }
           }
         },
@@ -282,7 +327,8 @@
           "type":"object",
           "properties":{
             "enabled":{
-              "type":"boolean"
+              "type":"boolean",
+              "default":false
             },
             "server":{
               "type":"string",
@@ -298,16 +344,20 @@
           "type": "object",
           "properties": {
             "netmask": {
-              "type": "string"
+              "type": "string",
+              "default":"255.255.255.0"
             },
             "ip": {
-              "type": "string"
+              "type": "string",
+              "default":"192.168.1.1"
             },
             "dhcp": {
-              "type": "boolean"
+              "type": "boolean",
+              "default":true
             },
             "gateway": {
-              "type": "string"
+              "type": "string",
+              "default":"192.168.1.255"
             }
           }
         },
@@ -315,10 +365,12 @@
           "type": "object",
           "properties": {
             "password": {
-              "type": "string"
+              "type": "string",
+              "default":"configesp"
             },
             "secured": {
-              "type": "boolean"
+              "type": "boolean",
+              "default":true
             },
             "ssid": {
               "type": "string"
@@ -330,7 +382,7 @@
           "properties":{
             "enabled":{
             "type":"boolean",
-            "default":"true"
+            "default":true
             },
             "name":{
               "type":"string"

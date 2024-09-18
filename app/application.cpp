@@ -41,6 +41,7 @@
 #ifdef ARCH_ESP8266
 #include <Platform/OsMessageInterceptor.h>
 
+IMPORT_FSTR_LOCAL(default_config, PROJECT_DIR "/default_config.json");
 static OsMessageInterceptor osMessageInterceptor;
 
 /**
@@ -262,16 +263,28 @@ void Application::init() {
     // once the database is initialized, the config is loaded from the database
     {
         AppConfig::General general(*cfg);
-        if (general.getIsInitialized()) {
+        if (!general.getIsInitialized()) {
             debug_i("application init => reading config");
             //cfg.load(); 
+
+            Serial << "reading default config flash string" << endl << default_config << endl;
+           	//auto configStream = new FSTR::Stream(CONTENT_default_config);
+            //cfg->importFromStream(ConfigDB::Json::format, *configStream);
             debug_i("application init => config loaded, pin config %s",general.getPinConfig().c_str());  
-        } else {
             debug_i("Application::init - first run");
             _first_run = true;
+            
+            if(auto generalUpdate=general.update()){;
+                generalUpdate.setIsInitialized(true);
+            }
+            
+        } else {
             //cfg.save();
         }
     }
+
+    Serial << endl << _F("** Stream **") << endl;
+	cfg->exportToStream(ConfigDB::Json::format, Serial);
 
     mqttclient.init();
 
@@ -287,18 +300,6 @@ void Application::init() {
 
     app.webserver.init();
 
-    {
-        AppConfig::Network network(*cfg);
-        if (network.ntp.getEnabled()) {
-            String server = network.ntp.getServer().length() > 0 ? network.ntp.getServer() : NTP_DEFAULT_SERVER;
-            unsigned interval = network.ntp.getInterval() > 0 ? network.ntp.getInterval() : NTP_DEFAULT_AUTOQUERY_SECONDS;
-            debug_i("Enabling NTP server '%s' with interval %d s", server.c_str(), interval);
-            pNtpclient = new NtpClient(server, interval);
-        }
-        else {
-            debug_i("Disabling NTP server");
-        }
-    } // end of ConfigDB network context
 }
 void Application::initButtons(){
     Vector<String> buttons;
