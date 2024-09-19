@@ -43,6 +43,8 @@
 #define PWM_FREQUENCY 339
 #elif ARCH_ESP32
 #define PWM_FREQUENCY 4000
+#elif ARCH_HOST
+#define PWM_FREQUENCY 1000
 #endif
 #define RGBWW_USE_ESP_HWPWM
 
@@ -51,7 +53,7 @@
 
 //includes
 #include <RGBWWLed/RGBWWLed.h>
-#ifdef ARCH_ESP8266 || ARCH_ESP32
+#if defined(ARCH_ESP8266) || defined(ESP32)
     #include <otaupdate.h>
 #endif
 #include <config.h>

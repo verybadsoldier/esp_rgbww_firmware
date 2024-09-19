@@ -174,12 +174,18 @@
 		table.add(F("sys_param"), SubType::Data::sysParam, 0x3fd000, 0x3000);
 	}
 
+    Update: all this needs to be rethought a bit to work for the ESP32 and Host as well.
+    For The ESP32, there should never be the case that there is no partitio table or partition, 
+    the whole code to change the table is only a transitional requirement for the existing ESP8266 
+    based controllers.
+    
+    Since keeping the config partition is only really required when updating OTA on an ESP8266, the
+    hwconfig can be simplified to always provide two roms and two lfs partitions. 
  */
 #include <otaupdate.h>
 #include <RGBWWCtrl.h>
 
 void ApplicationOTA::start(String romurl){
-    // we'll say an empty spiffsurl is indicative of a v2 partition layout
     debug_i("ApplicationOTA::start");
     app.wsBroadcast(F("ota_status"),F("started"));
 	otaUpdater.reset(new Ota::Network::HttpUpgrader);
@@ -187,7 +193,9 @@ void ApplicationOTA::start(String romurl){
 
     auto part = ota.getNextBootPartition();
 
+    #if ESP8266
     debug_i("ApplicationOTA::start nextBootPartition: %s %#06x at slot %i", part.name().c_str(), part.address(), rboot_get_current_rom());
+    #endif 
     // flash rom to position indicated in the rBoot config rom table
     otaUpdater->addItem(romurl, part);
 
@@ -244,11 +252,14 @@ void ApplicationOTA::beforeOTA() {
     * this is being executed before otaUpdater->start
     */
 
-    // save files to old rom
-    // only in v1 partition layout, 
-    // that is: if there is a spiffsPartition
-    // which is only assigned if there's a spiffsurl
-    if(spiffsPartition.name()!=""){
+    /*
+     * ToDo few differnt situations here:
+       - old partition is spiffs (and thus .config based)
+         (should be irrelevant because then old firmware is running, nothing we can do)
+       - old partition is lfs (and thus ConfigDB based)
+         (new partition is lfs based, too - so we can copy the config)
+     */
+    if(dataPartition.name()!=""){
         debug_i("partition layout v1, saving status to old rom");
         saveStatus(OTASTATUS::OTA_FAILED);
     }
@@ -265,6 +276,7 @@ void ApplicationOTA::afterOTA() {
     if (status == OTASTATUS::OTA_SUCCESS_REBOOT) {
         debug_i("afterOta, rom Slot=%i",app.getRomSlot());
 
+        // ToDo: so the ota has been successful, now what? 
         #ifdef ARCH_ESP8266
         if(app.getRomSlot()==1){
             /* getRomSlot returns the current (OTA pre reboot) slot
@@ -333,16 +345,19 @@ void ApplicationOTA::checkAtBoot() {
     debug_i("ApplicationOTA::checkAtBoot status: %i", status);
     debug_i("after reboot, checking partition layout");
     debug_i("current active rom is: %i",rom);
+    #if defined(ARCH_ESP8266)||defined(ARCH_ESP32)
     Storage::Debug::listDevices(Serial);
-
+    #endif
     if (app.isTempBoot()) {
         debug_i("ApplicationOTA::checkAtBoot permanently enabling rom %i", app.getRomSlot());
+        #ifdef ESP8266 
         rboot_set_current_rom(app.getRomSlot());
-        saveStatus(OTASTATUS::OTA_NOT_UPDATING);
+        #endif
+        (OTASTATUS::OTA_NOT_UPDATING);
     }
         saveStatus(OTASTATUS::OTA_SUCCESS);
 }
-
+#ifdef ARCH_ESP8266
 bool ApplicationOTA::createLFS(uint8_t slot){
    /*
    * Create the target LittleFS filesystem, format then mount
@@ -362,7 +377,8 @@ bool ApplicationOTA::createLFS(uint8_t slot){
    }
    return true;
 }
-
+#endif
+#if defined(ARCH_ESP8266)||defined(ARCH_ESP32)
 bool ApplicationOTA::copyContent(std::unique_ptr<IFS::FileSystem> src, std::unique_ptr<IFS::FileSystem> dst){
     // Copy files
 	IFS::FileCopier copier(*src, *dst);
@@ -389,8 +405,8 @@ bool ApplicationOTA::copyContent(std::unique_ptr<IFS::FileSystem> src, std::uniq
 	}
     return true;
 }
-
-//#ifdef ARCH_ESP8266
+#endif
+#ifdef ARCH_ESP8266
 bool ApplicationOTA::switchPartitions(){
     if(!Storage::findPartition(F("lfs1"))&&!Storage::findPartition(F("lfs0"))){
         std::vector<Storage::esp_partition_info_t> partitionTable=getEditablePartitionTable();
@@ -443,9 +459,9 @@ bool ApplicationOTA::switchPartitions(){
         return true;
     }
 }
-//#endif
+#endif
 
-//#ifdef ARCH_ESP8266
+#ifdef ARCH_ESP8266
 bool ApplicationOTA::switchPartition(uint8_t slot){
     String spiffsPartName=F("spiffs")+String(slot);
     String lfsPartName=F("lfs")+String(slot);
@@ -474,7 +490,7 @@ bool ApplicationOTA::switchPartition(uint8_t slot){
         return false;
     }
 }
-//#endif
+#endif
 
 void ApplicationOTA::saveStatus(OTASTATUS status) {
     debug_i("ApplicationOTA::saveStatus %i to rom partition rom%i\n",status,app.getRomSlot());
@@ -494,7 +510,7 @@ OTASTATUS ApplicationOTA::loadStatus() {
         return OTASTATUS::OTA_NOT_UPDATING;
     }
 }
-
+#ifdef ARCH_ESP8266
 Storage::Partition ApplicationOTA::findSpiffsPartition(Storage::Partition appPart)
 {
 	String name = "spiffs";
@@ -505,8 +521,12 @@ Storage::Partition ApplicationOTA::findSpiffsPartition(Storage::Partition appPar
 	}
 	return part;
 }
+#endif
 
-//#ifdef ARCH_ESP8266
+#ifdef ARCH_ESP8266
+/*
+ * partition manipulation functions, only required for the EPS8266 transitional period
+ */
 std::vector<Storage::esp_partition_info_t> ApplicationOTA::getEditablePartitionTable(){
     auto& table = Storage::spiFlash->editablePartitions();
     std::vector<Storage::esp_partition_info_t> partitionTable;
@@ -641,3 +661,5 @@ bool ApplicationOTA::savePartitionTable(std::vector<Storage::esp_partition_info_
     return true;
 //#endif
 }
+#endif
+

@@ -188,7 +188,7 @@ bool ICACHE_FLASH_ATTR ApplicationWebserver::authenticateExec(HttpRequest &reque
     {
         AppConfig::Root config(*app.cfg);
         userPass = base64_decode(userPass);
-        debug_d("ApplicationWebserver::authenticated Password: '%s' - Expected password: '%s'", userPass.c_str(), config.security.getApiPassword.c_str());
+        //debug_d("ApplicationWebserver::authenticated Password: '%s' - Expected password: '%s'", userPass.c_str(), config.security.getApiPassword.c_str());
         
         if (userPass.endsWith(config.security.getApiPassword())) {
             return true;
@@ -507,7 +507,9 @@ void ApplicationWebserver::onInfo(HttpRequest &request, HttpResponse &response) 
     JsonObjectStream* stream = new JsonObjectStream();
     JsonObject data = stream->getRoot();
     data[F("deviceid")] = String(system_get_chip_id());
+    #if defined(ARCH_ESP8266)||defined(ARCH_ESP32)
     data[F("current_rom")] = String(app.ota.getRomPartition().name());
+    #endif
     data[F("git_version")] = fw_git_version;
     data[F("git_date")] = fw_git_date;
     data[F("webapp_version")] = WEBAPP_VERSION;

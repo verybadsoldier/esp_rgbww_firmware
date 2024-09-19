@@ -38,10 +38,17 @@
 #include <Storage/ProgMem.h>
 #include <Storage/Debug.h>
 
+#if ARCH_ESP8266
+#define PART0 "lfs0"
+#elif ARCH_ESP32
+#define PART0 "factory"
+#endif 
+
 #ifdef ARCH_ESP8266
 #include <Platform/OsMessageInterceptor.h>
 
 IMPORT_FSTR_LOCAL(default_config, PROJECT_DIR "/default_config.json");
+
 static OsMessageInterceptor osMessageInterceptor;
 
 /**
@@ -163,7 +170,7 @@ void Application::init() {
     Serial.print("\r\n");
     // ConfigDB obsoleted debug_i("going to initialize config");
     // ConfigDB obsoleted config::initializeConfig(cfg); // initialize the config structure if necessary
-#ifdef ARCH_ESP8266 || ARCH_ESP32
+#if defined(ARCH_ESP8266) || defined(ESP32)
     app.ota.checkAtBoot();
 #endif
 
@@ -173,12 +180,12 @@ void Application::init() {
     #endif
     debug_i("Application::init - partition scheme: %s\r\n", fw_part_layout);
 
-#ifdef ARCH_ESP8266 || ARCH_ESP32
+#if defined(ARCH_ESP8266) //|| defined(ESP32)
     /*
     * verify for new partition layout
     */
-    debug_i("application init, \nspiffs0 found: %s\nspiffs1 found: %s\nlfs1 found: %s\nlfs1 found: %s ",Storage::findPartition(F("spiffs0"))?F("true"):F("false"),Storage::findPartition(F("spiffs1"))?F("true"):F("false"),Storage::findPartition(F("lfs0"))?F("true"):F("false"),Storage::findPartition(F("lfs1"))?F("true"):F("false"));
-    if (!Storage::findPartition(F("lfs0")) && !Storage::findPartition(F("lfs1"))) {
+    debug_i("application init, \nspiffs0 found: %s\nspiffs1 found: %s\nlfs1 found: %s\nlfs1 found: %s ",Storage::findPartition(F("spiffs0"))?F("true"):F("false"),Storage::findPartition(F("spiffs1"))?F("true"):F("false"),Storage::findPartition(PART0)?F("true"):F("false"),Storage::findPartition(F("lfs1"))?F("true"):F("false"));
+    if (!Storage::findPartition(PART0) && !Storage::findPartition(F("lfs1"))) {
         
         // mount existing data partition
         debug_i("application init (with spiffs) => Mounting file system");
@@ -232,7 +239,7 @@ void Application::init() {
 
     //debug_i("Application::init - got rom partition %s @0x%#08x", romPartition.name(),romPartition.address());
     //auto spiffsPartition=app.ota.findSpiffsPartition(romPartition);
-    
+    #if defined(ARCH_ESP8266) || defined(ESP32)
     mountfs(getRomSlot());
     // ToDo - rework mounting filesystem
     if(_fs_mounted) {
@@ -245,6 +252,7 @@ void Application::init() {
         }
         Serial << dir.count() << _F(" files found") << endl << endl;
     }
+    #endif
 
     // initialize config and data
     cfg = std::make_unique<AppConfig>(configDB_PATH);
@@ -274,7 +282,7 @@ void Application::init() {
             debug_i("application init => reading config");
             //cfg.load(); 
 
-            Serial << "* reading default config flash string *" << endl << default_config << endl;
+            //Serial << "* reading default config flash string *" << endl << default_config << endl;
            	//auto configStream = new FSTR::Stream(CONTENT_default_config);
             //cfg->importFromStream(ConfigDB::Json::format, *configStream);
             debug_i("application init => config loaded, pin config %s",general.getPinConfig().c_str());  
@@ -397,8 +405,10 @@ bool Application::delayedCMD(String cmd, int delay) {
     } else if (cmd.equals(F("mountfs"))) {
         //
     } else if (cmd.equals(F("switch_rom"))) {
+        #if ARCH_ESP8266
         switchRom();
         //_systimer.initializeMs(delay, TimerDelegate(&Application::restart, this)).startOnce();
+        #endif
     } else {
         return false;
     }
@@ -423,6 +433,16 @@ bool Application::mountfs(int slot) {
     * 
     */
 
+    #ifdef ARCH_HOST
+	/*
+     * host file system
+     */
+    fileSetFileSystem(&IFS::Host::getFileSystem());
+    #else
+    /*
+     * on device file system
+     */
+    
     auto part = Storage::findPartition("spiffs"+String(slot));
     if (part){
         debug_i("mouting spiffs partition %i at %x, length %d", slot,part.address(), part.size());
@@ -442,6 +462,7 @@ bool Application::mountfs(int slot) {
         debug_i("partition is neither spiffs nor lfs");
         return false;
     }
+    #endif
 }
 
 void Application::listFiles(){ 
@@ -487,7 +508,7 @@ void Application::umountfs() {
     }
     */
 }
-#ifdef ARCH_ESP8266 || ARCH_ESP32
+#if defined(ARCH_ESP8266) || defined(ESP32)
 void Application::switchRom() {
     //ToDo - rewrite to use ota.getRunningPartition() and ota.getNextBootPartition()
     debug_i("Application::switchRom");
@@ -511,9 +532,9 @@ void Application::switchRom() {
 }
 #endif
 
-#ifdef ARCH_ESP8266 || ARCH_ESP32
+#if defined(ARCH_ESP8266) || defined(ESP32)
 int Application::getRomSlot(){
-            auto partition = app.getRomPartition();
+            auto partition = app.ota.getRomPartition();
             uint8_t slot;
             if(partition.name()=="rom1"){
                 slot=1;
@@ -554,7 +575,7 @@ void Application::onButtonTogglePressed(int pin) {
         _lastToggles[pin] = now;
     }
     else {
-        debug_d("Button press ignored by debounce. Diff: %d Debounce: %d", diff, cfg.general.buttons_debounce_ms);
+        debug_d("Button press ignored by debounce. Diff: %d Debounce: %d", diff, general.getButtonsDebounceMs());
 
     }
 }
