@@ -253,9 +253,13 @@ void Application::init() {
         Serial << dir.count() << _F(" files found") << endl << endl;
     }
     #endif
+    #ifdef ARCH_HOST
+    debug_i("mounting host file system");
+    fileSetFileSystem(&IFS::Host::getFileSystem());
+    #endif
 
     // initialize config and data
-    cfg = std::make_unique<AppConfig>(configDB_PATH);
+    cfg = std::make_shared<AppConfig>(configDB_PATH);
     data = std::make_unique<AppData>(dataDB_PATH);
     
     // check if we need to reset settings
@@ -437,6 +441,7 @@ bool Application::mountfs(int slot) {
 	/*
      * host file system
      */
+    debug_i("mounting host file system");
     fileSetFileSystem(&IFS::Host::getFileSystem());
     #else
     /*

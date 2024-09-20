@@ -1,16 +1,17 @@
 COMPONENT_SEARCH_DIRS := $(PROJECT_DIR)/Components
 COMPONENT_DEPENDS += MDNS RGBWWLed LittleFS ConfigDB ArduinoJson6 OtaNetwork
-ARDUINO_LIBRARIES := RGBWWLed ArduinoJson6 OtaNetwork
+#ARDUINO_LIBRARIES := RGBWWLed ArduinoJson6 OtaNetwork
+ARDUINO_LIBRARIES :) RGBWWLed
 
-GLOBAL_CFLAGS += \
-  -DIP_REASSEMBLY=1 \
-  -DIP_FRAG=1 \
-  -DIP_REASS_MAXAGE=3 \
-  -DLWIP_NETIF_TX_SINGLE_PBUF=0 \
-  -DIP_REASS_DEBUG=1 \
-  -DIP_DEBUG=1 \
-  -DTCP_DEBUG=1 \
-  -DTCP_INPUT_DEBUG=1
+# GLOBAL_CFLAGS += \
+#  -DIP_REASSEMBLY=1 \
+#  -DIP_FRAG=1 \
+#  -DIP_REASS_MAXAGE=3 \
+#  -DLWIP_NETIF_TX_SINGLE_PBUF=0 \
+#  -DIP_REASS_DEBUG=1 \
+#  -DIP_DEBUG=1 \
+# -DTCP_DEBUG=1 \
+#  -DTCP_INPUT_DEBUG=1
 
 
 #HWCONFIG := two-spiffs-two-roms
@@ -41,8 +42,8 @@ ENABLE_CUSTOM_PWM = 0
 
 //COM_SPEED = 230400
 //COM_SPEED = 460800
-//COM_SPEED = 115200
-COM_SPEED = 921600
+COM_SPEED = 115200
+//COM_SPEED = 921600
 //COM_SPEED = 2000000
 //COM_PORT=/dev/ttyUSB0
 //COM_PORT=/dev/ttyACM0
@@ -81,4 +82,3 @@ endif
 ifndef WEBAPP_VERSION
 	$(error can not find webapp/VERSION file - please ensure the source code is complete)
 endif
-
