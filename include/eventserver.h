@@ -17,6 +17,8 @@ public:
 	void publishTransitionFinished(const String& name, bool requeued = false);
 	void publishKeepAlive();
 	void publishClockSlaveStatus(int offset, uint32_t interval);
+	bool isEnabled() const { return enabled; }
+	void setEnabled(bool enabled) { this->enabled = enabled; }
 
 private:
 	virtual void onClient(TcpClient *client) override;
@@ -30,6 +32,8 @@ private:
 	
     Timer _keepAliveTimer;
 	int _nextId = 1;
+
+	bool enabled;
 
 	ChannelOutput _lastRaw;
 	// websocket interface

@@ -1,21 +1,27 @@
 COMPONENT_SEARCH_DIRS := $(PROJECT_DIR)/Components
 COMPONENT_DEPENDS += MDNS RGBWWLed LittleFS ConfigDB ArduinoJson6 OtaNetwork
-ARDUINO_LIBRARIES := RGBWWLed ArduinoJson6 OtaNetwork
+#ARDUINO_LIBRARIES := RGBWWLed ArduinoJson6 OtaNetwork
+ARDUINO_LIBRARIES :) RGBWWLed
 
-GLOBAL_CFLAGS += \
-  -DIP_REASSEMBLY=1 \
-  -DIP_FRAG=1 \
-  -DIP_REASS_MAXAGE=3 \
-  -DLWIP_NETIF_TX_SINGLE_PBUF=0 \
-  -DIP_REASS_DEBUG=1 \
-  -DIP_DEBUG=1 \
-  -DTCP_DEBUG=1 \
-  -DTCP_INPUT_DEBUG=1
+# GLOBAL_CFLAGS += \
+#  -DIP_REASSEMBLY=1 \
+#  -DIP_FRAG=1 \
+#  -DIP_REASS_MAXAGE=3 \
+#  -DLWIP_NETIF_TX_SINGLE_PBUF=0 \
+#  -DIP_REASS_DEBUG=1 \
+#  -DIP_DEBUG=1 \
+# -DTCP_DEBUG=1 \
+#  -DTCP_INPUT_DEBUG=1
 
 
 #HWCONFIG := two-spiffs-two-roms
 #HWCONFIG := old_layout
-HWCONFIG := flash_only
+
+# Set default number of jobs to twice the number of available processors
+NUM_JOBS := $(shell echo $(($(nproc) * 2)))
+MAKEFLAGS += -j$(NUM_JOBS)
+
+HWCONFIG :=two_roms_two_lfs_$(SMING_ARCH)
 #ENABLE_CUSTOM_LWIP = 0
 #ENABLE_LWIP_DEBUG = 1
 
@@ -36,14 +42,21 @@ ENABLE_CUSTOM_PWM = 0
 
 //COM_SPEED = 230400
 //COM_SPEED = 460800
-COM_SPEED = 115200
 //COM_SPEED = 921600
 //COM_SPEED = 2000000
 //COM_PORT=/dev/ttyUSB0
-COM_PORT=/dev/ttyACM0
-#usb-1a86_USB2.0-Serial-if00-port0
-#usb-1a86_USB_Single_Serial_5647014434-if00
-#usb-Silicon_Labs_CP2104_USB_to_UART_Bridge_Controller_01A7B447-if00-port0
+//COM_PORT=/dev/ttyACM0
+COM_PORT=""
+
+ifeq ($(SMING_ARCH), Esp8266)
+  COM_PORT=/dev/serial/by-id/usb-1a86_USB_Single_Serial_5647014434-if00
+	COM_SPEED = 921600
+  $(info COM_PORT is $(COM_PORT)@$(COM_SPEED) for $(SMING_ARCH))
+  else ifeq ($(SMING_ARCH), Esp32)
+  COM_PORT=/dev/serial/by-id/usb-1a86_USB_Single_Serial_5647022450-if00
+	COM_SPEED = 115200
+  $(info COM_PORT is $(COM_PORT)@$(COM_SPEED) for $(SMING_ARCH))
+endif
 
 CUSTOM_TARGETS += check_versions
 
@@ -69,8 +82,4 @@ ifndef GIT_DATE
 endif
 ifndef WEBAPP_VERSION
 	$(error can not find webapp/VERSION file - please ensure the source code is complete)
-endif
-ifndef PART_LAYOUT
-	$(info partition layout not defined, defaulting to v1)
-	PART_LAYOUT=v1
 endif

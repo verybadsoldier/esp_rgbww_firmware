@@ -1,5 +1,5 @@
 {
-    "name": "flash only",
+    "name": "Two Roms, two littlefs",
     "base_config": "standard",
     "options": [],
     "devices": {
@@ -9,13 +9,12 @@
     },
     "partitions": {
         "rom0": {
-            "subtype": "ota_0",
+			"subtype": "ota_0",
             "size": "1016K"
         },
         "lfs0": {
-            "device": "spiFlash",
             "address": "0x00106000",
-            "size": "1008K",
+            "size": "992K",
             "type": "data",
             "subtype": "littlefs",
             "readonly": false,
@@ -29,9 +28,8 @@
             "type": "app"
         },
         "lfs1": {
-            "device": "spiFlash",
             "address": "0x00300000",
-            "size": "1M",
+            "size": "992K",
             "type": "data",
             "subtype": "littlefs",
             "readonly": false,
