@@ -38,10 +38,17 @@
 #include <Storage/ProgMem.h>
 #include <Storage/Debug.h>
 
+#if ARCH_ESP8266
+#define PART0 "lfs0"
+#elif ARCH_ESP32
+#define PART0 "factory"
+#endif 
+
 #ifdef ARCH_ESP8266
 #include <Platform/OsMessageInterceptor.h>
 
 IMPORT_FSTR_LOCAL(default_config, PROJECT_DIR "/default_config.json");
+
 static OsMessageInterceptor osMessageInterceptor;
 
 /**
@@ -163,8 +170,9 @@ void Application::init() {
     Serial.print("\r\n");
     // ConfigDB obsoleted debug_i("going to initialize config");
     // ConfigDB obsoleted config::initializeConfig(cfg); // initialize the config structure if necessary
-
+#if defined(ARCH_ESP8266) || defined(ESP32)
     app.ota.checkAtBoot();
+#endif
 
     debug_i("RGBWW Controller v %s\r\n", fw_git_version);
     #ifdef ARCH_ESP8266
@@ -172,12 +180,12 @@ void Application::init() {
     #endif
     debug_i("Application::init - partition scheme: %s\r\n", fw_part_layout);
 
-#ifdef ARCH_ESP8266
+#if defined(ARCH_ESP8266) //|| defined(ESP32)
     /*
     * verify for new partition layout
     */
-    debug_i("application init, \nspiffs0 found: %s\nspiffs1 found: %s\nlfs1 found: %s\nlfs1 found: %s ",Storage::findPartition(F("spiffs0"))?F("true"):F("false"),Storage::findPartition(F("spiffs1"))?F("true"):F("false"),Storage::findPartition(F("lfs0"))?F("true"):F("false"),Storage::findPartition(F("lfs1"))?F("true"):F("false"));
-    if (!Storage::findPartition(F("lfs0")) && !Storage::findPartition(F("lfs1"))) {
+    debug_i("application init, \nspiffs0 found: %s\nspiffs1 found: %s\nlfs1 found: %s\nlfs1 found: %s ",Storage::findPartition(F("spiffs0"))?F("true"):F("false"),Storage::findPartition(F("spiffs1"))?F("true"):F("false"),Storage::findPartition(PART0)?F("true"):F("false"),Storage::findPartition(F("lfs1"))?F("true"):F("false"));
+    if (!Storage::findPartition(PART0) && !Storage::findPartition(F("lfs1"))) {
         
         // mount existing data partition
         debug_i("application init (with spiffs) => Mounting file system");
@@ -231,7 +239,7 @@ void Application::init() {
 
     //debug_i("Application::init - got rom partition %s @0x%#08x", romPartition.name(),romPartition.address());
     //auto spiffsPartition=app.ota.findSpiffsPartition(romPartition);
-    
+    #if defined(ARCH_ESP8266) || defined(ESP32)
     mountfs(getRomSlot());
     // ToDo - rework mounting filesystem
     if(_fs_mounted) {
@@ -244,12 +252,18 @@ void Application::init() {
         }
         Serial << dir.count() << _F(" files found") << endl << endl;
     }
+    #endif
+    #ifdef ARCH_HOST
+    debug_i("mounting host file system");
+    fileSetFileSystem(&IFS::Host::getFileSystem());
+    #endif
 
     // initialize config and data
     cfg = std::make_unique<AppConfig>(configDB_PATH);
     data = std::make_unique<AppData>(dataDB_PATH);
     
     // check if we need to reset settings
+    #if !defined(ARCH_HOST)
     if (digitalRead(CLEAR_PIN) < 1) {
         debug_i("CLR button low - resetting settings");
         // ConfigDB - decide i f to reload defaults or load a specific saved version
@@ -257,6 +271,7 @@ void Application::init() {
         // cfg.reset();
         network.forgetWifi();
     }
+    #endif
 
     // check ota
 #ifdef ARCH_ESP8266
@@ -274,7 +289,7 @@ void Application::init() {
             //cfg.load(); 
 
             Serial << "* reading default config flash string *" << endl << default_config << endl;
-           	//auto configStream = new FSTR::Stream(CONTENT_default_config);
+            //Serial << "* reading default config flash string *" << endl << default_config << endl;
             //cfg->importFromStream(ConfigDB::Json::format, *configStream);
             debug_i("application init => config loaded, pin config %s",general.getPinConfig().c_str());  
             debug_i("Application::init - first run");
@@ -311,6 +326,7 @@ void Application::init() {
 void Application::initButtons(){
     Vector<String> buttons;
     {   
+        debug_i("Application::initButtons");
         AppConfig::General general(*cfg);
     
         if (general.getButtonsConfig().length() <= 0)
@@ -348,9 +364,12 @@ void Application::startServices() {
     webserver.start();
 
     {  
+        debug_i("Application::startServices - starting NTP");
         AppConfig::Root appcfg(*cfg);
-        if (appcfg.events.getServerEnabled())
+        if (appcfg.events.getServerEnabled()){
+            eventserver.setEnabled(true);
             eventserver.start(app.webserver);
+        }
     } // end of ConfigDB root context
 }
 
@@ -396,8 +415,10 @@ bool Application::delayedCMD(String cmd, int delay) {
     } else if (cmd.equals(F("mountfs"))) {
         //
     } else if (cmd.equals(F("switch_rom"))) {
+        #if ARCH_ESP8266
         switchRom();
         //_systimer.initializeMs(delay, TimerDelegate(&Application::restart, this)).startOnce();
+        #endif
     } else {
         return false;
     }
@@ -422,6 +443,17 @@ bool Application::mountfs(int slot) {
     * 
     */
 
+    #ifdef ARCH_HOST
+	/*
+     * host file system
+     */
+    debug_i("mounting host file system");
+    fileSetFileSystem(&IFS::Host::getFileSystem());
+    #else
+    /*
+     * on device file system
+     */
+    
     auto part = Storage::findPartition("spiffs"+String(slot));
     if (part){
         debug_i("mouting spiffs partition %i at %x, length %d", slot,part.address(), part.size());
@@ -441,6 +473,7 @@ bool Application::mountfs(int slot) {
         debug_i("partition is neither spiffs nor lfs");
         return false;
     }
+    #endif
 }
 
 void Application::listFiles(){ 
@@ -486,7 +519,7 @@ void Application::umountfs() {
     }
     */
 }
-
+#if defined(ARCH_ESP8266) || defined(ESP32)
 void Application::switchRom() {
     //ToDo - rewrite to use ota.getRunningPartition() and ota.getNextBootPartition()
     debug_i("Application::switchRom");
@@ -508,7 +541,9 @@ void Application::switchRom() {
     */
    app.ota.doSwitch();
 }
+#endif
 
+#if defined(ARCH_ESP8266) || defined(ESP32)
 int Application::getRomSlot(){
             auto partition = app.ota.getRomPartition();
             uint8_t slot;
@@ -519,6 +554,7 @@ int Application::getRomSlot(){
             }
             return slot;
 }
+#endif
 
 void Application::wsBroadcast(String message) {
     debug_i("Application::wsBroadcast");
@@ -534,6 +570,7 @@ void Application::wsBroadcast(String cmd, String message){
 }
 
 void Application::onCommandRelay(const String& method, const JsonObject& params) {
+    debug_i("Application::onCommandRelay");
     AppConfig::Sync sync(*cfg);
     if (!sync.getCmdMasterEnabled())
         return;
@@ -543,6 +580,7 @@ void Application::onCommandRelay(const String& method, const JsonObject& params)
 void Application::onButtonTogglePressed(int pin) {
     uint32_t now = millis();
     uint32_t diff = now - _lastToggles[pin];
+    debug_i("Application::onButtonTogglePressed");
     AppConfig::General general(*cfg);
     if (diff > (uint32_t) general.getButtonsDebounceMs()) {  // debounce
         debug_i("Button %d pressed - toggle", pin);
@@ -550,7 +588,7 @@ void Application::onButtonTogglePressed(int pin) {
         _lastToggles[pin] = now;
     }
     else {
-        debug_d("Button press ignored by debounce. Diff: %d Debounce: %d", diff, cfg.general.buttons_debounce_ms);
+        debug_d("Button press ignored by debounce. Diff: %d Debounce: %d", diff, general.getButtonsDebounceMs());
 
     }
 }

@@ -28,11 +28,13 @@
 #include <Storage/SpiFlash.h>
 #include <Ota/Upgrader.h>
 #include <Storage.h>
+#include <Storage/Debug.h>
 
 #ifdef ARCH_ESP8266
 #include <Crypto/Md5.h>
 #include <Storage/partition_info.h>
-#include <Storage/Debug.h>
+#endif
+
 #include <LittleFS.h>
 #include <IFS/FileCopier.h>
 
@@ -41,7 +43,6 @@ enum class MigrateResult {
 	alreadyUpgraded,
 	success,
 };
-#endif
 
 
 enum class OTASTATUS {
@@ -77,8 +78,18 @@ public:
         return findSpiffsPartition(ota.getBootPartition());
     }
 
-#ifdef ARCH_ESP8266
-    /*
+
+
+protected:
+    std::unique_ptr<Ota::Network::HttpUpgrader> otaUpdater;
+    uint8 rom_slot;
+    OTASTATUS status = OTASTATUS::OTA_NOT_UPDATING;
+
+#if defined(ARCH_ESP8266)||defined(ARCH_ESP32)
+    bool copyContent(std::unique_ptr<IFS::FileSystem> src, std::unique_ptr<IFS::FileSystem> dst);
+#endif
+#if ARCH_ESP8266
+/*
     * functions to manipulate the partition table
     * those are only a transitional requirement and should be dropped in a future version 
     * when most users have migrated to the new partition layout
@@ -86,22 +97,13 @@ public:
     std::vector<Storage::esp_partition_info_t> getEditablePartitionTable();
     bool addPartition(std::vector<Storage::esp_partition_info_t>& partitionTable, String partitionName,uint8_t type, uint8_t subType, uint32_t start, uint32_t size, uint8_t flags);
     bool delPartition(std::vector<Storage::esp_partition_info_t>& partitionTable, String partitionName);
-#endif
-
-protected:
-    std::unique_ptr<Ota::Network::HttpUpgrader> otaUpdater;
-    uint8 rom_slot;
-    OTASTATUS status = OTASTATUS::OTA_NOT_UPDATING;
-
-#ifdef ARCH_ESP8266
-    bool copyContent(std::unique_ptr<IFS::FileSystem> src, std::unique_ptr<IFS::FileSystem> dst);
     bool savePartitionTable(std::vector<Storage::esp_partition_info_t>& partitionTable);
     uint8_t getPartitionIndex(std::vector<Storage::esp_partition_info_t>& partitionTable, String partitionName);
     bool createLFS(uint8_t slot);
 #endif 
 
 protected:
-    Storage::Partition spiffsPartition;
+    Storage::Partition dataPartition;
     OtaUpgrader ota;
     void upgradeCallback(Ota::Network::HttpUpgrader& client, bool result);
     void reset();

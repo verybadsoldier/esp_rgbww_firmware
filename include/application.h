@@ -75,10 +75,11 @@ public:
     AppWIFI network;
     ApplicationWebserver webserver;
     APPLedCtrl rgbwwctrl;
-
+#if defined(ARCH_ESP8266) || defined(ESP32)
     ApplicationOTA ota;
-
+#endif
     std::unique_ptr<AppConfig> cfg;
+    //std::unique_ptr<AppConfig> cfg;
     std::unique_ptr<AppData> data;
     EventServer eventserver;
     AppMqttClient mqttclient;

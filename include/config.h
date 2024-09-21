@@ -43,8 +43,8 @@
 #include <Data/CStringArray.h>
 #include <Data/Format/Json.h>
 
-#define configDB_PATH "config"
-#define dataDB_PATH "data"
+#define configDB_PATH "app-config"
+#define dataDB_PATH "app-data"
 
 /*
 void save(bool print = true) {

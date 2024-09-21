@@ -1,6 +1,6 @@
 {
     "name": "flash only",
-    "base_config": "two-rom-mode",
+    "base_config": "standard",
     "options": [],
     "devices": {
         "spiFlash": {
@@ -9,11 +9,34 @@
     },
     "partitions": {
         "rom0": {
+            "subtype": "ota_0",
             "size": "1016K"
         },
+        "lfs0": {
+            "device": "spiFlash",
+            "address": "0x00106000",
+            "size": "1008K",
+            "type": "data",
+            "subtype": "littlefs",
+            "readonly": false,
+            "encrypted": false,
+            "filename": ""
+        },
         "rom1": {
+            "subtype": "ota_1",
             "address": "0x00202000",
-            "size": "1016K"
+            "size": "1016K",
+            "type": "app"
+        },
+        "lfs1": {
+            "device": "spiFlash",
+            "address": "0x00300000",
+            "size": "1M",
+            "type": "data",
+            "subtype": "littlefs",
+            "readonly": false,
+            "encrypted": false,
+            "filename": ""
         }
     }
 }
