@@ -276,11 +276,11 @@
           "type": "integer",
           "default":500
         },
-        "color_mininterval_ms": {
+        "color_min_interval_ms": {
           "type": "integer",
           "default":500
         },
-        "transfin_interval_ms": {
+        "trans_fin_interval_ms": {
           "type": "integer",
           "default":1000
         },

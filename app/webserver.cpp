@@ -165,6 +165,7 @@ void ApplicationWebserver::stop() {
 
 bool ICACHE_FLASH_ATTR ApplicationWebserver::authenticateExec(HttpRequest &request, HttpResponse &response) {
     {
+        debug_i("ApplicationWebserver::authenticated - checking general context");
         AppConfig::Root config(*app.cfg);
         if (!config.security.getApiSecured())
             return true;
@@ -186,6 +187,7 @@ bool ICACHE_FLASH_ATTR ApplicationWebserver::authenticateExec(HttpRequest &reque
         return false;
     }
     {
+        debug_i("ApplicationWebserver::authenticated - getting password");
         AppConfig::Root config(*app.cfg);
         userPass = base64_decode(userPass);
         //debug_d("ApplicationWebserver::authenticated Password: '%s' - Expected password: '%s'", userPass.c_str(), config.security.getApiPassword.c_str());
@@ -412,6 +414,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
     /* ConfigDB importFomStream */
     String oldIP,oldSSID;
     {
+        debug_i("ApplicationWebserver::onConfig storing old ip settings");
         AppConfig::Network network(*app.cfg);
         oldIP = network.connection.getIp();
         oldSSID = network.ap.getSsid();
@@ -429,6 +432,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         	// bool restart = root[F("restart")] | false;
             String newIP, newSSID;
             {
+                debug_i("ApplicationWebserver::onConfig geting new ip settings");
                 AppConfig::Network network(*app.cfg);
                 newIP = network.connection.getIp();
                 newSSID = network.ap.getSsid();
@@ -861,6 +865,7 @@ void ApplicationWebserver::onConnect(HttpRequest &request, HttpResponse &respons
             json[F("error")] = app.network.get_con_err_msg();
         } else if (status == CONNECTION_STATUS::CONNECTED) {
             // return connected
+            debug_i("wifi connected, checking if dhcp enabled");
             AppConfig::Network network(*app.cfg);
         
             if (network.connection.getDhcp()) {

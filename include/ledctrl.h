@@ -90,6 +90,27 @@ public:
     void onMasterClock(uint32_t steps);
     void onMasterClockReset();
     virtual void onAnimationFinished(const String& name, bool requeued);
+
+    void setClockMaster(bool master, uint32_t interval = 0) {
+        clockMaster = master;
+        clockMasterInterval = interval;
+    };
+    void setColorMaster(bool master) {
+        colorMaster = master;
+    };
+    void setTransitionInterval(uint32_t interval) {
+        transFinInterval = interval;
+    };
+    void setColorInterval(uint32_t interval) {
+        colorMasterInterval = interval;
+    };
+    void setColorMinInterval(uint32_t interval) {
+        colorMinInterval = interval;
+    };
+    void setStartupColorLast(bool last) {
+        startupColorLast = last;
+    };
+    void reconfigure();
 private:
     static PinConfig parsePinConfigString(String& pinStr);
     static PinConfig parsePinConfigString(const String& pinStr);
@@ -101,6 +122,13 @@ private:
     void checkStableColorState();
     void publishStatus();
 
+    bool clockMaster,
+         colorMaster,
+         startupColorLast;
+    uint32_t clockMasterInterval,
+             transFinInterval,
+             colorMasterInterval,
+             colorMinInterval;
     ColorStorage colorStorage;
 
     HSVCT _lastHsvct;

@@ -6,7 +6,7 @@
         "4m"
     ],
     "partitions": {
-        "factory": {
+        "factory": {    
             "size": "1536K"
         },
         "lfs0": {

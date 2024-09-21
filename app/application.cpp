@@ -259,10 +259,11 @@ void Application::init() {
     #endif
 
     // initialize config and data
-    cfg = std::make_shared<AppConfig>(configDB_PATH);
+    cfg = std::make_unique<AppConfig>(configDB_PATH);
     data = std::make_unique<AppData>(dataDB_PATH);
     
     // check if we need to reset settings
+    #if !defined(ARCH_HOST)
     if (digitalRead(CLEAR_PIN) < 1) {
         debug_i("CLR button low - resetting settings");
         // ConfigDB - decide i f to reload defaults or load a specific saved version
@@ -270,6 +271,7 @@ void Application::init() {
         // cfg.reset();
         network.forgetWifi();
     }
+    #endif
 
     // check ota
 #ifdef ARCH_ESP8266
@@ -324,6 +326,7 @@ void Application::init() {
 void Application::initButtons(){
     Vector<String> buttons;
     {   
+        debug_i("Application::initButtons");
         AppConfig::General general(*cfg);
     
         if (general.getButtonsConfig().length() <= 0)
@@ -361,9 +364,12 @@ void Application::startServices() {
     webserver.start();
 
     {  
+        debug_i("Application::startServices - starting NTP");
         AppConfig::Root appcfg(*cfg);
-        if (appcfg.events.getServerEnabled())
+        if (appcfg.events.getServerEnabled()){
+            eventserver.setEnabled(true);
             eventserver.start(app.webserver);
+        }
     } // end of ConfigDB root context
 }
 
@@ -564,6 +570,7 @@ void Application::wsBroadcast(String cmd, String message){
 }
 
 void Application::onCommandRelay(const String& method, const JsonObject& params) {
+    debug_i("Application::onCommandRelay");
     AppConfig::Sync sync(*cfg);
     if (!sync.getCmdMasterEnabled())
         return;
@@ -573,6 +580,7 @@ void Application::onCommandRelay(const String& method, const JsonObject& params)
 void Application::onButtonTogglePressed(int pin) {
     uint32_t now = millis();
     uint32_t diff = now - _lastToggles[pin];
+    debug_i("Application::onButtonTogglePressed");
     AppConfig::General general(*cfg);
     if (diff > (uint32_t) general.getButtonsDebounceMs()) {  // debounce
         debug_i("Button %d pressed - toggle", pin);

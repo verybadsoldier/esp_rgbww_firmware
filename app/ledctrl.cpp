@@ -102,13 +102,17 @@ PinConfig APPLedCtrl::parsePinConfigString(const String& pinStr) {
  * CHANNELS structure that will provide the channel name and the channel brightness.
  */
 
+
 void APPLedCtrl::init() {
     debug_i("APPLedCtrl::init");
 
     _stepSync = new StepSync();
 
+    reconfigure();
+ 
     PinConfig pins;
     {
+        debug_i("APPLedCtrl::init - reading pin config");
         AppConfig::General general(*app.cfg);
         if(general.channels.getItemCount()!=0){
             // prefer the channels config
@@ -130,12 +134,14 @@ void APPLedCtrl::init() {
             pins = APPLedCtrl::parsePinConfigString(general.getPinConfig());
         }
     }
+    debug_i("APPLedCtrl::init - initializing RGBWWLed");
     RGBWWLed::init(pins.red, pins.green, pins.blue, pins.warmwhite, pins.coldwhite, PWM_FREQUENCY);
 
     setup();
 
     HSVCT startupColor;
     {
+        debug_i("APPLedCtrl::init - reading startup color");
         AppConfig::Color color(*app.cfg);
         if (color.getStartupColor() == "last") {
             colorStorage.load();
@@ -154,6 +160,30 @@ void APPLedCtrl::init() {
 }
 
 /**
+ * @brief read local configuration from ConfigDB
+ * 
+ */
+void APPLedCtrl::reconfigure() {
+    debug_i("APPLedCtrl::reconfigure");
+    {
+        AppConfig::Sync sync(*app.cfg);
+        clockMaster         = sync.getColorMasterEnabled();
+        clockMasterInterval = sync.getColorMasterIntervalMs();
+        colorMaster         = sync.getColorMasterEnabled();
+        colorMasterInterval = sync.getColorMasterIntervalMs();
+        
+    } // end AppConfig::Sync context
+    {
+        AppConfig::Root config(*app.cfg);
+        transFinInterval = config.events.getTransFinIntervalMs();
+        colorMinInterval = config.events.getColorMinIntervalMs();
+    } //close configdb root context
+    {
+        AppConfig::Color color(*app.cfg);
+        startupColorLast=(color.getStartupColor() == "last");
+    } //close configdb context for color
+ }
+/**
  * @brief Initializes the LED controller.
  * 
  * This function sets up the LED controller by configuring the brightness correction,
@@ -164,6 +194,7 @@ void APPLedCtrl::setup() {
     debug_i("APPLedCtrl::setup");
 
     {
+        debug_i("APPLedCtrl::setup - reading color config");
         AppConfig::Color color(*app.cfg);
 
         colorutils.setBrightnessCorrection(
@@ -199,18 +230,9 @@ void APPLedCtrl::setup() {
  * It publishes the current output and color information to the event server.
  */
 void APPLedCtrl::publishToEventServer() {
-    /* 
-     * ToDo: there might be a better way to do this. 
-     *       This is called relatively often and the config is read every time.
-     *       since eventserver is a class, maybe it should have it's state locally
-     */
-    AppConfig::Root config(*app.cfg); 
-    if (!config.events.getServerEnabled()){
+     if(!app.eventserver.isEnabled()){
         debug_i("APPLEDCtrl - eventserver is disabled");
         return;
-    }else{
-    //debug_i("APPLEDCtrl - eventserver is enabled, updating clients");
-        
     HSVCT const * pHsv = NULL;
     if (_mode == ColorMode::Hsv)
         pHsv = &getCurrentColor();
@@ -233,8 +255,9 @@ void APPLedCtrl::publishToMqtt() {
      * ToDo: this is called frequently, it might be good to hold this config in app directly
      */
     {
+        debug_i("APPLedCtrl::publishToMqtt");
         AppConfig::Sync sync(*app.cfg);
-        if (!sync.getColorMasterEnabled())
+        if (!colorMaster)
         return;
     }
     switch(_mode) {
@@ -269,54 +292,40 @@ void APPLedCtrl::updateLed() {
     const bool animFinished = show();
 
     ++_stepCounter;
-    /* ToDo profile this and see if it works with database access. 
-     */
-    {
-        AppConfig::Sync sync(*app.cfg);
-        
-        if (sync.getClockMasterEnabled()) {
-            if ((_stepCounter % (sync.getClockMasterInterval() * RGBWW_UPDATEFREQUENCY)) == 0) {
+    
+        if (clockMaster) {
+            if ((_stepCounter % clockMasterInterval * RGBWW_UPDATEFREQUENCY) == 0) {
                 app.mqttclient.publishClock(_stepCounter);
             }
         }
-    } //close configdb context for sync
     const static uint32_t stepLenMs = 1000 / RGBWW_UPDATEFREQUENCY;
-    {
-        AppConfig::Root config(*app.cfg);
-        if (config.events.getColorIntervalMs() >= 0) {
-            if (animFinished || config.events.getColorIntervalMs() == 0 ||
-                    ((stepLenMs * _stepCounter) % config.events.getColorIntervalMs()) < stepLenMs) {
+    if (colorMasterInterval >= 0) {
+        if (animFinished || colorMasterInterval == 0 ||
+                ((stepLenMs * _stepCounter) % colorMasterInterval) < stepLenMs) {
 
-                uint32_t now = millis();
-                if (now - _lastColorEvent >= (uint32_t) config.events.getColorMinintervalMs()) {
-                    // debug_i("APPLedCtrl::updateLed - publishing color event");
-                    _lastColorEvent = now;
-                    publishToEventServer();
-                }
+            uint32_t now = millis();
+            if (now - _lastColorEvent >= (uint32_t) colorMinInterval) {
+                // debug_i("APPLedCtrl::updateLed - publishing color event");
+                _lastColorEvent = now;
+                publishToEventServer();
             }
         }
-    } //close configdb context for events
+    }
 
-    {
-        AppConfig::Sync sync(*app.cfg);
-        if (sync.getColorMasterEnabled()) {
-            if (animFinished || sync.getColorMasterIntervalMs() == 0 ||
-                    ((stepLenMs * _stepCounter) % sync.getColorMasterIntervalMs()) < stepLenMs) {
-                publishToMqtt();
-            }
+    if (colorMaster) {
+        if (animFinished || colorMasterInterval == 0 ||
+                ((stepLenMs * _stepCounter) % colorMasterInterval) < stepLenMs) {
+            publishToMqtt();
         }
-    } //close configdb context for sync
-
+    }
+    
     checkStableColorState();
-    {
-        AppConfig::Root config(*app.cfg);
-        if (config.events.getTransfinIntervalMs() >= 0) {
-            if (config.events.getTransfinIntervalMs() == 0 ||
-                    ((stepLenMs * _stepCounter) % config.events.getTransfinIntervalMs()) < stepLenMs) {
+        if (transFinInterval >= 0) {
+            if (transFinInterval == 0 ||
+                    ((stepLenMs * _stepCounter) % transFinInterval) < stepLenMs) {
                 publishFinishedStepAnimations();
             }
         }
-    } //close configdb context for events
 }
 
 /**
@@ -328,12 +337,9 @@ void APPLedCtrl::updateLed() {
  * If the number of stable color steps reaches a certain threshold, the current color state is saved.
  */
 void APPLedCtrl::checkStableColorState() {
-    {
-        AppConfig::Color color(*app.cfg);
-        if (color.getStartupColor() != "last")
+    if (!startupColorLast)
             return;
-    } //close configdb context for color
-	
+    
     if (_prevColor == getCurrentColor())
     {
         ++_numStableColorSteps;
