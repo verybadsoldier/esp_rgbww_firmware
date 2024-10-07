@@ -150,7 +150,8 @@ void APPLedCtrl::init() {
             startupColor = colorStorage.current;
         } else {
             // interpret as color string
-            startupColor = color.getStartupColor();
+            String tempStartupColor = color.getStartupColor();
+            startupColor = tempStartupColor;
         }
     }
     // boot from off to startup color
@@ -213,7 +214,7 @@ void APPLedCtrl::setup() {
             color.hsv.getMagenta()
             );
 
-        colorutils.setColorMode((RGBWW_COLORMODE) color.getOutputmode());
+        colorutils.setColorMode((RGBWW_COLORMODE) color.getColorMode());
         colorutils.setHSVmodel((RGBWW_HSVMODEL) color.hsv.getModel());
 
         colorutils.setWhiteTemperature(

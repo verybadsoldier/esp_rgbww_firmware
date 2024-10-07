@@ -5,3 +5,7 @@
 [submodule "Components/RGBWWLed"]
 	path = Components/RGBWWLed
 	url = https://github.com/verybadsoldier/RGBWWLed.git
+[submodule "ConfigDB"]
+	path = Components/ConfigDB
+	url = https://github.com/mikee47/ConfigDB.git
+	branch = develop

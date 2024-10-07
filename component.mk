@@ -1,7 +1,7 @@
 COMPONENT_SEARCH_DIRS := $(PROJECT_DIR)/Components
 COMPONENT_DEPENDS += MDNS RGBWWLed LittleFS ConfigDB ArduinoJson6 OtaNetwork
 #ARDUINO_LIBRARIES := RGBWWLed ArduinoJson6 OtaNetwork
-ARDUINO_LIBRARIES :) RGBWWLed
+ARDUINO_LIBRARIES := RGBWWLed
 
 # GLOBAL_CFLAGS += \
 #  -DIP_REASSEMBLY=1 \
@@ -46,11 +46,15 @@ ENABLE_CUSTOM_PWM = 0
 //COM_SPEED = 2000000
 //COM_PORT=/dev/ttyUSB0
 //COM_PORT=/dev/ttyACM0
-COM_PORT=""
 
+$(info COM_PORT is $(COM_PORT))
 ifeq ($(SMING_ARCH), Esp8266)
-  COM_PORT=/dev/serial/by-id/usb-1a86_USB_Single_Serial_5647014434-if00
-	COM_SPEED = 921600
+	ifeq ($(COM_PORT), "")
+		COM_PORT=/dev/serial/by-id/usb-1a86_USB_Single_Serial_5647014434-if00
+	endif
+	ifeq ($(COM_SPEEED), "")
+		COM_SPEED = 921600
+	endif
   $(info COM_PORT is $(COM_PORT)@$(COM_SPEED) for $(SMING_ARCH))
   else ifeq ($(SMING_ARCH), Esp32)
   COM_PORT=/dev/serial/by-id/usb-1a86_USB_Single_Serial_5647022450-if00

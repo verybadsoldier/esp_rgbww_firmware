@@ -3,55 +3,70 @@
   "type": "object",
   "store":"json",
   "$defs":{
-    "RAW": {
-        "type": "object",
-        "properties": {
-            "ww": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 1023
-            },
-            "r": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 1023
-            },
-            "b": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 1023
-            },
-            "cw": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 1023
-            },
-            "g": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 1023
-            }
+    "raw": {
+      "type": "object",
+      "properties": {
+        "ww": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1023,
+            "alias":"warmwhite"
+        },
+        "r": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1023,
+            "alias":"red"
+        },
+        "b": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1023,
+            "alias":"blue"
+        },
+        "cw": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1023,
+            "alias":"coldwhite"
+        },
+        "g": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1023,
+            "alias":"green"
         }
+      }
     },
-    "HSV": {
-        "type": "object",
-        "properties": {
-            "s": {
-                "type": "number",
-                "minimum": 0,
-                "maximum": 100
-            },
-            "v": {
-                "type": "number",
-                "minimum": 0,
-                "maximum": 100
-            },
-            "h": {
-                "type": "number",
-                "minimum": 0,
-                "maximum": 359
-            }
+    "hsv": {
+      "type": "object",
+      "properties": {
+        "s": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "alias":"sat"
+        },
+        "v": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "alias":"val"
+        },
+        "h": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 359,
+            "alias":"hue"
         }
+      }
+    },
+    "color":{
+      "oneOf":
+        [
+          {"$ref":"#/$defs/hsv"},
+          {"$ref":"#/$defs/raw"}
+      ]
     },
     "channel": {
         "type":"object",
@@ -77,16 +92,18 @@
           "name": {
             "type": "string"
           },
-          "color":{
-            "oneOf":
-              [
-                {"$ref":"#/$defs/HSV"},
-                {"$ref":"#/$defs/RAW"}
-            ]
-            
+          "color": {
+            "$ref":"#/$defs/color"
           },
           "ts": {
             "type": "integer"
+          },
+          "id":{
+            "type":"integer"
+          },
+          "favorite":{
+            "type":"boolean",
+            "default":false
           }
         }
       }
@@ -97,6 +114,9 @@
       "items": {
         "type": "object",
         "properties": {
+          "id":{
+            "type":"integer"
+          },
           "ip": {
             "type": "string"
           },
@@ -105,6 +125,32 @@
           },
           "last-seen": {
             "type": "integer"
+          }
+        }
+      }
+    },
+    "scenes":{
+      "type":"array",
+      "store":"json",
+      "items":{
+        "type":"object",
+        "properties":{
+          "name":{
+            "type":"string"
+          },
+          "settings":{
+            "type":"array",
+            "items":{
+              "type":"object",
+              "properties":{
+                "controller_id":{
+                  "type":"integer"
+                },
+                "color": {
+                  "$ref":"#/$defs/color"
+                }
+              }
+            }
           }
         }
       }

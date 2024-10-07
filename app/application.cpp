@@ -170,6 +170,7 @@ void Application::init() {
     Serial.print("\r\n");
     // ConfigDB obsoleted debug_i("going to initialize config");
     // ConfigDB obsoleted config::initializeConfig(cfg); // initialize the config structure if necessary
+    Serial.printf("ESP RGBWW Controller Version %s\r\n", fw_git_version);
 #if defined(ARCH_ESP8266) || defined(ESP32)
     app.ota.checkAtBoot();
 #endif
@@ -215,7 +216,7 @@ void Application::init() {
 
     //load settings
     _uptimetimer.initializeMs(60000, TimerDelegate(&Application::uptimeCounter, this)).start();
-    _checkRamTimer.initializeMs(500, TimerDelegate(&Application::checkRam, this)).start();
+    _checkRamTimer.initializeMs(2000, TimerDelegate(&Application::checkRam, this)).start();
 #ifdef ARCH_ESP8266
     // load boot information
     uint8 bootmode, bootslot;
@@ -288,8 +289,10 @@ void Application::init() {
             debug_i("application init => reading config");
             //cfg.load(); 
 
-            Serial << "* reading default config flash string *" << endl << default_config << endl;
             //Serial << "* reading default config flash string *" << endl << default_config << endl;
+
+            //Serial << "* reading default config flash string *" << endl << default_config << endl;
+           	//auto configStream = new FSTR::Stream(CONTENT_default_config);
             //cfg->importFromStream(ConfigDB::Json::format, *configStream);
             debug_i("application init => config loaded, pin config %s",general.getPinConfig().c_str());  
             debug_i("Application::init - first run");
@@ -321,7 +324,33 @@ void Application::init() {
     // initialize webserver
 
     app.webserver.init();
+    
+    // ConfigDB: temp only: create an example preset
+    {
+        AppData::Presets::OuterUpdater presets(*data);
 
+        presets.clear();
+
+        auto preset=presets.addItem();
+        preset.setName("example-hsv");
+        preset.setFavorite(true);
+        auto hsvUpdater = preset.color.toHsv();
+        hsvUpdater.setH(0);
+        hsvUpdater.setS(100);
+        hsvUpdater.setV(100);
+    }
+    {
+        AppData::Presets::OuterUpdater presets(*data);
+        auto preset=presets.addItem();
+        preset.setName("example-raw");
+        auto rawUpdater = preset.color.toRaw();
+        rawUpdater.setR(255);
+        rawUpdater.setG(255);
+        rawUpdater.setB(255);
+        rawUpdater.setWw(255);
+        rawUpdater.setCw(255);
+    }
+    
 }
 void Application::initButtons(){
     Vector<String> buttons;

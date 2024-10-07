@@ -491,7 +491,7 @@ bool ApplicationOTA::switchPartition(uint8_t slot){
         return false;
     }
 }
-//#endif
+#endif
 
 void ApplicationOTA::saveStatus(OTASTATUS status) {
     debug_i("ApplicationOTA::saveStatus %i to rom partition rom%i\n",status,app.getRomSlot());

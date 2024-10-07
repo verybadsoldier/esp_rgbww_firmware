@@ -96,6 +96,8 @@ void ApplicationWebserver::init() {
     paths.set(F("/connect"), HttpPathDelegate(&ApplicationWebserver::onConnect, this));
     paths.set(F("/ping"), HttpPathDelegate(&ApplicationWebserver::onPing, this));
     paths.set(F("/hosts"), HttpPathDelegate(&ApplicationWebserver::onHosts, this));
+    paths.set(F("/presets"), HttpPathDelegate(&ApplicationWebserver::onPresets, this));
+    paths.set(F("/scenes"), HttpPathDelegate(&ApplicationWebserver::onScenes, this));
     paths.set(F("/object"), HttpPathDelegate(&ApplicationWebserver::onObject, this));
     // animation controls
     paths.set(F("/stop"), HttpPathDelegate(&ApplicationWebserver::onStop, this));
@@ -370,9 +372,7 @@ bool ApplicationWebserver::checkHeap(HttpResponse &response) {
     return true;
 }
 
-/*
 
-*/
 void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response) {
     debug_i("onConfig");
     if (!checkHeap(response))
@@ -389,7 +389,6 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
     }
 #endif
     
-
     if (request.method != HTTP_POST && request.method != HTTP_GET && request.method!=HTTP_OPTIONS) {
         sendApiCode(response, API_CODES::API_BAD_REQUEST, F("not POST, GET or OPTIONS request"));
         return;
@@ -452,6 +451,8 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
 					//json[F("data")] = "restart";
 				}
             }
+            //bodyStream->seekOrigin(0,SeekOrigin::Start);
+            //app.wsBroadcast(F("config"),bodyStream->moveString());
             /* ConfigDB ToDo
             if (color_updated) {
                 debug_d("ApplicationWebserver::onConfig color settings changed - refreshing");
@@ -469,6 +470,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
             app.cfg.save();
             JsonObject root = doc.as<JsonObject>();
             */
+            setCorsHeaders(response);
             sendApiCode(response, API_CODES::API_SUCCESS);
         } else {
             //CofigDB provide correct error message
@@ -476,12 +478,14 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
             //debug_i("config api error %s",error_msg.c_str());
             //JsonObject root = doc.as<JsonObject>();
             //sendApiCode(response, API_CODES::API_MISSING_PARAM, error_msg);
+            setCorsHeaders(response);
             sendApiCode(response, API_CODES::API_MISSING_PARAM);
         }
     } else {
         /*
          * /config GET
          */
+        setCorsHeaders(response);
         auto configStream=app.cfg->createExportStream(ConfigDB::Json::format);
 	    response.sendDataStream(configStream.release(), MIME_JSON);
     
@@ -1223,6 +1227,41 @@ void ApplicationWebserver::onHosts(HttpRequest &request, HttpResponse &response)
     return;
 }
 
+void ApplicationWebserver::onPresets(HttpRequest &request, HttpResponse &response){
+    if (request.method != HTTP_GET && request.method!=HTTP_OPTIONS &&request.method != HTTP_POST) {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not GET, POST or OPTIONS request");
+        return;
+    }
+    
+    if (request.method == HTTP_OPTIONS){
+        // probably a CORS request
+        sendApiCode(response,API_CODES::API_SUCCESS,"");
+        debug_i("HTTP_OPTIONS Request, sent API_SUCCSSS");
+        return;
+    }
+    
+    if (request.method == HTTP_GET) {
+        // Set the response body with the JSON
+        debug_i("/presets GET request received, ");
+        setCorsHeaders(response);
+        response.setContentType(F("application/json"));
+        auto presetStream=app.data->createExportStream(ConfigDB::Json::format,F("presets"));
+        response.sendDataStream(presetStream.release(), MIME_JSON);
+        return;
+    }
+
+    if (request.method == HTTP_POST) {
+        debug_i("/presets POST request received, ");
+        auto bodyStream = request.getBodyStream();
+        if(bodyStream){
+            ConfigDB::Status status = app.data->importFromStream(ConfigDB::Json::format, *bodyStream);
+        }        
+        return;
+    }
+}
+void ApplicationWebserver::onScenes(HttpRequest &request, HttpResponse &response){
+
+}
  void ApplicationWebserver::onObject(HttpRequest &request, HttpResponse &response){
     if (request.method == HTTP_OPTIONS){
         // probably a CORS request

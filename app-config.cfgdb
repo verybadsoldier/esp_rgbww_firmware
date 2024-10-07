@@ -3,7 +3,7 @@
   "type": "object",
   "store":"json",
   "$defs":{
-    "RAW": {
+    "raw": {
         "type": "object",
         "properties": {
             "ww": {
@@ -33,7 +33,7 @@
             }
         }
     },
-    "HSV": {
+    "hsv": {
         "type": "object",
         "properties": {
             "s": {
@@ -78,7 +78,7 @@
         },
         "device_name": {
           "type": "string",
-          "default":"mrpj"
+          "default":""
         },
         "buttons_debounce_ms": {
           "type": "integer",
@@ -106,11 +106,20 @@
             "items":{
                 "type":"string"
             },
-            "default":["RGB", "RGBW", "RGBWW", "RAW"]
+            "default":["RGB", "RGBW", "RGBWW", "RGBWWCW"]
         },
         "current_pin_config_name":{
           "type":"string",
           "default":"mrpj"
+        }
+      }
+    },
+    "ota":{
+      "type":"object",
+      "properties":{
+        "url":{
+          "type":"string",
+          "default":"http://lightinator.de/version.json"
         }
       }
     },
@@ -172,9 +181,10 @@
             }
           }
         },
-        "outputmode": {
+        "color_mode": {
           "type": "integer",
-          "default":0
+          "default":0,
+          "alias":[ "outputmode", "colormode"]
         },
         "hsv": {
           "type": "object",
@@ -208,14 +218,6 @@
               "default":0
             }
           }
-        }
-      }
-    },
-    "ota": {
-      "type": "object",
-      "properties": {
-        "url": {
-          "type": "string"
         }
       }
     },
@@ -282,7 +284,8 @@
         },
         "trans_fin_interval_ms": {
           "type": "integer",
-          "default":1000
+          "default":1000,
+          "alias":"transfin_interval_ms"
         },
         "server_enabled": {
           "type": "boolean",
