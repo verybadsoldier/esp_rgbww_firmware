@@ -179,6 +179,14 @@ void Application::init() {
     #ifdef ARCH_ESP8266
         debug_i("Platform: Esp8266\r\n");
     #endif
+    #ifdef ARCH_ESP32
+        #ifdef __riscv
+            debug_i("Platform: Esp32 RISC-V (Esp32c3)\r\n");
+        #else
+            debug_i("Platform: Esp32\r\n");
+        #endif
+    #endif
+
     debug_i("Application::init - partition scheme: %s\r\n", fw_part_layout);
 
 #if defined(ARCH_ESP8266) //|| defined(ESP32)

@@ -116,6 +116,7 @@ void APPLedCtrl::init() {
         AppConfig::General general(*app.cfg);
         if(general.channels.getItemCount()!=0){
             // prefer the channels config
+            debug_i("cannels array configured");
             for(unsigned int i=0;i<general.channels.getItemCount();i++){
                 if(general.channels[i].getName() == "red"){
                     pins.red = general.channels[i].getPin();
@@ -129,12 +130,46 @@ void APPLedCtrl::init() {
                     pins.coldwhite = general.channels[i].getPin();
                 }
             }
-        }else{
-            //fall back on the old pin config string if necessary
-            pins = APPLedCtrl::parsePinConfigString(general.getPinConfig());
         }
-    }
-    debug_i("APPLedCtrl::init - initializing RGBWWLed");
+        else{
+            //fall back on the old pin config string if necessary
+            debug_i("no channels array configured");
+            pins = APPLedCtrl::parsePinConfigString(general.getPinConfig());
+            //populate the pin array for next time
+            if(auto generalUpdate=general.update()){ 
+                {
+                    auto pin=generalUpdate.channels.addItem();
+                    pin.setName("red");
+                    pin.setPin(pins.red);
+                }
+                {
+                    auto pin=generalUpdate.channels.addItem();
+                    pin.setName("green");
+                    pin.setPin(pins.green);
+                }
+                {
+                    auto pin=generalUpdate.channels.addItem();
+                    pin.setName("blue");
+                    pin.setPin(pins.blue);
+                }
+                {
+                    auto pin=generalUpdate.channels.addItem();
+                    pin.setName("warmwhite");
+                    pin.setPin(pins.warmwhite);
+                }
+                {
+                    auto pin=generalUpdate.channels.addItem();
+                    pin.setName("coldwhite");
+                    pin.setPin(pins.coldwhite);
+                }
+            } // end AppConfig::General::update context
+            else{
+                debug_e("APPLedCtrl::init - failed to update pin config");
+            }
+        }
+    } //end ConfigDB::General context
+
+    debug_i("APPLedCtrl::init - initializing RGBWWLed\n   red: %i | green: %i | blue: %i | warmwhite: %i | coldwhite: %i", pins.red, pins.green, pins.blue, pins.warmwhite, pins.coldwhite);
     RGBWWLed::init(pins.red, pins.green, pins.blue, pins.warmwhite, pins.coldwhite, PWM_FREQUENCY);
 
     setup();
@@ -143,8 +178,8 @@ void APPLedCtrl::init() {
     {
         debug_i("APPLedCtrl::init - reading startup color");
         AppConfig::Color color(*app.cfg);
-        if (color.getStartupColor() == "last") {
-            colorStorage.load();
+        if (color.getStartupColor() == "last") { 
+            colorStorage.load(true); //pj debug
             debug_i("H: %i | s: %i | v: %i | ct: %i", colorStorage.current.h, colorStorage.current.s, colorStorage.current.v, colorStorage.current.ct);
 
             startupColor = colorStorage.current;
@@ -183,6 +218,7 @@ void APPLedCtrl::reconfigure() {
         AppConfig::Color color(*app.cfg);
         startupColorLast=(color.getStartupColor() == "last");
     } //close configdb context for color
+
  }
 /**
  * @brief Initializes the LED controller.
@@ -216,6 +252,7 @@ void APPLedCtrl::setup() {
 
         colorutils.setColorMode((RGBWW_COLORMODE) color.getColorMode());
         colorutils.setHSVmodel((RGBWW_HSVMODEL) color.hsv.getModel());
+        debug_i("set RGBWW_COLORMOD %i and RGBWW_HSVMODEL %i", color.getColorMode(), color.hsv.getModel());
 
         colorutils.setWhiteTemperature(
             color.colortemp.getWw(),
@@ -414,6 +451,7 @@ void APPLedCtrl::start() {
 
     _ledTimer.setCallback(APPLedCtrl::updateLedCb, this);
     _ledTimer.setIntervalMs(_timerInterval);
+    debug_i("_timerInterval", _timerInterval);
     _ledTimer.startOnce();
 }
 

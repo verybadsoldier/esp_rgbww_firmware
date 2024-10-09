@@ -33,9 +33,11 @@ bool JsonProcessor::onColor(const String& json, String& msg, bool relay) {
 bool JsonProcessor::onColor(JsonObject root, String& msg, bool relay) {
     bool result = false;
     auto cmds = root[F("cmds")].as<JsonArray>();
+    debug_i("JsonProcessor::onColor");
     if (!cmds.isNull()) {
         Vector<String> errors;
         // multi command post (needs testing)
+        debug_i("  multi command post");
         for(unsigned i=0; i < cmds.size(); ++i) {
             String msg;
             if (!onSingleColorCommand(cmds[i], msg))
@@ -46,12 +48,14 @@ bool JsonProcessor::onColor(JsonObject root, String& msg, bool relay) {
             result = true;
         else {
             String msg;
+            debug_i("  multi command post, %s", msg.c_str());
             for (unsigned i=0; i < errors.size(); ++i)
                 msg += errors[i] + "|";
             result = false;
         }
     }
     else {
+        debug_i("  single command post %s",msg.c_str());
         if (onSingleColorCommand(root, msg))
             result = true;
         else
@@ -338,17 +342,21 @@ bool JsonProcessor::onSingleColorCommand(JsonObject root, String& errorMsg) {
 
     bool queueOk = false;
     if (params.mode == RequestParameters::Mode::Hsv) {
+        debug_i("got hsv command");
         if(!params.hasHsvFrom) {
+            debug_i("   enqueueing hsv command");
             if (params.cmd == "fade") {
                 queueOk = app.rgbwwctrl.fadeHSV(params.hsv, params.ramp, params.direction, params.queue, params.requeue, params.name);
             } else {
                 queueOk = app.rgbwwctrl.setHSV(params.hsv, params.ramp.value, params.queue, params.requeue, params.name);
             }
         } else {
+            debug_i("   executing hsv command");
             app.rgbwwctrl.fadeHSV(params.hsvFrom, params.hsv, params.ramp, params.direction, params.queue);
         }
     } else if (params.mode == RequestParameters::Mode::Raw) {
         if(!params.hasRawFrom) {
+            debug_i("got raw command");
             if (params.cmd == "fade") {
                 queueOk = app.rgbwwctrl.fadeRAW(params.raw, params.ramp, params.queue);
             } else {
@@ -359,11 +367,14 @@ bool JsonProcessor::onSingleColorCommand(JsonObject root, String& errorMsg) {
         }
     } else {
         errorMsg = "No color object!";
+        debug_i("no color object");
         return false;
     }
 
-    if (!queueOk)
+    if (!queueOk){
+        debug_i("queue full");
         errorMsg = "Queue full";
+    }
     return queueOk;
 }
 
