@@ -289,22 +289,17 @@ void APPLedCtrl::publishToEventServer() {
  * @note This function does nothing if the color master is disabled.
  */
 void APPLedCtrl::publishToMqtt() {
-    /* 
-     * ToDo: this is called frequently, it might be good to hold this config in app directly
-     */
+    debug_i("APPLedCtrl::publishToMqtt");
+    if (colorMaster)
     {
-        debug_i("APPLedCtrl::publishToMqtt");
-        AppConfig::Sync sync(*app.cfg);
-        if (!colorMaster)
-        return;
-    }
-    switch(_mode) {
-    case ColorMode::Hsv:
-        app.mqttclient.publishCurrentHsv(getCurrentColor());
-        break;
-    case ColorMode::Raw:
-        app.mqttclient.publishCurrentRaw(getCurrentOutput());
-        break;
+        switch(_mode) {
+        case ColorMode::Hsv:
+            app.mqttclient.publishCurrentHsv(getCurrentColor());
+            break;
+        case ColorMode::Raw:
+            app.mqttclient.publishCurrentRaw(getCurrentOutput());
+            break;
+        }
     }
 }
 
@@ -331,11 +326,14 @@ void APPLedCtrl::updateLed() {
 
     ++_stepCounter;
     
-        if (clockMaster) {
-            if ((_stepCounter % clockMasterInterval * RGBWW_UPDATEFREQUENCY) == 0) {
-                app.mqttclient.publishClock(_stepCounter);
-            }
+    // publish _stepCounter if this is the clockMaster
+    if (clockMaster) {
+        if ((_stepCounter % clockMasterInterval * RGBWW_UPDATEFREQUENCY) == 0) {
+            app.mqttclient.publishClock(_stepCounter);
         }
+    }
+
+    //
     const static uint32_t stepLenMs = 1000 / RGBWW_UPDATEFREQUENCY;
     if (colorMasterInterval >= 0) {
         if (animFinished || colorMasterInterval == 0 ||

@@ -2,87 +2,10 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "store":"json",
-  "$defs":{
-    "raw": {
-      "type": "object",
-      "properties": {
-        "ww": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 1023,
-            "alias":"warmwhite"
-        },
-        "r": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 1023,
-            "alias":"red"
-        },
-        "b": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 1023,
-            "alias":"blue"
-        },
-        "cw": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 1023,
-            "alias":"coldwhite"
-        },
-        "g": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 1023,
-            "alias":"green"
-        }
-      }
-    },
-    "hsv": {
-      "type": "object",
-      "properties": {
-        "s": {
-            "type": "number",
-            "minimum": 0,
-            "maximum": 100,
-            "alias":"sat"
-        },
-        "v": {
-            "type": "number",
-            "minimum": 0,
-            "maximum": 100,
-            "alias":"val"
-        },
-        "h": {
-            "type": "number",
-            "minimum": 0,
-            "maximum": 359,
-            "alias":"hue"
-        }
-      }
-    },
-    "color":{
-      "oneOf":
-        [
-          {"$ref":"#/$defs/hsv"},
-          {"$ref":"#/$defs/raw"}
-      ]
-    },
-    "channel": {
-        "type":"object",
-        "properties":{
-            "pin":{
-                "type":"integer",
-                "minimum":0,
-                "maximum":255
-            },
-            "name":{
-                "type":"string"
-            }
-        }
-    }
-  },
   "properties": {
+    "last-color":{
+      "$ref":"defs/$defs/hsvct"
+    },
     "presets": {
       "type": "array",
       "store":"json",
@@ -93,7 +16,7 @@
             "type": "string"
           },
           "color": {
-            "$ref":"#/$defs/color"
+            "$ref":"defs/$defs/color"
           },
           "ts": {
             "type": "integer"
@@ -147,7 +70,7 @@
                   "type":"integer"
                 },
                 "color": {
-                  "$ref":"#/$defs/color"
+                  "$ref":"defs/$defs/color"
                 }
               }
             }

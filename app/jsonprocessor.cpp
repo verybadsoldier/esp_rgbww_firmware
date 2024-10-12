@@ -33,7 +33,6 @@ bool JsonProcessor::onColor(const String& json, String& msg, bool relay) {
 bool JsonProcessor::onColor(JsonObject root, String& msg, bool relay) {
     bool result = false;
     auto cmds = root[F("cmds")].as<JsonArray>();
-    debug_i("JsonProcessor::onColor");
     if (!cmds.isNull()) {
         Vector<String> errors;
         // multi command post (needs testing)

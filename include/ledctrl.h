@@ -39,35 +39,34 @@ struct PinConfig {
 struct ColorStorage {
     HSVCT current;
     void load(bool print = false) {
-    	StaticJsonDocument<128> doc;
-        if (Json::loadFromFile(doc, APP_COLOR_FILE)) {
-            JsonObject root = doc.as<JsonObject>();
-            current.h = root[F("h")];
-            current.s = root[F("s")];
-            current.v = root[F("v")];
-            current.ct = root[F("ct")];
-            if (print) {
-            	Json::serialize(root, Serial, Json::Pretty);
-            }
+        ConfigDB::Root data(*app.data);
+
+        durrent.h=data.lastColor.getH();
+        current.s=data.lastColor.getS();
+        current.v=data.lastColor.getV();
+        current.ct=data.lastColor.getCt();
+        if (print) {
+            printf("H: %i | s: %i | v: %i | ct: %i\n", current.h, current.s, current.v, current.ct);
         }
     }
 
     void save(bool print = false) {
         debug_d("Saving ColorStorage to file...");
-        StaticJsonDocument<256> doc;
-        JsonObject root = doc.to<JsonObject>();
-        root[F("h")] = current.h;
-        root[F("s")] = current.s;
-        root[F("v")] = current.v;
-        root[F("ct")] = current.ct;
-        if (print) {
-        	Json::serialize(root, Serial, Json::Pretty);
+        ConfigDB::Root data(*app.data);
+        {
+            ConfigDB::Update update(data);
+            update.lastColor.setH(current.h);
+            update.lastColor.setS(current.s);
+            update.lastColor.setV(current.v);
+            update.lastColor.setCt(current.ct);
         }
-        Json::saveToFile(root, APP_COLOR_FILE);
+        if (print) {
+            printf("H: %i | s: %i | v: %i | ct: %i\n", current.h, current.s, current.v, current.ct);
+        }
     }
 
     bool exist() {
-        return fileExist(APP_COLOR_FILE);
+        return true;
     }
 };
 
@@ -129,7 +128,6 @@ private:
              transFinInterval,
              colorMasterInterval,
              colorMinInterval;
-    ColorStorage colorStorage;
 
     HSVCT _lastHsvct;
     ChannelOutput _lastOutput;

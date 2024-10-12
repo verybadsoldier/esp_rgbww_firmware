@@ -679,11 +679,12 @@ void ApplicationWebserver::onColor(HttpRequest &request, HttpResponse &response)
     if (request.method == HTTP_POST) {
         debug_i("POST");
         ApplicationWebserver::onColorPost(request, response);
-    } else {
+    } else if (request.method == HTTP_GET) {
         debug_i("GET");
         ApplicationWebserver::onColorGet(request, response);
+    } else{
+        debug_i("found unimplementd http_method %i",(int)request.method);
     }
-    debug_i("found method %i",(int)request.method);
 }
 
 /**

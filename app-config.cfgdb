@@ -2,71 +2,6 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "store":"json",
-  "$defs":{
-    "raw": {
-        "type": "object",
-        "properties": {
-            "ww": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 1023
-            },
-            "r": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 1023
-            },
-            "b": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 1023
-            },
-            "cw": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 1023
-            },
-            "g": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 1023
-            }
-        }
-    },
-    "hsv": {
-        "type": "object",
-        "properties": {
-            "s": {
-                "type": "number",
-                "minimum": 0,
-                "maximum": 100
-            },
-            "v": {
-                "type": "number",
-                "minimum": 0,
-                "maximum": 100
-            },
-            "h": {
-                "type": "number",
-                "minimum": 0,
-                "maximum": 359
-            }
-        }
-    },
-    "channel": {
-        "type":"object",
-        "properties":{
-            "pin":{
-                "type":"integer",
-                "minimum":0,
-                "maximum":255
-            },
-            "name":{
-                "type":"string"
-            }
-        }
-    }
-  },
   "properties": {
     "general": {
       "type": "object",
@@ -98,7 +33,7 @@
         "channels":{
             "type":"array",
             "items":{
-                "$ref":"#/$defs/channel"
+                "$ref":"defs/$defs/channel"
             }
         },
         "supported_color_models":{
