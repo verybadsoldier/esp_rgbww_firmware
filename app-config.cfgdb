@@ -1,11 +1,11 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
-  "store":"json",
+  "store":true,
   "properties": {
     "general": {
       "type": "object",
-      "store":"json",
+      "store":true,
       "properties": {
           "is_initialized":{
           "type":"boolean",
@@ -72,7 +72,7 @@
     },
     "color": {
       "type": "object",
-      "store":"json",
+      "store":true,
       "properties": {
         "startup_color": {
           "type": "string",
@@ -158,7 +158,7 @@
     },
     "sync": {
       "type": "object",
-      "store":"json",
+      "store":true,
       "properties": {
         "cmd_master_enabled": {
           "type": "boolean",
@@ -230,7 +230,7 @@
     },
     "network": {
       "type": "object",
-      "store":"json",
+      "store":true,
       "properties": {
         "mqtt": {
           "type": "object",

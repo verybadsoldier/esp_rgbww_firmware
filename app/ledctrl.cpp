@@ -179,10 +179,13 @@ void APPLedCtrl::init() {
         debug_i("APPLedCtrl::init - reading startup color");
         AppConfig::Color color(*app.cfg);
         if (color.getStartupColor() == "last") { 
-            colorStorage.load(true); //pj debug
-            debug_i("H: %i | s: %i | v: %i | ct: %i", colorStorage.current.h, colorStorage.current.s, colorStorage.current.v, colorStorage.current.ct);
+            AppData::Root data(*app.data);
+            debug_i("H: %i | s: %i | v: %i | ct: %i", data.lastColor.getH(), data.lastColor.getS(), data.lastColor.getV(), data.lastColor.getCt());
 
-            startupColor = colorStorage.current;
+            startupColor.h=data.lastColor.getH();
+            startupColor.s=data.lastColor.getS();
+            startupColor.v=data.lastColor.getV();
+            startupColor.ct=data.lastColor.getCt();
         } else {
             // interpret as color string
             String tempStartupColor = color.getStartupColor();
@@ -203,8 +206,8 @@ void APPLedCtrl::reconfigure() {
     debug_i("APPLedCtrl::reconfigure");
     {
         AppConfig::Sync sync(*app.cfg);
-        clockMaster         = sync.getColorMasterEnabled();
-        clockMasterInterval = sync.getColorMasterIntervalMs();
+        clockMaster         = sync.getClockMasterEnabled();
+        clockMasterInterval = sync.getClockMasterInterval();
         colorMaster         = sync.getColorMasterEnabled();
         colorMasterInterval = sync.getColorMasterIntervalMs();
         
@@ -333,8 +336,8 @@ void APPLedCtrl::updateLed() {
         }
     }
 
-    //
     const static uint32_t stepLenMs = 1000 / RGBWW_UPDATEFREQUENCY;
+    
     if (colorMasterInterval >= 0) {
         if (animFinished || colorMasterInterval == 0 ||
                 ((stepLenMs * _stepCounter) % colorMasterInterval) < stepLenMs) {
@@ -356,12 +359,13 @@ void APPLedCtrl::updateLed() {
     }
     
     checkStableColorState();
-        if (transFinInterval >= 0) {
-            if (transFinInterval == 0 ||
-                    ((stepLenMs * _stepCounter) % transFinInterval) < stepLenMs) {
-                publishFinishedStepAnimations();
-            }
+
+    if (transFinInterval >= 0) {
+        if (transFinInterval == 0 ||
+                ((stepLenMs * _stepCounter) % transFinInterval) < stepLenMs) {
+            publishFinishedStepAnimations();
         }
+    }
 }
 
 /**
@@ -459,17 +463,27 @@ void APPLedCtrl::stop() {
 }
 
 void APPLedCtrl::colorSave() {
-    colorStorage.current = getCurrentColor();
-    colorStorage.save();
+    AppData::Root data(*app.data);
+    {
+        auto update = data.update();
+        auto current= getCurrentColor();
+        update.lastColor.setH(current.h);
+        update.lastColor.setS(current.s);
+        update.lastColor.setV(current.v);
+        update.lastColor.setCt(current.ct);
+    }
 }
 
 void APPLedCtrl::colorReset() {
     debug_i("APPLedCtrl::colorReset");
-    colorStorage.current.h = 0;
-    colorStorage.current.s = 0;
-    colorStorage.current.v = 0;
-    colorStorage.current.ct = 0;
-    colorStorage.save();
+    AppData::Root data(*app.data);
+    {
+        auto update = data.update();
+        update.lastColor.setH(0);
+        update.lastColor.setS(0);
+        update.lastColor.setV(0);
+        update.lastColor.setCt(0);
+    }
 }
 
 void APPLedCtrl::onAnimationFinished(const String& name, bool requeued) {

@@ -36,39 +36,6 @@ struct PinConfig {
     int coldwhite;
 };
 
-struct ColorStorage {
-    HSVCT current;
-    void load(bool print = false) {
-        ConfigDB::Root data(*app.data);
-
-        durrent.h=data.lastColor.getH();
-        current.s=data.lastColor.getS();
-        current.v=data.lastColor.getV();
-        current.ct=data.lastColor.getCt();
-        if (print) {
-            printf("H: %i | s: %i | v: %i | ct: %i\n", current.h, current.s, current.v, current.ct);
-        }
-    }
-
-    void save(bool print = false) {
-        debug_d("Saving ColorStorage to file...");
-        ConfigDB::Root data(*app.data);
-        {
-            ConfigDB::Update update(data);
-            update.lastColor.setH(current.h);
-            update.lastColor.setS(current.s);
-            update.lastColor.setV(current.v);
-            update.lastColor.setCt(current.ct);
-        }
-        if (print) {
-            printf("H: %i | s: %i | v: %i | ct: %i\n", current.h, current.s, current.v, current.ct);
-        }
-    }
-
-    bool exist() {
-        return true;
-    }
-};
 
 class APPLedCtrl: public RGBWWLed {
 
