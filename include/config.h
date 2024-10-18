@@ -67,8 +67,10 @@ void sanitizeValues() {
     
 }
 */
+/* 
 namespace config{
 inline void initializeConfig(AppConfig& cfg){
 //this may not even be needed, initialization is done by either defaults or by loading from storage
 }
 }//namespace config
+*/  

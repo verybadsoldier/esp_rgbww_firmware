@@ -1,7 +1,6 @@
 COMPONENT_SEARCH_DIRS := $(PROJECT_DIR)/Components
-COMPONENT_DEPENDS += MDNS RGBWWLed LittleFS ConfigDB ArduinoJson6 OtaNetwork
+COMPONENT_DEPENDS += MDNS RGBWWLed LittleFS ConfigDB ArduinoJson6 OtaNetwork HueEmulator
 #ARDUINO_LIBRARIES := RGBWWLed ArduinoJson6 OtaNetwork
-ARDUINO_LIBRARIES := RGBWWLed
 
 # GLOBAL_CFLAGS += \
 #  -DIP_REASSEMBLY=1 \
