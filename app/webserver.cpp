@@ -136,7 +136,7 @@ void ApplicationWebserver::wsBroadcast(String message){
     HttpConnection *connection = nullptr;
     String remoteIP;
     auto tcpConnections=getConnections();
-    debug_i("=== Websocket Broadcast ===\n%s",message.c_str());
+    debug_i("=== Websocket Broadcast === -> %s",message.c_str());
     debug_i("===>nr of tcpConnections: %i", tcpConnections.size());
     for(auto& connection : tcpConnections) { // Iterate over all active sockets
         remoteIP=String(connection->getRemoteIp().toString());
@@ -616,6 +616,7 @@ void ApplicationWebserver::onColorGet(HttpRequest &request, HttpResponse &respon
  */
 void ApplicationWebserver::onColorPost(HttpRequest &request, HttpResponse &response) {
     String body = request.getBody();
+
     setCorsHeaders(response);
     response.setHeader(F("Access-Control-Allow-Methods"),F("GET, PUT, POST, OPTIONS"));
     response.setHeader(F("Access-Control-Allow-Credentials"),F("true"));

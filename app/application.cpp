@@ -170,12 +170,8 @@ void Application::init() {
     Serial.print("\r\n");
     // ConfigDB obsoleted debug_i("going to initialize config");
     // ConfigDB obsoleted config::initializeConfig(cfg); // initialize the config structure if necessary
-    Serial.printf("ESP RGBWW Controller Version %s\r\n", fw_git_version);
-#if defined(ARCH_ESP8266) || defined(ESP32)
-    app.ota.checkAtBoot();
-#endif
-
-    debug_i("RGBWW Controller v %s\r\n", fw_git_version);
+    debug_i("ESP RGBWW Controller Version %s\r\n", fw_git_version);
+    debug_i("Sming Version: %s\r\n", sming_git_version);
     #ifdef ARCH_ESP8266
         debug_i("Platform: Esp8266\r\n");
     #endif
@@ -187,7 +183,9 @@ void Application::init() {
         #endif
     #endif
 
-    debug_i("Application::init - partition scheme: %s\r\n", fw_part_layout);
+#if defined(ARCH_ESP8266) || defined(ESP32)
+    app.ota.checkAtBoot();
+#endif
 
 #if defined(ARCH_ESP8266) //|| defined(ESP32)
     /*
