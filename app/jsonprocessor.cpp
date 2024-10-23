@@ -341,21 +341,17 @@ bool JsonProcessor::onSingleColorCommand(JsonObject root, String& errorMsg) {
 
     bool queueOk = false;
     if (params.mode == RequestParameters::Mode::Hsv) {
-        debug_i("got hsv command");
         if(!params.hasHsvFrom) {
-            debug_i("   enqueueing hsv command");
             if (params.cmd == "fade") {
                 queueOk = app.rgbwwctrl.fadeHSV(params.hsv, params.ramp, params.direction, params.queue, params.requeue, params.name);
             } else {
                 queueOk = app.rgbwwctrl.setHSV(params.hsv, params.ramp.value, params.queue, params.requeue, params.name);
             }
         } else {
-            debug_i("   executing hsv command");
             app.rgbwwctrl.fadeHSV(params.hsvFrom, params.hsv, params.ramp, params.direction, params.queue);
         }
     } else if (params.mode == RequestParameters::Mode::Raw) {
         if(!params.hasRawFrom) {
-            debug_i("got raw command");
             if (params.cmd == "fade") {
                 queueOk = app.rgbwwctrl.fadeRAW(params.raw, params.ramp, params.queue);
             } else {

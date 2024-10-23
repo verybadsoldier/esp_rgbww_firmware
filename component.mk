@@ -1,29 +1,11 @@
 COMPONENT_SEARCH_DIRS := $(PROJECT_DIR)/Components
 COMPONENT_DEPENDS += MDNS RGBWWLed LittleFS ConfigDB ArduinoJson6 OtaNetwork 
-#ARDUINO_LIBRARIES := RGBWWLed ArduinoJson6 OtaNetwork
-
-# GLOBAL_CFLAGS += \
-#  -DIP_REASSEMBLY=1 \
-#  -DIP_FRAG=1 \
-#  -DIP_REASS_MAXAGE=3 \
-#  -DLWIP_NETIF_TX_SINGLE_PBUF=0 \
-#  -DIP_REASS_DEBUG=1 \
-#  -DIP_DEBUG=1 \
-# -DTCP_DEBUG=1 \
-#  -DTCP_INPUT_DEBUG=1
-
-
-#HWCONFIG := two-spiffs-two-roms
-#HWCONFIG := old_layout
 
 # Set default number of jobs to twice the number of available processors
 NUM_JOBS := $(shell echo $(($(nproc) * 2)))
 MAKEFLAGS += -j$(NUM_JOBS)
 
 HWCONFIG :=two_roms_two_lfs_$(SMING_ARCH)
-#ENABLE_CUSTOM_LWIP = 0
-#ENABLE_LWIP_DEBUG = 1
-
 
 #### rBoot options ####
 # use rboot build mode
@@ -46,19 +28,23 @@ ENABLE_CUSTOM_PWM = 0
 //COM_PORT=/dev/ttyUSB0
 //COM_PORT=/dev/ttyACM0
 
-$(info COM_PORT is $(COM_PORT))
 ifeq ($(SMING_ARCH), Esp8266)
-	ifeq ($(COM_PORT), "")
-		COM_PORT=/dev/serial/by-id/usb-1a86_USB_Single_Serial_5647014434-if00
-	endif
-	ifeq ($(COM_SPEEED), "")
-		COM_SPEED = 921600
-	endif
-  $(info COM_PORT is $(COM_PORT)@$(COM_SPEED) for $(SMING_ARCH))
-  else ifeq ($(SMING_ARCH), Esp32)
-  COM_PORT=/dev/serial/by-id/usb-1a86_USB_Single_Serial_5647022450-if00
-	COM_SPEED = 115200
-$(info COM_PORT is $(COM_PORT)@$(COM_SPEED) for $(SMING_ARCH))
+    $(info arch Esp8266)
+    ifeq ($(strip $(COM_PORT)),)
+        override COM_PORT=/dev/serial/by-id/usb-1a86_USB_Single_Serial_5647014434-if00
+    endif
+    ifeq ($(strip $(COM_SPEED)),)
+        override COM_SPEED=921600
+    endif
+    $(info COM_PORT is $(COM_PORT)@$(COM_SPEED) for $(SMING_ARCH))
+else ifeq ($(SMING_ARCH), Esp32)
+    ifeq ($(strip $(COM_PORT)),)
+        override COM_PORT=/dev/serial/by-id/usb-1a86_USB_Single_Serial_5647022450-if00
+    endif
+    ifeq ($(strip $(COM_SPEED)),)
+        override COM_SPEED=115200
+    endif
+    $(info COM_PORT is $(COM_PORT)@$(COM_SPEED) for $(SMING_ARCH))
 endif
 
 CUSTOM_TARGETS += check_versions
@@ -72,7 +58,7 @@ USER_CFLAGS = -DGITVERSION=\"$(GIT_VERSION)\" -DGITDATE=\"$(GIT_DATE)\" -DWEBAPP
 
 $(info using firmware version $(GIT_VERSION))
 $(info using WEBapp $(WEBAPP_VERSION))
-$(info using SMING $(SMING_VERSION))
+$(info using SMING $(SMING_GITVERSION))
 
 # include partition file for initial OTA
 EXTRA_LDFLAGS := $(call Wrap,user_pre_init)

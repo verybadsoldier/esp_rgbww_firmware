@@ -112,7 +112,7 @@ void EventServer::publishCurrentState(const ChannelOutput& raw, const HSVCT* pHs
         hsvJson[F("ct")] = ct;
     }
 
-    debug_d("EventServer::publishCurrentHsv\n");
+    debug_d("EventServer::publishCurrentColor\n");
 
     sendToClients(msg);
 }

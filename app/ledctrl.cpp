@@ -274,12 +274,13 @@ void APPLedCtrl::publishToEventServer() {
      if(!app.eventserver.isEnabled()){
         debug_i("APPLEDCtrl - eventserver is disabled");
         return;
+     }
     HSVCT const * pHsv = NULL;
     if (_mode == ColorMode::Hsv)
         pHsv = &getCurrentColor();
 
     app.eventserver.publishCurrentState(getCurrentOutput(), pHsv);
-    }
+    
 }
 
 /**
@@ -292,16 +293,20 @@ void APPLedCtrl::publishToEventServer() {
  * @note This function does nothing if the color master is disabled.
  */
 void APPLedCtrl::publishToMqtt() {
-    debug_i("APPLedCtrl::publishToMqtt");
-    if (colorMaster)
-    {
-        switch(_mode) {
-        case ColorMode::Hsv:
-            app.mqttclient.publishCurrentHsv(getCurrentColor());
-            break;
-        case ColorMode::Raw:
-            app.mqttclient.publishCurrentRaw(getCurrentOutput());
-            break;
+    //debug_i("APPLedCtrl::publishToMqtt");
+    AppConfig::Network network(*app.cfg);
+    if(network.mqtt.getEnabled())
+    { 
+        if (colorMaster)
+        {
+            switch(_mode) {
+            case ColorMode::Hsv:
+                app.mqttclient.publishCurrentHsv(getCurrentColor());
+                break;
+            case ColorMode::Raw:
+                app.mqttclient.publishCurrentRaw(getCurrentOutput());
+                break;
+            }
         }
     }
 }

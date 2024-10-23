@@ -255,28 +255,31 @@ void AppWIFI::_STADisconnect(const String& ssid, MacAddress bssid, WifiDisconnec
 /**
  * Callback function called when a WiFi connection is established.
  * 
+ * primarily sets the hostname, if it's configured in ConfigDB, that is used
+ * otherwise, the default hostname is set to "RGBWW-<chipid>"
+ * the hostname is used for mDNS and other network services
+ * 
+ * the function also broadcasts the wifi status to the clients
+ * 
  * @param ssid The SSID of the Wi-Fi network.
  * @param bssid The MAC address of the access point.
  * @param channel The Wi-Fi channel used for the connection.
  */
 void AppWIFI::_STAConnected(const String& ssid, MacAddress bssid, uint8_t channel) {
     debug_i("AppWIFI::_STAConnected SSID - %s", ssid.c_str());
-
     {
         AppConfig::General general(*app.cfg);
         String device_name = general.getDeviceName();
-        if(device_name!="") {
-            debug_i("AppWIFI::connect setting hostname to %s", device_name.c_str());
-            WifiStation.setHostname(device_name);
-            {
-                AppConfig::Network::OuterUpdater network(*app.cfg);
-                network.mdns.setName(device_name);
-            } // end ConfigDB network updater context
-        }else{
-            debug_i("no device name configured, setting hostname to default %s",String(DEFAULT_AP_SSIDPREFIX) + String(system_get_chip_id()));
-            AppConfig::Network::OuterUpdater network(*app.cfg);
-            network.mdns.setName(String(DEFAULT_AP_SSIDPREFIX) + String(system_get_chip_id()));
+        if(device_name=="") {
+            device_name=String(DEFAULT_AP_SSIDPREFIX) + String(system_get_chip_id());
+            debug_i("no device name configured, building default name");
         }
+        debug_i("AppWIFI::connect setting hostname to %s", device_name.c_str());
+        WifiStation.setHostname(device_name);
+        {
+            AppConfig::Network::OuterUpdater network(*app.cfg);
+            network.mdns.setName(device_name);
+        } // end ConfigDB network updater context
     } // end ConfigDB general context
     broadcastWifiStatus(F("Connected to WiFi"));
     _con_ctr = 0;

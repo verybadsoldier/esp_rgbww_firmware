@@ -40,7 +40,23 @@
     XX(RgbwwLayout_js,  "assets/RgbwwLayout.js.gz")   \
     XX(i18n_js,         "assets/i18n.js.gz")          \
     XX(pinconfig_json,  "config/pinconfig.json")      \
-    XX(favicon_ico,     "icons/favicon.ico")          \
+    XX(favicon_ico,                                          "icons/favicon.ico")          \
+    XX(badge_outlined_24,                                    "icons/badge-outlined-24.svg") \
+    XX(exposure_outlined_24,                                 "icons/exposure-outlined-24.svg") \
+    XX(hub_outlined_24,                                      "icons/hub-outlined-24.svg") \
+    XX(info_outlined_24,                                     "icons/info-outlined-24.svg") \
+    XX(memory_outlined_24,                                   "icons/memory-outlined-24.svg") \
+    XX(palette_outlined_24,                                  "icons/palette-outlined-24.svg") \
+    XX(security_outlined_24,                                 "icons/security-outlined-24.svg") \
+    XX(settings_outlined_24,                                 "icons/settings-outlined-24.svg") \
+    XX(systemsecurityupdate_outlined_24,                     "icons/systemsecurityupdate-outlined-24.svg") \
+    XX(tune_outlined_24,                                     "icons/tune-outlined-24.svg") \
+    XX(visibility_off_outlined_24,                           "icons/visibility_off-outlined-24.svg") \
+    XX(visibility_outlined_24,                               "icons/visibility-outlined-24.svg") \
+    XX(wifi_outlined_24,                                     "icons/wifi-outlined-24.svg") \
+    XX(report_problem_outlined_24,                           "icons/report_problem-outlined-24.svg") \
+    XX(star_outlined_24,                                     "icons/star-outlined-24.svg") \
+    XX(arrow_drop_down,                                      "icons/arrow_drop_down.svg") \
     XX(network_wifi_3_bar_locked_FILL0_wght400_GRAD0_opsz24, "icons/network_wifi_3_bar_locked_FILL0_wght400_GRAD0_opsz24.svg") \
     XX(network_wifi_1_bar_FILL0_wght400_GRAD0_opsz24,        "icons/network_wifi_1_bar_FILL0_wght400_GRAD0_opsz24.svg")        \
     XX(network_wifi_FILL0_wght400_GRAD0_opsz24,              "icons/network_wifi_FILL0_wght400_GRAD0_opsz24.svg")              \
