@@ -48,3 +48,7 @@ term.sh
 tflash
 #spiffs/*
 version.json
+
+#ConfigDB directories used for host emulator tests
+app-config
+app-data
