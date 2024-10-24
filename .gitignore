@@ -46,7 +46,7 @@ sming.code-workspace
 flash.sh
 term.sh
 tflash
-spiffs/*
+#spiffs/*
 version.json
 
 # don't include the webapp files, they need to come from the deployment
