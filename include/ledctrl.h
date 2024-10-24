@@ -36,40 +36,6 @@ struct PinConfig {
     int coldwhite;
 };
 
-struct ColorStorage {
-    HSVCT current;
-    void load(bool print = false) {
-    	StaticJsonDocument<128> doc;
-        if (Json::loadFromFile(doc, APP_COLOR_FILE)) {
-            JsonObject root = doc.as<JsonObject>();
-            current.h = root["h"];
-            current.s = root["s"];
-            current.v = root["v"];
-            current.ct = root["ct"];
-            if (print) {
-            	Json::serialize(root, Serial, Json::Pretty);
-            }
-        }
-    }
-
-    void save(bool print = false) {
-        debug_d("Saving ColorStorage to file...");
-        StaticJsonDocument<256> doc;
-        JsonObject root = doc.to<JsonObject>();
-        root["h"] = current.h;
-        root["s"] = current.s;
-        root["v"] = current.v;
-        root["ct"] = current.ct;
-        if (print) {
-        	Json::serialize(root, Serial, Json::Pretty);
-        }
-        Json::saveToFile(root, APP_COLOR_FILE);
-    }
-
-    bool exist() {
-        return fileExist(APP_COLOR_FILE);
-    }
-};
 
 class APPLedCtrl: public RGBWWLed {
 
@@ -90,8 +56,30 @@ public:
     void onMasterClock(uint32_t steps);
     void onMasterClockReset();
     virtual void onAnimationFinished(const String& name, bool requeued);
+
+    void setClockMaster(bool master, uint32_t interval = 0) {
+        clockMaster = master;
+        clockMasterInterval = interval;
+    };
+    void setColorMaster(bool master) {
+        colorMaster = master;
+    };
+    void setTransitionInterval(uint32_t interval) {
+        transFinInterval = interval;
+    };
+    void setColorInterval(uint32_t interval) {
+        colorMasterInterval = interval;
+    };
+    void setColorMinInterval(uint32_t interval) {
+        colorMinInterval = interval;
+    };
+    void setStartupColorLast(bool last) {
+        startupColorLast = last;
+    };
+    void reconfigure();
 private:
     static PinConfig parsePinConfigString(String& pinStr);
+    static PinConfig parsePinConfigString(const String& pinStr);
     static void updateLedCb(void* pTimerArg);
     void publishToEventServer();
     void publishToMqtt();
@@ -100,7 +88,13 @@ private:
     void checkStableColorState();
     void publishStatus();
 
-    ColorStorage colorStorage;
+    bool clockMaster,
+         colorMaster,
+         startupColorLast;
+    uint32_t clockMasterInterval,
+             transFinInterval,
+             colorMasterInterval,
+             colorMinInterval;
 
     HSVCT _lastHsvct;
     ChannelOutput _lastOutput;

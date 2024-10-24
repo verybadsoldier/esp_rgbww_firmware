@@ -76,6 +76,8 @@ private:
     void onUpdate(HttpRequest &request, HttpResponse &response);
     void onConnect(HttpRequest &request, HttpResponse &response);
     void onHosts(HttpRequest &request, HttpResponse &response);
+    void onPresets(HttpRequest &request, HttpResponse &response);
+    void onScenes(HttpRequest &request, HttpResponse &response);
     void onPing(HttpRequest &request, HttpResponse &response);
     void onStop(HttpRequest &request, HttpResponse &response);
     void onSkip(HttpRequest &request, HttpResponse &response);
@@ -98,6 +100,8 @@ private:
     static bool isPrintable(String& str);
 
     void onStorage(HttpRequest &request, HttpResponse &response);
+
+    void setCorsHeaders(HttpResponse &response);
 
     void wsConnected(WebsocketConnection& socket);
     void wsDisconnected(WebsocketConnection& socket);

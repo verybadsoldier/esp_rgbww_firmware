@@ -46,9 +46,13 @@ APPLedCtrl::~APPLedCtrl() {
  * - warmwhite: Pin number for the warm white color channel.
  * - coldwhite: Pin number for the cold white color channel.
  */
-PinConfig APPLedCtrl::parsePinConfigString(String& pinStr) {
+PinConfig APPLedCtrl::parsePinConfigString(const String& pinStr) {
     Vector<int> pins;
-    splitString(pinStr, ',', pins);
+    {
+        String _pinStr=pinStr;
+    
+    splitString(_pinStr, ',', pins);
+    }
 
     bool isCorrect = true;
     // sanity check
@@ -81,35 +85,144 @@ PinConfig APPLedCtrl::parsePinConfigString(String& pinStr) {
  * This function initializes the APPLedCtrl class by creating a StepSync object,
  * parsing the pin configuration string, initializing the RGBWWLed, setting up
  * the LED controller, and setting the startup color.
+ * 
+ * ToDo:
+ * in the future, this should be expanded to be able to use more pins than just five (some platforms make 12 or more pwm pins available)
+ * the idea is to introduce a layer of abstraction above the pins that can be configured as lights. This way, the user can define a light
+ * to be RGB, RGBW, RGBWW, WW or just a single channel and use one controller to drive multiple "virtual" lights.
+ * For now, however, we will stick to the current implementation. 
+ * 
+ * ToDo:
+ * a nearer term feature I'm, thinking about is named channels. Currently, the channels are named for the RGBWW colors the drive in the HSV 
+ * color model. Named channels would be an extension of the RAW API and allow the user to a) name a channel and b) use that name in the API
+ * to set the intensity for that channel. This will not require a change of the underlying code, but will necessitate a change to the PinConfig 
+ * structure, namely rather than having the color names hardcoded there, I'll switch to channel numbers. 
+ * Once named mode has been fully implemented and a controller has been configured with channel names other than [ red, green, blue, warmwhite, 
+ * coldwhite ], I believe the controller shall not allow calls to the /color api with the HSV or RAW structure but with a new, yet to define
+ * CHANNELS structure that will provide the channel name and the channel brightness.
  */
+
+
 void APPLedCtrl::init() {
     debug_i("APPLedCtrl::init");
 
     _stepSync = new StepSync();
 
-    const PinConfig pins = APPLedCtrl::parsePinConfigString(app.cfg.general.pin_config);
+    reconfigure();
+ 
+    PinConfig pins;
+    {
+        debug_i("APPLedCtrl::init - reading pin config");
+        AppConfig::General general(*app.cfg);
+        if(general.channels.getItemCount()!=0){
+            // prefer the channels config
+            debug_i("cannels array configured");
+            for(unsigned int i=0;i<general.channels.getItemCount();i++){
+                if(general.channels[i].getName() == "red"){
+                    pins.red = general.channels[i].getPin();
+                }else if(general.channels[i].getName() == "green"){
+                    pins.green = general.channels[i].getPin();
+                }else if(general.channels[i].getName() == "blue"){
+                    pins.blue = general.channels[i].getPin();
+                }else if(general.channels[i].getName() == "warmwhite"){
+                    pins.warmwhite = general.channels[i].getPin();
+                }else if(general.channels[i].getName() == "coldwhite"){
+                    pins.coldwhite = general.channels[i].getPin();
+                }
+            }
+        }
+        else{
+            //fall back on the old pin config string if necessary
+            debug_i("no channels array configured");
+            pins = APPLedCtrl::parsePinConfigString(general.getPinConfig());
+            //populate the pin array for next time
+            if(auto generalUpdate=general.update()){ 
+                {
+                    auto pin=generalUpdate.channels.addItem();
+                    pin.setName("red");
+                    pin.setPin(pins.red);
+                }
+                {
+                    auto pin=generalUpdate.channels.addItem();
+                    pin.setName("green");
+                    pin.setPin(pins.green);
+                }
+                {
+                    auto pin=generalUpdate.channels.addItem();
+                    pin.setName("blue");
+                    pin.setPin(pins.blue);
+                }
+                {
+                    auto pin=generalUpdate.channels.addItem();
+                    pin.setName("warmwhite");
+                    pin.setPin(pins.warmwhite);
+                }
+                {
+                    auto pin=generalUpdate.channels.addItem();
+                    pin.setName("coldwhite");
+                    pin.setPin(pins.coldwhite);
+                }
+            } // end AppConfig::General::update context
+            else{
+                debug_e("APPLedCtrl::init - failed to update pin config");
+            }
+        }
+    } //end ConfigDB::General context
 
+    debug_i("APPLedCtrl::init - initializing RGBWWLed\n   red: %i | green: %i | blue: %i | warmwhite: %i | coldwhite: %i", pins.red, pins.green, pins.blue, pins.warmwhite, pins.coldwhite);
     RGBWWLed::init(pins.red, pins.green, pins.blue, pins.warmwhite, pins.coldwhite, PWM_FREQUENCY);
 
     setup();
 
     HSVCT startupColor;
-    if (app.cfg.color.startup_color == "last") {
-        colorStorage.load();
-        debug_i("H: %i | s: %i | v: %i | ct: %i", colorStorage.current.h, colorStorage.current.s, colorStorage.current.v, colorStorage.current.ct);
+    {
+        debug_i("APPLedCtrl::init - reading startup color");
+        AppConfig::Color color(*app.cfg);
+        if (color.getStartupColor() == "last") { 
+            AppData::Root data(*app.data);
+            debug_i("H: %i | s: %i | v: %i | ct: %i", data.lastColor.getH(), data.lastColor.getS(), data.lastColor.getV(), data.lastColor.getCt());
 
-        startupColor = colorStorage.current;
-    } else {
-        // interpret as color string
-        startupColor = app.cfg.color.startup_color;
+            startupColor.h=data.lastColor.getH();
+            startupColor.s=data.lastColor.getS();
+            startupColor.v=data.lastColor.getV();
+            startupColor.ct=data.lastColor.getCt();
+        } else {
+            // interpret as color string
+            String tempStartupColor = color.getStartupColor();
+            startupColor = tempStartupColor;
+        }
     }
-
     // boot from off to startup color
     HSVCT startupColorDark = startupColor;
     startupColorDark.v = 0;
     fadeHSV(startupColorDark, startupColor, 2000); //fade to color in 700ms
 }
 
+/**
+ * @brief read local configuration from ConfigDB
+ * 
+ */
+void APPLedCtrl::reconfigure() {
+    debug_i("APPLedCtrl::reconfigure");
+    {
+        AppConfig::Sync sync(*app.cfg);
+        clockMaster         = sync.getClockMasterEnabled();
+        clockMasterInterval = sync.getClockMasterInterval();
+        colorMaster         = sync.getColorMasterEnabled();
+        colorMasterInterval = sync.getColorMasterIntervalMs();
+        
+    } // end AppConfig::Sync context
+    {
+        AppConfig::Root config(*app.cfg);
+        transFinInterval = config.events.getTransFinIntervalMs();
+        colorMinInterval = config.events.getColorMinIntervalMs();
+    } //close configdb root context
+    {
+        AppConfig::Color color(*app.cfg);
+        startupColorLast=(color.getStartupColor() == "last");
+    } //close configdb context for color
+
+ }
 /**
  * @brief Initializes the LED controller.
  * 
@@ -120,17 +233,35 @@ void APPLedCtrl::init() {
 void APPLedCtrl::setup() {
     debug_i("APPLedCtrl::setup");
 
-    colorutils.setBrightnessCorrection(app.cfg.color.brightness.red,
-            app.cfg.color.brightness.green, app.cfg.color.brightness.blue,
-            app.cfg.color.brightness.ww, app.cfg.color.brightness.cw);
-    colorutils.setHSVcorrection(app.cfg.color.hsv.red, app.cfg.color.hsv.yellow,
-            app.cfg.color.hsv.green, app.cfg.color.hsv.cyan,
-            app.cfg.color.hsv.blue, app.cfg.color.hsv.magenta);
+    {
+        debug_i("APPLedCtrl::setup - reading color config");
+        AppConfig::Color color(*app.cfg);
 
-    colorutils.setColorMode((RGBWW_COLORMODE) app.cfg.color.outputmode);
-    colorutils.setHSVmodel((RGBWW_HSVMODEL) app.cfg.color.hsv.model);
+        colorutils.setBrightnessCorrection(
+            color.brightness.getRed(),
+            color.brightness.getGreen(),
+            color.brightness.getBlue(),
+            color.brightness.getWw(), 
+            color.brightness.getCw()
+            );
+        colorutils.setHSVcorrection(
+            color.hsv.getRed(), 
+            color.hsv.getYellow(),
+            color.hsv.getGreen(), 
+            color.hsv.getCyan(),
+            color.hsv.getBlue(), 
+            color.hsv.getMagenta()
+            );
 
-    colorutils.setWhiteTemperature(app.cfg.color.colortemp.ww, app.cfg.color.colortemp.cw);
+        colorutils.setColorMode((RGBWW_COLORMODE) color.getColorMode());
+        colorutils.setHSVmodel((RGBWW_HSVMODEL) color.hsv.getModel());
+        debug_i("set RGBWW_COLORMOD %i and RGBWW_HSVMODEL %i", color.getColorMode(), color.hsv.getModel());
+
+        colorutils.setWhiteTemperature(
+            color.colortemp.getWw(),
+            color.colortemp.getCw()
+            );
+    } // end configdb context for color
 }
 
 /**
@@ -140,18 +271,16 @@ void APPLedCtrl::setup() {
  * It publishes the current output and color information to the event server.
  */
 void APPLedCtrl::publishToEventServer() {
-    if (!app.cfg.events.server_enabled){
+     if(!app.eventserver.isEnabled()){
         debug_i("APPLEDCtrl - eventserver is disabled");
         return;
-    }else{
-    //debug_i("APPLEDCtrl - eventserver is enabled, updating clients");
-        
+     }
     HSVCT const * pHsv = NULL;
     if (_mode == ColorMode::Hsv)
         pHsv = &getCurrentColor();
 
     app.eventserver.publishCurrentState(getCurrentOutput(), pHsv);
-    }
+    
 }
 
 /**
@@ -164,16 +293,20 @@ void APPLedCtrl::publishToEventServer() {
  * @note This function does nothing if the color master is disabled.
  */
 void APPLedCtrl::publishToMqtt() {
-    if (!app.cfg.sync.color_master_enabled)
-        return;
-
-    switch(_mode) {
-    case ColorMode::Hsv:
-        app.mqttclient.publishCurrentHsv(getCurrentColor());
-        break;
-    case ColorMode::Raw:
-        app.mqttclient.publishCurrentRaw(getCurrentOutput());
-        break;
+    AppConfig::Network network(*app.cfg);
+    if(network.mqtt.getEnabled())
+    { 
+        if (colorMaster)
+        {
+            switch(_mode) {
+            case ColorMode::Hsv:
+                app.mqttclient.publishCurrentHsv(getCurrentColor());
+                break;
+            case ColorMode::Raw:
+                app.mqttclient.publishCurrentRaw(getCurrentOutput());
+                break;
+            }
+        }
     }
 }
 
@@ -196,24 +329,30 @@ void APPLedCtrl::updateLed() {
     // arm next timer
     _ledTimer.startOnce();
 
+
+    /************************** 
+     * those rely on the mqtt master/secodary toggles to be set
+     * but really, they should also look at the main mqtt enable flag
+     **************************/
     const bool animFinished = show();
 
     ++_stepCounter;
-
-    if (app.cfg.sync.clock_master_enabled) {
-        if ((_stepCounter % (app.cfg.sync.clock_master_interval * RGBWW_UPDATEFREQUENCY)) == 0) {
+    
+    // publish _stepCounter if this is the clockMaster
+    if (clockMaster) {
+        if ((_stepCounter % clockMasterInterval * RGBWW_UPDATEFREQUENCY) == 0) {
             app.mqttclient.publishClock(_stepCounter);
         }
     }
 
     const static uint32_t stepLenMs = 1000 / RGBWW_UPDATEFREQUENCY;
-
-    if (app.cfg.events.color_interval_ms >= 0) {
-        if (animFinished || app.cfg.events.color_interval_ms == 0 ||
-                ((stepLenMs * _stepCounter) % app.cfg.events.color_interval_ms) < stepLenMs) {
+    
+    if (colorMasterInterval >= 0) {
+        if (animFinished || colorMasterInterval == 0 ||
+                ((stepLenMs * _stepCounter) % colorMasterInterval) < stepLenMs) {
 
             uint32_t now = millis();
-            if (now - _lastColorEvent >= (uint32_t) app.cfg.events.color_mininterval_ms) {
+            if (now - _lastColorEvent >= (uint32_t) colorMinInterval) {
                 // debug_i("APPLedCtrl::updateLed - publishing color event");
                 _lastColorEvent = now;
                 publishToEventServer();
@@ -221,16 +360,18 @@ void APPLedCtrl::updateLed() {
         }
     }
 
-    if (animFinished || app.cfg.sync.color_master_interval_ms == 0 ||
-            ((stepLenMs * _stepCounter) % app.cfg.sync.color_master_interval_ms) < stepLenMs) {
-        publishToMqtt();
+    if (colorMaster) {
+        if (animFinished || colorMasterInterval == 0 ||
+                ((stepLenMs * _stepCounter) % colorMasterInterval) < stepLenMs) {
+            publishToMqtt();
+        }
     }
-
+    
     checkStableColorState();
 
-    if (app.cfg.events.transfin_interval_ms >= 0) {
-        if (app.cfg.events.transfin_interval_ms == 0 ||
-                ((stepLenMs * _stepCounter) % app.cfg.events.transfin_interval_ms) < stepLenMs) {
+    if (transFinInterval >= 0) {
+        if (transFinInterval == 0 ||
+                ((stepLenMs * _stepCounter) % transFinInterval) < stepLenMs) {
             publishFinishedStepAnimations();
         }
     }
@@ -245,9 +386,9 @@ void APPLedCtrl::updateLed() {
  * If the number of stable color steps reaches a certain threshold, the current color state is saved.
  */
 void APPLedCtrl::checkStableColorState() {
-	if (app.cfg.color.startup_color != "last")
-		return;
-
+    if (!startupColorLast)
+            return;
+    
     if (_prevColor == getCurrentColor())
     {
         ++_numStableColorSteps;
@@ -321,6 +462,7 @@ void APPLedCtrl::start() {
 
     _ledTimer.setCallback(APPLedCtrl::updateLedCb, this);
     _ledTimer.setIntervalMs(_timerInterval);
+    debug_i("_timerInterval", _timerInterval);
     _ledTimer.startOnce();
 }
 
@@ -330,17 +472,27 @@ void APPLedCtrl::stop() {
 }
 
 void APPLedCtrl::colorSave() {
-    colorStorage.current = getCurrentColor();
-    colorStorage.save();
+    AppData::Root data(*app.data);
+    {
+        auto update = data.update();
+        auto current= getCurrentColor();
+        update.lastColor.setH(current.h);
+        update.lastColor.setS(current.s);
+        update.lastColor.setV(current.v);
+        update.lastColor.setCt(current.ct);
+    }
 }
 
 void APPLedCtrl::colorReset() {
     debug_i("APPLedCtrl::colorReset");
-    colorStorage.current.h = 0;
-    colorStorage.current.s = 0;
-    colorStorage.current.v = 0;
-    colorStorage.current.ct = 0;
-    colorStorage.save();
+    AppData::Root data(*app.data);
+    {
+        auto update = data.update();
+        update.lastColor.setH(0);
+        update.lastColor.setS(0);
+        update.lastColor.setV(0);
+        update.lastColor.setCt(0);
+    }
 }
 
 void APPLedCtrl::onAnimationFinished(const String& name, bool requeued) {

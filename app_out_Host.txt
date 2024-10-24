@@ -1,0 +1,1085 @@
+
+Welcome to the Sming Host emulator
+
+
+Opened "/home/pjakobs/devel/esp_rgbww_firmware/out/Host/debug/firmware/flash.bin", size = 0x00400000
+Warning! MAGIC mismatch
+Warning! Note: No App partitions found
+
+507 [Partition] Bad partition table for device 'spiFlash' @ 0x00002000
+Initialising LWIP
+Thread 'Timer1' running
+Using interface 'tap0', gateway 192.168.13.1, netmask 255.255.255.0, ip 192.168.13.10
+MAC: 52:85:4b:80:22:b0
+If required, you may start terminal application(s) now
+>> Starting Sming <<
+
+pinMode: 16, 0
+=Thread 'keyboard' running
+=========
+2001819 RGBWW Controller v V5-pj-299-g1214-dirty-[feature/ConfigDB]
+
+2001829 Application::init - partition scheme: 
+
+2001849 mounting host file system
+2001860 application init => checking ConfigDB
+2001868 [CFGDB] LoadStore 'general'
+2001876 [CFGDB] Store() general 877d45c 1
+2001891 [CFGDB] incUpdate() general 877d45c 1
+2002020 attached file: '' (465 bytes) #0xFFFCC1F0
+2002157 [CFGDB] decUpdate() general 877d45c 0
+2002167 ConfigDB already initialized. starting
+
+** Stream **
+{2002214 [CFGDB] ~Store() general 877d45c 0
+2002227 [CFGDB] LoadStore ''
+2002234 [CFGDB] Store()  877d45c 1
+2002242 [CFGDB] incUpdate()  877d45c 1
+2002271 File 'app-config/_root.json' open error: NotFound
+2002278 [CFGDB] open 'app-config/_root.json' failed
+2002285 [CFGDB] Load defaults
+2002297 [CFGDB] decUpdate()  877d45c 0
+"ota":{"url":"http://lightinator.de/version.json"},"security":{"api_secured":false,"api_password":null},"events":{"color_interval_ms":500,"color_min_interval_ms":500,"trans_fin_interval_ms":1000,"server_enabled":true},2002526 [CFGDB] ~Store()  877d45c 0
+2002534 [CFGDB] LoadStore 'general'
+2002541 [CFGDB] Store() general 877d45c 1
+2002553 [CFGDB] incUpdate() general 877d45c 1
+2002634 attached file: '' (465 bytes) #0xFFFCBFA0
+2002752 [CFGDB] decUpdate() general 877d45c 0
+"general":{"channels":[{"pin":13,"name":"red"},{"pin":12,"name":"green"},{"pin":14,"name":"blue"},{"pin":5,"name":"warmwhite"},{"pin":4,"name":"coldwhite"}],"supported_color_models":["RGB","RGBW","RGBWW","RAW"],"is_initialized":true,"device_name":"mrpj","buttons_debounce_ms":50,"pin_config":"13,12,14,5,4","buttons_config":null,"pin_config_url":"https://raw.githubusercontent.com/pljakobs/esp_rgb_webapp2/devel/public/config/pinconfig.json","current_pin_config_name":"mrpj"},2003293 [CFGDB] ~Store() general 877d45c 0
+2003300 [CFGDB] LoadStore 'color'
+2003307 [CFGDB] Store() color 877d45c 1
+2003315 [CFGDB] incUpdate() color 877d45c 1
+2003402 attached file: '' (216 bytes) #0xFFFCBFA0
+2003473 [CFGDB] decUpdate() color 877d45c 0
+"color":{"brightness":{"red":100,"ww":100,"green":100,"blue":100,"cw":100},"colortemp":{"ww":2700,"cw":6000},"hsv":{"red":0,"magenta":0,"green":0,"blue":0,"yellow":0,"model":0,"cyan":0},"startup_color":"last","outputmode":0},2003884 [CFGDB] ~Store() color 877d45c 0
+2003896 [CFGDB] LoadStore 'sync'
+2003902 [CFGDB] Store() sync 877d45c 1
+2003910 [CFGDB] incUpdate() sync 877d45c 1
+2003991 attached file: '' (339 bytes) #0xFFFCBFA0
+2004062 [CFGDB] decUpdate() sync 877d45c 0
+"sync":{"cmd_master_enabled":false,"color_slave_enabled":false,"color_slave_topic":"home/led1/command","clock_master_enabled":false,"color_master_interval_ms":0,"clock_slave_enabled":false,"cmd_slave_enabled":false,"clock_master_interval":30,"clock_slave_topic":"home/led1/clock","cmd_slave_topic":"home/led/command","color_master_enabled":false},2004342 [CFGDB] ~Store() sync 877d45c 0
+2004350 [CFGDB] LoadStore 'network'
+2004361 [CFGDB] Store() network 877d45c 1
+2004368 [CFGDB] incUpdate() network 877d45c 1
+2004446 attached file: '' (383 bytes) #0xFFFCBFA0
+2004532 [CFGDB] decUpdate() network 877d45c 0
+"network":{"mqtt":{"server":"mqtt.local","password":null,"port":1883,"topic_base":"home/","enabled":false,"username":null},"ntp":{"enabled":false,"server":"pool.ntp.org","interval":3600},"connection":{"netmask":"255.255.255.0","ip":"192.168.1.1","dhcp":true,"gateway":"192.168.1.255"},"ap":{"password":"configesp","secured":true,"ssid":"RGBWW3221339823"},"mdns":{"enabled":true,"name":"mrpj"}}}2005024 [CFGDB] ~Store() network 877d45c 0
+2005036 [CFGDB] LoadStore 'general'
+2005042 [CFGDB] Store() general 877d45c 1
+2005050 [CFGDB] incUpdate() general 877d45c 1
+2005128 attached file: '' (465 bytes) #0xFFFCC150
+2005249 [CFGDB] decUpdate() general 877d45c 0
+2005268 AppMqttClient::init: building MQTT ID from device name: 'mrpj'
+
+2005281 APPLedCtrl::init
+2005287 APPLedCtrl::reconfigure
+2005294 [CFGDB] ~Store() general 877d45c 0
+2005306 [CFGDB] LoadStore 'sync'
+2005313 [CFGDB] Store() sync 877d45c 1
+2005320 [CFGDB] incUpdate() sync 877d45c 1
+2005402 attached file: '' (339 bytes) #0xFFFCC040
+2005471 [CFGDB] decUpdate() sync 877d45c 0
+2005479 [CFGDB] ~Store() sync 877d45c 0
+2005491 [CFGDB] LoadStore ''
+2005497 [CFGDB] Store()  877d45c 1
+2005504 [CFGDB] incUpdate()  877d45c 1
+2005523 File 'app-config/_root.json' open error: NotFound
+2005534 [CFGDB] open 'app-config/_root.json' failed
+2005541 [CFGDB] Load defaults
+2005553 [CFGDB] decUpdate()  877d45c 0
+2005561 [CFGDB] ~Store()  877d45c 0
+2005568 [CFGDB] LoadStore 'color'
+2005574 [CFGDB] Store() color 877d45c 1
+2005586 [CFGDB] incUpdate() color 877d45c 1
+2005658 attached file: '' (216 bytes) #0xFFFCC040
+2005722 [CFGDB] decUpdate() color 877d45c 0
+2005730 APPLedCtrl::init - reading pin config
+2005737 [CFGDB] ~Store() color 877d45c 0
+2005748 [CFGDB] LoadStore 'general'
+2005755 [CFGDB] Store() general 877d45c 1
+2005762 [CFGDB] incUpdate() general 877d45c 1
+2005838 attached file: '' (465 bytes) #0xFFFCC0E0
+2005938 [CFGDB] decUpdate() general 877d45c 0
+2005955 APPLedCtrl::init - initializing RGBWWLed
+2005968 APPLedCtrl::setup
+2005973 APPLedCtrl::setup - reading color config
+2005980 [CFGDB] ~Store() general 877d45c 0
+2005992 [CFGDB] LoadStore 'color'
+2005999 [CFGDB] Store() color 877d45c 1
+2006006 [CFGDB] incUpdate() color 877d45c 1
+2006083 attached file: '' (216 bytes) #0xFFFCC030
+2006140 [CFGDB] decUpdate() color 877d45c 0
+2006149 COLORMODE 0
+2006160 HSVMODE 0
+2006166 APPLedCtrl::init - reading startup color
+2006254 attached file: '' (33 bytes) #0xFFFCC120
+2006440 H: 0 | s: 573 | v: 696 | ct: 2700
+2006461 Application::initButtons
+2006467 [CFGDB] ~Store() color 877d45c 0
+2006475 [CFGDB] LoadStore 'general'
+2006486 [CFGDB] Store() general 877d45c 1
+2006493 [CFGDB] incUpdate() general 877d45c 1
+2006567 attached file: '' (465 bytes) #0xFFFCC130
+2006671 [CFGDB] decUpdate() general 877d45c 0
+2006694 [CFGDB] ~Store() general 877d45c 0
+2006702 [CFGDB] LoadStore 'network'
+2006713 [CFGDB] Store() network 877d45c 1
+2006720 [CFGDB] incUpdate() network 877d45c 1
+2006794 attached file: '' (383 bytes) #0xFFFCC090
+2006879 [CFGDB] decUpdate() network 877d45c 0
+2006887 AppWIFI::init dhcp
+2006894 '*' registered
+2006908 '/' registered
+2006916 '/webapp' registered
+2006924 '/config' registered
+2006931 '/info' registered
+2006944 '/color' registered
+2006952 '/networks' registered
+2006961 '/scan_networks' registered
+2006969 '/system' registered
+2006982 '/update' registered
+2006990 '/connect' registered
+2006999 '/ping' registered
+2007007 '/hosts' registered
+2007015 '/object' registered
+2007028 '/stop' registered
+2007036 '/skip' registered
+2007044 '/pause' registered
+2007052 '/continue' registered
+2007066 '/blink' registered
+2007074 '/toggle' registered
+IF_UP, AP: Host WiFi
+2007104 AppWIFI::_STAConnected SSID - Host WiFi
+2007111 [CFGDB] ~Store() network 877d45c 0
+2007123 [CFGDB] LoadStore 'general'
+2007130 [CFGDB] Store() general 877d45c 1
+2007136 [CFGDB] incUpdate() general 877d45c 1
+2007229 attached file: '' (465 bytes) #0xFFFCC090
+2007330 [CFGDB] decUpdate() general 877d45c 0
+2007344 AppWIFI::connect setting hostname to mrpj
+2007351 [CFGDB] LoadStore 'network'
+2007358 [CFGDB] Store() network 877f23c 2
+2007370 [CFGDB] incUpdate() network 877f23c 1
+2007443 attached file: '' (383 bytes) #0xFFFCC060
+2007520 [CFGDB] decUpdate() network 877f23c 0
+2007533 [CFGDB] lockStore() app-config 877d380
+2007541 [CFGDB] incUpdate() network 877f23c 1
+2007549 [CFGDB] incUpdate() network 877f23c 2
+2007560 [CFGDB] decUpdate() network 877f23c 1
+2007568 [CFGDB] decUpdate() network 877f23c 0
+2007580 [CFGDB] Save 'network'
+2007619 File 'app-config/network.json' open error: Denied
+2007626 [CFGDB] Object save to 'app-config/network.json' failed: Denied
+2007639 [CFGDB] ~Store() general 877d45c 1
+IP_CHANGE, ip: 192.168.13.10, netmask: 255.255.255.0, gateway: 192.168.13.1
+2007658 AppWIFI::_STAGotIP
+2007664 [CFGDB] LoadStore 'general'
+2007676 [CFGDB] Store() general 877d45c 2
+2007682 [CFGDB] incUpdate() general 877d45c 1
+2007755 attached file: '' (465 bytes) #0xFFFCC0F0
+2007858 [CFGDB] decUpdate() general 877d45c 0
+2007866 [CFGDB] LoadStore 'network'
+2007873 [CFGDB] Store() network 877f3ac 3
+2007885 [CFGDB] incUpdate() network 877f3ac 1
+2007957 attached file: '' (383 bytes) #0xFFFCC0E0
+2008038 [CFGDB] decUpdate() network 877f3ac 0
+2008056 AppWIFI::_STAGotIP - device_name mrpj mdnshostname mrpj
+2008063 AppWIFI::_STAGotIP - setting mdns hostname to mrpj
+2008075 [CFGDB] ~Store() general 877d45c 2
+2008125 UDP listen port 5353
+2008133 MDNS initialised for 'mrpj'
+2008147 [MDNS] addService 'esprgbwwAPI._http._tcp.local'
+2008157 [MDNS] addService 'esprgbwwWebApp._http._tcp.local'
+2008171 [MDNS] addService 'esprgbwwWS._http._tcp.local'
+2008180 setting searchName to esprgbwwAPI._http._tcp.local
+2008253 Application::wsBroadcast
+2008261 === Websocket Broadcast ===
+{"jsonrpc":"2.0","method":"new_host","params":{"hostname":"mrpj","ip_address":"dhcp","ttl":-1}}
+2008279 ===>nr of tcpConnections: 0
+2008286 =========================================
+2008296 ===>nr of websockets: 0
+2008350 rpc: root ={"station":{"connected":true,"ssid":"Host WiFi","dhcp":true,"ip":"192.168.13.10","netmask":"255.255.255.0","gateway":"192.168.13.1","mac":"52854b8022b0"},"ap":{"enabled":false,"ssid":"","ip":"0.0.0.0"}}
+2008394 rpc: msg ={"jsonrpc":"2.0","method":"wifi_status","params":{"station":{"connected":true,"ssid":"Host WiFi","dhcp":true,"ip":"192.168.13.10","netmask":"255.255.255.0","gateway":"192.168.13.1","mac":"52854b8022b0"},"ap":{"enabled":false,"ssid":"","i 2008443 Application::wsBroadcast
+2008450 === Websocket Broadcast ===
+{"jsonrpc":"2.0","method":"wifi_status","params":{"station":{"connected":true,"ssid":"Host WiFi","dhcp":true,"ip":"192.168.13.10","netmask":"255.255.255.0","gateway":"192.168.13.1","mac":"52854b8022b0"},"ap":{"enabled": 2008481 ===>nr of tcpConnections: 0
+2008487 =========================================
+2008498 ===>nr of websockets: 0
+2008506 [CFGDB] ~Store() network 877f3ac 1
+2008515 [CFGDB] ~Store() network 877f23c 0
+2008522 Application::startServices
+2008533 APPLedCtrl::start
+2008541 TCP 811d6c8 +connection
+2008549 Application::startServices - starting NTP
+2008560 [CFGDB] LoadStore ''
+2008567 [CFGDB] Store()  877f3ac 1
+2008574 [CFGDB] incUpdate()  877f3ac 1
+2008598 File 'app-config/_root.json' open error: NotFound
+2008610 [CFGDB] open 'app-config/_root.json' failed
+2008617 [CFGDB] Load defaults
+2008629 [CFGDB] decUpdate()  877f3ac 0
+2008637 Starting event server with webserver referal
+
+2008644 TCP 811d948 timeout updating: 20 -> 120
+2008656 TCP 811d948 +connection
+2008721 [CFGDB] ~Store()  877f3ac 0
+2109085 NEW: h:0, s:573, v:6, ct: 2700
+2109114 HSVtoRGBraw Sector 1
+2109121 HSVtoRGBraw R 3 | G 0 | B 0 | W 3
+2109128 R:6 | G:3 | B:3 | WW:0 | CW:0
+2109135 R:42 | G:21 | B:21 | WW:0 | CW:0
+2129088 NEW: h:0, s:573, v:13, ct: 2700
+2129111 HSVtoRGBraw Sector 1
+2129118 HSVtoRGBraw R 7 | G 0 | B 0 | W 6
+2129131 R:13 | G:6 | B:6 | WW:0 | CW:0
+2129138 R:92 | G:42 | B:42 | WW:0 | CW:0
+2149094 NEW: h:0, s:573, v:20, ct: 2700
+2149128 HSVtoRGBraw Sector 1
+2149135 HSVtoRGBraw R 11 | G 0 | B 0 | W 9
+2149143 R:20 | G:9 | B:9 | WW:0 | CW:0
+2149150 R:141 | G:63 | B:63 | WW:0 | CW:0
+2169098 NEW: h:0, s:573, v:27, ct: 2700
+2169120 HSVtoRGBraw Sector 1
+2169127 HSVtoRGBraw R 15 | G 0 | B 0 | W 12
+2169139 R:27 | G:12 | B:12 | WW:0 | CW:0
+2169147 R:191 | G:85 | B:85 | WW:0 | CW:0
+2189103 NEW: h:0, s:573, v:34, ct: 2700
+2189129 HSVtoRGBraw Sector 1
+2189135 HSVtoRGBraw R 19 | G 0 | B 0 | W 15
+2189142 R:34 | G:15 | B:15 | WW:0 | CW:0
+2189156 R:241 | G:106 | B:106 | WW:0 | CW:0
+2209104 NEW: h:0, s:573, v:41, ct: 2700
+2209125 HSVtoRGBraw Sector 1
+2209137 HSVtoRGBraw R 22 | G 0 | B 0 | W 19
+2209145 R:41 | G:19 | B:19 | WW:0 | CW:0
+2209152 R:290 | G:134 | B:134 | WW:0 | CW:0
+2229108 NEW: h:0, s:573, v:48, ct: 2700
+2229129 HSVtoRGBraw Sector 1
+2229136 HSVtoRGBraw R 26 | G 0 | B 0 | W 22
+2229144 R:48 | G:22 | B:22 | WW:0 | CW:0
+2229157 R:340 | G:156 | B:156 | WW:0 | CW:0
+2249113 NEW: h:0, s:573, v:55, ct: 2700
+2249137 HSVtoRGBraw Sector 1
+2249148 HSVtoRGBraw R 30 | G 0 | B 0 | W 25
+2249156 R:55 | G:25 | B:25 | WW:0 | CW:0
+2249163 R:390 | G:177 | B:177 | WW:0 | CW:0
+2269116 NEW: h:0, s:573, v:62, ct: 2700
+2269134 HSVtoRGBraw Sector 1
+2269141 HSVtoRGBraw R 34 | G 0 | B 0 | W 28
+2269154 R:62 | G:28 | B:28 | WW:0 | CW:0
+2269161 R:439 | G:198 | B:198 | WW:0 | CW:0
+2289118 NEW: h:0, s:573, v:69, ct: 2700
+2289141 HSVtoRGBraw Sector 1
+2289147 HSVtoRGBraw R 38 | G 0 | B 0 | W 31
+2289155 R:69 | G:31 | B:31 | WW:0 | CW:0
+2289167 R:489 | G:219 | B:219 | WW:0 | CW:0
+2309119 NEW: h:0, s:573, v:76, ct: 2700
+2309137 HSVtoRGBraw Sector 1
+2309144 HSVtoRGBraw R 42 | G 0 | B 0 | W 34
+2309156 R:76 | G:34 | B:34 | WW:0 | CW:0
+2309163 R:538 | G:241 | B:241 | WW:0 | CW:0
+2329124 NEW: h:0, s:573, v:83, ct: 2700
+2329143 HSVtoRGBraw Sector 1
+2329150 HSVtoRGBraw R 46 | G 0 | B 0 | W 37
+2329158 R:83 | G:37 | B:37 | WW:0 | CW:0
+2329170 R:588 | G:262 | B:262 | WW:0 | CW:0
+2349129 NEW: h:0, s:573, v:90, ct: 2700
+2349150 HSVtoRGBraw Sector 1
+2349162 HSVtoRGBraw R 50 | G 0 | B 0 | W 40
+2349170 R:90 | G:40 | B:40 | WW:0 | CW:0
+2349177 R:640 | G:283 | B:283 | WW:0 | CW:0
+2369134 NEW: h:0, s:573, v:97, ct: 2700
+2369153 HSVtoRGBraw Sector 1
+2369160 HSVtoRGBraw R 54 | G 0 | B 0 | W 43
+2369173 R:97 | G:43 | B:43 | WW:0 | CW:0
+2369180 R:694 | G:304 | B:304 | WW:0 | CW:0
+2389137 NEW: h:0, s:573, v:104, ct: 2700
+2389161 HSVtoRGBraw Sector 1
+2389168 HSVtoRGBraw R 58 | G 0 | B 0 | W 46
+2389175 R:104 | G:46 | B:46 | WW:0 | CW:0
+2389201 R:752 | G:326 | B:326 | WW:0 | CW:0
+2409140 NEW: h:0, s:573, v:111, ct: 2700
+2409160 HSVtoRGBraw Sector 1
+2409167 HSVtoRGBraw R 62 | G 0 | B 0 | W 49
+2409179 R:111 | G:49 | B:49 | WW:0 | CW:0
+2409197 R:812 | G:347 | B:347 | WW:0 | CW:0
+2429143 NEW: h:0, s:573, v:118, ct: 2700
+2429165 HSVtoRGBraw Sector 1
+2429171 HSVtoRGBraw R 66 | G 0 | B 0 | W 52
+2429179 R:118 | G:52 | B:52 | WW:0 | CW:0
+2429200 R:876 | G:368 | B:368 | WW:0 | CW:0
+2449147 NEW: h:0, s:573, v:125, ct: 2700
+2449167 HSVtoRGBraw Sector 1
+2449179 HSVtoRGBraw R 70 | G 0 | B 0 | W 55
+2449201 R:125 | G:55 | B:55 | WW:0 | CW:0
+2449209 R:943 | G:390 | B:390 | WW:0 | CW:0
+2469154 NEW: h:0, s:573, v:132, ct: 2700
+2469174 HSVtoRGBraw Sector 1
+2469181 HSVtoRGBraw R 73 | G 0 | B 0 | W 59
+2469201 R:132 | G:59 | B:59 | WW:0 | CW:0
+2469209 R:1013 | G:418 | B:418 | WW:0 | CW:0
+2489157 NEW: h:0, s:573, v:139, ct: 2700
+2489199 HSVtoRGBraw Sector 1
+2489206 HSVtoRGBraw R 77 | G 0 | B 0 | W 62
+2489214 R:139 | G:62 | B:62 | WW:0 | CW:0
+2489226 R:1087 | G:439 | B:439 | WW:0 | CW:0
+2501853 Free heap: 121821
+2509159 NEW: h:0, s:573, v:146, ct: 2700
+2509178 HSVtoRGBraw Sector 1
+2509208 HSVtoRGBraw R 81 | G 0 | B 0 | W 65
+2509216 R:146 | G:65 | B:65 | WW:0 | CW:0
+2509224 R:1164 | G:460 | B:460 | WW:0 | CW:0
+2529161 NEW: h:0, s:573, v:153, ct: 2700
+2529196 HSVtoRGBraw Sector 1
+2529204 HSVtoRGBraw R 85 | G 0 | B 0 | W 68
+2529216 R:153 | G:68 | B:68 | WW:0 | CW:0
+2529224 R:1245 | G:482 | B:482 | WW:0 | CW:0
+2549166 NEW: h:0, s:573, v:160, ct: 2700
+2549210 HSVtoRGBraw Sector 1
+2549217 HSVtoRGBraw R 89 | G 0 | B 0 | W 71
+2549225 R:160 | G:71 | B:71 | WW:0 | CW:0
+2549237 R:1329 | G:503 | B:503 | WW:0 | CW:0
+2569172 NEW: h:0, s:573, v:166, ct: 2700
+2569199 HSVtoRGBraw Sector 1
+2569206 HSVtoRGBraw R 92 | G 0 | B 0 | W 74
+2569219 R:166 | G:74 | B:74 | WW:0 | CW:0
+2569226 R:1405 | G:524 | B:524 | WW:0 | CW:0
+2589173 NEW: h:0, s:573, v:173, ct: 2700
+2589201 HSVtoRGBraw Sector 1
+2589208 HSVtoRGBraw R 96 | G 0 | B 0 | W 77
+2589216 R:173 | G:77 | B:77 | WW:0 | CW:0
+2589228 R:1496 | G:546 | B:546 | WW:0 | CW:0
+2609175 NEW: h:0, s:573, v:180, ct: 2700
+2609204 HSVtoRGBraw Sector 1
+2609217 HSVtoRGBraw R 100 | G 0 | B 0 | W 80
+2609225 R:180 | G:80 | B:80 | WW:0 | CW:0
+2609232 R:1591 | G:567 | B:567 | WW:0 | CW:0
+2629177 NEW: h:0, s:573, v:187, ct: 2700
+2629210 HSVtoRGBraw Sector 1
+2629217 HSVtoRGBraw R 104 | G 0 | B 0 | W 83
+2629230 R:187 | G:83 | B:83 | WW:0 | CW:0
+2629238 R:1691 | G:588 | B:588 | WW:0 | CW:0
+2649181 NEW: h:0, s:573, v:194, ct: 2700
+2649216 HSVtoRGBraw Sector 1
+2649223 HSVtoRGBraw R 108 | G 0 | B 0 | W 86
+2649231 R:194 | G:86 | B:86 | WW:0 | CW:0
+2649243 R:1794 | G:610 | B:610 | WW:0 | CW:0
+2669197 NEW: h:0, s:573, v:201, ct: 2700
+2669217 HSVtoRGBraw Sector 1
+2669228 HSVtoRGBraw R 112 | G 0 | B 0 | W 89
+2669236 R:201 | G:89 | B:89 | WW:0 | CW:0
+2669243 R:1902 | G:632 | B:632 | WW:0 | CW:0
+2689201 NEW: h:0, s:573, v:208, ct: 2700
+2689221 HSVtoRGBraw Sector 1
+2689228 HSVtoRGBraw R 116 | G 0 | B 0 | W 92
+2689241 R:208 | G:92 | B:92 | WW:0 | CW:0
+2689248 R:2013 | G:655 | B:655 | WW:0 | CW:0
+2709207 NEW: h:0, s:573, v:215, ct: 2700
+2709231 HSVtoRGBraw Sector 1
+2709237 HSVtoRGBraw R 120 | G 0 | B 0 | W 95
+2709245 R:215 | G:95 | B:95 | WW:0 | CW:0
+2709253 R:2129 | G:678 | B:678 | WW:0 | CW:0
+2729212 NEW: h:0, s:573, v:222, ct: 2700
+2729234 HSVtoRGBraw Sector 1
+2729241 HSVtoRGBraw R 124 | G 0 | B 0 | W 98
+2729254 R:222 | G:98 | B:98 | WW:0 | CW:0
+2729262 R:2249 | G:702 | B:702 | WW:0 | CW:0
+2749216 NEW: h:0, s:573, v:229, ct: 2700
+2749249 HSVtoRGBraw Sector 1
+2749256 HSVtoRGBraw R 128 | G 0 | B 0 | W 101
+2749264 R:229 | G:101 | B:101 | WW:0 | CW:0
+2749276 R:2374 | G:727 | B:727 | WW:0 | CW:0
+2769218 NEW: h:0, s:573, v:236, ct: 2700
+2769239 HSVtoRGBraw Sector 1
+2769251 HSVtoRGBraw R 132 | G 0 | B 0 | W 104
+2769259 R:236 | G:104 | B:104 | WW:0 | CW:0
+2769266 R:2503 | G:752 | B:752 | WW:0 | CW:0
+2789221 NEW: h:0, s:573, v:243, ct: 2700
+2789244 HSVtoRGBraw Sector 1
+2789251 HSVtoRGBraw R 136 | G 0 | B 0 | W 107
+2789264 R:243 | G:107 | B:107 | WW:0 | CW:0
+2789272 R:2637 | G:777 | B:777 | WW:0 | CW:0
+2809232 NEW: h:0, s:573, v:250, ct: 2700
+2809255 HSVtoRGBraw Sector 1
+2809262 HSVtoRGBraw R 140 | G 0 | B 0 | W 110
+2809270 R:250 | G:110 | B:110 | WW:0 | CW:0
+2809282 R:2776 | G:803 | B:803 | WW:0 | CW:0
+2829234 NEW: h:0, s:573, v:257, ct: 2700
+2829261 HSVtoRGBraw Sector 1
+2829273 HSVtoRGBraw R 143 | G 0 | B 0 | W 114
+2829282 R:257 | G:114 | B:114 | WW:0 | CW:0
+2829289 R:2919 | G:839 | B:839 | WW:0 | CW:0
+2849238 NEW: h:0, s:573, v:264, ct: 2700
+2849255 HSVtoRGBraw Sector 1
+2849262 HSVtoRGBraw R 147 | G 0 | B 0 | W 117
+2849275 R:264 | G:117 | B:117 | WW:0 | CW:0
+2849284 R:3067 | G:867 | B:867 | WW:0 | CW:0
+2869243 NEW: h:0, s:573, v:271, ct: 2700
+2869267 HSVtoRGBraw Sector 1
+2869274 HSVtoRGBraw R 151 | G 0 | B 0 | W 120
+2869282 R:271 | G:120 | B:120 | WW:0 | CW:0
+2869294 R:3220 | G:895 | B:895 | WW:0 | CW:0
+2889248 NEW: h:0, s:573, v:278, ct: 2700
+2889270 HSVtoRGBraw Sector 1
+2889282 HSVtoRGBraw R 155 | G 0 | B 0 | W 123
+2889290 R:278 | G:123 | B:123 | WW:0 | CW:0
+2889297 R:3379 | G:923 | B:923 | WW:0 | CW:0
+2909251 NEW: h:0, s:573, v:285, ct: 2700
+2909269 HSVtoRGBraw Sector 1
+2909276 HSVtoRGBraw R 159 | G 0 | B 0 | W 126
+2909289 R:285 | G:126 | B:126 | WW:0 | CW:0
+2909296 R:3542 | G:953 | B:953 | WW:0 | CW:0
+2929254 NEW: h:0, s:573, v:292, ct: 2700
+2929287 HSVtoRGBraw Sector 1
+2929293 HSVtoRGBraw R 163 | G 0 | B 0 | W 129
+2929301 R:292 | G:129 | B:129 | WW:0 | CW:0
+2929313 R:3710 | G:983 | B:983 | WW:0 | CW:0
+2949258 NEW: h:0, s:573, v:299, ct: 2700
+2949275 HSVtoRGBraw Sector 1
+2949282 HSVtoRGBraw R 167 | G 0 | B 0 | W 132
+2949294 R:299 | G:132 | B:132 | WW:0 | CW:0
+2949301 R:3884 | G:1013 | B:1013 | WW:0 | CW:0
+2969260 NEW: h:0, s:573, v:306, ct: 2700
+2969280 HSVtoRGBraw Sector 1
+2969287 HSVtoRGBraw R 171 | G 0 | B 0 | W 135
+2969295 R:306 | G:135 | B:135 | WW:0 | CW:0
+2969307 R:4063 | G:1044 | B:1044 | WW:0 | CW:0
+2989265 NEW: h:0, s:573, v:313, ct: 2700
+2989292 HSVtoRGBraw Sector 1
+2989298 HSVtoRGBraw R 175 | G 0 | B 0 | W 138
+2989306 R:313 | G:138 | B:138 | WW:0 | CW:0
+2989313 R:4247 | G:1076 | B:1076 | WW:0 | CW:0
+3001852 Free heap: 121821
+3009276 NEW: h:0, s:573, v:320, ct: 2700
+3009300 HSVtoRGBraw Sector 1
+3009311 HSVtoRGBraw R 179 | G 0 | B 0 | W 141
+3009320 R:320 | G:141 | B:141 | WW:0 | CW:0
+3009327 R:4437 | G:1109 | B:1109 | WW:0 | CW:0
+3029281 NEW: h:0, s:573, v:326, ct: 2700
+3029301 HSVtoRGBraw Sector 1
+3029309 HSVtoRGBraw R 182 | G 0 | B 0 | W 144
+3029321 R:326 | G:144 | B:144 | WW:0 | CW:0
+3029328 R:4604 | G:1142 | B:1142 | WW:0 | CW:0
+3049286 NEW: h:0, s:573, v:333, ct: 2700
+3049310 HSVtoRGBraw Sector 1
+3049316 HSVtoRGBraw R 186 | G 0 | B 0 | W 147
+3049324 R:333 | G:147 | B:147 | WW:0 | CW:0
+3049336 R:4805 | G:1176 | B:1176 | WW:0 | CW:0
+3069293 NEW: h:0, s:573, v:340, ct: 2700
+3069313 HSVtoRGBraw Sector 1
+3069325 HSVtoRGBraw R 190 | G 0 | B 0 | W 150
+3069333 R:340 | G:150 | B:150 | WW:0 | CW:0
+3069341 R:5011 | G:1210 | B:1210 | WW:0 | CW:0
+3089297 NEW: h:0, s:573, v:347, ct: 2700
+3089316 HSVtoRGBraw Sector 1
+3089323 HSVtoRGBraw R 194 | G 0 | B 0 | W 153
+3089335 R:347 | G:153 | B:153 | WW:0 | CW:0
+3089343 R:5223 | G:1245 | B:1245 | WW:0 | CW:0
+3109299 NEW: h:0, s:573, v:354, ct: 2700
+3109330 HSVtoRGBraw Sector 1
+3109337 HSVtoRGBraw R 198 | G 0 | B 0 | W 156
+3109344 R:354 | G:156 | B:156 | WW:0 | CW:0
+3109356 R:5440 | G:1281 | B:1281 | WW:0 | CW:0
+3129303 NEW: h:0, s:573, v:361, ct: 2700
+3129325 HSVtoRGBraw Sector 1
+3129337 HSVtoRGBraw R 202 | G 0 | B 0 | W 159
+3129345 R:361 | G:159 | B:159 | WW:0 | CW:0
+3129352 R:5664 | G:1317 | B:1317 | WW:0 | CW:0
+3149307 NEW: h:0, s:573, v:368, ct: 2700
+3149327 HSVtoRGBraw Sector 1
+3149334 HSVtoRGBraw R 206 | G 0 | B 0 | W 162
+3149346 R:368 | G:162 | B:162 | WW:0 | CW:0
+3149354 R:5894 | G:1354 | B:1354 | WW:0 | CW:0
+3169312 NEW: h:0, s:573, v:375, ct: 2700
+3169339 HSVtoRGBraw Sector 1
+3169346 HSVtoRGBraw R 210 | G 0 | B 0 | W 165
+3169355 R:375 | G:165 | B:165 | WW:0 | CW:0
+3169367 R:6130 | G:1392 | B:1392 | WW:0 | CW:0
+3189314 NEW: h:0, s:573, v:382, ct: 2700
+3189332 HSVtoRGBraw Sector 1
+3189344 HSVtoRGBraw R 213 | G 0 | B 0 | W 169
+3189351 R:382 | G:169 | B:169 | WW:0 | CW:0
+3189359 R:6372 | G:1443 | B:1443 | WW:0 | CW:0
+3209317 NEW: h:0, s:573, v:389, ct: 2700
+3209336 HSVtoRGBraw Sector 1
+3209343 HSVtoRGBraw R 217 | G 0 | B 0 | W 172
+3209355 R:389 | G:172 | B:172 | WW:0 | CW:0
+3209362 R:6620 | G:1483 | B:1483 | WW:0 | CW:0
+3229320 NEW: h:0, s:573, v:396, ct: 2700
+3229343 HSVtoRGBraw Sector 1
+3229350 HSVtoRGBraw R 221 | G 0 | B 0 | W 175
+3229357 R:396 | G:175 | B:175 | WW:0 | CW:0
+3229369 R:6875 | G:1523 | B:1523 | WW:0 | CW:0
+3249324 NEW: h:0, s:573, v:403, ct: 2700
+3249344 HSVtoRGBraw Sector 1
+3249350 HSVtoRGBraw R 225 | G 0 | B 0 | W 178
+3249363 R:403 | G:178 | B:178 | WW:0 | CW:0
+3249370 R:7136 | G:1564 | B:1564 | WW:0 | CW:0
+3269326 NEW: h:0, s:573, v:410, ct: 2700
+3269347 HSVtoRGBraw Sector 1
+3269354 HSVtoRGBraw R 229 | G 0 | B 0 | W 181
+3269367 R:410 | G:181 | B:181 | WW:0 | CW:0
+3269374 R:7404 | G:1605 | B:1605 | WW:0 | CW:0
+3289331 NEW: h:0, s:573, v:417, ct: 2700
+3289355 HSVtoRGBraw Sector 1
+3289361 HSVtoRGBraw R 233 | G 0 | B 0 | W 184
+3289369 R:417 | G:184 | B:184 | WW:0 | CW:0
+3289381 R:7678 | G:1648 | B:1648 | WW:0 | CW:0
+3309338 NEW: h:0, s:573, v:424, ct: 2700
+3309359 HSVtoRGBraw Sector 1
+3309366 HSVtoRGBraw R 237 | G 0 | B 0 | W 187
+3309378 R:424 | G:187 | B:187 | WW:0 | CW:0
+3309386 R:7959 | G:1691 | B:1691 | WW:0 | CW:0
+3329345 NEW: h:0, s:573, v:431, ct: 2700
+3329364 HSVtoRGBraw Sector 1
+3329371 HSVtoRGBraw R 241 | G 0 | B 0 | W 190
+3329379 R:431 | G:190 | B:190 | WW:0 | CW:0
+3329392 R:8247 | G:1735 | B:1735 | WW:0 | CW:0
+3349347 NEW: h:0, s:573, v:438, ct: 2700
+3349382 HSVtoRGBraw Sector 1
+3349389 HSVtoRGBraw R 245 | G 0 | B 0 | W 193
+3349397 R:438 | G:193 | B:193 | WW:0 | CW:0
+3349404 R:8542 | G:1779 | B:1779 | WW:0 | CW:0
+3369353 NEW: h:0, s:573, v:445, ct: 2700
+3369371 HSVtoRGBraw Sector 1
+3369377 HSVtoRGBraw R 249 | G 0 | B 0 | W 196
+3369390 R:445 | G:196 | B:196 | WW:0 | CW:0
+3369397 R:8843 | G:1824 | B:1824 | WW:0 | CW:0
+3389359 NEW: h:0, s:573, v:452, ct: 2700
+3389378 HSVtoRGBraw Sector 1
+3389385 HSVtoRGBraw R 253 | G 0 | B 0 | W 199
+3389392 R:452 | G:199 | B:199 | WW:0 | CW:0
+3389404 R:9152 | G:1870 | B:1870 | WW:0 | CW:0
+3409361 NEW: h:0, s:573, v:459, ct: 2700
+3409392 HSVtoRGBraw Sector 1
+3409399 HSVtoRGBraw R 257 | G 0 | B 0 | W 202
+3409407 R:459 | G:202 | B:202 | WW:0 | CW:0
+3409415 R:9468 | G:1917 | B:1917 | WW:0 | CW:0
+3429363 NEW: h:0, s:573, v:466, ct: 2700
+3429382 HSVtoRGBraw Sector 1
+3429389 HSVtoRGBraw R 261 | G 0 | B 0 | W 205
+3429401 R:466 | G:205 | B:205 | WW:0 | CW:0
+3429409 R:9791 | G:1965 | B:1965 | WW:0 | CW:0
+3449367 NEW: h:0, s:573, v:473, ct: 2700
+3449392 HSVtoRGBraw Sector 1
+3449398 HSVtoRGBraw R 264 | G 0 | B 0 | W 209
+3449406 R:473 | G:209 | B:209 | WW:0 | CW:0
+3449418 R:10121 | G:2029 | B:2029 | WW:0 | CW:0
+3469372 NEW: h:0, s:573, v:480, ct: 2700
+3469390 HSVtoRGBraw Sector 1
+3469402 HSVtoRGBraw R 268 | G 0 | B 0 | W 212
+3469410 R:480 | G:212 | B:212 | WW:0 | CW:0
+3469417 R:10458 | G:2079 | B:2079 | WW:0 | CW:0
+3489373 NEW: h:0, s:573, v:486, ct: 2700
+3489392 HSVtoRGBraw Sector 1
+3489399 HSVtoRGBraw R 272 | G 0 | B 0 | W 214
+3489411 R:486 | G:214 | B:214 | WW:0 | CW:0
+3489418 R:10754 | G:2112 | B:2112 | WW:0 | CW:0
+3501853 Free heap: 121821
+3509383 NEW: h:0, s:573, v:493, ct: 2700
+3509409 HSVtoRGBraw Sector 1
+3509416 HSVtoRGBraw R 276 | G 0 | B 0 | W 217
+3509429 R:493 | G:217 | B:217 | WW:0 | CW:0
+3509437 R:11105 | G:2163 | B:2163 | WW:0 | CW:0
+3529384 NEW: h:0, s:573, v:500, ct: 2700
+3529408 HSVtoRGBraw Sector 1
+3529414 HSVtoRGBraw R 280 | G 0 | B 0 | W 220
+3529422 R:500 | G:220 | B:220 | WW:0 | CW:0
+3529434 R:11464 | G:2215 | B:2215 | WW:0 | CW:0
+3549389 NEW: h:0, s:573, v:507, ct: 2700
+3549411 HSVtoRGBraw Sector 1
+3549422 HSVtoRGBraw R 283 | G 0 | B 0 | W 224
+3549430 R:507 | G:224 | B:224 | WW:0 | CW:0
+3549437 R:11831 | G:2285 | B:2285 | WW:0 | CW:0
+3569394 NEW: h:0, s:573, v:514, ct: 2700
+3569414 HSVtoRGBraw Sector 1
+3569421 HSVtoRGBraw R 287 | G 0 | B 0 | W 227
+3569433 R:514 | G:227 | B:227 | WW:0 | CW:0
+3569440 R:12205 | G:2338 | B:2338 | WW:0 | CW:0
+3589398 NEW: h:0, s:573, v:521, ct: 2700
+3589422 HSVtoRGBraw Sector 1
+3589429 HSVtoRGBraw R 291 | G 0 | B 0 | W 230
+3589436 R:521 | G:230 | B:230 | WW:0 | CW:0
+3589448 R:12587 | G:2392 | B:2392 | WW:0 | CW:0
+3609404 NEW: h:0, s:573, v:528, ct: 2700
+3609422 HSVtoRGBraw Sector 1
+3609434 HSVtoRGBraw R 295 | G 0 | B 0 | W 233
+3609441 R:528 | G:233 | B:233 | WW:0 | CW:0
+3609449 R:12977 | G:2447 | B:2447 | WW:0 | CW:0
+3629408 NEW: h:0, s:573, v:535, ct: 2700
+3629426 HSVtoRGBraw Sector 1
+3629433 HSVtoRGBraw R 299 | G 0 | B 0 | W 236
+3629445 R:535 | G:236 | B:236 | WW:0 | CW:0
+3629452 R:13375 | G:2503 | B:2503 | WW:0 | CW:0
+3649414 NEW: h:0, s:573, v:542, ct: 2700
+3649439 HSVtoRGBraw Sector 1
+3649445 HSVtoRGBraw R 303 | G 0 | B 0 | W 239
+3649453 R:542 | G:239 | B:239 | WW:0 | CW:0
+3649465 R:13781 | G:2560 | B:2560 | WW:0 | CW:0
+3669418 NEW: h:0, s:573, v:549, ct: 2700
+3669439 HSVtoRGBraw Sector 1
+3669451 HSVtoRGBraw R 307 | G 0 | B 0 | W 242
+3669459 R:549 | G:242 | B:242 | WW:0 | CW:0
+3669467 R:14195 | G:2618 | B:2618 | WW:0 | CW:0
+3689423 NEW: h:0, s:573, v:556, ct: 2700
+3689442 HSVtoRGBraw Sector 1
+3689449 HSVtoRGBraw R 311 | G 0 | B 0 | W 245
+3689462 R:556 | G:245 | B:245 | WW:0 | CW:0
+3689470 R:14618 | G:2676 | B:2676 | WW:0 | CW:0
+3709426 NEW: h:0, s:573, v:563, ct: 2700
+3709449 HSVtoRGBraw Sector 1
+3709455 HSVtoRGBraw R 315 | G 0 | B 0 | W 248
+3709463 R:563 | G:248 | B:248 | WW:0 | CW:0
+3709475 R:15049 | G:2736 | B:2736 | WW:0 | CW:0
+3729432 NEW: h:0, s:573, v:570, ct: 2700
+3729451 HSVtoRGBraw Sector 1
+3729463 HSVtoRGBraw R 319 | G 0 | B 0 | W 251
+3729470 R:570 | G:251 | B:251 | WW:0 | CW:0
+3729477 R:15488 | G:2796 | B:2796 | WW:0 | CW:0
+3749438 NEW: h:0, s:573, v:577, ct: 2700
+3749456 HSVtoRGBraw Sector 1
+3749463 HSVtoRGBraw R 323 | G 0 | B 0 | W 254
+3749475 R:577 | G:254 | B:254 | WW:0 | CW:0
+3749482 R:15935 | G:2857 | B:2857 | WW:0 | CW:0
+3769441 NEW: h:0, s:573, v:584, ct: 2700
+3769463 HSVtoRGBraw Sector 1
+3769470 HSVtoRGBraw R 327 | G 0 | B 0 | W 257
+3769477 R:584 | G:257 | B:257 | WW:0 | CW:0
+3769489 R:16391 | G:2919 | B:2919 | WW:0 | CW:0
+3789446 NEW: h:0, s:573, v:591, ct: 2700
+3789468 HSVtoRGBraw Sector 1
+3789481 HSVtoRGBraw R 331 | G 0 | B 0 | W 260
+3789488 R:591 | G:260 | B:260 | WW:0 | CW:0
+3789496 R:16856 | G:2982 | B:2982 | WW:0 | CW:0
+3809451 NEW: h:0, s:573, v:598, ct: 2700
+3809468 HSVtoRGBraw Sector 1
+3809475 HSVtoRGBraw R 334 | G 0 | B 0 | W 264
+3809487 R:598 | G:264 | B:264 | WW:0 | CW:0
+3809495 R:17329 | G:3067 | B:3067 | WW:0 | CW:0
+3829453 NEW: h:0, s:573, v:605, ct: 2700
+3829478 HSVtoRGBraw Sector 1
+3829484 HSVtoRGBraw R 338 | G 0 | B 0 | W 267
+3829492 R:605 | G:267 | B:267 | WW:0 | CW:0
+3829504 R:17812 | G:3132 | B:3132 | WW:0 | CW:0
+3849457 NEW: h:0, s:573, v:612, ct: 2700
+3849475 HSVtoRGBraw Sector 1
+3849487 HSVtoRGBraw R 342 | G 0 | B 0 | W 270
+3849495 R:612 | G:270 | B:270 | WW:0 | CW:0
+3849502 R:18303 | G:3198 | B:3198 | WW:0 | CW:0
+3869461 NEW: h:0, s:573, v:619, ct: 2700
+3869487 HSVtoRGBraw Sector 1
+3869495 HSVtoRGBraw R 346 | G 0 | B 0 | W 273
+3869507 R:619 | G:273 | B:273 | WW:0 | CW:0
+3869515 R:18803 | G:3265 | B:3265 | WW:0 | CW:0
+3889464 NEW: h:0, s:573, v:626, ct: 2700
+3889488 HSVtoRGBraw Sector 1
+3889494 HSVtoRGBraw R 350 | G 0 | B 0 | W 276
+3889502 R:626 | G:276 | B:276 | WW:0 | CW:0
+3889514 R:19312 | G:3333 | B:3333 | WW:0 | CW:0
+3909512 NEW: h:0, s:573, v:633, ct: 2700
+3909529 HSVtoRGBraw Sector 1
+3909541 HSVtoRGBraw R 354 | G 0 | B 0 | W 279
+3909549 R:633 | G:279 | B:279 | WW:0 | CW:0
+3909557 R:19830 | G:3402 | B:3402 | WW:0 | CW:0
+3915844 onAccept, tcp: 8125cec, state: 0 K=0, Free heap size=121821
+3915862 TCP 877f3f0 +connection
+3915873 TCP 877f3f0 timeout updating: 70 -> 10
+3915886 Opening connection. Total connections: 1
+3915894 TcpServer onClient: 192.168.29.164
+
+3921898 The headers are complete
+3921950 MemoryDataStream::realloc 0 -> 1253
+3921960 TCP 877f3f0 received: 1390 bytes
+3921972 TCP 877f3f0 onReadyToSendData: 1
+3924040 MemoryDataStream::realloc 1253 -> 1709
+3924056 onConfig
+3924063 ApplicationWebserver::authenticated - checking general context
+3924079 [CFGDB] LoadStore ''
+3924086 [CFGDB] Store()  877f3ac 1
+3924095 [CFGDB] incUpdate()  877f3ac 1
+3924136 File 'app-config/_root.json' open error: NotFound
+3924144 [CFGDB] open 'app-config/_root.json' failed
+3924155 [CFGDB] Load defaults
+3924163 [CFGDB] decUpdate()  877f3ac 0
+3924173 ======================
+HTTP POST request received, 
+3924201 ApplicationWebserver::onConfig storing old ip settings
+3924209 [CFGDB] ~Store()  877f3ac 0
+3924216 [CFGDB] LoadStore 'network'
+3924228 [CFGDB] Store() network 877f3ac 1
+3924235 [CFGDB] incUpdate() network 877f3ac 1
+3924339 attached file: '' (383 bytes) #0xFFFCBE50
+3924442 [CFGDB] decUpdate() network 877f3ac 0
+3924455 [CFGDB] ~Store() network 877f3ac 0
+3924467 [CFGDB] LoadStore ''
+3924474 [CFGDB] Store()  877f3ac 1
+3924481 [CFGDB] incUpdate()  877f3ac 1
+3924502 File 'app-config/_root.json' open error: NotFound
+3924513 [CFGDB] open 'app-config/_root.json' failed
+3924520 [CFGDB] Load defaults
+3924528 [CFGDB] decUpdate()  877f3ac 0
+3924540 [CFGDB] lockStore() app-config 877d380
+3924549 [CFGDB] incUpdate()  877f3ac 1
+3924556 [CFGDB] incUpdate()  877f3ac 2
+3924567 [CFGDB] decUpdate()  877f3ac 1
+3924577 [CFGDB] LoadStore ''
+3924583 [CFGDB] Store()  877d45c 2
+3924595 [CFGDB] incUpdate()  877d45c 1
+3924613 File 'app-config/_root.json' open error: NotFound
+3924619 [CFGDB] open 'app-config/_root.json' failed
+3924630 [CFGDB] Load defaults
+3924637 [CFGDB] decUpdate()  877d45c 0
+3924644 [CFGDB] lockStore() app-config 877d380
+3924656 [CFGDB] Store '' is locked, cannot write
+3924665 [CFGDB] UpdateConflict "security"
+3924676 [CFGDB] NotInSchema "api_secured"
+3924690 [CFGDB] NotInSchema "api_password"
+3924698 [CFGDB] lockStore() app-config 877d380
+3924710 [CFGDB] Store '' is locked, cannot write
+3924718 [CFGDB] UpdateConflict "events"
+3924727 [CFGDB] NotInSchema "color_interval_ms"
+3924740 [CFGDB] NotInSchema "color_min_interval_ms"
+3924749 [CFGDB] NotInSchema "trans_fin_interval_ms"
+3924757 [CFGDB] NotInSchema "server_enabled"
+3924771 [CFGDB] ~Store()  877d45c 1
+3924778 [CFGDB] LoadStore 'general'
+3924784 [CFGDB] Store() general 877d45c 2
+3924796 [CFGDB] incUpdate() general 877d45c 1
+3924873 attached file: '' (465 bytes) #0xFFFCB730
+3925000 [CFGDB] decUpdate() general 877d45c 0
+3925014 [CFGDB] lockStore() app-config 877d380
+3925021 [CFGDB] ~Store()  877f3ac 1
+3925033 [CFGDB] incUpdate() general 877d45c 1
+3925040 [CFGDB] incUpdate() general 877d45c 2
+3925047 [CFGDB] decUpdate() general 877d45c 1
+3925105 [CFGDB] Save 'general'
+3925140 File 'app-config/general.json' open error: Denied
+3925148 [CFGDB] Object save to 'app-config/general.json' failed: Denied
+3925161 [CFGDB] LoadStore 'color'
+3925168 [CFGDB] Store() color 8780c4c 2
+3925175 [CFGDB] incUpdate() color 8780c4c 1
+3925277 attached file: '' (216 bytes) #0xFFFCB730
+3925339 [CFGDB] decUpdate() color 8780c4c 0
+3925352 [CFGDB] lockStore() app-config 877d380
+3925359 [CFGDB] ~Store() general 877d45c 1
+3925367 [CFGDB] incUpdate() color 8780c4c 1
+3925378 [CFGDB] incUpdate() color 8780c4c 2
+3925385 [CFGDB] decUpdate() color 8780c4c 1
+3925416 [CFGDB] Save 'color'
+3925451 File 'app-config/color.json' open error: Denied
+3925458 [CFGDB] Object save to 'app-config/color.json' failed: Denied
+3925471 [CFGDB] LoadStore 'sync'
+3925478 [CFGDB] Store() sync 8780dfc 2
+3925485 [CFGDB] incUpdate() sync 8780dfc 1
+3925563 attached file: '' (339 bytes) #0xFFFCB730
+3925634 [CFGDB] decUpdate() sync 8780dfc 0
+3925641 [CFGDB] lockStore() app-config 877d380
+3925653 [CFGDB] ~Store() color 8780c4c 1
+3925661 [CFGDB] incUpdate() sync 8780dfc 1
+3925668 [CFGDB] incUpdate() sync 8780dfc 2
+3925679 [CFGDB] decUpdate() sync 8780dfc 1
+3925710 [CFGDB] Save 'sync'
+3925737 File 'app-config/sync.json' open error: Denied
+3925749 [CFGDB] Object save to 'app-config/sync.json' failed: Denied
+3925757 [CFGDB] LoadStore 'network'
+3925765 [CFGDB] Store() network 877f1dc 2
+3925772 [CFGDB] incUpdate() network 877f1dc 1
+3925845 attached file: '' (383 bytes) #0xFFFCB730
+3925930 [CFGDB] decUpdate() network 877f1dc 0
+3925949 [CFGDB] lockStore() app-config 877d380
+3925956 [CFGDB] ~Store() sync 8780dfc 1
+3925968 [CFGDB] incUpdate() network 877f1dc 1
+3925975 [CFGDB] incUpdate() network 877f1dc 2
+3925982 [CFGDB] decUpdate() network 877f1dc 1
+3926030 [CFGDB] BadType "Integer"
+3926037 [CFGDB] Save 'network'
+3926066 File 'app-config/network.json' open error: Denied
+3926078 [CFGDB] Object save to 'app-config/network.json' failed: Denied
+3926086 [CFGDB] decUpdate() network 877f1dc 0
+3926097 [CFGDB] Save 'network'
+3926122 File 'app-config/network.json' open error: Denied
+3926129 [CFGDB] Object save to 'app-config/network.json' failed: Denied
+3926143 JSON load 'app-config': FormatError::BadType
+3926150 ApplicationWebserver::onConfig geting new ip settings
+3926162 [CFGDB] LoadStore 'network'
+3926168 [CFGDB] Store() network 877f23c 2
+3926180 [CFGDB] incUpdate() network 877f23c 1
+3926267 attached file: '' (383 bytes) #0xFFFCBE50
+3926345 [CFGDB] decUpdate() network 877f23c 0
+3926398 MemoryDataStream::realloc 0 -> 1
+3926406 MemoryDataStream::realloc 1 -> 130
+3926423 MemoryDataStream::realloc 0 -> 17
+3926435 Sending stream. Bytes to send: 17
+3926450 MemoryDataStream::realloc 17 -> 177
+3926458 Sending stream. Bytes to send: 49
+3926471 Sending stream. Bytes to send: 93
+3926478 Sending stream. Bytes to send: 121
+3926486 Sending stream. Bytes to send: 153
+3926498 Sending stream. Bytes to send: 173
+3926505 MemoryDataStream::realloc 177 -> 325
+3926513 Sending stream. Bytes to send: 197
+3926525 Sending stream. Bytes to send: 223
+3926532 Sending stream. Bytes to send: 225
+3926538 TCP 877f3f0 onReadyToSendData: 1
+3926553 TCP 877f3f0 Written: 225, Available: 2780, isFinished: 0, PushCount: 1
+3926562 TcpClient stream finished
+3926575 TCP 877f3f0 Written: 16, Available: 2555, isFinished: 0, PushCount: 1
+3926584 TcpClient stream finished
+3926601 TCP 877f3f0 received: 392 bytes
+3926608 TCP 877f3f0 onReadyToSendData: 1
+3926651 [CFGDB] ~Store() network 877f23c 1
+3926663 [CFGDB] ~Store() network 877f1dc 0
+3935274 TCP 877f3f0 sent: 241
+3935292 TCP 877f3f0 onReadyToSendData: 2
+3935316 NEW: h:0, s:573, v:640, ct: 2700
+3935329 HSVtoRGBraw Sector 1
+3935335 HSVtoRGBraw R 358 | G 0 | B 0 | W 282
+3935343 R:640 | G:282 | B:282 | WW:0 | CW:0
+3935355 R:20357 | G:3471 | B:3471 | WW:0 | CW:0
+3937328 TCP 877f3f0 receive: pbuf is NULL
+3937340 TCP 877f3f0 received: (null)
+3937352 TCP 877f3f0 connection closing
+3937365 TCP 877f3f0 ~connection
+3937372 Destroying connection. Total connections: 0
+4008716 NEW: h:0, s:573, v:647, ct: 2700
+4008740 HSVtoRGBraw Sector 1
+4008746 HSVtoRGBraw R 362 | G 0 | B 0 | W 285
+4008759 R:647 | G:285 | B:285 | WW:0 | CW:0
+4008766 R:20894 | G:3542 | B:3542 | WW:0 | CW:0
+4008782 Free heap: 121613
+4028721 NEW: h:0, s:573, v:653, ct: 2700
+4028741 HSVtoRGBraw Sector 1
+4028748 HSVtoRGBraw R 365 | G 0 | B 0 | W 288
+4028761 R:653 | G:288 | B:288 | WW:0 | CW:0
+4028769 R:21361 | G:3613 | B:3613 | WW:0 | CW:0
+4048725 NEW: h:0, s:573, v:660, ct: 2700
+4048747 HSVtoRGBraw Sector 1
+4048754 HSVtoRGBraw R 369 | G 0 | B 0 | W 291
+4048762 R:660 | G:291 | B:291 | WW:0 | CW:0
+4048774 R:21915 | G:3686 | B:3686 | WW:0 | CW:0
+4068730 NEW: h:0, s:573, v:667, ct: 2700
+4068750 HSVtoRGBraw Sector 1
+4068757 HSVtoRGBraw R 373 | G 0 | B 0 | W 294
+4068765 R:667 | G:294 | B:294 | WW:0 | CW:0
+4068773 R:22479 | G:3759 | B:3759 | WW:0 | CW:0
+4089102 NEW: h:0, s:573, v:674, ct: 2700
+4089131 HSVtoRGBraw Sector 1
+4089139 HSVtoRGBraw R 377 | G 0 | B 0 | W 297
+4089151 R:674 | G:297 | B:297 | WW:0 | CW:0
+4089158 R:23052 | G:3834 | B:3834 | WW:0 | CW:0
+4109106 NEW: h:0, s:573, v:681, ct: 2700
+4109133 HSVtoRGBraw Sector 1
+4109140 HSVtoRGBraw R 381 | G 0 | B 0 | W 300
+4109148 R:681 | G:300 | B:300 | WW:0 | CW:0
+4109160 R:23635 | G:3909 | B:3909 | WW:0 | CW:0
+4129109 NEW: h:0, s:573, v:688, ct: 2700
+4129130 HSVtoRGBraw Sector 1
+4129137 HSVtoRGBraw R 385 | G 0 | B 0 | W 303
+4129149 R:688 | G:303 | B:303 | WW:0 | CW:0
+4129157 R:24227 | G:3985 | B:3985 | WW:0 | CW:0
+4149114 APPLedCtrl::onAnimationFinished: 
+4149133 APPLedCtrl::onAnimationFinished: 
+4149140 APPLedCtrl::onAnimationFinished: 
+4149151 APPLedCtrl::onAnimationFinished: 
+4149158 NEW: h:0, s:573, v:696, ct: 2700
+4149166 HSVtoRGBraw Sector 1
+4149173 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4149180 R:696 | G:307 | B:307 | WW:0 | CW:0
+4149207 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4169119 NEW: h:0, s:573, v:696, ct: 2700
+4169138 HSVtoRGBraw Sector 1
+4169146 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4169159 R:696 | G:307 | B:307 | WW:0 | CW:0
+4169166 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4189123 NEW: h:0, s:573, v:696, ct: 2700
+4189147 HSVtoRGBraw Sector 1
+4189154 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4189162 R:696 | G:307 | B:307 | WW:0 | CW:0
+4189174 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4208742 -TCP connection
+4209126 NEW: h:0, s:573, v:696, ct: 2700
+4209136 HSVtoRGBraw Sector 1
+4209147 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4209155 R:696 | G:307 | B:307 | WW:0 | CW:0
+4209162 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4229129 NEW: h:0, s:573, v:696, ct: 2700
+4229155 HSVtoRGBraw Sector 1
+4229162 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4229175 R:696 | G:307 | B:307 | WW:0 | CW:0
+4229182 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4249133 NEW: h:0, s:573, v:696, ct: 2700
+4249157 HSVtoRGBraw Sector 1
+4249163 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4249171 R:696 | G:307 | B:307 | WW:0 | CW:0
+4249183 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4269137 NEW: h:0, s:573, v:696, ct: 2700
+4269158 HSVtoRGBraw Sector 1
+4269171 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4269179 R:696 | G:307 | B:307 | WW:0 | CW:0
+4269196 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4289139 NEW: h:0, s:573, v:696, ct: 2700
+4289156 HSVtoRGBraw Sector 1
+4289163 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4289175 R:696 | G:307 | B:307 | WW:0 | CW:0
+4289182 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4309145 NEW: h:0, s:573, v:696, ct: 2700
+4309167 HSVtoRGBraw Sector 1
+4309174 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4309182 R:696 | G:307 | B:307 | WW:0 | CW:0
+4309206 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4409174 NEW: h:0, s:573, v:696, ct: 2700
+4409220 HSVtoRGBraw Sector 1
+4409232 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4409240 R:696 | G:307 | B:307 | WW:0 | CW:0
+4409247 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4429181 NEW: h:0, s:573, v:696, ct: 2700
+4429213 HSVtoRGBraw Sector 1
+4429220 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4429232 R:696 | G:307 | B:307 | WW:0 | CW:0
+4429240 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4449200 NEW: h:0, s:573, v:696, ct: 2700
+4449227 HSVtoRGBraw Sector 1
+4449234 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4449242 R:696 | G:307 | B:307 | WW:0 | CW:0
+4449254 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4469209 NEW: h:0, s:573, v:696, ct: 2700
+4469227 HSVtoRGBraw Sector 1
+4469238 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4469246 R:696 | G:307 | B:307 | WW:0 | CW:0
+4469253 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4489211 NEW: h:0, s:573, v:696, ct: 2700
+4489239 HSVtoRGBraw Sector 1
+4489246 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4489258 R:696 | G:307 | B:307 | WW:0 | CW:0
+4489265 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4501853 Free heap: 122065
+4509213 NEW: h:0, s:573, v:696, ct: 2700
+4509239 HSVtoRGBraw Sector 1
+4509246 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4509259 R:696 | G:307 | B:307 | WW:0 | CW:0
+4509267 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4529219 NEW: h:0, s:573, v:696, ct: 2700
+4529245 HSVtoRGBraw Sector 1
+4529252 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4529260 R:696 | G:307 | B:307 | WW:0 | CW:0
+4529272 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4549226 NEW: h:0, s:573, v:696, ct: 2700
+4549245 HSVtoRGBraw Sector 1
+4549257 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4549266 R:696 | G:307 | B:307 | WW:0 | CW:0
+4549274 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4569230 NEW: h:0, s:573, v:696, ct: 2700
+4569247 HSVtoRGBraw Sector 1
+4569254 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4569267 R:696 | G:307 | B:307 | WW:0 | CW:0
+4569274 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4589233 NEW: h:0, s:573, v:696, ct: 2700
+4589257 HSVtoRGBraw Sector 1
+4589263 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4589271 R:696 | G:307 | B:307 | WW:0 | CW:0
+4589283 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4609236 NEW: h:0, s:573, v:696, ct: 2700
+4609254 HSVtoRGBraw Sector 1
+4609265 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4609273 R:696 | G:307 | B:307 | WW:0 | CW:0
+4609280 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4629242 NEW: h:0, s:573, v:696, ct: 2700
+4629270 HSVtoRGBraw Sector 1
+4629277 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4629291 R:696 | G:307 | B:307 | WW:0 | CW:0
+4629298 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4649245 NEW: h:0, s:573, v:696, ct: 2700
+4649280 HSVtoRGBraw Sector 1
+4649287 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4649295 R:696 | G:307 | B:307 | WW:0 | CW:0
+4649308 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4669250 NEW: h:0, s:573, v:696, ct: 2700
+4669270 HSVtoRGBraw Sector 1
+4669282 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4669290 R:696 | G:307 | B:307 | WW:0 | CW:0
+4669297 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4689253 NEW: h:0, s:573, v:696, ct: 2700
+4689271 HSVtoRGBraw Sector 1
+4689278 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4689291 R:696 | G:307 | B:307 | WW:0 | CW:0
+4689298 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4709254 NEW: h:0, s:573, v:696, ct: 2700
+4709277 HSVtoRGBraw Sector 1
+4709284 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4709291 R:696 | G:307 | B:307 | WW:0 | CW:0
+4709303 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4729259 NEW: h:0, s:573, v:696, ct: 2700
+4729278 HSVtoRGBraw Sector 1
+4729290 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4729297 R:696 | G:307 | B:307 | WW:0 | CW:0
+4729304 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4749261 NEW: h:0, s:573, v:696, ct: 2700
+4749279 HSVtoRGBraw Sector 1
+4749286 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4749298 R:696 | G:307 | B:307 | WW:0 | CW:0
+4749305 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4769266 NEW: h:0, s:573, v:696, ct: 2700
+4769291 HSVtoRGBraw Sector 1
+4769298 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4769306 R:696 | G:307 | B:307 | WW:0 | CW:0
+4769318 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4789270 NEW: h:0, s:573, v:696, ct: 2700
+4789288 HSVtoRGBraw Sector 1
+4789295 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4789303 R:696 | G:307 | B:307 | WW:0 | CW:0
+4789311 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4809275 NEW: h:0, s:573, v:696, ct: 2700
+4809294 HSVtoRGBraw Sector 1
+4809301 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4809314 R:696 | G:307 | B:307 | WW:0 | CW:0
+4809321 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4829279 NEW: h:0, s:573, v:696, ct: 2700
+4829302 HSVtoRGBraw Sector 1
+4829309 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4829316 R:696 | G:307 | B:307 | WW:0 | CW:0
+4829328 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4849282 NEW: h:0, s:573, v:696, ct: 2700
+4849302 HSVtoRGBraw Sector 1
+4849309 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4849323 R:696 | G:307 | B:307 | WW:0 | CW:0
+4849330 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4869289 NEW: h:0, s:573, v:696, ct: 2700
+4869310 HSVtoRGBraw Sector 1
+4869317 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4869330 R:696 | G:307 | B:307 | WW:0 | CW:0
+4869337 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4889291 NEW: h:0, s:573, v:696, ct: 2700
+4889314 HSVtoRGBraw Sector 1
+4889321 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4889328 R:696 | G:307 | B:307 | WW:0 | CW:0
+4889341 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4909294 NEW: h:0, s:573, v:696, ct: 2700
+4909312 HSVtoRGBraw Sector 1
+4909319 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4909331 R:696 | G:307 | B:307 | WW:0 | CW:0
+4909338 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4929297 NEW: h:0, s:573, v:696, ct: 2700
+4929316 HSVtoRGBraw Sector 1
+4929322 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4929335 R:696 | G:307 | B:307 | WW:0 | CW:0
+4929342 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4949301 NEW: h:0, s:573, v:696, ct: 2700
+4949328 HSVtoRGBraw Sector 1
+4949334 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4949343 R:696 | G:307 | B:307 | WW:0 | CW:0
+4949354 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4969305 NEW: h:0, s:573, v:696, ct: 2700
+4969327 HSVtoRGBraw Sector 1
+4969333 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4969346 R:696 | G:307 | B:307 | WW:0 | CW:0
+4969354 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+4989311 NEW: h:0, s:573, v:696, ct: 2700
+4989331 HSVtoRGBraw Sector 1
+4989337 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+4989350 R:696 | G:307 | B:307 | WW:0 | CW:0
+4989357 R:24916 | G:4089 | B:4089 | WW:0 | CW:0
+5001853 Free heap: 122065
+5009315 NEW: h:0, s:573, v:696, ct: 2700
+5009339 HSVtoRGBraw Sector 1
+5009346 HSVtoRGBraw R 389 | G 0 | B 0 | W 307
+5009354 R:696 | G:307 | B:307 | WW:0 | CW:0
+5009366 R:24916 | G:4089 | B:4089 | WW:0 | CW:0

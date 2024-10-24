@@ -51,14 +51,16 @@ void AppMqttClient::connect() {
 
     debug_d("MQTT::connect ID: %s\n", _id.c_str());
 
-    if(!mqtt->setWill("last/will","The connection from this device is lost:(", MqttClient::getFlags(MQTT_QOS_AT_LEAST_ONCE, MQTT_RETAIN_TRUE))) {
+    if(!mqtt->setWill(F("last/will"),F("The connection from this device is lost:("), MqttClient::getFlags(MQTT_QOS_AT_LEAST_ONCE, MQTT_RETAIN_TRUE))) {
         debugf("Unable to set the last will and testament. Most probably there is not enough memory on the device.");
     }
 //    0);app.cfg.network.mqtt.username, app.cfg.network.mqtt.password);
     //debug_i("MqttClient: Server: %s Port: %d\n", app.cfg.network.mqtt.server.c_str(), app.cfg.network.mqtt.port);
-
-    Url url = "mqtt://" + app.cfg.network.mqtt.username + ":" + app.cfg.network.mqtt.password + "@" + app.cfg.network.mqtt.server + ":" + String(app.cfg.network.mqtt.port);
-    mqtt->connect(url, _id);
+    {
+        AppConfig::Network network(*app.cfg);
+        Url url = "mqtt://" + network.mqtt.getUsername() + ":" + network.mqtt.getPassword() + "@" + network.mqtt.getServer() + ":" + String(network.mqtt.getPort());
+        mqtt->connect(url, _id);
+    } // end ConfigDB network context
 #ifdef ENABLE_SSL
     // not need i guess? mqtt->addSslOptions(SSL_SERVER_VERIFY_LATER);
 
@@ -70,26 +72,29 @@ void AppMqttClient::connect() {
 #endif
     // Assign a disconnect callback function
     mqtt->setCompleteDelegate(TcpClientCompleteDelegate(&AppMqttClient::onComplete, this));
-
-    if (app.cfg.sync.clock_slave_enabled) {
-        mqtt->subscribe(app.cfg.sync.clock_slave_topic);
-    }
-    if (app.cfg.sync.cmd_slave_enabled) {
-        mqtt->subscribe(app.cfg.sync.cmd_slave_topic);
-    }
-    if (app.cfg.sync.color_slave_enabled) {
-        debug_d("Subscribe: %s\n", app.cfg.sync.color_slave_topic.c_str());
-        mqtt->subscribe(app.cfg.sync.color_slave_topic);
-    }
+    {
+        AppConfig::Sync sync(*app.cfg);
+        if (sync.getClockSlaveEnabled()) {
+            mqtt->subscribe(sync.getClockSlaveTopic());
+        }
+        if (sync.getCmdSlaveEnabled()) {
+            mqtt->subscribe(sync.getCmdSlaveTopic());
+        }
+        if (sync.getColorSlaveEnabled()) {
+            debug_d("Subscribe: %s\n", sync.getColorSlaveTopic().c_str());
+            mqtt->subscribe(sync.getColorSlaveTopic());
+        }
+    }// end ConfigDB sync context
 }
 
 void AppMqttClient::init() {
-    if (app.cfg.general.device_name.length() > 0) {
-        debug_w("AppMqttClient::init: building MQTT ID from device name: '%s'\n", app.cfg.general.device_name.c_str());
-        _id = app.cfg.general.device_name;
+    AppConfig::General general(*app.cfg);
+    if (general.getDeviceName().length() > 0) {
+        debug_w("AppMqttClient::init: building MQTT ID from device name: '%s'\n", general.getDeviceName().c_str());
+        _id = general.getDeviceName();
     }
     else {
-        debug_w("AppMqttClient::init: building MQTT ID from MAC (device name is: '%s')\n", app.cfg.general.device_name.c_str());
+        debug_w("AppMqttClient::init: building MQTT ID from MAC (device name is: '%s')\n", general.getDeviceName().c_str());
         _id = String("rgbww_") + WifiStation.getMAC();
     }
 }
@@ -116,8 +121,9 @@ int AppMqttClient::onMessageReceived(MqttClient& client, mqtt_message_t* msg) {
     String topic = MqttBuffer(msg->publish.topic_name);
     String message = MqttBuffer(msg->publish.content);
 
-    if (app.cfg.sync.clock_slave_enabled && (topic == app.cfg.sync.clock_slave_topic)) {
-        if (message == "reset") {
+    AppConfig::Sync sync(*app.cfg);
+    if (sync.getClockSlaveEnabled() && (topic == sync.getClockSlaveTopic())) {
+        if (message == F("reset")) {
             app.rgbwwctrl.onMasterClockReset();
         }
         else  {
@@ -125,10 +131,10 @@ int AppMqttClient::onMessageReceived(MqttClient& client, mqtt_message_t* msg) {
             app.rgbwwctrl.onMasterClock(clock);
         }
     }
-    else if (app.cfg.sync.cmd_slave_enabled && topic == app.cfg.sync.cmd_slave_topic) {
+    else if (sync.getCmdSlaveEnabled() && topic == sync.getCmdSlaveTopic()) {
         app.jsonproc.onJsonRpc(message);
     }
-    else if (app.cfg.sync.color_slave_enabled && (topic == app.cfg.sync.color_slave_topic)) {
+    else if (sync.getColorSlaveEnabled() && (topic == sync.getColorSlaveTopic())) {
         String error;
         app.jsonproc.onColor(message, error, false);
     }
@@ -162,17 +168,17 @@ void AppMqttClient::publishCurrentRaw(const ChannelOutput& raw) {
     StaticJsonDocument<200> doc;
     JsonObject root = doc.to<JsonObject>();
     JsonObject rawJson = root.createNestedObject("raw");
-    rawJson["r"] = raw.r;
-    rawJson["g"] = raw.g;
-    rawJson["b"] = raw.b;
-    rawJson["cw"] = raw.cw;
-    rawJson["ww"] = raw.ww;
+    rawJson[F("r")] = raw.r;
+    rawJson[F("g")] = raw.g;
+    rawJson[F("b")] = raw.b;
+    rawJson[F("cw")] = raw.cw;
+    rawJson[F("ww")] = raw.ww;
 
-    root["t"] = 0;
-    root["cmd"] = "solid";
+    root[F("t")] = 0;
+    root[F("cmd")] = "solid";
 
     String jsonMsg = Json::serialize(root);
-    publish(buildTopic("color"), jsonMsg, true);
+    publish(buildTopic(F("color")), jsonMsg, true);
 }
 
 void AppMqttClient::publishCurrentHsv(const HSVCT& color) {
@@ -189,20 +195,21 @@ void AppMqttClient::publishCurrentHsv(const HSVCT& color) {
     StaticJsonDocument<200> doc;
     JsonObject root = doc.to<JsonObject>();
     JsonObject hsv = root.createNestedObject("hsv");
-    hsv["h"] = h;
-    hsv["s"] = s;
-    hsv["v"] = v;
-    hsv["ct"] = ct;
+    hsv[F("h")] = h;
+    hsv[F("s")] = s;
+    hsv[F("v")] = v;
+    hsv[F("ct")] = ct;
 
-    root["t"] = 0;
-    root["cmd"] = "solid";
+    root[F("t")] = 0;
+    root[F("cmd")] = "solid";
 
     String jsonMsg = Json::serialize(root);
-    publish(buildTopic("color"), jsonMsg, true);
+    publish(buildTopic(F("color")), jsonMsg, true);
 }
 
 String AppMqttClient::buildTopic(const String& suffix) {
-    String topic = app.cfg.network.mqtt.topic_base;
+    AppConfig::Network network(*app.cfg);
+    String topic = network.mqtt.getTopicBase();
     topic += _id + "/";
     return topic + suffix;
 }
@@ -216,26 +223,26 @@ void AppMqttClient::publishClock(uint32_t steps) {
         String msg;
         msg += steps;
 
-        publish(buildTopic("clock"), msg, false);
+        publish(buildTopic(F("clock")), msg, false);
     }
 }
 
 void AppMqttClient::publishClockReset() {
-    publish(buildTopic("clock"), "reset", false);
+    publish(buildTopic(F("clock")), "reset", false);
 }
 
 void AppMqttClient::publishClockInterval(uint32_t curInterval) {
     String msg;
     msg += curInterval;
 
-    publish(buildTopic("clock_interval"), msg, false);
+    publish(buildTopic(F("clock_interval")), msg, false);
 }
 
 void AppMqttClient::publishClockSlaveOffset(int offset) {
     String msg;
     msg += offset;
 
-    publish(buildTopic("clock_slave_offset"), msg, false);
+    publish(buildTopic(F("clock_slave_offset")), msg, false);
 }
 
 void AppMqttClient::publishCommand(const String& method, const JsonObject& params) {
@@ -244,10 +251,10 @@ void AppMqttClient::publishCommand(const String& method, const JsonObject& param
     JsonRpcMessage msg(method);
 
     if (params.size() > 0)
-        msg.getRoot()["params"] = params;
+        msg.getRoot()[F("params")] = params;
 
     String msgStr = Json::serialize(msg.getRoot());
-    publish(buildTopic("command"), msgStr, false);
+    publish(buildTopic(F("command")), msgStr, false);
 }
 
 void AppMqttClient::publishTransitionFinished(const String& name, bool requeued) {
@@ -255,9 +262,9 @@ void AppMqttClient::publishTransitionFinished(const String& name, bool requeued)
 
     StaticJsonDocument<200> doc;
     JsonObject root = doc.to<JsonObject>();
-    root["name"] = name;
-    root["requequed"] = requeued;
+    root[F("name")] = name;
+    root[F("requequed")] = requeued;
 
     String jsonMsg = Json::serialize(root);
-    publish(buildTopic("transition_finished"), jsonMsg, true);
+    publish(buildTopic(F("transition_finished")), jsonMsg, true);
 }

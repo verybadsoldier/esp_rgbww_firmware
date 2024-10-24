@@ -1,0 +1,22 @@
+{
+    "name": "flash only",
+    "base_config": "standard",
+    "options": [],
+    "devices": {
+        "spiFlash": {
+            "size": "4M"
+        }
+    },
+    "partitions": {
+        "rom0": {
+            "subtype": "ota_0",
+            "size": "1016K"
+        },
+        "rom1": {
+            "subtype": "ota_1",
+            "address": "0x00202000",
+            "size": "1016K",
+            "type": "app"
+        }
+    }
+}

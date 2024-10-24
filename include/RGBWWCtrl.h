@@ -33,14 +33,19 @@
 #define DEFAULT_API_SECURED false
 #define DEFAULT_API_PASSWORD "rgbwwctrl"
 #define DEFAULT_CONNECTION_RETRIES 10
-#define DEFAULT_OTA_URL "http://home.mobileme.de:8080/version.json"
-#define DEFAULT_PINCONFIG_URL "https://raw.githubusercontent.com/pljakobs/esp_rgb_webapp2/devel/public/config/pinconfig.json"
+#define DEFAULT_OTA_URL "https://lightinator.de/version.json"
 
 // RGBWW relatedssh 192.
 #define DEFAULT_COLORTEMP_WW 2700
 #define DEFAULT_COLORTEMP_CW 6000
 
-#define PWM_FREQUENCY 339
+#ifdef ARCH_ESP8266
+#define PWM_FREQUENCY 800
+#elif ARCH_ESP32
+#define PWM_FREQUENCY 4000
+#elif ARCH_HOST
+#define PWM_FREQUENCY 1000
+#endif
 #define RGBWW_USE_ESP_HWPWM
 
 // Debugging
@@ -48,8 +53,8 @@
 
 //includes
 #include <RGBWWLed/RGBWWLed.h>
-#ifdef ARCH_ESP8266
-#include <otaupdate.h>
+#if defined(ARCH_ESP8266) || defined(ESP32)
+    #include <otaupdate.h>
 #endif
 #include <config.h>
 #include <ledctrl.h>

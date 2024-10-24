@@ -1,0 +1,26 @@
+{
+    "pinconfigs":[
+        {
+            "name": "mrpj",
+            "model": "rgbww",
+            "config":{
+                "red": "13",
+                "green": "12",
+                "blue": "14",
+                "warmwhite": "5",
+                "coldwhite:": "4"
+            }
+        },
+        {
+            "name":"Shojo PCB (WemosD1 mini)",
+            "model": "rgbww",
+            "config":{
+                "red": "14",
+                "green": "4",
+                "blue": "5",
+                "warmwhite": "15",
+                "coldwhite:": "12"
+            }
+        }
+    ]
+}

@@ -8,9 +8,9 @@
         }
     },
     "partitions": {
-	"rom1":{
-	    "address": "0x00202000"
-	},
+        "rom1":{
+            "address": "0x00202000"
+        },
         "spiffs0": {
             "size": "768K",
 	    "address": "0x00100000"

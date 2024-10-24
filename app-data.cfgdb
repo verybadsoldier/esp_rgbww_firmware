@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "store":true,
+  "properties": {
+    "last-color":{
+      "$ref":"defs/$defs/hsvct"
+    },
+    "presets": {
+      "type": "array",
+      "store":true,
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "color": {
+            "$ref":"defs/$defs/color"
+          },
+          "ts": {
+            "type": "integer"
+          },
+          "id":{
+            "type":"integer"
+          },
+          "favorite":{
+            "type":"boolean",
+            "default":false
+          }
+        }
+      }
+    },
+    "controllers": {
+      "type": "array",
+      "store":true,
+      "items": {
+        "type": "object",
+        "properties": {
+          "id":{
+            "type":"integer"
+          },
+          "ip": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "last-seen": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "scenes":{
+      "type":"array",
+      "store":true,
+      "items":{
+        "type":"object",
+        "properties":{
+          "name":{
+            "type":"string"
+          },
+          "settings":{
+            "type":"array",
+            "items":{
+              "type":"object",
+              "properties":{
+                "controller_id":{
+                  "type":"integer"
+                },
+                "color": {
+                  "$ref":"defs/$defs/color"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+

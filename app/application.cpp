@@ -38,8 +38,16 @@
 #include <Storage/ProgMem.h>
 #include <Storage/Debug.h>
 
+#if ARCH_ESP8266
+#define PART0 "lfs0"
+#elif ARCH_ESP32
+#define PART0 "factory"
+#endif 
+
 #ifdef ARCH_ESP8266
 #include <Platform/OsMessageInterceptor.h>
+
+IMPORT_FSTR_LOCAL(default_config, PROJECT_DIR "/default_config.json");
 
 static OsMessageInterceptor osMessageInterceptor;
 
@@ -93,7 +101,6 @@ namespace
 {
 // Note: This file won't exist on initial build!
 IMPORT_FSTR(partitionTableData, PROJECT_DIR "/out/Esp8266/debug/firmware/partitions.bin")
-//IMPORT_FSTR(rbootData, PROJECT_DIR "/out/Esp8266/debug/firmware/rboot.bin")
 } // namespace
 
 extern "C" void __wrap_user_pre_init(void)
@@ -108,11 +115,6 @@ extern "C" void __wrap_user_pre_init(void)
 			flash.write(PARTITION_TABLE_OFFSET, data, partitionTableData.size());
 			flash.loadPartitions(PARTITION_TABLE_OFFSET);
 		}
-
-	  //  LOAD_FSTR(data, rbootData)
-      //  //data[3] = (data[3] & 0x0F) | (4 << 4); // beware, hardcoding flash size to 4MB
-      //  flash.erase_range(0, flash.getBlockSize());
-	  //  flash.write(0, data, rbootData.size());
        	
 	}
 
@@ -156,23 +158,71 @@ void Application::uptimeCounter() {
     ++_uptimeMinutes;
 }
 
+void Application::checkRam() {
+    debug_i("Free heap: %d", system_get_free_heap_size());
+}
+
 void Application::init() {
-    app.ota.checkAtBoot();
     for(int i=0;i<10;i++){
-        Serial.print("=");
+        Serial.print(_F("="));
         delay(200);
     }
     Serial.print("\r\n");
-    
-    debug_i("RGBWW Controller v %s\r\n", fw_git_version);
+    // ConfigDB obsoleted debug_i("going to initialize config");
+    // ConfigDB obsoleted config::initializeConfig(cfg); // initialize the config structure if necessary
+    debug_i("ESP RGBWW Controller Version %s\r\n", fw_git_version);
+    debug_i("Sming Version: %s\r\n", sming_git_version);
     #ifdef ARCH_ESP8266
         debug_i("Platform: Esp8266\r\n");
     #endif
-    debug_i("Application::init - partition scheme: %s\r\n", fw_part_layout);
+    #ifdef ARCH_ESP32
+        #ifdef __riscv
+            debug_i("Platform: Esp32 RISC-V (Esp32c3)\r\n");
+        #else
+            debug_i("Platform: Esp32\r\n");
+        #endif
+    #endif
+
+#if defined(ARCH_ESP8266) || defined(ESP32)
+    app.ota.checkAtBoot();
+#endif
+
+#if defined(ARCH_ESP8266) //|| defined(ESP32)
+    /*
+    * verify for new partition layout
+    */
+    debug_i("application init, \nspiffs0 found: %s\nspiffs1 found: %s\nlfs1 found: %s\nlfs1 found: %s ",Storage::findPartition(F("spiffs0"))?F("true"):F("false"),Storage::findPartition(F("spiffs1"))?F("true"):F("false"),Storage::findPartition(PART0)?F("true"):F("false"),Storage::findPartition(F("lfs1"))?F("true"):F("false"));
+    if (!Storage::findPartition(PART0) && !Storage::findPartition(F("lfs1"))) {
+        
+        // mount existing data partition
+        debug_i("application init (with spiffs) => Mounting file system");
+        /* ConfigDB - may need rework
+        if(mountfs(app.getRomSlot())){
+            if (cfg.exist()) {
+                debug_i("application init (with spiffs) => reading config");
+                cfg.load(); 
+                debug_i("application init (with spiffs) => config loaded, pin config %s",cfg.general.pin_config_name.c_str());
+            }
+        }else{
+            debug_i("application init (with spiffs) => failed to find config file");
+        }
+        */
+
+        /*
+        * now, app.cfg is the valid full configuration
+        * next step is to change the partition layout
+        */
+        debug_i("application init => switching file systems - partition 1");
+        ota.switchPartitions();
+        debug_i("application init => saving config");
+        // ConfigDB - not needed
+        // cfg.save();
+    }
+#endif
 
     //load settings
     _uptimetimer.initializeMs(60000, TimerDelegate(&Application::uptimeCounter, this)).start();
-
+    _checkRamTimer.initializeMs(2000, TimerDelegate(&Application::checkRam, this)).start();
 #ifdef ARCH_ESP8266
     // load boot information
     uint8 bootmode, bootslot;
@@ -189,16 +239,16 @@ void Application::init() {
 #endif
 
     // list spiffs partitions 
-    listSpiffsPartitions();
+    //listSpiffsPartitions();
 
     // mount filesystem
-    auto romPartition=app.ota.getRomPartition();
+    //auto romPartition=app.ota.getRomPartition();
 
-    debug_i("Application::init - got rom partition %s @0x%#08x", romPartition.name(),romPartition.address());
-    auto spiffsPartition=app.ota.findSpiffsPartition(romPartition);
-    debug_i("Application::init - mounting filesystem  %s @0x%#08x",spiffsPartition.name(),spiffsPartition.address());
-    _fs_mounted=spiffs_mount(spiffsPartition);
-    /*
+    //debug_i("Application::init - got rom partition %s @0x%#08x", romPartition.name(),romPartition.address());
+    //auto spiffsPartition=app.ota.findSpiffsPartition(romPartition);
+    #if defined(ARCH_ESP8266) || defined(ESP32)
+    mountfs(getRomSlot());
+    // ToDo - rework mounting filesystem
     if(_fs_mounted) {
         Directory dir;
         if(dir.open()) {
@@ -209,14 +259,26 @@ void Application::init() {
         }
         Serial << dir.count() << _F(" files found") << endl << endl;
     }
-    */
-   
+    #endif
+    #ifdef ARCH_HOST
+    debug_i("mounting host file system");
+    fileSetFileSystem(&IFS::Host::getFileSystem());
+    #endif
+
+    // initialize config and data
+    cfg = std::make_unique<AppConfig>(configDB_PATH);
+    data = std::make_unique<AppData>(dataDB_PATH);
+    
     // check if we need to reset settings
+    #if !defined(ARCH_HOST)
     if (digitalRead(CLEAR_PIN) < 1) {
         debug_i("CLR button low - resetting settings");
-        cfg.reset();
+        // ConfigDB - decide i f to reload defaults or load a specific saved version
+        // perhaps by holding the clear pin low for a certain time along with blink codes?
+        // cfg.reset();
         network.forgetWifi();
     }
+    #endif
 
     // check ota
 #ifdef ARCH_ESP8266
@@ -224,15 +286,36 @@ void Application::init() {
 #endif
 
     // load config
-    if (cfg.exist()) {
-        cfg.load();
-    } else {
-        debug_i("Application::init - first run");
-        _first_run = true;
-        cfg.save();
+    // ConfigDB obsoleted cfg.load(), either the config is defined by defaults or initially loaded from a default config.json
+    // once the database is initialized, the config is loaded from the database
+    {
+        debug_i("application init => checking ConfigDB");
+        AppConfig::General general(*cfg);
+        if (!general.getIsInitialized()) {
+            debug_i("application init => reading config");
+            //cfg.load(); 
+
+            //Serial << "* reading default config flash string *" << endl << default_config << endl;
+
+            //Serial << "* reading default config flash string *" << endl << default_config << endl;
+           	//auto configStream = new FSTR::Stream(CONTENT_default_config);
+            //cfg->importFromStream(ConfigDB::Json::format, *configStream);
+            debug_i("application init => config loaded, pin config %s",general.getPinConfig().c_str());  
+            debug_i("Application::init - first run");
+            _first_run = true;
+            
+            if(auto generalUpdate=general.update()){;
+                generalUpdate.setIsInitialized(true);
+            }
+            
+        } else {
+            //cfg.save();
+            debug_i("ConfigDB already initialized. starting");
+        }
     }
 
-    mqttclient.init();
+    Serial << endl << _F("** Stream **") << endl;
+	cfg->exportToStream(ConfigDB::Json::format, Serial);
 
     // initialize led ctrl
     rgbwwctrl.init();
@@ -245,26 +328,49 @@ void Application::init() {
     // initialize webserver
 
     app.webserver.init();
+    
+    // ConfigDB: temp only: create an example preset
+    {
+        AppData::Presets::OuterUpdater presets(*data);
 
-    if (cfg.ntp.enabled) {
-        String server = cfg.ntp.server.length() > 0 ? cfg.ntp.server : NTP_DEFAULT_SERVER;
-        unsigned interval = cfg.ntp.interval > 0 ? cfg.ntp.interval : NTP_DEFAULT_AUTOQUERY_SECONDS;
-        debug_i("Enabling NTP server '%s' with interval %d s", server.c_str(), interval);
-        pNtpclient = new NtpClient(server, interval);
+        presets.clear();
+
+        auto preset=presets.addItem();
+        preset.setName("example-hsv");
+        preset.setFavorite(true);
+        auto hsvUpdater = preset.color.toHsv();
+        hsvUpdater.setH(0);
+        hsvUpdater.setS(100);
+        hsvUpdater.setV(100);
     }
-    else {
-        debug_i("Disabling NTP server");
+    {
+        AppData::Presets::OuterUpdater presets(*data);
+        auto preset=presets.addItem();
+        preset.setName("example-raw");
+        auto rawUpdater = preset.color.toRaw();
+        rawUpdater.setR(255);
+        rawUpdater.setG(255);
+        rawUpdater.setB(255);
+        rawUpdater.setWw(255);
+        rawUpdater.setCw(255);
     }
+    
 }
-
-void Application::initButtons() {
-    if (cfg.general.buttons_config.length() <= 0)
-        return;
-
-    debug_i("Configuring buttons using string: '%s'", cfg.general.buttons_config.c_str());
-
+void Application::initButtons(){
     Vector<String> buttons;
-    splitString(cfg.general.buttons_config, ',', buttons);
+    {   
+        debug_i("Application::initButtons");
+        AppConfig::General general(*cfg);
+    
+        if (general.getButtonsConfig().length() <= 0)
+            return;
+        
+        String buttonsConfig = general.getButtonsConfig();
+    
+        debug_i("Configuring buttons using string: '%s'", buttonsConfig.c_str());
+
+        splitString(buttonsConfig, ',', buttons);
+    } // end of ConfigDB general context
 
     for(uint32_t i=0; i < buttons.count(); ++i) {
         if (buttons[i].length() == 0)
@@ -290,8 +396,22 @@ void Application::startServices() {
     rgbwwctrl.start();
     webserver.start();
 
-    if (cfg.events.server_enabled)
-        eventserver.start(app.webserver);
+    {  
+        debug_i("Application::startServices - starting NTP");
+        AppConfig::Root appcfg(*cfg);
+        if (appcfg.events.getServerEnabled()){
+            eventserver.setEnabled(true);
+            eventserver.start(app.webserver);
+        }
+    } // end of ConfigDB root context
+
+    {
+        debug_i("Application::startServices - starting mqtt");
+        AppConfig::Network network(*cfg);
+        if (network.mqtt.getEnabled()) {
+            mqttclient.start();
+        }
+    }
 }
 
 void Application::restart() {
@@ -305,7 +425,7 @@ void Application::restart() {
 
 void Application::reset() {
     debug_i("Application::reset");
-    cfg.reset();
+    //cfg.reset();
     rgbwwctrl.colorReset();
     network.forgetWifi();
     delay(500);
@@ -320,24 +440,26 @@ void Application::forget_wifi_and_restart() {
 
 bool Application::delayedCMD(String cmd, int delay) {
     debug_i("Application::delayedCMD cmd: %s - delay: %i", cmd.c_str(), delay);
-    if (cmd.equals("reset")) {
+    if (cmd.equals(F("reset"))) {
         _systimer.initializeMs(delay, TimerDelegate(&Application::reset, this)).startOnce();
-    } else if (cmd.equals("restart")) {
+    } else if (cmd.equals(F("restart"))) {
         _systimer.initializeMs(delay, TimerDelegate(&Application::restart, this)).startOnce();
-    } else if (cmd.equals("stopap")) {
+    } else if (cmd.equals(F("stopap"))) {
         network.stopAp(2000);
-    } else if (cmd.equals("forget_wifi")) {
+    } else if (cmd.equals(F("forget_wifi"))) {
         _systimer.initializeMs(delay, TimerDelegate(&AppWIFI::forgetWifi, &network)).startOnce();
-    } else if (cmd.equals("forget_wifi_and_restart")) {
+    } else if (cmd.equals(F("forget_wifi_and_restart"))) {
         network.forgetWifi();
         _systimer.initializeMs(delay, TimerDelegate(&Application::forget_wifi_and_restart, this)).startOnce();
-    } else if (cmd.equals("umountfs")) {
+    } else if (cmd.equals(F("umountfs"))) {
         //umountfs();
-    } else if (cmd.equals("mountfs")) {
+    } else if (cmd.equals(F("mountfs"))) {
         //
-    } else if (cmd.equals("switch_rom")) {
+    } else if (cmd.equals(F("switch_rom"))) {
+        #if ARCH_ESP8266
         switchRom();
         //_systimer.initializeMs(delay, TimerDelegate(&Application::restart, this)).startOnce();
+        #endif
     } else {
         return false;
     }
@@ -347,63 +469,98 @@ bool Application::delayedCMD(String cmd, int delay) {
 
 void Application::listSpiffsPartitions()
 {
-	Serial.println(_F("** Enumerate registered SPIFFS partitions"));
-	for(auto part : Storage::findPartition(Storage::Partition::SubType::Data::spiffs)) {
-        debug_i("checking filesystem  %s @0x%#08x",part.name(),part.address());
-
-		bool ok = spiffs_mount(part);
-		Serial.println(ok ? "OK, listing files:" : "Mount failed!");
-		if(ok) {
-			Directory dir;
-			if(dir.open()) {
-				while(dir.next()) {
-					Serial.print("  ");
-					Serial.println(dir.stat().name);
-				}
-			}
-			Serial << dir.count() << _F(" files found") << endl << endl;
-		}
-	}
+	Serial.println(_F("** Enumerate registered partitions"));
+	mountfs(1);
+    listFiles();
+    mountfs(0);
+    listFiles();
 }
 
-void Application::mountfs(int slot) {
-    debug_i("Application::mountfs rom slot: %i", slot);
-    // auto part = OtaUpgrader::getPartitionForSlot(slot);
-    auto part=Storage::findPartition(F("spiffs")+String(slot));
-    //auto part = Storage::findPartition(F("spiffs0"));
-    debug_i("Application::mountfs trying to mount spiffs at %x, length %d",
-            part.address(), part.size());
-    _fs_mounted = spiffs_mount(part);
-    _fs_mounted ? debug_i("OK, listing files:") : debug_i("Mount failed!");
+bool Application::mountfs(int slot) {
+    /*
+    *
+    * need a new mount method for the transitional time when the data file 
+    * system could be spiffs or LitleFS
+    * 
+    */
+
+    #ifdef ARCH_HOST
+	/*
+     * host file system
+     */
+    debug_i("mounting host file system");
+    fileSetFileSystem(&IFS::Host::getFileSystem());
+    #else
+    /*
+     * on device file system
+     */
     
-    if(_fs_mounted) {
-        if(FileHandle file = fileOpen(F("VERSION"), IFS::OpenFlag::Read)) {
-            debug_i("found VERSION file");
-            char buffer[64];
-            int bytesRead=fileRead(file,buffer,sizeof(buffer));
-            buffer[bytesRead]='\0';
-            debug_i("\nweb app version String: %s", buffer);
-            fileClose(file);
-        } else {
-            debug_i("Partition has no version file\n");
+    auto part = Storage::findPartition("spiffs"+String(slot));
+    if (part){
+        debug_i("mouting spiffs partition %i at %x, length %d", slot,part.address(), part.size());
+        return spiffs_mount(part);
+    }else{
+        part = Storage::findPartition(F("lfs0"));
+        if(part){
+            debug_i("mouting primary littlefs partition at %x, length %d", part.address(), part.size());
+            if(lfs_mount(part)){
+                return true;
+            }else{
+                part = Storage::findPartition(F("lfs1"));
+                debug_e("primary partition mount failed, mounting secondary lfs partition  at %x, length %d", part.address(), part.size());
+                return lfs_mount(part);
+            };
         }
-
-        Directory dir;
-        if(dir.open()) {
-            while(dir.next()) {
-                Serial.print("  ");
-                Serial.println(dir.stat().name);
-            }
-        }
-        debug_i("%i files found", dir.count());
-    }       
+        debug_i("partition is neither spiffs nor lfs");
+        return false;
+    }
+    #endif
 }
+
+void Application::listFiles(){ 
+    
+    if(FileHandle file = fileOpen(F("VERSION"), IFS::OpenFlag::Read)) {
+        debug_i("found VERSION file");
+        char buffer[64];
+        int bytesRead=fileRead(file,buffer,sizeof(buffer));
+        buffer[bytesRead]='\0';
+        debug_i("\nweb app version String: %s", buffer);
+        fileClose(file);
+    } else {
+        debug_i("Partition has no version file\n");
+    }
+
+    Directory dir;
+    if(dir.open()) {
+        while(dir.next()) {
+            Serial.print("  ");
+            Serial.println(dir.stat().name);
+        }
+    }
+    debug_i("%i files found", dir.count());
+}       
+
 
 void Application::umountfs() {
+    /*
     debug_i("Application::umountfs");
-    //spiffs_unmount();
+    auto part = Storage::findPartition(F("spiffs")+String(slot));
+    if (part){
+        debug_i("unmouting spiffs partition %i at %x, length %d", slot,part.address(), part.size());
+        return spiffs_unmount(part);
+    }else{
+        part = Storage::findPartition(F("littlefs")+String(slot));
+        if(part){
+            debug_i("mouting littlefs partition %i at %x, length %d", slot,part.address(), part.size());
+            return true;
+            //lfs doesn't seem to define umount
+            //return lfs_umount(part);
+        }
+        debug_i("partition is neither spiffs nor lfs");
+    }
+    */
 }
-
+#if defined(ARCH_ESP8266) || defined(ESP32)
 void Application::switchRom() {
     //ToDo - rewrite to use ota.getRunningPartition() and ota.getNextBootPartition()
     debug_i("Application::switchRom");
@@ -425,7 +582,9 @@ void Application::switchRom() {
     */
    app.ota.doSwitch();
 }
+#endif
 
+#if defined(ARCH_ESP8266) || defined(ESP32)
 int Application::getRomSlot(){
             auto partition = app.ota.getRomPartition();
             uint8_t slot;
@@ -436,6 +595,7 @@ int Application::getRomSlot(){
             }
             return slot;
 }
+#endif
 
 void Application::wsBroadcast(String message) {
     debug_i("Application::wsBroadcast");
@@ -445,28 +605,31 @@ void Application::wsBroadcast(String message) {
 void Application::wsBroadcast(String cmd, String message){
      JsonRpcMessage msg(cmd);
             JsonObject root = msg.getParams();   
-            root["message"] = message;
+            root[F("message")] = message;
             String jsonStr = Json::serialize(msg.getRoot());
             wsBroadcast(jsonStr);
 }
 
 void Application::onCommandRelay(const String& method, const JsonObject& params) {
-    if (!cfg.sync.cmd_master_enabled)
-        return;
-
-    mqttclient.publishCommand(method, params);
+    debug_i("Application::onCommandRelay");
+    AppConfig::Sync sync(*cfg);
+    if (sync.getCmdMasterEnabled())
+        mqttclient.publishCommand(method, params);
 }
 
 void Application::onButtonTogglePressed(int pin) {
     uint32_t now = millis();
     uint32_t diff = now - _lastToggles[pin];
-    if (diff > (uint32_t) cfg.general.buttons_debounce_ms) {  // debounce
+    debug_i("Application::onButtonTogglePressed");
+    AppConfig::General general(*cfg);
+    if (diff > (uint32_t) general.getButtonsDebounceMs()) {  // debounce
         debug_i("Button %d pressed - toggle", pin);
         rgbwwctrl.toggle();
         _lastToggles[pin] = now;
     }
     else {
-        debug_d("Button press ignored by debounce. Diff: %d Debounce: %d", diff, cfg.general.buttons_debounce_ms);
+        debug_d("Button press ignored by debounce. Diff: %d Debounce: %d", diff, general.getButtonsDebounceMs());
+
     }
 }
 

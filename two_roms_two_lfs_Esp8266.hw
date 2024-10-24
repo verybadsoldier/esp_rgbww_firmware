@@ -1,0 +1,40 @@
+{
+    "name": "Two Roms, two littlefs",
+    "base_config": "standard",
+    "options": [],
+    "devices": {
+        "spiFlash": {
+            "size": "4M"
+        }
+    },
+    "partitions": {
+        "rom0": {
+			"subtype": "ota_0",
+            "size": "1016K"
+        },
+        "lfs0": {
+            "address": "0x00106000",
+            "size": "992K",
+            "type": "data",
+            "subtype": "littlefs",
+            "readonly": false,
+            "encrypted": false,
+            "filename": ""
+        },
+        "rom1": {
+            "subtype": "ota_1",
+            "address": "0x00202000",
+            "size": "1016K",
+            "type": "app"
+        },
+        "lfs1": {
+            "address": "0x00300000",
+            "size": "992K",
+            "type": "data",
+            "subtype": "littlefs",
+            "readonly": false,
+            "encrypted": false,
+            "filename": ""
+        }
+    }
+}
