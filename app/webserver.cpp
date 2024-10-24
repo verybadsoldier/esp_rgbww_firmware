@@ -28,9 +28,11 @@
 #include <FlashString/Map.hpp>
 #include <FlashString/Stream.hpp>
 
+#include "./fileList.h"
 #define NOCACHE
 #define DEBUG_OBJECT_API
 
+/*
 #define FILE_LIST(XX)                                 \
     XX(index_html,      "index.html.gz")              \
     XX(VERSION,         "VERSION")                    \
@@ -40,7 +42,6 @@
     XX(RgbwwLayout_js,  "assets/RgbwwLayout.js.gz")   \
     XX(i18n_js,         "assets/i18n.js.gz")          \
     XX(pinconfig_json,  "config/pinconfig.json")      \
-    XX(favicon_ico,                                          "icons/favicon.ico")          \
     XX(badge_outlined_24,                                    "icons/badge-outlined-24.svg") \
     XX(exposure_outlined_24,                                 "icons/exposure-outlined-24.svg") \
     XX(hub_outlined_24,                                      "icons/hub-outlined-24.svg") \
@@ -57,6 +58,9 @@
     XX(report_problem_outlined_24,                           "icons/report_problem-outlined-24.svg") \
     XX(star_outlined_24,                                     "icons/star-outlined-24.svg") \
     XX(arrow_drop_down,                                      "icons/arrow_drop_down.svg") \
+    XX(menu_outlined_24,                                     "icons/menu-outlined-24.svg") \
+    XX(wb_incandescent_outlined_24,                          "icons/wb_incandescent-outlined-24.svg") \
+    XX(favicon.ico,                                          "icons/wb_incandescent-outlined-24.svg") \
     XX(network_wifi_3_bar_locked_FILL0_wght400_GRAD0_opsz24, "icons/network_wifi_3_bar_locked_FILL0_wght400_GRAD0_opsz24.svg") \
     XX(network_wifi_1_bar_FILL0_wght400_GRAD0_opsz24,        "icons/network_wifi_1_bar_FILL0_wght400_GRAD0_opsz24.svg")        \
     XX(network_wifi_FILL0_wght400_GRAD0_opsz24,              "icons/network_wifi_FILL0_wght400_GRAD0_opsz24.svg")              \
@@ -67,6 +71,7 @@
     XX(network_wifi_2_bar_locked_FILL0_wght400_GRAD0_opsz24, "icons/network_wifi_2_bar_locked_FILL0_wght400_GRAD0_opsz24.svg") \
     XX(wifi_lock_FILL0_wght400_GRAD0_opsz24,                 "icons/wifi_lock_FILL0_wght400_GRAD0_opsz24.svg")                 \
     XX(network_wifi_3_bar_FILL0_wght400_GRAD0_opsz24,        "icons/network_wifi_3_bar_FILL0_wght400_GRAD0_opsz24.svg")    
+*/
 
 // Define the names for each file
 #define XX(name, file) DEFINE_FSTR_LOCAL(KEY_##name, file)
@@ -279,6 +284,7 @@ void ApplicationWebserver::sendApiCode(HttpResponse &response, API_CODES code, S
 }
 
 void ApplicationWebserver::onFile(HttpRequest &request, HttpResponse &response) {
+    debug_i("http onFile");
     if (!authenticated(request, response)) {
         return;
     }
@@ -343,6 +349,7 @@ void ApplicationWebserver::onFile(HttpRequest &request, HttpResponse &response) 
 
 }
 void ApplicationWebserver::onWebapp(HttpRequest &request, HttpResponse &response) {
+    debug_i("http onWebapp");
     if (!authenticated(request, response)) {
         return;
     }
@@ -438,9 +445,19 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
     auto bodyStream = request.getBodyStream();
     if (bodyStream) {
         ConfigDB::Status status = app.cfg->importFromStream(ConfigDB::Json::format, *bodyStream);
-        // ConfigDB - probably no longer needed
-        // app.cfg->sanitizeValues();
+
         /* end ConfigDB importFromStream */
+
+        /*********************************
+         * TODO
+         * - if network settings changed (ip config, default gateway, netmask, ssid, hostname(?) ) -> reboot 
+         * - if mqtt settings changed to enabled -> start mqtt
+         *   - if mqtt broker changed -> reconnect
+         *   - if mqtt topic changed -> resubscribe
+         *   - if mqtt master/secondary changed -> resubscribe to master/secondary topics where necessary
+         * - if mqtt settings changed to disabled -> stop mqtt if possile, otherwise reboot
+         * - if color setttings changed - reconfigure controller (see below)
+         **********************************/
 
         // update and save settings if we haven`t received any error until now
 
@@ -481,11 +498,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
 
             }
             */
-            /* ConfigDB unneccessary 
-            debug_i("saving config");
-            app.cfg.save();
-            JsonObject root = doc.as<JsonObject>();
-            */
+
             setCorsHeaders(response);
             sendApiCode(response, API_CODES::API_SUCCESS);
         } else {
@@ -509,6 +522,7 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
 }
 
 void ApplicationWebserver::onInfo(HttpRequest &request, HttpResponse &response) {
+    debug_i("onInfo");
     if (!checkHeap(response))
         return;
 
@@ -590,6 +604,7 @@ void ApplicationWebserver::onInfo(HttpRequest &request, HttpResponse &response) 
  * @param response The HTTP response object.
  */
 void ApplicationWebserver::onColorGet(HttpRequest &request, HttpResponse &response) {
+    debug_i("onColorGet");
     if (!checkHeap(response))
         return;
 
@@ -664,6 +679,7 @@ void ApplicationWebserver::onColorPost(HttpRequest &request, HttpResponse &respo
  * @param response The HTTP response object.
  */
 void ApplicationWebserver::onColor(HttpRequest &request, HttpResponse &response) {
+    debug_i("onColor");
     if (!authenticated(request, response)) {
         return;
     }
@@ -734,6 +750,7 @@ bool ApplicationWebserver::isPrintable(String& str) {
  * @param response The HTTP response object.
  */
 void ApplicationWebserver::onNetworks(HttpRequest &request, HttpResponse &response) {
+    debug_i("onNetworks"); 
     if (!authenticated(request, response)) {
         return;
     }

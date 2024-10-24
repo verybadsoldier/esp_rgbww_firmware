@@ -317,8 +317,6 @@ void Application::init() {
     Serial << endl << _F("** Stream **") << endl;
 	cfg->exportToStream(ConfigDB::Json::format, Serial);
 
-    mqttclient.init();
-
     // initialize led ctrl
     rgbwwctrl.init();
 
@@ -406,6 +404,14 @@ void Application::startServices() {
             eventserver.start(app.webserver);
         }
     } // end of ConfigDB root context
+
+    {
+        debug_i("Application::startServices - starting mqtt");
+        AppConfig::Network network(*cfg);
+        if (network.mqtt.getEnabled()) {
+            mqttclient.start();
+        }
+    }
 }
 
 void Application::restart() {
@@ -607,9 +613,8 @@ void Application::wsBroadcast(String cmd, String message){
 void Application::onCommandRelay(const String& method, const JsonObject& params) {
     debug_i("Application::onCommandRelay");
     AppConfig::Sync sync(*cfg);
-    if (!sync.getCmdMasterEnabled())
-        return;
-    mqttclient.publishCommand(method, params);
+    if (sync.getCmdMasterEnabled())
+        mqttclient.publishCommand(method, params);
 }
 
 void Application::onButtonTogglePressed(int pin) {

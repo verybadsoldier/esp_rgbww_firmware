@@ -293,7 +293,6 @@ void APPLedCtrl::publishToEventServer() {
  * @note This function does nothing if the color master is disabled.
  */
 void APPLedCtrl::publishToMqtt() {
-    //debug_i("APPLedCtrl::publishToMqtt");
     AppConfig::Network network(*app.cfg);
     if(network.mqtt.getEnabled())
     { 
@@ -330,6 +329,11 @@ void APPLedCtrl::updateLed() {
     // arm next timer
     _ledTimer.startOnce();
 
+
+    /************************** 
+     * those rely on the mqtt master/secodary toggles to be set
+     * but really, they should also look at the main mqtt enable flag
+     **************************/
     const bool animFinished = show();
 
     ++_stepCounter;
