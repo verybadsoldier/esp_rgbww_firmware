@@ -1,0 +1,193 @@
+{
+    "network": {
+        "connection": {
+            "dhcp": true,
+            "ip": "0.0.0.0",
+            "netmask": "0.0.0.0",
+            "gateway": "0.0.0.0"
+        },
+        "ap": {
+            "secured": false,
+            "password": "rgbwwctrl",
+            "ssid": ""
+        },
+        "mqtt": {
+            "enabled": false,
+            "server": "mqtt.local",
+            "port": 1883,
+            "username": "",
+            "password": "",
+            "topic_base": "home/"
+        }
+    },
+    "color": {
+        "outputmode": 0,
+        "startup_color": "last",
+        "hsv": {
+            "model": 0,
+            "r": 0,
+            "yellow": 0,
+            "green": 0,
+            "cyan": 0,
+            "blue": 0,
+            "magenta": 0
+        },
+        "brightness": {
+            "r": 100,
+            "green": 100,
+            "blue": 100,
+            "ww": 100,
+            "cw": 100
+        },
+        "colortemp": {
+            "ww": 2700,
+            "cw": 6000
+        }
+    },
+    "security": {
+        "api_secured": false
+    },
+    "ota": {
+        "url": "https://lightinator.de/version.json"
+    },
+    "sync": {
+        "clock_master_enabled": false,
+        "clock_master_interval": 30,
+        "clock_slave_enabled": false,
+        "clock_slave_topic": "home/led1/clock",
+        "cmd_master_enabled": false,
+        "cmd_slave_enabled": false,
+        "cmd_slave_topic": "home/led1/command",
+        "color_master_enabled": false,
+        "color_master_interval_ms": 0,
+        "color_slave_enabled": false,
+        "color_slave_topic": "home/led1/color"
+    },
+    "events": {
+        "color_interval_ms": 500,
+        "color_mininterval_ms": 500,
+        "server_enabled": true,
+        "transfin_interval_ms": 1000
+    },
+    "general": {
+        "device_name": "",
+        "pin_config": "13,12,14,5,4",
+        "buttons_config": "",
+        "buttons_debounce_ms": 50,
+        "current_pin_config_name": "mrpj",
+        "pin_config_url": "https://raw.githubusercontent.com/pljakobs/esp_rgb_webapp2/devel/public/config/pinconfig.json",
+        "channels": [
+            {
+                "pin": 13,
+                "name": "red"
+            },
+            {
+                "pin": 12,
+                "name": "green"
+            },
+            {
+                "pin": 14,
+                "name": "blue"
+            },
+            {
+                "pin": 5,
+                "name": "warmwhite"
+            },
+            {
+                "pin": 4,
+                "name": "coldwhite"
+            }
+        ],
+        "supported_color_models": [
+            "RGB",
+            "RGBW",
+            "RGBWW",
+            "RAW"
+        ]
+    },
+    "presets":{
+        "RGB":[
+            {
+                "name":"Red",
+                "ts":0,
+                "id":0,
+                "color":{ "r":255, "g":0, "b":0 }
+            },
+            {
+                "name":"Green",
+                "ts":0,
+                "id":0,
+                "color":{ "r":0, "g":255, "b":0 }
+            },
+            {
+                "name":"Blue",
+                "ts":0,
+                "id":0,
+                "color":{ "r":0, "g":0, "b":255 }
+            }
+        ],
+        "HSV": [
+            {
+                "name":"Red",
+                "ts":0,
+                "id":0,
+                "color":{ "h":0, "s":100, "v":100 }
+            },
+            {
+                "name":"Green",
+                "ts":0,
+                "id":0,
+                "color":{
+                    "h":120, "s":100, "v":100
+                }
+            },
+            {
+                "name":"Blue",
+                "ts":0,
+                "id":0,
+                "color":{ "h":240, "s":100, "v":100 }
+            }
+        ],
+        "RAW":[
+            {
+                "name":"Setting 1",
+                "ts": 0,
+                "id":0,
+                "color":{ "r":800, "g":500, "b":200, "ww":1023, "cw":0 }
+            }
+        ]
+        
+    },
+    "controllers":[
+        {
+            "name": "controller1",
+            "last-seen":0,
+            "ip": "0.0.0.0",
+            "id":0
+        }
+    ],
+    "groups":[
+        {
+            "name": "group1",
+            "ts":0,
+            "ids":[
+                0,
+                3,
+                8
+            ]
+        }
+    ],
+    "group-presets":[
+        {
+            "name": "group-preset1",
+            "ts":0,
+            "id":0,
+            "presets":[
+                {
+                    "controller":0,
+                    "preset":0
+                }
+            ]
+        }
+    ]
+}

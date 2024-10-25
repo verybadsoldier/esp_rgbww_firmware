@@ -3,8 +3,8 @@
 
 JsonRpcMessage::JsonRpcMessage(const String& name) {
     JsonObject json = _stream.getRoot();
-    json["jsonrpc"] = "2.0";
-    json["method"] = name;
+    json[F("jsonrpc")] = "2.0";
+    json[F("method")] = name;
 }
 
 JsonObjectStream& JsonRpcMessage::getStream() {
@@ -24,7 +24,7 @@ JsonObject JsonRpcMessage::getRoot() {
 
 void JsonRpcMessage::setId(int id) {
     JsonObject json = _stream.getRoot();
-    json["id"] = id;
+    json[F("id")] = id;
 }
 
 ////////////////////////////////////////
@@ -34,7 +34,7 @@ JsonRpcMessageIn::JsonRpcMessageIn(const String& json) : _doc(1024) {
 }
 
 JsonObject JsonRpcMessageIn::getParams() {
-    return _doc["params"];
+    return _doc[F("params")];
 }
 
 JsonObject JsonRpcMessageIn::getRoot() {
@@ -42,5 +42,5 @@ JsonObject JsonRpcMessageIn::getRoot() {
 }
 
 String JsonRpcMessageIn::getMethod() {
-    return getRoot()["method"];
+    return getRoot()[F("method")];
 }

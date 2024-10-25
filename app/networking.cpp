@@ -132,13 +132,17 @@ void AppWIFI::init() {
 
     _con_ctr = 0;
 
+    // ConfigDB adapt
     if (app.isFirstRun()) {
         debug_i("AppWIFI::init initial run - setting up AP, ssid: ");
         String SSID=String(DEFAULT_AP_SSIDPREFIX) + String(system_get_chip_id());
         printf("%s",SSID);
-        app.cfg.network.connection.mdnshostname = String(DEFAULT_AP_SSIDPREFIX) + String(system_get_chip_id());
-        app.cfg.network.ap.ssid = String(DEFAULT_AP_SSIDPREFIX) + String(system_get_chip_id());
-        app.cfg.save();
+
+        AppConfig::Network network(*app.cfg);
+        if(auto networkUpdate = network.update()){
+            networkUpdate.mdns.setName(String(DEFAULT_AP_SSIDPREFIX) + String(system_get_chip_id()));
+            networkUpdate.ap.setSsid(String(DEFAULT_AP_SSIDPREFIX) + String(system_get_chip_id()));
+        }//this should never fail as it is during system startup, there are no asynchronous things here. I think
         WifiAccessPoint.setIP(_ApIP);
     }
 
@@ -160,25 +164,28 @@ void AppWIFI::init() {
     } else {
 
         //configure WifiClient
-        if (!app.cfg.network.connection.dhcp && !app.cfg.network.connection.ip.isNull()) {
-            debug_i("AppWIFI::init setting static ip");
-            if (WifiStation.isEnabledDHCP()) {
-                debug_i("AppWIFI::init disabled dhcp");
-                WifiStation.enableDHCP(false);
+        {
+            AppConfig::Network network(*app.cfg);
+            if (!network.connection.getDhcp() && !network.connection.getIp().length()==0) {
+                debug_i("AppWIFI::init setting static ip");
+                if (WifiStation.isEnabledDHCP()) {
+                    debug_i("AppWIFI::init disabled dhcp");
+                    WifiStation.enableDHCP(false);
+                }
+                if (!(WifiStation.getIP() == network.connection.getIp())
+                        || !(WifiStation.getNetworkGateway() == network.connection.getGateway())
+                        || !(WifiStation.getNetworkMask() == network.connection.getNetmask())) {
+                    debug_i("AppWIFI::init updating ip configuration");
+                    WifiStation.setIP(network.connection.getIp(),network.connection.getNetmask(),network.connection.getGateway());
+                }
+            } else {
+                debug_i("AppWIFI::init dhcp");
+                if (!WifiStation.isEnabledDHCP()) {
+                    debug_i("AppWIFI::init enabling dhcp");
+                    WifiStation.enableDHCP(true);
+                }
             }
-            if (!(WifiStation.getIP() == app.cfg.network.connection.ip)
-                    || !(WifiStation.getNetworkGateway() == app.cfg.network.connection.gateway)
-                    || !(WifiStation.getNetworkMask() == app.cfg.network.connection.netmask)) {
-                debug_i("AppWIFI::init updating ip configuration");
-                WifiStation.setIP(app.cfg.network.connection.ip,app.cfg.network.connection.netmask,app.cfg.network.connection.gateway);
-            }
-        } else {
-            debug_i("AppWIFI::init dhcp");
-            if (!WifiStation.isEnabledDHCP()) {
-                debug_i("AppWIFI::init enabling dhcp");
-                WifiStation.enableDHCP(true);
-            }
-        }
+        } // end ConfigDB network context
     }
 }
 
@@ -248,21 +255,32 @@ void AppWIFI::_STADisconnect(const String& ssid, MacAddress bssid, WifiDisconnec
 /**
  * Callback function called when a WiFi connection is established.
  * 
+ * primarily sets the hostname, if it's configured in ConfigDB, that is used
+ * otherwise, the default hostname is set to "RGBWW-<chipid>"
+ * the hostname is used for mDNS and other network services
+ * 
+ * the function also broadcasts the wifi status to the clients
+ * 
  * @param ssid The SSID of the Wi-Fi network.
  * @param bssid The MAC address of the access point.
  * @param channel The Wi-Fi channel used for the connection.
  */
 void AppWIFI::_STAConnected(const String& ssid, MacAddress bssid, uint8_t channel) {
     debug_i("AppWIFI::_STAConnected SSID - %s", ssid.c_str());
-
-    if(app.cfg.general.device_name!="") {
-        debug_i("AppWIFI::connect setting hostname to %s", app.cfg.general.device_name.c_str());
-        WifiStation.setHostname(app.cfg.general.device_name);
-        app.cfg.network.connection.mdnshostname = app.cfg.general.device_name;
-    }else{
-        debug_i("no device name configured, setting hostname to default %s",String(DEFAULT_AP_SSIDPREFIX) + String(system_get_chip_id()));
-        app.cfg.network.connection.mdnshostname = String(DEFAULT_AP_SSIDPREFIX) + String(system_get_chip_id());
-    }
+    {
+        AppConfig::General general(*app.cfg);
+        String device_name = general.getDeviceName();
+        if(device_name=="") {
+            device_name=String(DEFAULT_AP_SSIDPREFIX) + String(system_get_chip_id());
+            debug_i("no device name configured, building default name");
+        }
+        debug_i("AppWIFI::connect setting hostname to %s", device_name.c_str());
+        WifiStation.setHostname(device_name);
+        {
+            AppConfig::Network::OuterUpdater network(*app.cfg);
+            network.mdns.setName(device_name);
+        } // end ConfigDB network updater context
+    } // end ConfigDB general context
     broadcastWifiStatus(F("Connected to WiFi"));
     _con_ctr = 0;
     // wifi cstation connected
@@ -292,25 +310,33 @@ void AppWIFI::_STAGotIP(IpAddress ip, IpAddress mask, IpAddress gateway) {
     } else {
         stopAp(1000);
     }
-
-    debug_i("AppWIFI::_STAGotIP - device_name %s mdnshostname %s", app.cfg.general.device_name.c_str(),app.cfg.network.connection.mdnshostname.c_str());
-    if(app.cfg.network.connection.mdnshostname.length() > 0) {
-        debug_i("AppWIFI::_STAGotIP - setting mdns hostname to %s", app.cfg.network.connection.mdnshostname.c_str());
-    }
+    
+    {
+        AppConfig::General general(*app.cfg);  
+        AppConfig::Network network(*app.cfg);
+        debug_i("AppWIFI::_STAGotIP - device_name %s mdnshostname %s", general.getDeviceName().c_str(),network.mdns.getName().c_str());
+        if(network.mdns.getName().length() > 0) {
+            debug_i("AppWIFI::_STAGotIP - setting mdns hostname to %s", network.mdns.getName().c_str());
+        }
+    } //end ConfigDB general and network context
 
     mdnsHandler.start();
     String ipAddress=ip.toString();
 
+    {
+        AppConfig::Network network(*app.cfg);
+        if(network.connection.getDhcp()) {
+            ipAddress="dhcp";
+        }
+        mdnsHandler.addHost(network.mdns.getName(), ipAddress, -1);
     
     
-    
-    mdnsHandler.addHost(app.cfg.network.connection.mdnshostname, ipAddress, -1);
+        broadcastWifiStatus();
 
-    broadcastWifiStatus();
-
-    if(app.cfg.network.mqtt.enabled) {
-        app.mqttclient.start();
-    }
+        if(network.mqtt.getEnabled()) {
+            app.mqttclient.start();
+        }
+    } // end ConfigDB network context
 }
 
 /**
@@ -356,12 +382,14 @@ void AppWIFI::startAp() {
         WifiAccessPoint.enable(true, false);
         debug_i("AP enabled");
         //debug_i("AP SSID: %s", app.cfg.network.ap.ssid);
-        if (app.cfg.network.ap.secured) {
-            WifiAccessPoint.config(app.cfg.network.ap.ssid, app.cfg.network.ap.password, AUTH_WPA2_PSK);
-        } else {
-            WifiAccessPoint.config(app.cfg.network.ap.ssid, "", AUTH_OPEN);
-            //WifiAccessPoint.config(ssid, "", AUTH_OPEN);
-        }
+        {
+            AppConfig::Network network(*app.cfg);
+            if (network.ap.getSecured()) {
+                WifiAccessPoint.config(network.ap.getSsid(), network.ap.getPassword(), AUTH_WPA2_PSK);
+            } else {
+                WifiAccessPoint.config(network.ap.getSsid(), "", AUTH_OPEN);
+            }
+        } // end AppConfig network context
     }
     //start dns server for captive portal
     dnsServer.start(DNS_PORT, "*", WifiAccessPoint.getIP());
@@ -381,28 +409,28 @@ String AppWIFI::getMdnsHosts() {
 void AppWIFI::broadcastWifiStatus(String message){
     if(WifiStation.isConnected()||WifiAccessPoint.isEnabled()) {
     
-        JsonRpcMessage msg("wifi_status");
+        JsonRpcMessage msg(F("wifi_status"));
         JsonObject root = msg.getParams();
 
         if(message!="") {
-            root["message"] = message;
+            root[F("message")] = message;
         }   
 
-        JsonObject station = root.createNestedObject("station");
+        JsonObject station = root.createNestedObject(F("station"));
 
-        station["connected"] = WifiStation.isConnected();
-        station["ssid"] = WifiStation.getSSID();
-        station["dhcp"] = WifiStation.isEnabledDHCP();
-        station["ip"] = WifiStation.getIP().toString();
-        station["netmask"] = WifiStation.getNetworkMask().toString();
-        station["gateway"] = WifiStation.getNetworkGateway().toString();
-        station["mac"] = WifiStation.getMAC();
+        station[F("connected")] = WifiStation.isConnected();
+        station[F("ssid")] = WifiStation.getSSID();
+        station[F("dhcp")] = WifiStation.isEnabledDHCP();
+        station[F("ip")] = WifiStation.getIP().toString();
+        station[F("netmask")] = WifiStation.getNetworkMask().toString();
+        station[F("gateway")] = WifiStation.getNetworkGateway().toString();
+        station[F("mac")] = WifiStation.getMAC();
 
         JsonObject ap=root.createNestedObject("ap");
         
-        ap["enabled"]=WifiAccessPoint.isEnabled();
-        ap["ssid"]=WifiAccessPoint.getSSID();
-        ap["ip"]=WifiAccessPoint.getIP().toString();
+        ap[F("enabled")]=WifiAccessPoint.isEnabled();
+        ap[F("ssid")]=WifiAccessPoint.getSSID();
+        ap[F("ip")]=WifiAccessPoint.getIP().toString();
 
         debug_i("rpc: root =%s",Json::serialize(root).c_str());
         debug_i("rpc: msg =%s",Json::serialize(msg.getRoot()).c_str());
