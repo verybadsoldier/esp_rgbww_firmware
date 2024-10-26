@@ -14,13 +14,12 @@ cat <<EOF > version.json
 	},
 	"spiffs":
 	{
-		"webapp_version":"$WEBAPP_VERSION",
-		"url":"$BASE_URL/Esp8266/v1/spiff_rom.bin"
+    "webapp_version":"0.3.3",
+    "url":"http://rgbww.dronezone.de/testing/spiff_rom.bin"
 	},
 	"firmware":
 	[
 		{
-			"partitioning":"v1",
 			"soc":"Esp8266",
 			"files":
 			{
@@ -28,33 +27,10 @@ cat <<EOF > version.json
 				{
 					"fw_version":"$FW_VERSION",
 					"url":"$BASE_URL/Esp8266/v1/rom0.bin"
-				},
-				"spiffs":
-				{
-					"webapp_version":"$WEBAPP_VERSION",
-			                "url":"$BASE_URL/Esp8266/v1/spiff_rom.bin"
 				}
 			}
 		},
 		{
-			"partitioning":"v2",
-			"soc":"Esp8266",
-			"files":
-			{
-				"rom":
-				{
-					"fw_version":"$FW_VERSION",
-					"url":"$BASE_URL/Esp8266/v2/rom0.bin"
-				},
-				"spiffs":
-				{
-					"webapp_version":"$WEBAPP_VERSION",
-			                "url":"$BASE_URL/Esp8266/v2/spiff_rom.bin"
-				}
-			}
-		},
-		{
-			"partitioning":"v2",
 			"soc":"Esp32",
 			"files":
 			{
@@ -62,11 +38,6 @@ cat <<EOF > version.json
 				{
 					"fw_version":"$FW_VERSION",
 					"url":"$BASE_URL/Esp32/v2/rom0.bin"
-				},
-				"spiffs":
-				{
-					"webapp_version":"$WEBAPP_VERSION",
-			                "url":"$BASE_URL/Esp32/v2/spiff_rom.bin"
 				}
 			}	
 		}
@@ -78,5 +49,4 @@ echo "deploying OTA files to webserver"
 cat version.json
 cp version.json $WEBROOT
 cp out/Esp8266/debug/firmware/rom0.bin $WEBROOT/Esp8266/v1
-cp out/Esp8266/debug/firmware/spiff_rom.bin $WEBROOT/Esp8266/v1
 

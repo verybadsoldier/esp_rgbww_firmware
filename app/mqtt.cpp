@@ -87,6 +87,7 @@ void AppMqttClient::connect() {
     }// end ConfigDB sync context
 }
 
+// ToDo: rework this so the class is less depending on the app itself but rather the app initializes the calls
 void AppMqttClient::init() {
     AppConfig::General general(*app.cfg);
     if (general.getDeviceName().length() > 0) {
@@ -97,6 +98,7 @@ void AppMqttClient::init() {
         debug_w("AppMqttClient::init: building MQTT ID from MAC (device name is: '%s')\n", general.getDeviceName().c_str());
         _id = String("rgbww_") + WifiStation.getMAC();
     }
+    connectDelayed(1000);
 }
 
 void AppMqttClient::start() {
@@ -105,7 +107,6 @@ void AppMqttClient::start() {
     delete mqtt;
     mqtt = new MqttClient();
     mqtt->setEventHandler(MQTT_TYPE_PUBLISH, MqttDelegate(&AppMqttClient::onMessageReceived, this));
-    connectDelayed(2000);
 }
 
 void AppMqttClient::stop() {
