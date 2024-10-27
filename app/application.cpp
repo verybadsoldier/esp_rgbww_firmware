@@ -408,6 +408,7 @@ void Application::startServices() {
     {
         debug_i("Application::startServices - starting mqtt");
         AppConfig::Network network(*cfg);
+        mqttclient.init(); // initialize mqtt client with node name
         if (network.mqtt.getEnabled()) {
             mqttclient.start();
         }
