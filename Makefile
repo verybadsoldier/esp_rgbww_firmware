@@ -2,6 +2,8 @@
 #### Please don't change this file. Use component.mk instead ####
 #####################################################################
 
+
+# removed to use global sming according to SMING_HOME
 #override SMING_HOME := $(CURDIR)/Sming/Sming
 
 ifndef SMING_HOME

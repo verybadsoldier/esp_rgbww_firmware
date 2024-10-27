@@ -1,6 +1,5 @@
 
-#BASE_URL=http://home.mobileme.de:8080
-BASE_URL=http://192.168.29.10:8080
+BASE_URL=http://lightinator.de
 FW_VERSION=$(git describe --abbrev=4 --dirty --always --tags)
 WEBAPP_VERSION=$(cat ./spiffs/VERSION)
 WEBROOT=~/nginx/html
