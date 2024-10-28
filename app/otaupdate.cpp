@@ -185,56 +185,60 @@
 #include <otaupdate.h>
 #include <RGBWWCtrl.h>
 
-void ApplicationOTA::start(String romurl){
-    debug_i("ApplicationOTA::start");
-    app.wsBroadcast(F("ota_status"),F("started"));
+void ApplicationOTA::start(String romurl)
+{
+	debug_i("ApplicationOTA::start");
+	app.wsBroadcast(F("ota_status"), F("started"));
 	otaUpdater.reset(new Ota::Network::HttpUpgrader);
-    status = OTASTATUS::OTA_PROCESSING;
+	status = OTASTATUS::OTA_PROCESSING;
 
-    auto part = ota.getNextBootPartition();
+	auto part = ota.getNextBootPartition();
 
-    #if ESP8266
-    debug_i("ApplicationOTA::start nextBootPartition: %s %#06x at slot %i", part.name().c_str(), part.address(), rboot_get_current_rom());
-    #endif 
-    // flash rom to position indicated in the rBoot config rom table
-    otaUpdater->addItem(romurl, part);
+#if ESP8266
+	debug_i("ApplicationOTA::start nextBootPartition: %s %#06x at slot %i", part.name().c_str(), part.address(),
+			rboot_get_current_rom());
+#endif
+	// flash rom to position indicated in the rBoot config rom table
+	otaUpdater->addItem(romurl, part);
 
-    ota.begin(part);
+	ota.begin(part);
 
-    otaUpdater->setCallback(Ota::Network::HttpUpgrader::CompletedDelegate(&ApplicationOTA::upgradeCallback, this));
-    
-    beforeOTA();
+	otaUpdater->setCallback(Ota::Network::HttpUpgrader::CompletedDelegate(&ApplicationOTA::upgradeCallback, this));
 
-    unsigned fh = system_get_free_heap_size();
-    debug_i("Free heap before OTA: %i", fh);
+	beforeOTA();
 
-    debug_i("Current running partition: %s", ota.getRunningPartition().name());
-    debug_i("OTA target partition: %s", part.name().c_str());
-    debug_i("configured OTA item list");
-    debug_i("========================");
-    const auto& items = otaUpdater->getItems();
-    for(const auto& item : items) {
-        debug_i("  URL: %s", item.url.c_str());
-        debug_i("  Partition: %s", item.partition.name().c_str());
-        debug_i("  Size: %i", item.size);
-        debug_i("  ---------");
-    }
-    debug_i("Starting OTA ...");
+	unsigned fh = system_get_free_heap_size();
+	debug_i("Free heap before OTA: %i", fh);
 
-    otaUpdater->start();
+	debug_i("Current running partition: %s", ota.getRunningPartition().name());
+	debug_i("OTA target partition: %s", part.name().c_str());
+	debug_i("configured OTA item list");
+	debug_i("========================");
+	const auto& items = otaUpdater->getItems();
+	for(const auto& item : items) {
+		debug_i("  URL: %s", item.url.c_str());
+		debug_i("  Partition: %s", item.partition.name().c_str());
+		debug_i("  Size: %i", item.size);
+		debug_i("  ---------");
+	}
+	debug_i("Starting OTA ...");
+
+	otaUpdater->start();
 }
 
-void ApplicationOTA::doSwitch(){
-   	auto before = ota.getRunningPartition();
+void ApplicationOTA::doSwitch()
+{
+	auto before = ota.getRunningPartition();
 	auto after = ota.getNextBootPartition();
 
-	debug_i("Swapping from %s @0x%s to %s @0x%s",before.name(),String(before.address(), HEX), after.name(), String(after.address(), HEX));
+	debug_i("Swapping from %s @0x%s to %s @0x%s", before.name(), String(before.address(), HEX), after.name(),
+			String(after.address(), HEX));
 	if(ota.setBootPartition(after)) {
 		debug_i("Restarting...\r\n");
 		System.restart();
 	} else {
 		debug_i("Switch failed.");
-	} 
+	}
 }
 
 /*
@@ -246,141 +250,146 @@ void ApplicationOTA::reset() {
 }
 */
 
-void ApplicationOTA::beforeOTA() {
-    debug_i("ApplicationOTA::beforeOTA");
-    /*
+void ApplicationOTA::beforeOTA()
+{
+	debug_i("ApplicationOTA::beforeOTA");
+	/*
     * this is being executed before otaUpdater->start
     */
 
-    /*
+	/*
      * ToDo few differnt situations here:
        - old partition is spiffs (and thus .config based)
          (should be irrelevant because then old firmware is running, nothing we can do)
        - old partition is lfs (and thus ConfigDB based)
          (new partition is lfs based, too - so we can copy the config)
      */
-    if(dataPartition.name()!=""){
-        debug_i("partition layout v1, saving status to old rom");
-        saveStatus(OTASTATUS::OTA_FAILED);
-    }
+	if(dataPartition.name() != "") {
+		debug_i("partition layout v1, saving status to old rom");
+		saveStatus(OTASTATUS::OTA_FAILED);
+	}
 }
 
-void ApplicationOTA::afterOTA() {
-    debug_i("ApplicationOTA::afterOTA");
-    /*
+void ApplicationOTA::afterOTA()
+{
+	debug_i("ApplicationOTA::afterOTA");
+	/*
     * called by upgradeCallback
     * this is being executed after otaUpdater->start but before System.restart
     * so this is still the old firmware running
     */
 
-    if (status == OTASTATUS::OTA_SUCCESS_REBOOT) {
-        debug_i("afterOta, rom Slot=%i",app.getRomSlot());
+	if(status == OTASTATUS::OTA_SUCCESS_REBOOT) {
+		debug_i("afterOta, rom Slot=%i", app.getRomSlot());
 
-        // ToDo: so the ota has been successful, now what? 
-        #ifdef ARCH_ESP8266
-        if(app.getRomSlot()==1){
-            /* getRomSlot returns the current (OTA pre reboot) slot
+// ToDo: so the ota has been successful, now what?
+#ifdef ARCH_ESP8266
+		if(app.getRomSlot() == 1) {
+			/* getRomSlot returns the current (OTA pre reboot) slot
             * slot 0 means we will be booting into ROM slot 1 next
             * but the most current information is in spiffs0
             * */
-            // unmount old Filesystem - mount new filesystem
-            app.umountfs();
-            app.mountfs(rom_slot);
+			// unmount old Filesystem - mount new filesystem
+			app.umountfs();
+			app.mountfs(rom_slot);
 
-            // save settings / color into new rom space
-            // app.cfg.save();
-            app.rgbwwctrl.colorSave();           
-        }
-        // unmount old Filesystem - mount new filesystem
-        // app.umountfs();
-        // app.mountfs(rom_slot);
+			// save settings / color into new rom space
+			// app.cfg.save();
+			app.rgbwwctrl.colorSave();
+		}
+		// unmount old Filesystem - mount new filesystem
+		// app.umountfs();
+		// app.mountfs(rom_slot);
 
-        // save settings / color into new rom space
-        // app.cfg.save();
-        // app.rgbwwctrl.colorSave();
+		// save settings / color into new rom space
+		// app.cfg.save();
+		// app.rgbwwctrl.colorSave();
 
-        // save success to new rom
-        saveStatus(OTASTATUS::OTA_SUCCESS);
+		// save success to new rom
+		saveStatus(OTASTATUS::OTA_SUCCESS);
 
-        // remount old filesystem
-        // app.umountfs();
-        // app.mountfs(app.getRomSlot());
-        #endif
-        
-    }
+// remount old filesystem
+// app.umountfs();
+// app.mountfs(app.getRomSlot());
+#endif
+	}
 }
 
 /*
 * OTA callback - after the new rom has been written but before restart
 */
-void ApplicationOTA::upgradeCallback(Ota::Network::HttpUpgrader& client, bool result) {
-    debug_i("ApplicationOTA::rBootCallback");
-    if (result == true) {
-        ota.end();
+void ApplicationOTA::upgradeCallback(Ota::Network::HttpUpgrader& client, bool result)
+{
+	debug_i("ApplicationOTA::rBootCallback");
+	if(result == true) {
+		ota.end();
 
-        auto part=ota.getNextBootPartition();
-        debug_i("ApplicationOTA::rBootCallback next boot partition: %s", part.name().c_str());
-        ota.setBootPartition(part);
-        status = OTASTATUS::OTA_SUCCESS_REBOOT;
-    }else{
-        status = OTASTATUS::OTA_FAILED;
-        ota.abort();
-        debug_i("OTA failed");
-    }
-    afterOTA();
-    debug_i("OTA callback done, rebooting");
-    System.restart();
+		auto part = ota.getNextBootPartition();
+		debug_i("ApplicationOTA::rBootCallback next boot partition: %s", part.name().c_str());
+		ota.setBootPartition(part);
+		status = OTASTATUS::OTA_SUCCESS_REBOOT;
+	} else {
+		status = OTASTATUS::OTA_FAILED;
+		ota.abort();
+		debug_i("OTA failed");
+	}
+	afterOTA();
+	debug_i("OTA callback done, rebooting");
+	System.restart();
 }
 
-void ApplicationOTA::checkAtBoot() {
-    debug_i("ApplicationOTA::checkAtBoot");
-    status = loadStatus();
-    /*
+void ApplicationOTA::checkAtBoot()
+{
+	debug_i("ApplicationOTA::checkAtBoot");
+	status = loadStatus();
+	/*
     * after a successful OTA reboot, this should be
     * OTA_SUCCESS_REBOOT, so this could be used to 
     * then change the file systems if necessary.
     */
-    int rom=app.getRomSlot();
-    Serial.systemDebugOutput(true);
-    debug_i("ApplicationOTA::checkAtBoot status: %i", status);
-    debug_i("after reboot, checking partition layout");
-    debug_i("current active rom is: %i",rom);
-    #if defined(ARCH_ESP8266)||defined(ARCH_ESP32)
-    Storage::Debug::listDevices(Serial);
-    #endif
-    if (app.isTempBoot()) {
-        debug_i("ApplicationOTA::checkAtBoot permanently enabling rom %i", app.getRomSlot());
-        #ifdef ESP8266 
-        rboot_set_current_rom(app.getRomSlot());
-        #endif
-        (OTASTATUS::OTA_NOT_UPDATING);
-    }
-        saveStatus(OTASTATUS::OTA_SUCCESS);
+	int rom = app.getRomSlot();
+	Serial.systemDebugOutput(true);
+	debug_i("ApplicationOTA::checkAtBoot status: %i", status);
+	debug_i("after reboot, checking partition layout");
+	debug_i("current active rom is: %i", rom);
+#if defined(ARCH_ESP8266) || defined(ARCH_ESP32)
+	Storage::Debug::listDevices(Serial);
+#endif
+	if(app.isTempBoot()) {
+		debug_i("ApplicationOTA::checkAtBoot permanently enabling rom %i", app.getRomSlot());
+#ifdef ESP8266
+		rboot_set_current_rom(app.getRomSlot());
+#endif
+		(OTASTATUS::OTA_NOT_UPDATING);
+	}
+	saveStatus(OTASTATUS::OTA_SUCCESS);
 }
 #ifdef ARCH_ESP8266
-bool ApplicationOTA::createLFS(uint8_t slot){
-   /*
+bool ApplicationOTA::createLFS(uint8_t slot)
+{
+	/*
    * Create the target LittleFS filesystem, format then mount
    */
-   String fsName=F("littlefs")+String(slot);
-   auto targetPart=Storage::findPartition(fsName);
-   std::unique_ptr<IFS::FileSystem> dstFilesystem{IFS::createLfsFilesystem(targetPart)};
-   if(!dstFilesystem) {
-       // Cannot proceed
-       return false;
-   }
-   if(dstFilesystem->format() < 0) {
-       return false;
-   }
-   if(dstFilesystem->mount() < 0) {
-       return false;
-   }
-   return true;
+	String fsName = F("littlefs") + String(slot);
+	auto targetPart = Storage::findPartition(fsName);
+	std::unique_ptr<IFS::FileSystem> dstFilesystem{IFS::createLfsFilesystem(targetPart)};
+	if(!dstFilesystem) {
+		// Cannot proceed
+		return false;
+	}
+	if(dstFilesystem->format() < 0) {
+		return false;
+	}
+	if(dstFilesystem->mount() < 0) {
+		return false;
+	}
+	return true;
 }
 #endif
-#if defined(ARCH_ESP8266)||defined(ARCH_ESP32)
-bool ApplicationOTA::copyContent(std::unique_ptr<IFS::FileSystem> src, std::unique_ptr<IFS::FileSystem> dst){
-    // Copy files
+#if defined(ARCH_ESP8266) || defined(ARCH_ESP32)
+bool ApplicationOTA::copyContent(std::unique_ptr<IFS::FileSystem> src, std::unique_ptr<IFS::FileSystem> dst)
+{
+	// Copy files
 	IFS::FileCopier copier(*src, *dst);
 
 	copier.onError([&](const IFS::FileCopier::ErrorInfo& info) -> bool {
@@ -403,113 +412,120 @@ bool ApplicationOTA::copyContent(std::unique_ptr<IFS::FileSystem> src, std::uniq
 		// Copy failed
 		return false;
 	}
-    return true;
+	return true;
 }
 
 #endif
 #ifdef ARCH_ESP8266
-bool ApplicationOTA::switchPartitions(){
-    if(!Storage::findPartition(F("lfs1"))&&!Storage::findPartition(F("lfs0"))){
-        std::vector<Storage::esp_partition_info_t> partitionTable=getEditablePartitionTable();
-        //if present, delete spiffs1 to make space
+bool ApplicationOTA::switchPartitions()
+{
+	if(!Storage::findPartition(F("lfs1")) && !Storage::findPartition(F("lfs0"))) {
+		std::vector<Storage::esp_partition_info_t> partitionTable = getEditablePartitionTable();
+		//if present, delete spiffs1 to make space
 
-        if(Storage::findPartition(F("spiffs1"))){
-            if(!delPartition(partitionTable, F("spiffs1"))) {
-                debug_i("ApplicationOTA::checkAtBoot failed to delete spiffs1");
-                return false;
-            }
-        }
-        if(Storage::findPartition(F("spiffs0"))){
-            if(!delPartition(partitionTable, F("spiffs0"))) {
-                debug_i("ApplicationOTA::checkAtBoot failed to delete spiffs0");
-                return false;
-            }
-        }
+		if(Storage::findPartition(F("spiffs1"))) {
+			if(!delPartition(partitionTable, F("spiffs1"))) {
+				debug_i("ApplicationOTA::checkAtBoot failed to delete spiffs1");
+				return false;
+			}
+		}
+		if(Storage::findPartition(F("spiffs0"))) {
+			if(!delPartition(partitionTable, F("spiffs0"))) {
+				debug_i("ApplicationOTA::checkAtBoot failed to delete spiffs0");
+				return false;
+			}
+		}
 
-        int offset=0x300000;
-        if(!addPartition(partitionTable, F("lfs1"),static_cast<uint8_t>(Storage::Partition::Type::data), static_cast<uint8_t>(Storage::Partition::SubType::Data::littlefs), offset, 0x0f8000, 0x00)){
-            debug_i("ApplicationOTA::checkAtBoot failed to add lfs1");
-            return false;
-        }
-        offset=0x100000;
-        if(!addPartition(partitionTable, F("lfs0"),static_cast<uint8_t>(Storage::Partition::Type::data), static_cast<uint8_t>(Storage::Partition::SubType::Data::littlefs), offset, 0x0f8000, 0x00)){
-            debug_i("ApplicationOTA::checkAtBoot failed to add lfs0");
-            return false;
-        }
-            
-        if(!savePartitionTable(partitionTable)){
-            debug_i("ApplicationOTA::checkAtBoot failed to save partition table");
-            return false;
-        }
-            
-        debug_i("OTA post, switchPartition => reloading partition table");
-        Storage::spiFlash->loadPartitions(PARTITION_TABLE_OFFSET); // load partition table from storage
-        
-        Storage::Debug::listDevices(Serial);
-        
-        debug_i("OTA_post, create new file system");
-        createLFS(1);
-        createLFS(0);
-        
-        //debug_i("OTA_post, saving config");
-        //app.cfg.save();
+		int offset = 0x300000;
+		if(!addPartition(partitionTable, F("lfs1"), static_cast<uint8_t>(Storage::Partition::Type::data),
+						 static_cast<uint8_t>(Storage::Partition::SubType::Data::littlefs), offset, 0x0f8000, 0x00)) {
+			debug_i("ApplicationOTA::checkAtBoot failed to add lfs1");
+			return false;
+		}
+		offset = 0x100000;
+		if(!addPartition(partitionTable, F("lfs0"), static_cast<uint8_t>(Storage::Partition::Type::data),
+						 static_cast<uint8_t>(Storage::Partition::SubType::Data::littlefs), offset, 0x0f8000, 0x00)) {
+			debug_i("ApplicationOTA::checkAtBoot failed to add lfs0");
+			return false;
+		}
 
+		if(!savePartitionTable(partitionTable)) {
+			debug_i("ApplicationOTA::checkAtBoot failed to save partition table");
+			return false;
+		}
 
-        debug_i("OTA_post, switchPartitions => restart");
-        app.restart();
-        return true;
-    }
+		debug_i("OTA post, switchPartition => reloading partition table");
+		Storage::spiFlash->loadPartitions(PARTITION_TABLE_OFFSET); // load partition table from storage
+
+		Storage::Debug::listDevices(Serial);
+
+		debug_i("OTA_post, create new file system");
+		createLFS(1);
+		createLFS(0);
+
+		//debug_i("OTA_post, saving config");
+		//app.cfg.save();
+
+		debug_i("OTA_post, switchPartitions => restart");
+		app.restart();
+		return true;
+	}
 }
 //#endif
 
 //#ifdef ARCH_ESP8266
-bool ApplicationOTA::switchPartition(uint8_t slot){
-    String spiffsPartName=F("spiffs")+String(slot);
-    String lfsPartName=F("lfs")+String(slot);
-    if(Storage::findPartition(spiffsPartName)){
-        std::vector<Storage::esp_partition_info_t> partitionTable=getEditablePartitionTable();
-        if(!delPartition(partitionTable, spiffsPartName)) {
-            debug_i("ApplicationOTA::checkAtBoot failed to delete %s",spiffsPartName.c_str());
-        }else{
-            int offset;
-            slot==0?offset=0x100000:offset=0x300000;
-            if(!addPartition(partitionTable, lfsPartName,static_cast<uint8_t>(Storage::Partition::Type::data), static_cast<uint8_t>(Storage::Partition::SubType::Data::littlefs), offset, 0x0f8000, 0x00)){
-                debug_i("ApplicationOTA::checkAtBoot failed to add %s",lfsPartName.c_str());
-            }else{
-                if(!savePartitionTable(partitionTable)){
-                    debug_i("ApplicationOTA::checkAtBoot failed to save partition table");
-                }
-            }
-            debug_i("partition update saved");
-        }
-        Storage::spiFlash->loadPartitions(PARTITION_TABLE_OFFSET); // load partition table from storage
-        debug_i("OTA post, switchPartition => reloading partition table");
-        Storage::Debug::listDevices(Serial);
-        return true;
-    }else{
-        debug_i("OTA post switchPartition => Partition %s not found",spiffsPartName.c_str());
-        return false;
-    }
+bool ApplicationOTA::switchPartition(uint8_t slot)
+{
+	String spiffsPartName = F("spiffs") + String(slot);
+	String lfsPartName = F("lfs") + String(slot);
+	if(Storage::findPartition(spiffsPartName)) {
+		std::vector<Storage::esp_partition_info_t> partitionTable = getEditablePartitionTable();
+		if(!delPartition(partitionTable, spiffsPartName)) {
+			debug_i("ApplicationOTA::checkAtBoot failed to delete %s", spiffsPartName.c_str());
+		} else {
+			int offset;
+			slot == 0 ? offset = 0x100000 : offset = 0x300000;
+			if(!addPartition(partitionTable, lfsPartName, static_cast<uint8_t>(Storage::Partition::Type::data),
+							 static_cast<uint8_t>(Storage::Partition::SubType::Data::littlefs), offset, 0x0f8000,
+							 0x00)) {
+				debug_i("ApplicationOTA::checkAtBoot failed to add %s", lfsPartName.c_str());
+			} else {
+				if(!savePartitionTable(partitionTable)) {
+					debug_i("ApplicationOTA::checkAtBoot failed to save partition table");
+				}
+			}
+			debug_i("partition update saved");
+		}
+		Storage::spiFlash->loadPartitions(PARTITION_TABLE_OFFSET); // load partition table from storage
+		debug_i("OTA post, switchPartition => reloading partition table");
+		Storage::Debug::listDevices(Serial);
+		return true;
+	} else {
+		debug_i("OTA post switchPartition => Partition %s not found", spiffsPartName.c_str());
+		return false;
+	}
 }
 #endif
 
-void ApplicationOTA::saveStatus(OTASTATUS status) {
-    debug_i("ApplicationOTA::saveStatus %i to rom partition rom%i\n",status,app.getRomSlot());
-    StaticJsonDocument<128> doc;
-    JsonObject root = doc.to<JsonObject>();
-    root[F("status")] = int(status);
-    Json::saveToFile(root, OTA_STATUS_FILE);
+void ApplicationOTA::saveStatus(OTASTATUS status)
+{
+	debug_i("ApplicationOTA::saveStatus %i to rom partition rom%i\n", status, app.getRomSlot());
+	StaticJsonDocument<128> doc;
+	JsonObject root = doc.to<JsonObject>();
+	root[F("status")] = int(status);
+	Json::saveToFile(root, OTA_STATUS_FILE);
 }
 
-OTASTATUS ApplicationOTA::loadStatus() {
-    debug_i("ApplicationOTA::loadStatus");
-    StaticJsonDocument<128> doc;
-    if (Json::loadFromFile(doc, OTA_STATUS_FILE)) {
-        OTASTATUS status = (OTASTATUS) doc[F("status")].as<int>();
-        return status;
-    } else {
-        return OTASTATUS::OTA_NOT_UPDATING;
-    }
+OTASTATUS ApplicationOTA::loadStatus()
+{
+	debug_i("ApplicationOTA::loadStatus");
+	StaticJsonDocument<128> doc;
+	if(Json::loadFromFile(doc, OTA_STATUS_FILE)) {
+		OTASTATUS status = (OTASTATUS)doc[F("status")].as<int>();
+		return status;
+	} else {
+		return OTASTATUS::OTA_NOT_UPDATING;
+	}
 }
 #ifdef ARCH_ESP8266
 Storage::Partition ApplicationOTA::findSpiffsPartition(Storage::Partition appPart)
@@ -524,144 +540,149 @@ Storage::Partition ApplicationOTA::findSpiffsPartition(Storage::Partition appPar
 }
 #endif
 
-
 #ifdef ARCH_ESP8266
 /*
  * partition manipulation functions, only required for the EPS8266 transitional period
  */
-std::vector<Storage::esp_partition_info_t> ApplicationOTA::getEditablePartitionTable(){
-    auto& table = Storage::spiFlash->editablePartitions();
-    std::vector<Storage::esp_partition_info_t> partitionTable;
-    for (auto partition : table){
-        Storage::esp_partition_info_t entry;
-        entry.magic=0x50AA;
-        strncpy(entry.name, partition.name().c_str(), sizeof(entry.name));
-        entry.type=partition.type();
-        entry.subtype=partition.subType();
-        entry.offset=partition.address();
-        entry.size=partition.size();
-        entry.flags=partition.flags();
-        partitionTable.push_back(entry);
-    }   
-    return partitionTable;
+std::vector<Storage::esp_partition_info_t> ApplicationOTA::getEditablePartitionTable()
+{
+	auto& table = Storage::spiFlash->editablePartitions();
+	std::vector<Storage::esp_partition_info_t> partitionTable;
+	for(auto partition : table) {
+		Storage::esp_partition_info_t entry;
+		entry.magic = 0x50AA;
+		strncpy(entry.name, partition.name().c_str(), sizeof(entry.name));
+		entry.type = partition.type();
+		entry.subtype = partition.subType();
+		entry.offset = partition.address();
+		entry.size = partition.size();
+		entry.flags = partition.flags();
+		partitionTable.push_back(entry);
+	}
+	return partitionTable;
 }
 
-uint8_t ApplicationOTA::getPartitionIndex(std::vector<Storage::esp_partition_info_t>& partitionTable, String partitionName){ 
-    for (uint8_t i = 0; i < partitionTable.size(); i++) {
-        if (String(partitionTable[i].name) == partitionName) {
-            return i;
-        }
-    }
-    return 0;
+uint8_t ApplicationOTA::getPartitionIndex(std::vector<Storage::esp_partition_info_t>& partitionTable,
+										  String partitionName)
+{
+	for(uint8_t i = 0; i < partitionTable.size(); i++) {
+		if(String(partitionTable[i].name) == partitionName) {
+			return i;
+		}
+	}
+	return 0;
 }
 
-bool ApplicationOTA::addPartition(std::vector<Storage::esp_partition_info_t>& partitionTable, String name, uint8_t type, uint8_t subType, uint32_t start, uint32_t size, uint8_t flags){
-    Storage::esp_partition_info_t newPartition;
-    newPartition.magic=0x50AA;
-    strncpy(newPartition.name, name.c_str(), sizeof(newPartition.name));
-    newPartition.type=static_cast<Storage::Partition::Type>(type);
-    //newPartition.subtype=static_cast<Storage::Partition::subtype>(subType);
-    newPartition.subtype=subType;
-    newPartition.offset=start;
-    newPartition.size=size;
-    newPartition.flags=flags;
-    partitionTable.push_back(newPartition);
-    return true;
+bool ApplicationOTA::addPartition(std::vector<Storage::esp_partition_info_t>& partitionTable, String name, uint8_t type,
+								  uint8_t subType, uint32_t start, uint32_t size, uint8_t flags)
+{
+	Storage::esp_partition_info_t newPartition;
+	newPartition.magic = 0x50AA;
+	strncpy(newPartition.name, name.c_str(), sizeof(newPartition.name));
+	newPartition.type = static_cast<Storage::Partition::Type>(type);
+	//newPartition.subtype=static_cast<Storage::Partition::subtype>(subType);
+	newPartition.subtype = subType;
+	newPartition.offset = start;
+	newPartition.size = size;
+	newPartition.flags = flags;
+	partitionTable.push_back(newPartition);
+	return true;
 }
 
-bool ApplicationOTA::delPartition(std::vector<Storage::esp_partition_info_t>& partitionTable, String partitionName){
-    uint8_t index = getPartitionIndex(partitionTable, partitionName);
-    if (index == 0) {
-        //first partition is the rom partition, this should not be dropped
-        return false;
-    }
-    partitionTable.erase(partitionTable.begin()+index);
-    return true;
-}    
+bool ApplicationOTA::delPartition(std::vector<Storage::esp_partition_info_t>& partitionTable, String partitionName)
+{
+	uint8_t index = getPartitionIndex(partitionTable, partitionName);
+	if(index == 0) {
+		//first partition is the rom partition, this should not be dropped
+		return false;
+	}
+	partitionTable.erase(partitionTable.begin() + index);
+	return true;
+}
 
-bool ApplicationOTA::savePartitionTable(std::vector<Storage::esp_partition_info_t>& partitionTable){
-    std::vector<uint8_t> entries;
-    auto& flash = *Storage::spiFlash;
-    //partitions have to be sorted by start address
-    std::sort(partitionTable.begin(), partitionTable.end(), [](const auto& a, const auto &b){
-        return a.offset < b.offset;
-    });
+bool ApplicationOTA::savePartitionTable(std::vector<Storage::esp_partition_info_t>& partitionTable)
+{
+	std::vector<uint8_t> entries;
+	auto& flash = *Storage::spiFlash;
+	//partitions have to be sorted by start address
+	std::sort(partitionTable.begin(), partitionTable.end(),
+			  [](const auto& a, const auto& b) { return a.offset < b.offset; });
 
-    // Check for overlaps
-	bool isFirst=true;
+	// Check for overlaps
+	bool isFirst = true;
 	uint32_t partitionEnd;
-    for (const auto& partition : partitionTable) {
-		Serial <<"Partition: "<<partition.name<<" start: "<<partition.offset<<" end: "<<partition.offset+partition.size<<endl;
-		if(!isFirst){
-			if ((partition.offset + partition.size) < partitionEnd) {
+	for(const auto& partition : partitionTable) {
+		Serial << "Partition: " << partition.name << " start: " << partition.offset
+			   << " end: " << partition.offset + partition.size << endl;
+		if(!isFirst) {
+			if((partition.offset + partition.size) < partitionEnd) {
 				// Overlap detected, handle error
 				Serial << "Error: Overlapping partitions detected " << partition.name << endl;
 				return false;
-			}else{
-				partitionEnd=partition.offset+partition.size;
+			} else {
+				partitionEnd = partition.offset + partition.size;
 			}
-		}else{
-			partitionEnd=partition.offset+partition.size;
-			isFirst=false;
+		} else {
+			partitionEnd = partition.offset + partition.size;
+			isFirst = false;
 		}
-    }
+	}
 
-    // Write partition table to flash
-    Storage::esp_partition_info_t deviceHeader;
-    strncpy(deviceHeader.name, "spiFlash", sizeof(deviceHeader.name));
-	deviceHeader.magic=0x50AA;
-    deviceHeader.type = Storage::Partition::Type::storage;  // Set the type to storage
-	deviceHeader.subtype = static_cast<uint8_t>(0x01);  // Set the subtype to 0x01 (partition table header)
-    deviceHeader.offset = 0x00000000;
-    deviceHeader.size = 0x00400000; //this is the size of the flash chip hardcoded to 4MB / 32MBit
-    deviceHeader.flags = 0x00;  // Adjust this to match your device
-    uint8_t* headerData = reinterpret_cast<uint8_t*>(&deviceHeader);
+	// Write partition table to flash
+	Storage::esp_partition_info_t deviceHeader;
+	strncpy(deviceHeader.name, "spiFlash", sizeof(deviceHeader.name));
+	deviceHeader.magic = 0x50AA;
+	deviceHeader.type = Storage::Partition::Type::storage; // Set the type to storage
+	deviceHeader.subtype = static_cast<uint8_t>(0x01);	 // Set the subtype to 0x01 (partition table header)
+	deviceHeader.offset = 0x00000000;
+	deviceHeader.size = 0x00400000; //this is the size of the flash chip hardcoded to 4MB / 32MBit
+	deviceHeader.flags = 0x00;		// Adjust this to match your device
+	uint8_t* headerData = reinterpret_cast<uint8_t*>(&deviceHeader);
 	// m_printHex("header:",headerData,sizeof(Storage::esp_partition_info_t)) ;
-    entries.insert(entries.end(), headerData, headerData + sizeof(Storage::esp_partition_info_t));
+	entries.insert(entries.end(), headerData, headerData + sizeof(Storage::esp_partition_info_t));
 
-    for (const auto& partition : partitionTable) {
-        // Add the magic number
+	for(const auto& partition : partitionTable) {
+		// Add the magic number
 		Serial << "Adding Partition " << partition.name << endl;
 
-        // Add the partition entry
-        Storage::esp_partition_info_t entry;
-		entry.magic=0x50AA;
-        strncpy(entry.name, partition.name, sizeof(entry.name));
-        entry.type = partition.type;
-        entry.subtype = partition.subtype;
-        entry.offset = partition.offset;
-        entry.size = partition.size;
-        entry.flags = partition.flags;
-        uint8_t* entryData = reinterpret_cast<uint8_t*>(&entry);
-        entries.insert(entries.end(), entryData, entryData + sizeof(Storage::esp_partition_info_t));
+		// Add the partition entry
+		Storage::esp_partition_info_t entry;
+		entry.magic = 0x50AA;
+		strncpy(entry.name, partition.name, sizeof(entry.name));
+		entry.type = partition.type;
+		entry.subtype = partition.subtype;
+		entry.offset = partition.offset;
+		entry.size = partition.size;
+		entry.flags = partition.flags;
+		uint8_t* entryData = reinterpret_cast<uint8_t*>(&entry);
+		entries.insert(entries.end(), entryData, entryData + sizeof(Storage::esp_partition_info_t));
 		// m_printHex("entry:", entryData,sizeof(Storage::esp_partition_info_t));
-        if (sizeof(Storage::esp_partition_info_t) % 16 != 0) {
-            printf("\n");
-        }
-    }
-    debug_i("all partitions added, going to compute md5 sum");
-    // Compute the MD5 hash of the entries
-    crypto_md5_context_t md5Context;
-    crypto_md5_init(&md5Context);
-    crypto_md5_update(&md5Context, entries.data(), entries.size());
-    uint8_t md5sum[MD5_SIZE];
-    crypto_md5_final(md5sum, &md5Context);
+		if(sizeof(Storage::esp_partition_info_t) % 16 != 0) {
+			printf("\n");
+		}
+	}
+	debug_i("all partitions added, going to compute md5 sum");
+	// Compute the MD5 hash of the entries
+	crypto_md5_context_t md5Context;
+	crypto_md5_init(&md5Context);
+	crypto_md5_update(&md5Context, entries.data(), entries.size());
+	uint8_t md5sum[MD5_SIZE];
+	crypto_md5_final(md5sum, &md5Context);
 
-    // Add the MD5 sum entry
-    entries.push_back(0xEB); // Magic number
-    entries.push_back(0xEB);
-    for (int i = 0; i < 14; i++) {
-        entries.push_back(0xFF);
-    }
-    entries.insert(entries.end(), md5sum, md5sum + MD5_SIZE);
+	// Add the MD5 sum entry
+	entries.push_back(0xEB); // Magic number
+	entries.push_back(0xEB);
+	for(int i = 0; i < 14; i++) {
+		entries.push_back(0xFF);
+	}
+	entries.insert(entries.end(), md5sum, md5sum + MD5_SIZE);
 
-    // which this, the partiton table is complete. Write it to flash:
-    debug_i("Writing partition table to flash to %0xi",PARTITION_TABLE_OFFSET);
-    flash.erase_range(PARTITION_TABLE_OFFSET, flash.getBlockSize());
-    flash.write(PARTITION_TABLE_OFFSET, entries.data(), entries.size());
-    debug_i("done updating partition table");
-    return true;
-//#endif
+	// which this, the partiton table is complete. Write it to flash:
+	debug_i("Writing partition table to flash to %0xi", PARTITION_TABLE_OFFSET);
+	flash.erase_range(PARTITION_TABLE_OFFSET, flash.getBlockSize());
+	flash.write(PARTITION_TABLE_OFFSET, entries.data(), entries.size());
+	debug_i("done updating partition table");
+	return true;
+	//#endif
 }
 #endif
-

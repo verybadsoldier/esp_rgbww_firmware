@@ -6,8 +6,9 @@
  */
 #include <RGBWWCtrl.h>
 
-EventServer::~EventServer() {
-    stop();
+EventServer::~EventServer()
+{
+	stop();
 }
 
 /**
@@ -20,16 +21,17 @@ EventServer::~EventServer() {
  * 
  * @param webServer The reference to the ApplicationWebserver object.
  */
-void EventServer::start(ApplicationWebserver& webServer) {
-    this->webServer=&webServer;
-    debug_i("Starting event server with webserver referal\n");
-    setTimeOut(_connectionTimeout);
-    if (not listen(_tcpPort)) {
-        debug_e("EventServer failed to open listening port!");
-    }
-  
-    auto fnc = TimerDelegate(&EventServer::publishKeepAlive, this);
-    _keepAliveTimer.initializeMs(_keepAliveInterval * 1000, fnc).start();
+void EventServer::start(ApplicationWebserver& webServer)
+{
+	this->webServer = &webServer;
+	debug_i("Starting event server with webserver referal\n");
+	setTimeOut(_connectionTimeout);
+	if(not listen(_tcpPort)) {
+		debug_e("EventServer failed to open listening port!");
+	}
+
+	auto fnc = TimerDelegate(&EventServer::publishKeepAlive, this);
+	_keepAliveTimer.initializeMs(_keepAliveInterval * 1000, fnc).start();
 }
 
 /**
@@ -37,11 +39,12 @@ void EventServer::start(ApplicationWebserver& webServer) {
  *
  * This function stops the EventServer if it is currently active. If the EventServer is not active, the function does nothing.
  */
-void EventServer::stop() {
-    if (not active)
-        return;
+void EventServer::stop()
+{
+	if(not active)
+		return;
 
-    shutdown();
+	shutdown();
 }
 
 /**
@@ -52,9 +55,10 @@ void EventServer::stop() {
  *
  * @param client A pointer to the TcpClient object representing the connected client.
  */
-void EventServer::onClient(TcpClient *client) {
-    TcpServer::onClient(client);
-    debug_d("Client connected from: %s\n", client->getRemoteIp().toString().c_str());
+void EventServer::onClient(TcpClient* client)
+{
+	TcpServer::onClient(client);
+	debug_d("Client connected from: %s\n", client->getRemoteIp().toString().c_str());
 }
 
 /**
@@ -66,9 +70,10 @@ void EventServer::onClient(TcpClient *client) {
  * @param client The TcpClient object representing the client connection.
  * @param successful A boolean indicating whether the client connection was successful or not.
  */
-void EventServer::onClientComplete(TcpClient& client, bool succesfull) {
-    TcpServer::onClientComplete(client, succesfull);
-    debug_d("Client removed: %x\n", &client);
+void EventServer::onClientComplete(TcpClient& client, bool succesfull)
+{
+	TcpServer::onClientComplete(client, succesfull);
+	debug_d("Client removed: %x\n", &client);
 }
 
 /**
@@ -82,39 +87,40 @@ void EventServer::onClientComplete(TcpClient& client, bool succesfull) {
  * @param pHsv Pointer to the HSVCT object representing the HSV color values. If null,
  *             the mode will be set to "raw".
  */
-void EventServer::publishCurrentState(const ChannelOutput& raw, const HSVCT* pHsv) {
-    //debug_i("EventServer::publishCurrentState\n");
-    if (raw == _lastRaw)
-        return;
-    _lastRaw = raw;
+void EventServer::publishCurrentState(const ChannelOutput& raw, const HSVCT* pHsv)
+{
+	//debug_i("EventServer::publishCurrentState\n");
+	if(raw == _lastRaw)
+		return;
+	_lastRaw = raw;
 
-    JsonRpcMessage msg(F("color_event"));
-    JsonObject root = msg.getParams();
+	JsonRpcMessage msg(F("color_event"));
+	JsonObject root = msg.getParams();
 
-    root[F("mode")] = pHsv ? "hsv" : "raw";
+	root[F("mode")] = pHsv ? "hsv" : "raw";
 
-    JsonObject rawJson = root.createNestedObject(F("raw"));
-    rawJson[F("r")] = raw.r;
-    rawJson[F("g")] = raw.g;
-    rawJson[F("b")] = raw.b;
-    rawJson[F("ww")] = raw.ww;
-    rawJson[F("cw")] = raw.cw;
+	JsonObject rawJson = root.createNestedObject(F("raw"));
+	rawJson[F("r")] = raw.r;
+	rawJson[F("g")] = raw.g;
+	rawJson[F("b")] = raw.b;
+	rawJson[F("ww")] = raw.ww;
+	rawJson[F("cw")] = raw.cw;
 
-    if (pHsv) {
-        float h, s, v;
-        int ct;
-        pHsv->asRadian(h, s, v, ct);
+	if(pHsv) {
+		float h, s, v;
+		int ct;
+		pHsv->asRadian(h, s, v, ct);
 
-        JsonObject hsvJson = root.createNestedObject(F("hsv"));
-        hsvJson[F("h")] = h;
-        hsvJson[F("s")] = s;
-        hsvJson[F("v")] = v;
-        hsvJson[F("ct")] = ct;
-    }
+		JsonObject hsvJson = root.createNestedObject(F("hsv"));
+		hsvJson[F("h")] = h;
+		hsvJson[F("s")] = s;
+		hsvJson[F("v")] = v;
+		hsvJson[F("ct")] = ct;
+	}
 
-    debug_d("EventServer::publishCurrentColor\n");
+	debug_d("EventServer::publishCurrentColor\n");
 
-    sendToClients(msg);
+	sendToClients(msg);
 }
 
 /**
@@ -125,14 +131,15 @@ void EventServer::publishCurrentState(const ChannelOutput& raw, const HSVCT* pHs
  * @param offset The offset value.
  * @param interval The current interval value.
  */
-void EventServer::publishClockSlaveStatus(int offset, uint32_t interval) {
-    debug_d("EventServer::publishClockSlaveStatus: offset: %d | interval :%d\n", offset, interval);
+void EventServer::publishClockSlaveStatus(int offset, uint32_t interval)
+{
+	debug_d("EventServer::publishClockSlaveStatus: offset: %d | interval :%d\n", offset, interval);
 
-    JsonRpcMessage msg(F("clock_slave_status"));
-    JsonObject root = msg.getParams();
-    root[F("offset")] = offset;
-    root[F("current_interval")] = interval;
-    sendToClients(msg);
+	JsonRpcMessage msg(F("clock_slave_status"));
+	JsonObject root = msg.getParams();
+	root[F("offset")] = offset;
+	root[F("current_interval")] = interval;
+	sendToClients(msg);
 }
 
 /**
@@ -140,11 +147,12 @@ void EventServer::publishClockSlaveStatus(int offset, uint32_t interval) {
  * 
  * This function creates a JSON-RPC message with the method "keep_alive" and sends it to all connected clients.
  */
-void EventServer::publishKeepAlive() {
-    debug_d("EventServer::publishKeepAlive\n");
+void EventServer::publishKeepAlive()
+{
+	debug_d("EventServer::publishKeepAlive\n");
 
-    JsonRpcMessage msg(F("keep_alive"));
-    sendToClients(msg);
+	JsonRpcMessage msg(F("keep_alive"));
+	sendToClients(msg);
 }
 
 /**
@@ -155,15 +163,16 @@ void EventServer::publishKeepAlive() {
  * @param name The name of the transition.
  * @param requeued Indicates whether the transition was requeued or not.
  */
-void EventServer::publishTransitionFinished(const String& name, bool requeued) {
-    debug_d("EventServer::publishTransitionComplete: %s\n", name.c_str());
+void EventServer::publishTransitionFinished(const String& name, bool requeued)
+{
+	debug_d("EventServer::publishTransitionComplete: %s\n", name.c_str());
 
-    JsonRpcMessage msg(F("transition_finished"));
-    JsonObject root = msg.getParams();
-    root[F("name")] = name;
-    root[F("requeued")] = requeued;
+	JsonRpcMessage msg(F("transition_finished"));
+	JsonObject root = msg.getParams();
+	root[F("name")] = name;
+	root[F("requeued")] = requeued;
 
-    sendToClients(msg);
+	sendToClients(msg);
 }
 
 /**
@@ -180,17 +189,18 @@ void EventServer::publishTransitionFinished(const String& name, bool requeued) {
  *
  * @param rpcMsg The JSON-RPC message to be sent to the clients.
  */
-void EventServer::sendToClients(JsonRpcMessage& rpcMsg) {
-    //Serial.printf("EventServer: sendToClient: %x, Vector: %x Tests: %d\n", _client, _clients.elementAt(0), _tests[0]);
-    rpcMsg.setId(_nextId++);
+void EventServer::sendToClients(JsonRpcMessage& rpcMsg)
+{
+	//Serial.printf("EventServer: sendToClient: %x, Vector: %x Tests: %d\n", _client, _clients.elementAt(0), _tests[0]);
+	rpcMsg.setId(_nextId++);
 
-    String jsonStr = Json::serialize(rpcMsg.getRoot());
-    debug_i("EventServer::sendToClients: %s\n", jsonStr.c_str());
+	String jsonStr = Json::serialize(rpcMsg.getRoot());
+	debug_i("EventServer::sendToClients: %s\n", jsonStr.c_str());
 
-    for(unsigned i=0; i < connections.size(); ++i) {
-        auto pClient = reinterpret_cast<TcpClient*>(connections[i]);
-        pClient->sendString(jsonStr);
-    }
+	for(unsigned i = 0; i < connections.size(); ++i) {
+		auto pClient = reinterpret_cast<TcpClient*>(connections[i]);
+		pClient->sendString(jsonStr);
+	}
 
-    webServer->wsBroadcast(jsonStr);
+	webServer->wsBroadcast(jsonStr);
 }
