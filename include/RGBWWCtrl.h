@@ -25,7 +25,14 @@
 
 //default defines
 
-#define CLEAR_PIN 16
+#if defined ARCH_ESP8266
+    #define CLEAR_PIN 16
+#endif
+
+#if defined ARCH_ESP32
+    #undef CLEAR_PIN 
+#endif
+
 #define DEFAULT_AP_IP "192.168.4.1"
 #define DEFAULT_AP_SECURED false
 #define DEFAULT_AP_PASSWORD "rgbwwctrl"

@@ -174,7 +174,7 @@ void APPLedCtrl::init()
 		"APPLedCtrl::init - initializing RGBWWLed\n   red: %i | green: %i | blue: %i | warmwhite: %i | coldwhite: %i",
 		pins.red, pins.green, pins.blue, pins.warmwhite, pins.coldwhite);
 	RGBWWLed::init(pins.red, pins.green, pins.blue, pins.warmwhite, pins.coldwhite, PWM_FREQUENCY);
-
+	debug_i("APPLedCtrl::init - finished setting up RGBWWLed");
 	setup();
 
 	HSVCT startupColor;

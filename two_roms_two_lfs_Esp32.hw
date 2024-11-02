@@ -6,13 +6,13 @@
         "4m"
     ],
     "partitions": {
-        "factory": {    
-            "size": "1536K"
+        "factory": {
+            "size": "1408K"
         },
         "lfs0": {
             "device": "spiFlash",
-            "address": "0x00190000",
-            "size": "448K",
+            "address": "0x00170000",
+            "size": "576K",
             "type": "data",
             "subtype": "littlefs",
             "readonly": false,
@@ -22,7 +22,7 @@
         "rom1": {
             "device": "spiFlash",
             "address": "0x00200000",
-            "size": "1M",
+            "size": "1536K",
             "type": "app",
             "subtype": "ota_1",
             "readonly": false,
@@ -31,8 +31,8 @@
         },
         "lfs1": {
             "device": "spiFlash",
-            "address": "0x00300000",
-            "size": "1M",
+            "address": "0x00380000",
+            "size": "512K",
             "type": "data",
             "subtype": "littlefs",
             "readonly": false,

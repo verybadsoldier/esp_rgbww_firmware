@@ -20,16 +20,6 @@
  *
  */
 
-#ifdef __riscv
-//#if SMING_SOC==esp32c3
-//#warning "redefining INT32 to be int, not long int for riscv based esp32c3"
-#undef __INT32_TYPE__
-#define __INT32_TYPE__ int
-
-#undef __UINT32_TYPE__
-#define __UINT32_TYPE__ unsigned int
-
-#endif // __riscv
 
 #include <RGBWWCtrl.h>
 #include <Ota/Upgrader.h>
@@ -44,10 +34,10 @@
 #define PART0 "factory"
 #endif
 
+//IMPORT_FSTR_LOCAL(default_config, PROJECT_DIR "/default_config.json");
+
 #ifdef ARCH_ESP8266
 #include <Platform/OsMessageInterceptor.h>
-
-IMPORT_FSTR_LOCAL(default_config, PROJECT_DIR "/default_config.json");
 
 static OsMessageInterceptor osMessageInterceptor;
 
@@ -138,7 +128,7 @@ void init()
 #endif
 
 	// set CLR pin to input
-	pinMode(CLEAR_PIN, INPUT);
+	// pinMode(CLEAR_PIN, INPUT);
 
 	// seperated application init
 	app.init();
@@ -176,16 +166,19 @@ void Application::init()
 	// ConfigDB obsoleted config::initializeConfig(cfg); // initialize the config structure if necessary
 	debug_i("ESP RGBWW Controller Version %s\r\n", fw_git_version);
 	debug_i("Sming Version: %s\r\n", sming_git_version);
-#ifdef ARCH_ESP8266
-	debug_i("Platform: Esp8266\r\n");
+
+#if defined(SOC_ESP8266)
+	#define SOC "esp8266"
+#elif defined(SOC_ESP32S2)
+	#define SOC "esp32s2"
+#elif defined(SOC_ESP32S3)
+	#define SOC "esp32s3"
+#elif defined(SOC_ESP32C2)
+	#define SOC "esp32c2"
+#elif defined(SOC_ESP32C3)
+	#define SOC "esp32c3"
 #endif
-#ifdef ARCH_ESP32
-#ifdef __riscv
-	debug_i("Platform: Esp32 RISC-V (Esp32c3)\r\n");
-#else
-	debug_i("Platform: Esp32\r\n");
-#endif
-#endif
+debug_i("Platform: %s\r\n", SOC);
 
 #if defined(ARCH_ESP8266) || defined(ESP32)
 	app.ota.checkAtBoot();
@@ -222,14 +215,13 @@ void Application::init()
 		debug_i("application init => switching file systems - partition 1");
 		ota.switchPartitions();
 		debug_i("application init => saving config");
-		// ConfigDB - not needed
-		// cfg.save();
 	}
+	
 #endif
 
 	//load settings
 	_uptimetimer.initializeMs(60000, TimerDelegate(&Application::uptimeCounter, this)).start();
-	_checkRamTimer.initializeMs(2000, TimerDelegate(&Application::checkRam, this)).start();
+	_checkRamTimer.initializeMs(30000, TimerDelegate(&Application::checkRam, this)).start();
 #ifdef ARCH_ESP8266
 	// load boot information
 	uint8 bootmode, bootslot;
@@ -253,7 +245,7 @@ void Application::init()
 
 //debug_i("Application::init - got rom partition %s @0x%#08x", romPartition.name(),romPartition.address());
 //auto spiffsPartition=app.ota.findSpiffsPartition(romPartition);
-#if defined(ARCH_ESP8266) || defined(ESP32)
+#if defined(ARCH_ESP8266) || defined(ARCH_ESP32)
 	mountfs(getRomSlot());
 	// ToDo - rework mounting filesystem
 	if(_fs_mounted) {
@@ -277,14 +269,16 @@ void Application::init()
 	data = std::make_unique<AppData>(dataDB_PATH);
 
 // check if we need to reset settings
-#if !defined(ARCH_HOST)
-	if(digitalRead(CLEAR_PIN) < 1) {
+#if !defined(ARCH_HOST) 
+
+/*	if(digitalRead(CLEAR_PIN) < 1) {
 		debug_i("CLR button low - resetting settings");
-		// ConfigDB - decide i f to reload defaults or load a specific saved version
+		// ConfigDB - decide if to reload defaults or load a specific saved version
 		// perhaps by holding the clear pin low for a certain time along with blink codes?
 		// cfg.reset();
 		network.forgetWifi();
 	}
+*/
 #endif
 
 	// check ota
@@ -292,32 +286,21 @@ void Application::init()
 	ota.checkAtBoot();
 #endif
 
-	// load config
-	// ConfigDB obsoleted cfg.load(), either the config is defined by defaults or initially loaded from a default config.json
-	// once the database is initialized, the config is loaded from the database
 	{
 		debug_i("application init => checking ConfigDB");
 		AppConfig::General general(*cfg);
 		if(!general.getIsInitialized()) {
 			debug_i("application init => reading config");
-			//cfg.load();
 
-			//Serial << "* reading default config flash string *" << endl << default_config << endl;
-
-			//Serial << "* reading default config flash string *" << endl << default_config << endl;
-			//auto configStream = new FSTR::Stream(CONTENT_default_config);
-			//cfg->importFromStream(ConfigDB::Json::format, *configStream);
 			debug_i("application init => config loaded, pin config %s", general.getPinConfig().c_str());
 			debug_i("Application::init - first run");
 			_first_run = true;
 
 			if(auto generalUpdate = general.update()) {
-				;
 				generalUpdate.setIsInitialized(true);
 			}
 
 		} else {
-			//cfg.save();
 			debug_i("ConfigDB already initialized. starting");
 		}
 	}
@@ -325,17 +308,18 @@ void Application::init()
 	Serial << endl << _F("** Stream **") << endl;
 	cfg->exportToStream(ConfigDB::Json::format, Serial);
 
-	// initialize led ctrl
-	rgbwwctrl.init();
-
-	initButtons();
 
 	// initialize networking
 	network.init();
 
 	// initialize webserver
-
 	app.webserver.init();
+	
+	// initialize led ctrl
+	rgbwwctrl.init();
+
+	initButtons();
+
 
 	// ConfigDB: temp only: create an example preset
 	{

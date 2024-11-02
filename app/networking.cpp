@@ -72,14 +72,16 @@ void AppWIFI::scan(bool connectAfterScan)
  */
 void AppWIFI::scanCompleted(bool succeeded, BssList& list)
 {
-	debug_i("AppWIFI::scanCompleted. Success: %d", succeeded);
 	if(succeeded) {
+		debug_i("AppWIFI::scanCompleted");
 		_networks.clear();
 		for(size_t i = 0; i < list.count(); i++) {
 			if(!list[i].hidden && list[i].ssid.length() > 0) {
 				_networks.add(list[i]);
 			}
 		}
+	}else{
+		debug_e("wifi scan failed");
 	}
 	// TODO add wsBroadcast of available networks
 	_networks.sort([](const BssInfo& a, const BssInfo& b) { return b.rssi - a.rssi; });

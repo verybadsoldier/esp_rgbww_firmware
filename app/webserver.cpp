@@ -84,6 +84,9 @@ void ApplicationWebserver::init()
 	paths.set(F("/presets"), HttpPathDelegate(&ApplicationWebserver::onPresets, this));
 	paths.set(F("/scenes"), HttpPathDelegate(&ApplicationWebserver::onScenes, this));
 	paths.set(F("/object"), HttpPathDelegate(&ApplicationWebserver::onObject, this));
+	paths.set(F("/canonical.html"), HttpPathDelegate(&ApplicationWebserver::onIndex, this));
+	paths.set(F("/generate_204"), HttpPathDelegate(&ApplicationWebserver::onIndex, this));
+	paths.set(F("/static/hotspot.txt"), HttpPathDelegate(&ApplicationWebserver::onIndex, this));
 
 	// animation controls
 	paths.set(F("/stop"), HttpPathDelegate(&ApplicationWebserver::onStop, this));
@@ -274,6 +277,7 @@ void ApplicationWebserver::onFile(HttpRequest& request, HttpResponse& response)
 #endif
 
 	String fileName = request.uri.Path;
+	debug_i("ApplicationWebserver::onFile with uri path=%s",fileName.c_str());
 	if(fileName[0] == '/')
 		fileName = fileName.substring(1);
 	if(fileName[0] == '.') {
@@ -553,12 +557,8 @@ void ApplicationWebserver::onInfo(HttpRequest& request, HttpResponse& response)
 	data[F("heap_free")] = system_get_free_heap_size();
 // the app.cfg array is not used anymore
 // data[F("config_size")]=sizeof(app.cfg);
-#ifdef ARCH_ESP8266
-	data[F("soc")] = F("Esp8266");
-#elif ARCH_ESP32
-	data[F("soc")] = F("Esp32");
-#endif
-
+	data[F("soc")]=SOC;
+	
 	/*
     FileSystem::Info fsInfo;
     app.getinfo(fsInfo);
