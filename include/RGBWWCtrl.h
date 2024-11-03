@@ -23,6 +23,24 @@
 #ifndef RGBWWCTRL_H_
 #define RGBWWCTRL_H_
 
+#include <fileMap.h>
+
+#if defined(SOC_ESP8266)
+	#define SOC "esp8266"
+#elif defined(SOC_ESP32S2)
+	#define SOC "esp32s2"
+#elif defined(SOC_ESP32S3)
+	#define SOC "esp32s3"
+#elif defined(SOC_ESP32C2)
+	#define SOC "esp32c2"
+#elif defined(SOC_ESP32C3)
+	#define SOC "esp32c3"
+#elif defined(SOC_ESP32)
+    #define SOC "esp32"
+#else
+    #define SOC "unknown"
+#endif
+
 //default defines
 
 #if defined ARCH_ESP8266

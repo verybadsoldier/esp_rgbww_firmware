@@ -167,17 +167,6 @@ void Application::init()
 	debug_i("ESP RGBWW Controller Version %s\r\n", fw_git_version);
 	debug_i("Sming Version: %s\r\n", sming_git_version);
 
-#if defined(SOC_ESP8266)
-	#define SOC "esp8266"
-#elif defined(SOC_ESP32S2)
-	#define SOC "esp32s2"
-#elif defined(SOC_ESP32S3)
-	#define SOC "esp32s3"
-#elif defined(SOC_ESP32C2)
-	#define SOC "esp32c2"
-#elif defined(SOC_ESP32C3)
-	#define SOC "esp32c3"
-#endif
 debug_i("Platform: %s\r\n", SOC);
 
 #if defined(ARCH_ESP8266) || defined(ESP32)
@@ -200,7 +189,7 @@ debug_i("Platform: %s\r\n", SOC);
         if(mountfs(app.getRomSlot())){
             if (cfg.exist()) {
                 debug_i("application init (with spiffs) => reading config");
-                cfg.load(); 
+                cfg.load();
                 debug_i("application init (with spiffs) => config loaded, pin config %s",cfg.general.pin_config_name.c_str());
             }
         }else{
@@ -216,7 +205,7 @@ debug_i("Platform: %s\r\n", SOC);
 		ota.switchPartitions();
 		debug_i("application init => saving config");
 	}
-	
+
 #endif
 
 	//load settings
@@ -269,7 +258,7 @@ debug_i("Platform: %s\r\n", SOC);
 	data = std::make_unique<AppData>(dataDB_PATH);
 
 // check if we need to reset settings
-#if !defined(ARCH_HOST) 
+#if !defined(ARCH_HOST)
 
 /*	if(digitalRead(CLEAR_PIN) < 1) {
 		debug_i("CLR button low - resetting settings");
@@ -314,7 +303,9 @@ debug_i("Platform: %s\r\n", SOC);
 
 	// initialize webserver
 	app.webserver.init();
-	
+
+	//Serial.print("pin config string %s", fileMap["pin_config"]);
+
 	// initialize led ctrl
 	rgbwwctrl.init();
 
@@ -477,9 +468,9 @@ bool Application::mountfs(int slot)
 {
 	/*
     *
-    * need a new mount method for the transitional time when the data file 
+    * need a new mount method for the transitional time when the data file
     * system could be spiffs or LitleFS
-    * 
+    *
     */
 
 #ifdef ARCH_HOST
