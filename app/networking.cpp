@@ -123,6 +123,7 @@ void AppWIFI::forgetWifi()
  */
 void AppWIFI::init()
 {
+	debug_i("AppWIFI::init");
 	// ESP SDK function to disable  sleep
 	wifi_set_sleep_type(NONE_SLEEP_T);
 
@@ -138,7 +139,7 @@ void AppWIFI::init()
 	}
 
 	_con_ctr = 0;
-
+	debug_i("AppWIFI::init\n    station %s\n    AP      %s", WifiStation.isEnabled()? "enabled" : "disabled", WifiAccessPoint.isEnabled()? "enabled" : "disabled");
 	// ConfigDB adapt
 	if(app.isFirstRun()) {
 		debug_i("AppWIFI::init initial run - setting up AP, ssid: ");
@@ -167,6 +168,7 @@ void AppWIFI::init()
 		scan(false);
 
 	} else {
+
 		//configure WifiClient
 		{
 			AppConfig::Network network(*app.cfg);
@@ -219,6 +221,7 @@ void AppWIFI::connect(String ssid, String pass, bool new_con /* = false */)
 	_new_connection = new_con;
 	_client_status = CONNECTION_STATUS::CONNECTING;
 
+	debug_i("connecting to %s using %s", ssid.c_str(), pass.c_str());
 	WifiStation.config(ssid, pass);
 	WifiStation.connect();
 	broadcastWifiStatus(F("Connecting to WiFi"));

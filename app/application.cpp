@@ -297,22 +297,25 @@ debug_i("Platform: %s\r\n", SOC);
 	Serial << endl << _F("** Stream **") << endl;
 	cfg->exportToStream(ConfigDB::Json::format, Serial);
 
-
 	// initialize networking
 	network.init();
+	debug_i("network initizalized, ssid: %s", WifiStation.getSSID().c_str());
+	
+	/// initialize led ctrl
+	rgbwwctrl.init();
+	debug_i("ledctrl initialized");
+
+	initButtons();
+	debug_i("buttons initialized");
 
 	// initialize webserver
 	app.webserver.init();
+	debug_i("webserver initialized");
 
-	//Serial.print("pin config string %s", fileMap["pin_config"]);
-
-	// initialize led ctrl
-	rgbwwctrl.init();
-
-	initButtons();
-
+	debug_i("pin config string %s", fileMap["pin_config"]);
 
 	// ConfigDB: temp only: create an example preset
+	/*
 	{
 		AppData::Presets::OuterUpdater presets(*data);
 
@@ -337,6 +340,7 @@ debug_i("Platform: %s\r\n", SOC);
 		rawUpdater.setWw(255);
 		rawUpdater.setCw(255);
 	}
+	*/
 }
 void Application::initButtons()
 {
