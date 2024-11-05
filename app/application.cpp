@@ -153,6 +153,8 @@ void Application::uptimeCounter()
 void Application::checkRam()
 {
 	debug_i("Free heap: %d", system_get_free_heap_size());
+	String _client_status = WifiStation.getConnectionStatusName();
+	debug_i("wifi conection Status: %s", _client_status.c_str());
 }
 
 void Application::init()
@@ -210,7 +212,7 @@ debug_i("Platform: %s\r\n", SOC);
 
 	//load settings
 	_uptimetimer.initializeMs(60000, TimerDelegate(&Application::uptimeCounter, this)).start();
-	_checkRamTimer.initializeMs(30000, TimerDelegate(&Application::checkRam, this)).start();
+	_checkRamTimer.initializeMs(10000, TimerDelegate(&Application::checkRam, this)).start();
 #ifdef ARCH_ESP8266
 	// load boot information
 	uint8 bootmode, bootslot;

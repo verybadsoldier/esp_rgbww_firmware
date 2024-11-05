@@ -155,6 +155,7 @@ void AppWIFI::init()
 	}
 
 	// register callbacks
+	debug_i("AppWIFI::init register callbacks");
 	WifiEvents.onStationDisconnect(StationDisconnectDelegate(&AppWIFI::_STADisconnect, this));
 	WifiEvents.onStationConnect(StationConnectDelegate(&AppWIFI::_STAConnected, this));
 	WifiEvents.onStationGotIP(StationGotIPDelegate(&AppWIFI::_STAGotIP, this));
@@ -175,6 +176,7 @@ void AppWIFI::init()
 			if(!network.connection.getDhcp() && !network.connection.getIp().length() == 0) {
 				debug_i("AppWIFI::init setting static ip");
 				if(WifiStation.isEnabledDHCP()) {
+					// dhcp is configured off but currently enabled - disable it
 					debug_i("AppWIFI::init disabled dhcp");
 					WifiStation.enableDHCP(false);
 				}
@@ -193,6 +195,8 @@ void AppWIFI::init()
 				}
 			}
 		} // end ConfigDB network context
+		debug_i("AppWifi::init - triggering wifi connect");
+		WifiStation.connect();
 	}
 }
 
