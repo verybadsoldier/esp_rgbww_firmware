@@ -100,16 +100,33 @@
           {"$ref":"#/$defs/raw"}
       ]
     },
+    "pin":{
+        "type":"integer",
+        "minimum":0,
+        "maximum":255
+    },
     "channel": {
       "type":"object",
-      "properties":{
-        "pin":{
-            "type":"integer",
-            "minimum":0,
-            "maximum":255
-        },
+      "properties":{ 
         "name":{
             "type":"string"
+        },
+        "pin": {
+          "$ref":"#/$defs/pin"
+        }
+      }
+    },
+    "pinmap":{
+      "type":"object",
+      "properties":{
+        "soc":{
+          "type":"string"
+        },
+        "pins":{
+          "type":"array",
+          "items":{
+              "$ref":"#/$defs/pin"
+          }
         }
       }
     }   

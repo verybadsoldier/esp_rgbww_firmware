@@ -259,6 +259,15 @@ debug_i("Platform: %s\r\n", SOC);
 	cfg = std::make_unique<AppConfig>(configDB_PATH);
 	data = std::make_unique<AppData>(dataDB_PATH);
 
+{
+	AppConfig::Hardware hardware(*cfg);
+	debug_i("Application::init - hardware config loaded");
+	
+	if(auto hardwareUpdate = hardware.update()){
+		FlashMemoryStream pindefs=fileMap["pinconfig"];
+		hardwareUpdate.importFromStream(pindefs);
+	}
+}
 // check if we need to reset settings
 #if !defined(ARCH_HOST)
 

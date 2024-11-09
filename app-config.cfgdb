@@ -319,8 +319,8 @@
           "type":"object",
           "properties":{
             "enabled":{
-            "type":"boolean",
-            "default":true
+              "type":"boolean",
+              "default":true
             },
             "name":{
               "type":"string"
@@ -328,7 +328,45 @@
           }
         }
       }
+    },
+    "hardware": {
+      "type":"object",
+      "store":true,
+      "properties":{
+        "version":{
+          "type":"integer",
+          "default":0
+        },
+        "available-pins":{
+          "type":"array",
+          "items":{ 
+            "$ref":"defs/$defs/pinmap"
+          }
+        },
+        "pinconfigs":{
+          "type":"array",
+          "items":{
+            "type":"object",
+            "properties":{
+              "name": {
+                "type": "string"
+              },
+              "soc": {
+                "type": "string"
+              },
+              "model":{
+                "type":"string"
+              },
+              "channels": {
+                "type":"array",
+                "items":{
+                  "$ref":"defs/$defs/channel"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }
-
