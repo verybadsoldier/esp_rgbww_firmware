@@ -27,6 +27,10 @@
 #include <Storage/SysMem.h>
 #include <Storage/ProgMem.h>
 #include <Storage/Debug.h>
+#include <JSON/StreamingParser.h>
+#include <VersionListener.h>
+#include <FlashString/Stream.hpp>
+
 
 #if ARCH_ESP8266
 #define PART0 "lfs0"
@@ -135,6 +139,19 @@ void init()
 
 	// Run Services on system ready
 	System.onReady(SystemReadyDelegate(&Application::startServices, &app));
+}
+
+uint32_t getVersion(IDataSourceStream& input)
+{
+	JSON::VersionListener listener;
+	JSON::StaticStreamingParser<128> parser(&listener);
+	auto status = parser.parse(input);
+	if (listener.hasVersion())
+	{
+		input.seekFrom(0, SeekOrigin::Start); // rewind to leave the stream in the same state
+		return listener.getVersion();
+	}
+	return -1;
 }
 
 Application::~Application()
@@ -259,15 +276,30 @@ debug_i("Platform: %s\r\n", SOC);
 	cfg = std::make_unique<AppConfig>(configDB_PATH);
 	data = std::make_unique<AppData>(dataDB_PATH);
 
-{
+	// verify if there is a new version of the hardware config
+
 	AppConfig::Hardware hardware(*cfg);
 	debug_i("Application::init - hardware config loaded");
 	
-	if(auto hardwareUpdate = hardware.update()){
-		FlashMemoryStream pindefs=fileMap["pinconfig"];
-		hardwareUpdate.importFromStream(pindefs);
+	uint32_t currentVersion=hardware.getVersion();
+	{
+		debug_i("make pinconfig stream");
+		FSTR::Stream fs(fileMap["config/pinconfig.json"]);	
+		Serial.println(fileMap["config/pinconfig.json"]);
+		debug_i("get file Version");
+		uint32_t fileVersion=getVersion(fs);
+		debug_i("fileVersion %i", fileVersion);	
+		if(fileVersion == -1){
+			debug_i("Application::init - no version found in pinconfig");
+		}
+		debug_i("Application::init - hardware version: %d, file version: %d", currentVersion, fileVersion);
+		if(fileVersion>currentVersion){
+			if(auto hardwareUpdate = hardware.update()){
+				hardwareUpdate.importFromStream(ConfigDB::Json::format, fs);
+			}
+		}
 	}
-}
+
 // check if we need to reset settings
 #if !defined(ARCH_HOST)
 

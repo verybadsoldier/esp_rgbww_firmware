@@ -339,8 +339,19 @@
         },
         "available-pins":{
           "type":"array",
-          "items":{ 
-            "$ref":"defs/$defs/pinmap"
+          "items":{
+            "type":"object",
+            "properties" :{
+              "soc":{
+                "type":"string"
+              },
+              "pins":{
+                "type":"array",
+                "items":{
+                  "$ref":"defs/$defs/pin"
+                }
+              }
+            }
           }
         },
         "pinconfigs":{

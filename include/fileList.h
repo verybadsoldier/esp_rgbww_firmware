@@ -1,3 +1,4 @@
+#pragma once
 // Automatically generated file
 #define FILE_LIST(XX) \
 	XX(VERSION, "VERSION") \
@@ -6,13 +7,13 @@
 	XX(i18n_js, "assets/i18n.js.gz") \
 	XX(index_css, "assets/index.css.gz") \
 	XX(index_js, "assets/index.js.gz") \
-	XX(pinconfig, "config/pinconfig.json") \
+	XX(pinconfig_json, "config/pinconfig.json") \
 	XX(arrow_drop_down_svg, "icons/arrow_drop_down.svg.gz") \
 	XX(badge_outlined_svg, "icons/badge_outlined.svg.gz") \
 	XX(check_outlined_svg, "icons/check_outlined.svg.gz") \
 	XX(close_outlined_svg, "icons/close_outlined.svg.gz") \
 	XX(exposure_outlined_svg, "icons/exposure_outlined.svg.gz") \
-	XX(favicon, "icons/favicon.ico") \
+	XX(favicon_ico, "icons/favicon.ico") \
 	XX(help_outlined_svg, "icons/help_outlined.svg.gz") \
 	XX(hub_outlined_svg, "icons/hub_outlined.svg.gz") \
 	XX(info_outlined_svg, "icons/info_outlined.svg.gz") \
