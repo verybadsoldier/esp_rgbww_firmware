@@ -278,6 +278,8 @@ debug_i("Platform: %s\r\n", SOC);
 
 	// verify if there is a new version of the hardware config
 
+/*	this should be moved to the ConfigDB intitialization 
+
 	AppConfig::Hardware hardware(*cfg);
 	debug_i("Application::init - hardware config loaded");
 	
@@ -285,7 +287,7 @@ debug_i("Platform: %s\r\n", SOC);
 	{
 		debug_i("make pinconfig stream");
 		FSTR::Stream fs(fileMap["config/pinconfig.json"]);	
-		Serial.println(fileMap["config/pinconfig.json"]);
+		//Serial.println(fileMap["config/pinconfig.json"]);
 		debug_i("get file Version");
 		uint32_t fileVersion=getVersion(fs);
 		debug_i("fileVersion %i", fileVersion);	
@@ -299,6 +301,7 @@ debug_i("Platform: %s\r\n", SOC);
 			}
 		}
 	}
+*/
 
 // check if we need to reset settings
 #if !defined(ARCH_HOST)
@@ -317,14 +320,27 @@ debug_i("Platform: %s\r\n", SOC);
 #ifdef ARCH_ESP8266
 	ota.checkAtBoot();
 #endif
-
+	Serial << endl << _F("** Stream **") << endl;
+	Serial << "#########################################################################################"<<endl;
+	cfg->exportToStream(ConfigDB::Json::format, Serial);
+	Serial <<endl;
+	Serial << "#########################################################################################"<<endl;
+	
 	{
 		debug_i("application init => checking ConfigDB");
 		AppConfig::General general(*cfg);
+		debug_i("application init => config is %s", general.getIsInitialized()?"initialized":"not initialized");
 		if(!general.getIsInitialized()) {
 			debug_i("application init => reading config");
 
-			debug_i("application init => config loaded, pin config %s", general.getPinConfig().c_str());
+			FSTR::Stream fs(fileMap["config/pinconfig.json"]);	
+			debug_i("Application::init - importing hardware configuration from file");
+			
+			AppConfig::Hardware hardware(*cfg);
+			if(auto hardwareUpdate = hardware.update()){
+				hardwareUpdate.importFromStream(ConfigDB::Json::format, fs);
+			}
+			
 			debug_i("Application::init - first run");
 			_first_run = true;
 
@@ -338,8 +354,11 @@ debug_i("Platform: %s\r\n", SOC);
 	}
 
 	Serial << endl << _F("** Stream **") << endl;
+	Serial << "#########################################################################################"<<endl;
 	cfg->exportToStream(ConfigDB::Json::format, Serial);
-
+	Serial <<endl;
+	Serial << "#########################################################################################"<<endl;
+	
 	// initialize networking
 	network.init();
 	debug_i("network initizalized, ssid: %s", WifiStation.getSSID().c_str());

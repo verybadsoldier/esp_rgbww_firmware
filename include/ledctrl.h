@@ -34,6 +34,7 @@ struct PinConfig {
     int blue;
     int warmwhite;
     int coldwhite;
+    bool isValid;
 };
 
 
@@ -81,6 +82,7 @@ private:
     static PinConfig parsePinConfigString(String& pinStr);
     static PinConfig parsePinConfigString(const String& pinStr);
     static void updateLedCb(void* pTimerArg);
+    static bool isPinValid(int pin);
     void publishToEventServer();
     void publishToMqtt();
     void publishFinishedStepAnimations();

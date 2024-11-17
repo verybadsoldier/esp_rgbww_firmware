@@ -50,24 +50,24 @@ APPLedCtrl::~APPLedCtrl()
 PinConfig APPLedCtrl::parsePinConfigString(const String& pinStr)
 {
 	Vector<int> pins;
+	bool isValid=true;
 	{
 		String _pinStr = pinStr;
 
 		splitString(_pinStr, ',', pins);
 	}
-
-	bool isCorrect = true;
+	
 	// sanity check
 	for(int i = 0; i < 5; ++i) {
-		if(pins[i] == 0) {
-			isCorrect = false;
+		if(pins[i] == 0||!isPinValid(pins[i])) {
+			isValid = false;
 		}
 	}
 
 	if(pins.size() != 5)
-		isCorrect = false;
+		isValid = false;
 
-	if(!isCorrect) {
+	if(!isValid) {
 		debug_e("APPLedCtrl::parsePinConfigString - Error in pin configuration - Using default pin values");
 		return PinConfig();
 	}
@@ -113,23 +113,30 @@ void APPLedCtrl::init()
 	reconfigure();
 
 	PinConfig pins;
+	pins.isValid=true;
 	{
 		debug_i("APPLedCtrl::init - reading pin config");
 		AppConfig::General general(*app.cfg);
 		if(general.channels.getItemCount() != 0) {
 			// prefer the channels config
 			debug_i("cannels array configured");
-			for(unsigned int i = 0; i < general.channels.getItemCount(); i++) {
-				if(general.channels[i].getName() == "red") {
-					pins.red = general.channels[i].getPin();
-				} else if(general.channels[i].getName() == "green") {
-					pins.green = general.channels[i].getPin();
-				} else if(general.channels[i].getName() == "blue") {
-					pins.blue = general.channels[i].getPin();
-				} else if(general.channels[i].getName() == "warmwhite") {
-					pins.warmwhite = general.channels[i].getPin();
-				} else if(general.channels[i].getName() == "coldwhite") {
-					pins.coldwhite = general.channels[i].getPin();
+			for(auto channel : general.channels) {
+				int pin=channel.getPin();
+				if (isPinValid(pin)){
+					if(channel.getName() == "red") {
+						pins.red = channel.getPin();
+					} else if(channel.getName() == "green") {
+						pins.green = channel.getPin();
+					} else if(channel.getName() == "blue") {
+						pins.blue = channel.getPin();
+					} else if(channel.getName() == "warmwhite") {
+						pins.warmwhite = channel.getPin();
+					} else if(channel.getName() == "coldwhite") {
+						pins.coldwhite = channel.getPin();
+					}
+				}else{
+					debug_e("APPLedCtrl::init - invalid pin %i for SoC %s", pin, SOC);
+					pins.isValid=false;
 				}
 			}
 		} else {
@@ -171,11 +178,14 @@ void APPLedCtrl::init()
 	} //end ConfigDB::General context
 
 	debug_i(
-		"APPLedCtrl::init - initializing RGBWWLed\n   red: %i | green: %i | blue: %i | warmwhite: %i | coldwhite: %i",
-		pins.red, pins.green, pins.blue, pins.warmwhite, pins.coldwhite);
-	RGBWWLed::init(pins.red, pins.green, pins.blue, pins.warmwhite, pins.coldwhite, PWM_FREQUENCY);
-	debug_i("APPLedCtrl::init - finished setting up RGBWWLed");
-	setup();
+		"APPLedCtrl::init - initializing RGBWWLed\n   red: %i | green: %i | blue: %i | warmwhite: %i | coldwhite: %i, valid: [%s]",
+		pins.red, pins.green, pins.blue, pins.warmwhite, pins.coldwhite, pins.isValid?"true":"false");
+	if(pins.isValid)
+		{
+			RGBWWLed::init(pins.red, pins.green, pins.blue, pins.warmwhite, pins.coldwhite, PWM_FREQUENCY);
+		debug_i("APPLedCtrl::init - finished setting up RGBWWLed");
+		setup();
+		}
 
 	HSVCT startupColor;
 	{
@@ -202,6 +212,23 @@ void APPLedCtrl::init()
 	fadeHSV(startupColorDark, startupColor, 2000); //fade to color in 700ms
 }
 
+bool APPLedCtrl::isPinValid(int currentPin)
+{
+	AppConfig::Hardware hardware(*app.cfg);
+	for (auto pinconfig : hardware.availablePins){
+		if (strcmp(pinconfig.getSoc().c_str(),SOC)==0){
+			for (auto pin : pinconfig.pins){
+				if(pin==currentPin){
+					return true;
+				}
+			}
+		debug_e("APPLedCtrl::isPinValid - invalid pin %i for SoC %s", currentPin, SOC);
+		return false;
+		}
+	}
+	debug_e("APPLedCtrl::isPinValid - invalid SoC %s", SOC);
+	return false;
+}
 /**
  * @brief read local configuration from ConfigDB
  * 

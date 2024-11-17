@@ -133,6 +133,7 @@ void AppWIFI::init()
 		WifiStation.enable(true, true);
 	}
 
+	WifiStation.enable(true);
 	if(WifiAccessPoint.isEnabled()) {
 		debug_i("AppWIFI::init WifiAccessPoint disabled");
 		WifiAccessPoint.enable(false, true);
