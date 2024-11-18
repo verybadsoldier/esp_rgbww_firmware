@@ -137,6 +137,9 @@ void APPLedCtrl::init()
 				}else{
 					debug_e("APPLedCtrl::init - invalid pin %i for SoC %s", pin, SOC);
 					pins.isValid=false;
+					if(auto generalUpdate = general.update()) {
+						generalUpdate.setCurrentPinConfigName("unconfigured");
+					} // end AppConfig::General::update context
 				}
 			}
 		} else {

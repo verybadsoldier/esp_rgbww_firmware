@@ -127,6 +127,8 @@ void AppWIFI::init()
 	// ESP SDK function to disable  sleep
 	wifi_set_sleep_type(NONE_SLEEP_T);
 
+	debug_i("AppWIFI::init\n    station %s\n    AP      %s", WifiStation.isEnabled()? "enabled" : "disabled", WifiAccessPoint.isEnabled()? "enabled" : "disabled");
+
 	//don`t enable/disable again to save eeprom cycles
 	if(!WifiStation.isEnabled()) {
 		debug_i("AppWIFI::init enable WifiStation");
@@ -140,7 +142,6 @@ void AppWIFI::init()
 	}
 
 	_con_ctr = 0;
-	debug_i("AppWIFI::init\n    station %s\n    AP      %s", WifiStation.isEnabled()? "enabled" : "disabled", WifiAccessPoint.isEnabled()? "enabled" : "disabled");
 	// ConfigDB adapt
 	if(app.isFirstRun()) {
 		debug_i("AppWIFI::init initial run - setting up AP, ssid: ");
