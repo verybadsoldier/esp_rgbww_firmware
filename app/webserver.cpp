@@ -18,7 +18,7 @@
  * @section DESCRIPTION
  *
  */
-//#include <RGBWWCtrl.h>
+#include <RGBWWCtrl.h>
 #include <Data/WebHelpers/base64.h>
 
 #include <Network/Http/Websocket/WebsocketResource.h>

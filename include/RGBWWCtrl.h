@@ -21,16 +21,7 @@
  */
 
 #pragma once
-#include <config.h>
-#include <ledctrl.h>
-#include <networking.h>
-#include <webserver.h>
-#include <mqtt.h>
-#include <eventserver.h>
-#include <jsonprocessor.h>
-#include <application.h>
-#include <stepsync.h>
-#include <arduinojson.h>
+
 
 #include <fileMap.h>
 
@@ -90,5 +81,16 @@
 #if defined(ARCH_ESP8266) || defined(ESP32)
     #include <otaupdate.h>
 #endif
+
+#include <config.h>
+#include <ledctrl.h>
+#include <networking.h>
+#include <webserver.h>
+#include <mqtt.h>
+#include <eventserver.h>
+#include <jsonprocessor.h>
+#include <application.h>
+#include <stepsync.h>
+#include <arduinojson.h>
 
 

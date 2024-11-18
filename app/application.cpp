@@ -23,6 +23,7 @@
 
 #include <RGBWWCtrl.h>
 #include <Ota/Upgrader.h>
+#include <RGBWWLed/RGBWWLed.h>
 #include <SmingCore.h>
 #include <Storage/SysMem.h>
 #include <Storage/ProgMem.h>
