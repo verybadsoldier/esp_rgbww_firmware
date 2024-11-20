@@ -38,6 +38,12 @@
     #define SOC "unknown"
 #endif
 
+#if defined(SMING_RELEASE)
+    #define BUILD_TYPE "release"
+#else
+    #define BUILD_TYPE "debug"
+#endif
+
 //default defines
 
 #if defined ARCH_ESP8266

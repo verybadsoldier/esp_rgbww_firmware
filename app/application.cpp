@@ -96,7 +96,12 @@ static void onOsMessage(OsMessage& msg)
 namespace
 {
 // Note: This file won't exist on initial build!
+#if defined(SMING_RELEASE)
+// release build, pull release partition table
+IMPORT_FSTR(partitionTableData, PROJECT_DIR "/out/Esp8266/release/firmware/partitions.bin")
+#else
 IMPORT_FSTR(partitionTableData, PROJECT_DIR "/out/Esp8266/debug/firmware/partitions.bin")
+#endif
 } // namespace
 
 extern "C" void __wrap_user_pre_init(void)

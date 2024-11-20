@@ -541,6 +541,7 @@ void ApplicationWebserver::onInfo(HttpRequest& request, HttpResponse& response)
 	data[F("current_rom")] = String(app.ota.getRomPartition().name());
 #endif
 	data[F("git_version")] = fw_git_version;
+	data[F("build type")] = BUILD_TYPE;
 	data[F("git_date")] = fw_git_date;
 	data[F("webapp_version")] = WEBAPP_VERSION;
 	data[F("sming")] = SMING_VERSION;
