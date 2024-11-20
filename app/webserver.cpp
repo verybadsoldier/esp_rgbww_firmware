@@ -25,6 +25,8 @@
 #include <Storage.h>
 #include <config.h>
 
+#include <fileMap.h>
+
 #define NOCACHE
 #define DEBUG_OBJECT_API
 
@@ -390,13 +392,14 @@ void ApplicationWebserver::onConfig(HttpRequest& request, HttpResponse& response
 
 		/* ConfigDB importFomStream */
 		String oldIP, oldSSID;
-		bool mqttEnabled;
+		bool mqttEnabled, dhcpEnabled;
 		{
 			debug_i("ApplicationWebserver::onConfig storing old settings");
 			AppConfig::Network network(*app.cfg);
 			oldIP = network.connection.getIp();
 			oldSSID = network.ap.getSsid();
 			mqttEnabled = network.mqtt.getEnabled();
+			dhcpEnabled=network.connection.getDhcp();
 		}
 
 		auto bodyStream = request.getBodyStream();
@@ -419,15 +422,16 @@ void ApplicationWebserver::onConfig(HttpRequest& request, HttpResponse& response
 			// bool restart = root[F("restart")] | false;
 
 			String newIP, newSSID;
-			bool newMqttEnabled;
+			bool newMqttEnabled,newDhcpEnabled;
 			{
 				debug_i("ApplicationWebserver::onConfig geting new ip settings");
 				AppConfig::Network network(*app.cfg);
 				newIP = network.connection.getIp();
 				newSSID = network.ap.getSsid();
 				newMqttEnabled = network.mqtt.getEnabled();
+				newDhcpEnabled=network.connection.getDhcp();
 			}
-
+			
 			if(oldIP != newIP) {
 				//if (restart) {
 				debug_i("ApplicationWebserver::onConfig ip settings changed - rebooting");
@@ -459,7 +463,17 @@ void ApplicationWebserver::onConfig(HttpRequest& request, HttpResponse& response
 						debug_i("mqttclient was not running, no need to stop");
 					}
 				}
+			
 			}
+			if(newDhcpEnabled!=dhcpEnabled){
+				if(newDhcpEnabled){
+					WifiStation.enableDHCP(true);
+				}else{
+					debug_i("ApplicationWebserver::onConfig ip settings changed - rebooting");
+					app.delayedCMD(F("restart"), 3000); // wait 3s to first send response
+				}
+			}
+
 
 			//bodyStream->seekOrigin(0,SeekOrigin::Start);
 			//app.wsBroadcast(F("config"),bodyStream->moveString());

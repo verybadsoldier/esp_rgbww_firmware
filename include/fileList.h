@@ -1,4 +1,5 @@
-// Automatically generated file
+#pragma once
+
 #define FILE_LIST(XX) \
 	XX(VERSION, "VERSION") \
 	XX(RgbwwLayout_css, "assets/RgbwwLayout.css.gz") \

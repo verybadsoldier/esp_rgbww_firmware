@@ -1,5 +1,4 @@
-/**
- * @file
+ /*
  * @author  Patrick Jahns http://github.com/patrickjahns
  *
  * @section LICENSE
@@ -20,20 +19,6 @@
  *
  */
 #pragma once
-
-#include <fileMap.h>
-
-#if defined(SOC_ESP8266)
-	#define SOC "esp8266"
-#elif defined(SOC_ESP32S2)
-	#define SOC "esp32s2"
-#elif defined(SOC_ESP32S3)
-	#define SOC "esp32s3"
-#elif defined(SOC_ESP32C2)
-	#define SOC "esp32c2"
-#elif defined(SOC_ESP32C3)
-	#define SOC "esp32c3"
-#endif
 
 static const char* fw_git_version = GITVERSION;
 static const char* fw_git_date = GITDATE;

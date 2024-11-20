@@ -23,10 +23,16 @@
 
 #include <RGBWWCtrl.h>
 #include <Ota/Upgrader.h>
+#include <RGBWWLed/RGBWWLed.h>
 #include <SmingCore.h>
 #include <Storage/SysMem.h>
 #include <Storage/ProgMem.h>
 #include <Storage/Debug.h>
+#include <JSON/StreamingParser.h>
+#include <VersionListener.h>
+#include <FlashString/Stream.hpp>
+#include <fileMap.h>
+
 
 #if ARCH_ESP8266
 #define PART0 "lfs0"
@@ -128,13 +134,26 @@ void init()
 #endif
 
 	// set CLR pin to input
-	// pinMode(CLEAR_PIN, INPUT);
+	// pinMode(CLEAR_PIN, INPUT)
 
 	// seperated application init
 	app.init();
 
 	// Run Services on system ready
 	System.onReady(SystemReadyDelegate(&Application::startServices, &app));
+}
+
+uint32_t getVersion(IDataSourceStream& input)
+{
+	JSON::VersionListener listener;
+	JSON::StaticStreamingParser<128> parser(&listener);
+	auto status = parser.parse(input);
+	if (listener.hasVersion())
+	{
+		input.seekFrom(0, SeekOrigin::Start); // rewind to leave the stream in the same state
+		return listener.getVersion();
+	}
+	return -1;
 }
 
 Application::~Application()
@@ -153,6 +172,8 @@ void Application::uptimeCounter()
 void Application::checkRam()
 {
 	debug_i("Free heap: %d", system_get_free_heap_size());
+	String _client_status = WifiStation.getConnectionStatusName();
+	debug_i("wifi conection Status: %s", _client_status.c_str());
 }
 
 void Application::init()
@@ -210,7 +231,7 @@ debug_i("Platform: %s\r\n", SOC);
 
 	//load settings
 	_uptimetimer.initializeMs(60000, TimerDelegate(&Application::uptimeCounter, this)).start();
-	_checkRamTimer.initializeMs(30000, TimerDelegate(&Application::checkRam, this)).start();
+	_checkRamTimer.initializeMs(10000, TimerDelegate(&Application::checkRam, this)).start();
 #ifdef ARCH_ESP8266
 	// load boot information
 	uint8 bootmode, bootslot;
@@ -257,6 +278,31 @@ debug_i("Platform: %s\r\n", SOC);
 	cfg = std::make_unique<AppConfig>(configDB_PATH);
 	data = std::make_unique<AppData>(dataDB_PATH);
 
+	// verify if there is a new version of the hardware config
+
+
+	AppConfig::Hardware hardware(*cfg);
+	debug_i("Application::init - hardware config loaded");
+	
+	uint32_t currentVersion=hardware.getVersion();
+	{
+		debug_i("make pinconfig stream");
+		FSTR::Stream fs(fileMap["config/pinconfig.json"]);	
+		//Serial.println(fileMap["config/pinconfig.json"]);
+		debug_i("get file Version");
+		uint32_t fileVersion=getVersion(fs);
+		debug_i("fileVersion %i", fileVersion);	
+		if(fileVersion == -1){
+			debug_i("Application::init - no version found in pinconfig");
+		}
+		debug_i("Application::init - hardware version: %d, file version: %d", currentVersion, fileVersion);
+		if(fileVersion>currentVersion){
+			if(auto hardwareUpdate = hardware.update()){
+				hardwareUpdate.importFromStream(ConfigDB::Json::format, fs);
+			}
+		}
+	}
+
 // check if we need to reset settings
 #if !defined(ARCH_HOST)
 
@@ -274,14 +320,19 @@ debug_i("Platform: %s\r\n", SOC);
 #ifdef ARCH_ESP8266
 	ota.checkAtBoot();
 #endif
-
+	/* Serial << endl << _F("** Stream **") << endl;
+	Serial << "#########################################################################################"<<endl;
+	cfg->exportToStream(ConfigDB::Json::format, Serial);
+	Serial <<endl;
+	Serial << "#########################################################################################"<<endl;
+	*/
 	{
 		debug_i("application init => checking ConfigDB");
 		AppConfig::General general(*cfg);
+		debug_i("application init => config is %s", general.getIsInitialized()?"initialized":"not initialized");
 		if(!general.getIsInitialized()) {
 			debug_i("application init => reading config");
 
-			debug_i("application init => config loaded, pin config %s", general.getPinConfig().c_str());
 			debug_i("Application::init - first run");
 			_first_run = true;
 
@@ -293,10 +344,13 @@ debug_i("Platform: %s\r\n", SOC);
 			debug_i("ConfigDB already initialized. starting");
 		}
 	}
-
+	/*
 	Serial << endl << _F("** Stream **") << endl;
+	Serial << "#########################################################################################"<<endl;
 	cfg->exportToStream(ConfigDB::Json::format, Serial);
-
+	Serial <<endl;
+	Serial << "#########################################################################################"<<endl;
+	*/
 	// initialize networking
 	network.init();
 	debug_i("network initizalized, ssid: %s", WifiStation.getSSID().c_str());

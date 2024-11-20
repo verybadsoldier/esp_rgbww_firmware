@@ -20,10 +20,7 @@
  *
  */
 
-#ifndef RGBWWCTRL_H_
-#define RGBWWCTRL_H_
-
-#include <fileMap.h>
+#pragma once
 
 #if defined(SOC_ESP8266)
 	#define SOC "esp8266"
@@ -81,6 +78,7 @@
 #if defined(ARCH_ESP8266) || defined(ESP32)
     #include <otaupdate.h>
 #endif
+
 #include <config.h>
 #include <ledctrl.h>
 #include <networking.h>
@@ -92,4 +90,4 @@
 #include <stepsync.h>
 #include <arduinojson.h>
 
-#endif /* RGBWWCTRL_H_ */
+

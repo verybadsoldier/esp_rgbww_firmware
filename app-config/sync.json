@@ -1,1 +1,0 @@
-{"cmd_master_enabled":false,"color_slave_enabled":false,"color_slave_topic":"home/led1/command","clock_master_enabled":false,"color_master_interval_ms":0,"clock_slave_enabled":false,"cmd_slave_enabled":false,"clock_master_interval":30,"clock_slave_topic":"home/led1/clock","cmd_slave_topic":"home/led/command","color_master_enabled":false}

@@ -127,19 +127,21 @@ void AppWIFI::init()
 	// ESP SDK function to disable  sleep
 	wifi_set_sleep_type(NONE_SLEEP_T);
 
+	debug_i("AppWIFI::init\n    station %s\n    AP      %s", WifiStation.isEnabled()? "enabled" : "disabled", WifiAccessPoint.isEnabled()? "enabled" : "disabled");
+
 	//don`t enable/disable again to save eeprom cycles
 	if(!WifiStation.isEnabled()) {
 		debug_i("AppWIFI::init enable WifiStation");
 		WifiStation.enable(true, true);
 	}
 
+	WifiStation.enable(true);
 	if(WifiAccessPoint.isEnabled()) {
 		debug_i("AppWIFI::init WifiAccessPoint disabled");
 		WifiAccessPoint.enable(false, true);
 	}
 
 	_con_ctr = 0;
-	debug_i("AppWIFI::init\n    station %s\n    AP      %s", WifiStation.isEnabled()? "enabled" : "disabled", WifiAccessPoint.isEnabled()? "enabled" : "disabled");
 	// ConfigDB adapt
 	if(app.isFirstRun()) {
 		debug_i("AppWIFI::init initial run - setting up AP, ssid: ");
@@ -155,6 +157,7 @@ void AppWIFI::init()
 	}
 
 	// register callbacks
+	debug_i("AppWIFI::init register callbacks");
 	WifiEvents.onStationDisconnect(StationDisconnectDelegate(&AppWIFI::_STADisconnect, this));
 	WifiEvents.onStationConnect(StationConnectDelegate(&AppWIFI::_STAConnected, this));
 	WifiEvents.onStationGotIP(StationGotIPDelegate(&AppWIFI::_STAGotIP, this));
@@ -175,6 +178,7 @@ void AppWIFI::init()
 			if(!network.connection.getDhcp() && !network.connection.getIp().length() == 0) {
 				debug_i("AppWIFI::init setting static ip");
 				if(WifiStation.isEnabledDHCP()) {
+					// dhcp is configured off but currently enabled - disable it
 					debug_i("AppWIFI::init disabled dhcp");
 					WifiStation.enableDHCP(false);
 				}
@@ -193,6 +197,8 @@ void AppWIFI::init()
 				}
 			}
 		} // end ConfigDB network context
+		debug_i("AppWifi::init - triggering wifi connect");
+		WifiStation.connect();
 	}
 }
 
