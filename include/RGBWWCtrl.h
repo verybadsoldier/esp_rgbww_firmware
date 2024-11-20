@@ -22,9 +22,6 @@
 
 #pragma once
 
-
-#include <fileMap.h>
-
 #if defined(SOC_ESP8266)
 	#define SOC "esp8266"
 #elif defined(SOC_ESP32S2)

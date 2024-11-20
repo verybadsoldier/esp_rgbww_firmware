@@ -31,6 +31,7 @@
 #include <JSON/StreamingParser.h>
 #include <VersionListener.h>
 #include <FlashString/Stream.hpp>
+#include <fileMap.h>
 
 
 #if ARCH_ESP8266

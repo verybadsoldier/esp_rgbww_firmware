@@ -25,6 +25,8 @@
 #include <Storage.h>
 #include <config.h>
 
+#include <fileMap.h>
+
 #define NOCACHE
 #define DEBUG_OBJECT_API
 
