@@ -1,0 +1,197 @@
+{
+    "network": 
+    {
+        "connection": 
+        {
+            "dhcp": true,
+            "ip": "0.0.0.0",
+            "netmask": "0.0.0.0",
+            "gateway": "0.0.0.0"
+        },
+        "ap": 
+        {
+            "secured": false,
+            "password": "rgbwwctrl",
+            "ssid": "RGBWW2856599"
+        },
+        "mqtt": 
+        {
+            "enabled": false,
+            "server": "",
+            "port": 0,
+            "username": "",
+            "password": "",
+            "topic_base": "home/"
+        }
+    },
+    "color": 
+    {
+        "outputmode": 2,
+        "startup_color": "last",
+        "hsv": 
+        {
+            "model": 0,
+            "red": 0,
+            "yellow": 0,
+            "green": 0,
+            "cyan": 0,
+            "blue": 0,
+            "magenta": 0
+        },
+        "brightness": 
+        {
+            "red": 100,
+            "green": 100,
+            "blue": 100,
+            "ww": 100,
+            "cw": 100
+        },
+        "colortemp": 
+        {
+            "ww": 2700,
+            "cw": 6000
+        }
+    },
+    "security": 
+    {
+        "api_secured": false
+    },
+    "ota": 
+    {
+        "url": "http://rgbww.dronezone.de/testing/version.json"
+    },
+    "sync": 
+    {
+        "clock_master_enabled": false,
+        "clock_master_interval": 30,
+        "clock_slave_enabled": false,
+        "clock_slave_topic": "home/led1/clock",
+        "cmd_master_enabled": false,
+        "cmd_slave_enabled": false,
+        "cmd_slave_topic": "home/led1/command",
+        "color_master_enabled": false,
+        "color_master_interval_ms": 0,
+        "color_slave_enabled": false,
+        "color_slave_topic": "home/led1/color"
+    },
+    "events": 
+    {
+        "color_interval_ms": 500,
+        "color_mininterval_ms": 500,
+        "server_enabled": true,
+        "transfin_interval_ms": 1000
+    },
+    "general": 
+    {
+        "device_name": "LED_So1",
+        "pin_config": "13,12,14,5,4",
+        "buttons_config": "",
+        "buttons_debounce_ms": 50,
+        "pin_config_url":"https://raw.githubusercontent.com/pljakobs/esp_rgb_webapp2/devel/public/config/pinconfig.json",
+        "channels":[	
+            {
+                "pin":	13,
+                "name":	"red"
+            },
+            {
+                "pin":	12,
+                "name":	"green"
+            },
+            {
+                "pin":	14,
+                "name":	"blue"
+            },
+            {
+                "pin":	5,
+                "name":	"warmwhite"
+            },
+            {
+                "pin":	4,
+                "name":	"coldwhite"
+            }
+        ],
+        "supported_color_models":
+        [
+            "RGB",
+            "RGBW",
+            "RGBWW",
+            "RAW"
+        ]
+    },
+    "presets":
+    [
+        {
+            "name": "red",
+            "ts":0,
+            "HSV":
+            {
+                "h":0.0,
+                "s":70.0,
+                "v":50.0
+            }
+        },
+        {
+            "name": "green",
+            "ts":0,
+            "HSV":
+            {
+                "h":120.0,
+                "s":70.0,
+                "v":50.0
+            }
+        },
+        {
+            "name": "blue",
+            "ts":0,
+            "HSV":
+            {
+                "h":240.0,
+                "s":70.0,
+                "v":50.0
+            }
+        },
+        {
+            "name": "white",
+            "ts":0,
+            "HSV":{
+                "h":0.0,
+                "s":0.0,
+                "v":50.0
+            }
+        },
+        {
+            "name": "warm white",
+            "ts":0,
+            "RAW":{
+                "r":0,
+                "g":0,
+                "b":0,
+                "ww":512,
+                "cw":0
+            }
+        },
+        {
+            "name": "warm white",
+            "ts":0,
+            "RAW":{
+                "r":0,
+                "g":0,
+                "b":0,
+                "ww":0,
+                "cw":512
+            }        
+        }
+    ],
+    "controllers":[
+        {
+            "name": "controller1",
+            "last-seen": 0,
+            "ip": "192.168.29.62"
+        },
+        {
+            "name": "controller2",
+            "last-seen": 0,
+            "ip": "192.168.29.63"
+        }
+    ]
+}

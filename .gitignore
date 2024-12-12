@@ -33,3 +33,36 @@
 # project related files
 out/
 .settings/
+
+# vscode files
+.vscode/*
+.vscode/
+.vscode/
+sming.code-workspace
+
+.cproject
+
+# local flash handling files
+flash.sh
+term.sh
+tflash
+#spiffs/*
+version.json
+
+#ConfigDB directories used for host emulator tests
+app-config
+app-data
+# don't include the webapp files, they need to come from the deployment
+webapp/*
+
+# exclude local script to update db that is under constant development
+pullall
+
+#exclude documentation for now
+docs
+docs/*
+html
+html/*
+latex
+latex/*
+

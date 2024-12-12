@@ -1,0 +1,120 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "store":"false",
+  "properties":{
+  },
+  "$defs":{
+    "raw": {
+      "type": "object",
+      "properties": {
+        "ww": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1023,
+            "alias":"warmwhite"
+        },
+        "r": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1023,
+            "alias":"red"
+        },
+        "b": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1023,
+            "alias":"blue"
+        },
+        "cw": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1023,
+            "alias":"coldwhite"
+        },
+        "g": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1023,
+            "alias":"green"
+        }
+      }
+    },
+    "hsv": {
+      "type": "object",
+      "properties": {
+        "s": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "alias":"sat"
+        },
+        "v": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "alias":"val"
+        },
+        "h": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 359,
+            "alias":"hue"
+        }
+      }
+    },
+    "hsvct": {
+      "type": "object",
+      "properties": {
+        "s": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "alias":"sat"
+        },
+        "v": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "alias":"val"
+        },
+        "h": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 359,
+            "alias":"hue"
+        },
+        "ct":{
+          "type":"integer",
+          "maximum":10000,
+          "minimum":0,
+          "alias":"colortemp"
+        }
+      }
+    },
+    "color":{
+      "oneOf":
+        [
+          {"$ref":"#/$defs/hsv"},
+          {"$ref":"#/$defs/hsvct"},
+          {"$ref":"#/$defs/raw"}
+      ]
+    },
+    "pin":{
+        "type":"integer",
+        "minimum":0,
+        "maximum":255
+    },
+    "channel": {
+      "type":"object",
+      "properties":{ 
+        "name":{
+            "type":"string"
+        },
+        "pin": {
+          "$ref":"#/$defs/pin"
+        }
+      }
+    }   
+  }
+}

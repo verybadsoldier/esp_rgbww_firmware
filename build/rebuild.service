@@ -1,0 +1,16 @@
+[Unit]
+Description=build service for esp_rgbww_firmware
+Wants=network.target
+
+[Service]
+WorkingDirectory=/home/pjakobs/devel/esp_rgbww_firmware/build
+Type=forking
+ExecStartPre=/usr/bin/podman build \
+    -f containerfile \
+    -t esprgbww_build
+ExecStart=/usr/bin/podman run \
+    -v /home/pjakobs/nginx/html/:/html:z \
+    esprgbww_build \
+    /esp_rgbww_firmware/build.sh
+TimeoutSec=1800
+

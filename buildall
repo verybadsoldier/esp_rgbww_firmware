@@ -1,0 +1,21 @@
+#!/bin/bash
+if [ ! -f out/Esp8266/debug/firmware/partitions.bin ]
+then
+	# create partition table first
+	make partmap-build
+fi
+for soc in esp8266 esp32 esp32c3 
+do
+	for release in 0 1
+	do
+		if [ "$soc" == "esp8266" ]
+		then
+			arch=Esp8266
+		else
+			arch=Esp32
+		fi
+		echo "arch=$arch, soc=$soc, release=$release"
+		make -j $threads SMING_ARCH=$arch SMING_SOC=$soc SMING_RELEASE=$release 
+	done
+done
+

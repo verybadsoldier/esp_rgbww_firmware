@@ -1,0 +1,51 @@
+
+BASE_URL=http://lightinator.de
+FW_VERSION=$(git describe --abbrev=4 --dirty --always --tags)
+WEBAPP_VERSION=$(cat ./spiffs/VERSION)
+WEBROOT=~/nginx/html
+
+cat <<EOF > version.json
+{
+	"rom":
+	{
+		"fw_version":"$FW_VERSION",
+		"url":"$BASE_URL/Esp8266/v1/rom0.bin"
+	},
+	"spiffs":
+	{
+    "webapp_version":"0.3.3",
+    "url":"http://rgbww.dronezone.de/testing/spiff_rom.bin"
+	},
+	"firmware":
+	[
+		{
+			"soc":"Esp8266",
+			"files":
+			{
+				"rom":
+				{
+					"fw_version":"$FW_VERSION",
+					"url":"$BASE_URL/Esp8266/v1/rom0.bin"
+				}
+			}
+		},
+		{
+			"soc":"Esp32",
+			"files":
+			{
+				"rom":
+				{
+					"fw_version":"$FW_VERSION",
+					"url":"$BASE_URL/Esp32/v2/rom0.bin"
+				}
+			}	
+		}
+	]
+}
+
+EOF
+echo "deploying OTA files to webserver"
+cat version.json
+cp version.json $WEBROOT
+cp out/Esp8266/debug/firmware/rom0.bin $WEBROOT/Esp8266/v1
+

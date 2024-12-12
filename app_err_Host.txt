@@ -1,0 +1,997 @@
+==1651961== Memcheck, a memory error detector
+==1651961== Copyright (C) 2002-2024, and GNU GPL'd, by Julian Seward et al.
+==1651961== Using Valgrind-3.23.0 and LibVEX; rerun with -h for copyright info
+==1651961== Command: out/Host/debug/firmware/app
+==1651961== 
+
+Welcome to the Sming Host emulator
+
+
+Opened "/home/pjakobs/devel/esp_rgbww_firmware/out/Host/debug/firmware/flash.bin", size = 0x00400000
+Warning! MAGIC mismatch
+Warning! Note: No App partitions found
+
+142675 [Partition] Bad partition table for device 'spiFlash' @ 0x00002000
+Initialising LWIP
+Thread 'Timer1' running
+Using interface 'tap0', gateway 192.168.13.1, netmask 255.255.255.0, ip 192.168.13.10
+MAC: 52:85:4b:80:22:b0
+If required, you may start terminal application(s) now
+>> Starting Sming <<
+
+pinMode: 16, 0
+Thread 'keyboard' running
+==========
+2747570 RGBWW Controller v V5-pj-293-g0583-dirty-[testing/Host]
+
+2749723 Application::init - partition scheme: 
+
+2774172 mounting host file system
+2785929 application init => checking ConfigDB
+2792602 [CFGDB] LoadStore 'general'
+2800626 [CFGDB] Store() general 45e4e64 1
+2811464 [CFGDB] incUpdate() general 45e4e64 1
+2869032 attached file: '' (465 bytes) #0xFE9A71C0
+3025141 [CFGDB] decUpdate() general 45e4e64 0
+3047119 ConfigDB already initialized. starting
+
+** Stream **
+{3062470 [CFGDB] ~Store() general 45e4e64 0
+3070975 [CFGDB] LoadStore ''
+3071176 [CFGDB] Store()  45e5ac4 1
+3071342 [CFGDB] incUpdate()  45e5ac4 1
+3079752 File 'app-config/_root.json' open error: NotFound
+3082582 [CFGDB] open 'app-config/_root.json' failed
+3084565 [CFGDB] Load defaults
+3097487 [CFGDB] decUpdate()  45e5ac4 0
+"security":{"api_secured":false,"api_password":null},"ota":{"url":null},"events":{"color_interval_ms":500,"color_min_interval_ms":500,"trans_fin_interval_ms":1000,"server_enabled":true},3170565 [CFGDB] ~Store()  45e5ac4 0
+3170867 [CFGDB] LoadStore 'general'
+3171038 [CFGDB] Store() general 45e602c 1
+3171190 [CFGDB] incUpdate() general 45e602c 1
+3172203 attached file: '' (465 bytes) #0xFE9A6F70
+3174891 [CFGDB] decUpdate() general 45e602c 0
+"general":{"channels":[{"pin":13,"name":"red"},{"pin":12,"name":"green"},{"pin":14,"name":"blue"},{"pin":5,"name":"warmwhite"},{"pin":4,"name":"coldwhite"}],"supported_color_models":["RGB","RGBW","RGBWW","RAW"],"is_initialized":true,"device_name":"mrpj","buttons_debounce_ms":50,"pin_config":"13,12,14,5,4","buttons_config":null,"pin_config_url":"https://raw.githubusercontent.com/pljakobs/esp_rgb_webapp2/devel/public/config/pinconfig.json","current_pin_config_name":"mrpj"},3202381 [CFGDB] ~Store() general 45e602c 0
+3202634 [CFGDB] LoadStore 'color'
+3202799 [CFGDB] Store() color 45e723c 1
+3202981 [CFGDB] incUpdate() color 45e723c 1
+3203996 attached file: '' (216 bytes) #0xFE9A6F70
+3207191 [CFGDB] decUpdate() color 45e723c 0
+"color":{"brightness":{"red":100,"ww":100,"green":100,"blue":100,"cw":100},"colortemp":{"ww":2700,"cw":6000},"hsv":{"red":0,"magenta":0,"green":0,"blue":0,"yellow":0,"model":0,"cyan":0},"startup_color":"last","outputmode":0},3214003 [CFGDB] ~Store() color 45e723c 0
+3214174 [CFGDB] LoadStore 'sync'
+3214385 [CFGDB] Store() sync 45e79cc 1
+3214535 [CFGDB] incUpdate() sync 45e79cc 1
+3215446 attached file: '' (339 bytes) #0xFE9A6F70
+3218902 [CFGDB] decUpdate() sync 45e79cc 0
+"sync":{"cmd_master_enabled":false,"color_slave_enabled":false,"color_slave_topic":"home/led1/command","clock_master_enabled":false,"color_master_interval_ms":0,"clock_slave_enabled":false,"cmd_slave_enabled":false,"clock_master_interval":30,"clock_slave_topic":"home/led1/clock","cmd_slave_topic":"home/led/command","color_master_enabled":false},3223851 [CFGDB] ~Store() sync 45e79cc 0
+3224024 [CFGDB] LoadStore 'network'
+3224171 [CFGDB] Store() network 45e8784 1
+3224383 [CFGDB] incUpdate() network 45e8784 1
+3225305 attached file: '' (383 bytes) #0xFE9A6F70
+3227253 [CFGDB] decUpdate() network 45e8784 0
+"network":{"mqtt":{"server":"mqtt.local","password":null,"port":1883,"topic_base":"home/","enabled":false,"username":null},"ntp":{"enabled":false,"server":"pool.ntp.org","interval":3600},"connection":{"netmask":"255.255.255.0","ip":"192.168.1.1","dhcp":true,"gateway":"192.168.1.255"},"ap":{"password":"configesp","secured":true,"ssid":"RGBWW3221339823"},"mdns":{"enabled":true,"name":"mrpj"}}}3240215 [CFGDB] ~Store() network 45e8784 0
+3240433 [CFGDB] LoadStore 'general'
+3240644 [CFGDB] Store() general 45e9234 1
+3240808 [CFGDB] incUpdate() general 45e9234 1
+3241732 attached file: '' (465 bytes) #0xFE9A7120
+3244440 [CFGDB] decUpdate() general 45e9234 0
+3254288 AppMqttClient::init: building MQTT ID from device name: 'mrpj'
+
+3258358 APPLedCtrl::init
+3260789 APPLedCtrl::reconfigure
+3262176 [CFGDB] ~Store() general 45e9234 0
+3262413 [CFGDB] LoadStore 'sync'
+3262655 [CFGDB] Store() sync 45e9ee4 1
+3262805 [CFGDB] incUpdate() sync 45e9ee4 1
+3263747 attached file: '' (339 bytes) #0xFE9A7010
+3265348 [CFGDB] decUpdate() sync 45e9ee4 0
+3270547 [CFGDB] ~Store() sync 45e9ee4 0
+3270755 [CFGDB] LoadStore ''
+3270987 [CFGDB] Store()  45ea4f4 1
+3271139 [CFGDB] incUpdate()  45ea4f4 1
+3271554 File 'app-config/_root.json' open error: NotFound
+3271758 [CFGDB] open 'app-config/_root.json' failed
+3271910 [CFGDB] Load defaults
+3272122 [CFGDB] decUpdate()  45ea4f4 0
+3277953 [CFGDB] ~Store()  45ea4f4 0
+3278172 [CFGDB] LoadStore 'color'
+3278346 [CFGDB] Store() color 45ea7ac 1
+3278506 [CFGDB] incUpdate() color 45ea7ac 1
+3279479 attached file: '' (216 bytes) #0xFE9A7010
+3280907 [CFGDB] decUpdate() color 45ea7ac 0
+3289638 APPLedCtrl::init - reading pin config
+3291120 [CFGDB] ~Store() color 45ea7ac 0
+3291330 [CFGDB] LoadStore 'general'
+3291541 [CFGDB] Store() general 45eadf4 1
+3291697 [CFGDB] incUpdate() general 45eadf4 1
+3292641 attached file: '' (465 bytes) #0xFE9A70B0
+3295347 [CFGDB] decUpdate() general 45eadf4 0
+3324602 APPLedCtrl::init - initializing RGBWWLed
+3331536 APPLedCtrl::setup
+3333119 APPLedCtrl::setup - reading color config
+3334386 [CFGDB] ~Store() general 45eadf4 0
+3334611 [CFGDB] LoadStore 'color'
+3334875 [CFGDB] Store() color 45ebad4 1
+3335036 [CFGDB] incUpdate() color 45ebad4 1
+3335986 attached file: '' (216 bytes) #0xFE9A7000
+3337514 [CFGDB] decUpdate() color 45ebad4 0
+3360428 COLORMODE 0
+3364159 HSVMODE 0
+3368434 APPLedCtrl::init - reading startup color
+3375727 attached file: '' (33 bytes) #0xFE9A70F0
+3441614 H: 0 | s: 573 | v: 696 | ct: 2700
+3478145 Application::initButtons
+3479552 [CFGDB] ~Store() color 45ebad4 0
+3479767 [CFGDB] LoadStore 'general'
+3479973 [CFGDB] Store() general 45ec914 1
+3480198 [CFGDB] incUpdate() general 45ec914 1
+3481156 attached file: '' (465 bytes) #0xFE9A7100
+3483898 [CFGDB] decUpdate() general 45ec914 0
+3515807 [CFGDB] ~Store() general 45ec914 0
+3516144 [CFGDB] LoadStore 'network'
+3516321 [CFGDB] Store() network 45ed6f4 1
+3516876 [CFGDB] incUpdate() network 45ed6f4 1
+3517839 attached file: '' (383 bytes) #0xFE9A7060
+3519841 [CFGDB] decUpdate() network 45ed6f4 0
+3526862 AppWIFI::init dhcp
+3535599 '*' registered
+3555667 '/' registered
+3563747 '/webapp' registered
+3566664 '/config' registered
+3569619 '/info' registered
+3572758 '/color' registered
+3576525 '/networks' registered
+3579569 '/scan_networks' registered
+3582535 '/system' registered
+3585479 '/update' registered
+3588406 '/connect' registered
+3592912 '/ping' registered
+3595805 '/hosts' registered
+3598742 '/object' registered
+3601670 '/stop' registered
+3604673 '/skip' registered
+3607599 '/pause' registered
+3610549 '/continue' registered
+3613488 '/blink' registered
+3616490 '/toggle' registered
+IF_UP, AP: Host WiFi
+3655181 AppWIFI::_STAConnected SSID - Host WiFi
+3656590 [CFGDB] ~Store() network 45ed6f4 0
+3656852 [CFGDB] LoadStore 'general'
+3657035 [CFGDB] Store() general 45f0254 1
+3657198 [CFGDB] incUpdate() general 45f0254 1
+3658150 attached file: '' (465 bytes) #0xFE9A7060
+3660873 [CFGDB] decUpdate() general 45f0254 0
+3663750 AppWIFI::connect setting hostname to mrpj
+3666641 [CFGDB] LoadStore 'network'
+3666861 [CFGDB] Store() network 45f0eb4 2
+3667030 [CFGDB] incUpdate() network 45f0eb4 1
+3668080 attached file: '' (383 bytes) #0xFE9A7030
+3670064 [CFGDB] decUpdate() network 45f0eb4 0
+3673038 [CFGDB] lockStore() app-config 45e4ca8
+3684564 [CFGDB] incUpdate() network 45f0eb4 1
+3695119 [CFGDB] incUpdate() network 45f0eb4 2
+3696415 [CFGDB] decUpdate() network 45f0eb4 1
+3704486 [CFGDB] decUpdate() network 45f0eb4 0
+3706895 [CFGDB] Save 'network'
+3730113 attached file: '' (0 bytes) #0xFE9A6E28
+3745447 [CFGDB] Object saved to 'app-config/network.json'
+3752886 [CFGDB] ~Store() general 45f0254 1
+IP_CHANGE, ip: 192.168.13.10, netmask: 255.255.255.0, gateway: 192.168.13.1
+3769050 AppWIFI::_STAGotIP
+3771945 [CFGDB] LoadStore 'general'
+3772158 [CFGDB] Store() general 45f2074 2
+3772376 [CFGDB] incUpdate() general 45f2074 1
+3773338 attached file: '' (465 bytes) #0xFE9A70C0
+3776358 [CFGDB] decUpdate() general 45f2074 0
+3783096 AppWIFI::_STAGotIP - device_name mrpj mdnshostname mrpj
+3788194 AppWIFI::_STAGotIP - setting mdns hostname to mrpj
+3790225 [CFGDB] ~Store() general 45f2074 1
+3846941 UDP listen port 5353
+3854834 MDNS initialised for 'mrpj'
+3874258 [MDNS] addService 'esprgbwwAPI._http._tcp.local'
+3878709 [MDNS] addService 'esprgbwwWebApp._http._tcp.local'
+3882684 [MDNS] addService 'esprgbwwWS._http._tcp.local'
+3891037 setting searchName to esprgbwwAPI._http._tcp.local
+4020848 Application::wsBroadcast
+4027785 === Websocket Broadcast ===
+{"jsonrpc":"2.0","method":"new_host","params":{"hostname":"mrpj","ip_address":"dhcp","ttl":-1}}
+4029535 ===>nr of tcpConnections: 0
+4031358 =========================================
+4032908 ===>nr of websockets: 0
+4131027 rpc: root ={"station":{"connected":true,"ssid":"Host WiFi","dhcp":true,"ip":"192.168.13.10","netmask":"255.255.255.0","gateway":"192.168.13.1","mac":"52854b8022b0"},"ap":{"enabled":false,"ssid":"","ip":"0.0.0.0"}}
+4135574 rpc: msg ={"jsonrpc":"2.0","method":"wifi_status","params":{"station":{"connected":true,"ssid":"Host WiFi","dhcp":true,"ip":"192.168.13.10","netmask":"255.255.255.0","gateway":"192.168.13.1","mac":"52854b8022b0"},"ap":{"enabled":false,"ssid":"","i 4140397 Application::wsBroadcast
+4140647 === Websocket Broadcast ===
+{"jsonrpc":"2.0","method":"wifi_status","params":{"station":{"connected":true,"ssid":"Host WiFi","dhcp":true,"ip":"192.168.13.10","netmask":"255.255.255.0","gateway":"192.168.13.1","mac":"52854b8022b0"},"ap":{"enabled": 4141123 ===>nr of tcpConnections: 0
+4141236 =========================================
+4141342 ===>nr of websockets: 0
+4148991 [CFGDB] ~Store() network 45f0eb4 0
+4152456 Application::startServices
+4153785 APPLedCtrl::start
+4166870 TCP 811d6c8 +connection
+4177432 Application::startServices - starting NTP
+4178621 [CFGDB] LoadStore ''
+4178803 [CFGDB] Store()  45f585c 1
+4179034 [CFGDB] incUpdate()  45f585c 1
+4179452 File 'app-config/_root.json' open error: NotFound
+4179608 [CFGDB] open 'app-config/_root.json' failed
+4179794 [CFGDB] Load defaults
+4179987 [CFGDB] decUpdate()  45f585c 0
+4185199 Starting event server with webserver referal
+
+4187152 TCP 811d948 timeout updating: 20 -> 120
+4188580 TCP 811d948 +connection
+4252460 [CFGDB] ~Store()  45f585c 0
+4256190 Free heap: 130489
+4257226 Free heap: 130489
+4289019 NEW: h:0, s:573, v:6, ct: 2700
+4293951 HSVtoRGBraw Sector 1
+4296652 HSVtoRGBraw R 3 | G 0 | B 0 | W 3
+4303710 R:6 | G:3 | B:3 | WW:0 | CW:0
+4306142 R:42 | G:21 | B:21 | WW:0 | CW:0
+4324540 Free heap: 130489
+4325141 NEW: h:0, s:573, v:13, ct: 2700
+4325317 HSVtoRGBraw Sector 1
+4325437 HSVtoRGBraw R 7 | G 0 | B 0 | W 6
+4325621 R:13 | G:6 | B:6 | WW:0 | CW:0
+4325766 R:92 | G:42 | B:42 | WW:0 | CW:0
+4345018 NEW: h:0, s:573, v:20, ct: 2700
+4345278 HSVtoRGBraw Sector 1
+4345386 HSVtoRGBraw R 11 | G 0 | B 0 | W 9
+4345515 R:20 | G:9 | B:9 | WW:0 | CW:0
+4345693 R:141 | G:63 | B:63 | WW:0 | CW:0
+4368177 NEW: h:0, s:573, v:27, ct: 2700
+4368373 HSVtoRGBraw Sector 1
+4368487 HSVtoRGBraw R 15 | G 0 | B 0 | W 12
+4368672 R:27 | G:12 | B:12 | WW:0 | CW:0
+4368797 R:191 | G:85 | B:85 | WW:0 | CW:0
+4388252 NEW: h:0, s:573, v:34, ct: 2700
+4388695 HSVtoRGBraw Sector 1
+4388805 HSVtoRGBraw R 19 | G 0 | B 0 | W 15
+4389015 R:34 | G:15 | B:15 | WW:0 | CW:0
+4389248 R:241 | G:106 | B:106 | WW:0 | CW:0
+4408299 NEW: h:0, s:573, v:41, ct: 2700
+4408497 HSVtoRGBraw Sector 1
+4408663 HSVtoRGBraw R 22 | G 0 | B 0 | W 19
+4408794 R:41 | G:19 | B:19 | WW:0 | CW:0
+4408970 R:290 | G:134 | B:134 | WW:0 | CW:0
+4428332 NEW: h:0, s:573, v:48, ct: 2700
+4428531 HSVtoRGBraw Sector 1
+4428644 HSVtoRGBraw R 26 | G 0 | B 0 | W 22
+4428865 R:48 | G:22 | B:22 | WW:0 | CW:0
+4428995 R:340 | G:156 | B:156 | WW:0 | CW:0
+4448375 NEW: h:0, s:573, v:55, ct: 2700
+4448631 HSVtoRGBraw Sector 1
+4448739 HSVtoRGBraw R 30 | G 0 | B 0 | W 25
+4448884 R:55 | G:25 | B:25 | WW:0 | CW:0
+4449028 R:390 | G:177 | B:177 | WW:0 | CW:0
+4468415 NEW: h:0, s:573, v:62, ct: 2700
+4468629 HSVtoRGBraw Sector 1
+4468742 HSVtoRGBraw R 34 | G 0 | B 0 | W 28
+4468956 R:62 | G:28 | B:28 | WW:0 | CW:0
+4469081 R:439 | G:198 | B:198 | WW:0 | CW:0
+4488455 NEW: h:0, s:573, v:69, ct: 2700
+4488709 HSVtoRGBraw Sector 1
+4488830 HSVtoRGBraw R 38 | G 0 | B 0 | W 31
+4488966 R:69 | G:31 | B:31 | WW:0 | CW:0
+4489157 R:489 | G:219 | B:219 | WW:0 | CW:0
+4508541 NEW: h:0, s:573, v:76, ct: 2700
+4508730 HSVtoRGBraw Sector 1
+4508926 HSVtoRGBraw R 42 | G 0 | B 0 | W 34
+4509059 R:76 | G:34 | B:34 | WW:0 | CW:0
+4509213 R:538 | G:241 | B:241 | WW:0 | CW:0
+4528593 NEW: h:0, s:573, v:83, ct: 2700
+4528973 HSVtoRGBraw Sector 1
+4529111 HSVtoRGBraw R 46 | G 0 | B 0 | W 37
+4529248 R:83 | G:37 | B:37 | WW:0 | CW:0
+4529429 R:588 | G:262 | B:262 | WW:0 | CW:0
+4548626 NEW: h:0, s:573, v:90, ct: 2700
+4548809 HSVtoRGBraw Sector 1
+4549005 HSVtoRGBraw R 50 | G 0 | B 0 | W 40
+4549134 R:90 | G:40 | B:40 | WW:0 | CW:0
+4549262 R:640 | G:283 | B:283 | WW:0 | CW:0
+4568663 NEW: h:0, s:573, v:97, ct: 2700
+4568878 HSVtoRGBraw Sector 1
+4568993 HSVtoRGBraw R 54 | G 0 | B 0 | W 43
+4569178 R:97 | G:43 | B:43 | WW:0 | CW:0
+4569302 R:694 | G:304 | B:304 | WW:0 | CW:0
+4588737 NEW: h:0, s:573, v:104, ct: 2700
+4589005 HSVtoRGBraw Sector 1
+4589112 HSVtoRGBraw R 58 | G 0 | B 0 | W 46
+4589241 R:104 | G:46 | B:46 | WW:0 | CW:0
+4589439 R:752 | G:326 | B:326 | WW:0 | CW:0
+4608777 NEW: h:0, s:573, v:111, ct: 2700
+4608988 HSVtoRGBraw Sector 1
+4609111 HSVtoRGBraw R 62 | G 0 | B 0 | W 49
+4609295 R:111 | G:49 | B:49 | WW:0 | CW:0
+4609421 R:812 | G:347 | B:347 | WW:0 | CW:0
+4628861 NEW: h:0, s:573, v:118, ct: 2700
+4629061 HSVtoRGBraw Sector 1
+4629175 HSVtoRGBraw R 66 | G 0 | B 0 | W 52
+4629305 R:118 | G:52 | B:52 | WW:0 | CW:0
+4629690 R:876 | G:368 | B:368 | WW:0 | CW:0
+4648921 NEW: h:0, s:573, v:125, ct: 2700
+4649106 HSVtoRGBraw Sector 1
+4649271 HSVtoRGBraw R 70 | G 0 | B 0 | W 55
+4649413 R:125 | G:55 | B:55 | WW:0 | CW:0
+4649540 R:943 | G:390 | B:390 | WW:0 | CW:0
+4668972 NEW: h:0, s:573, v:132, ct: 2700
+4669164 HSVtoRGBraw Sector 1
+4669275 HSVtoRGBraw R 73 | G 0 | B 0 | W 59
+4669459 R:132 | G:59 | B:59 | WW:0 | CW:0
+4669583 R:1013 | G:418 | B:418 | WW:0 | CW:0
+4689000 NEW: h:0, s:573, v:139, ct: 2700
+4689444 HSVtoRGBraw Sector 1
+4689557 HSVtoRGBraw R 77 | G 0 | B 0 | W 62
+4689688 R:139 | G:62 | B:62 | WW:0 | CW:0
+4690041 R:1087 | G:439 | B:439 | WW:0 | CW:0
+4709059 NEW: h:0, s:573, v:146, ct: 2700
+4709243 HSVtoRGBraw Sector 1
+4709408 HSVtoRGBraw R 81 | G 0 | B 0 | W 65
+4709537 R:146 | G:65 | B:65 | WW:0 | CW:0
+4709666 R:1164 | G:460 | B:460 | WW:0 | CW:0
+4729111 NEW: h:0, s:573, v:153, ct: 2700
+4729298 HSVtoRGBraw Sector 1
+4729409 HSVtoRGBraw R 85 | G 0 | B 0 | W 68
+4729540 R:153 | G:68 | B:68 | WW:0 | CW:0
+4729717 R:1245 | G:482 | B:482 | WW:0 | CW:0
+4749146 NEW: h:0, s:573, v:160, ct: 2700
+4749335 HSVtoRGBraw Sector 1
+4749448 HSVtoRGBraw R 89 | G 0 | B 0 | W 71
+4749577 R:160 | G:71 | B:71 | WW:0 | CW:0
+4749721 R:1329 | G:503 | B:503 | WW:0 | CW:0
+4769179 NEW: h:0, s:573, v:166, ct: 2700
+4769375 HSVtoRGBraw Sector 1
+4769487 HSVtoRGBraw R 92 | G 0 | B 0 | W 74
+4769671 R:166 | G:74 | B:74 | WW:0 | CW:0
+4769796 R:1405 | G:524 | B:524 | WW:0 | CW:0
+4772808 Free heap: 130489
+4789244 NEW: h:0, s:573, v:173, ct: 2700
+4789446 HSVtoRGBraw Sector 1
+4789749 HSVtoRGBraw R 96 | G 0 | B 0 | W 77
+4790003 R:173 | G:77 | B:77 | WW:0 | CW:0
+4790148 R:1496 | G:546 | B:546 | WW:0 | CW:0
+4809315 NEW: h:0, s:573, v:180, ct: 2700
+4809575 HSVtoRGBraw Sector 1
+4809682 HSVtoRGBraw R 100 | G 0 | B 0 | W 80
+4809833 R:180 | G:80 | B:80 | WW:0 | CW:0
+4809967 R:1591 | G:567 | B:567 | WW:0 | CW:0
+4829346 NEW: h:0, s:573, v:187, ct: 2700
+4829559 HSVtoRGBraw Sector 1
+4829674 HSVtoRGBraw R 104 | G 0 | B 0 | W 83
+4830216 R:187 | G:83 | B:83 | WW:0 | CW:0
+4830370 R:1691 | G:588 | B:588 | WW:0 | CW:0
+4849391 NEW: h:0, s:573, v:194, ct: 2700
+4849635 HSVtoRGBraw Sector 1
+4849741 HSVtoRGBraw R 108 | G 0 | B 0 | W 86
+4849891 R:194 | G:86 | B:86 | WW:0 | CW:0
+4850084 R:1794 | G:610 | B:610 | WW:0 | CW:0
+4869449 NEW: h:0, s:573, v:201, ct: 2700
+4869636 HSVtoRGBraw Sector 1
+4869801 HSVtoRGBraw R 112 | G 0 | B 0 | W 89
+4869951 R:201 | G:89 | B:89 | WW:0 | CW:0
+4870107 R:1902 | G:632 | B:632 | WW:0 | CW:0
+4889484 NEW: h:0, s:573, v:208, ct: 2700
+4889674 HSVtoRGBraw Sector 1
+4889786 HSVtoRGBraw R 116 | G 0 | B 0 | W 92
+4889992 R:208 | G:92 | B:92 | WW:0 | CW:0
+4890118 R:2013 | G:655 | B:655 | WW:0 | CW:0
+4909538 NEW: h:0, s:573, v:215, ct: 2700
+4909784 HSVtoRGBraw Sector 1
+4909921 HSVtoRGBraw R 120 | G 0 | B 0 | W 95
+4910064 R:215 | G:95 | B:95 | WW:0 | CW:0
+4910279 R:2129 | G:678 | B:678 | WW:0 | CW:0
+4929609 NEW: h:0, s:573, v:222, ct: 2700
+4929988 HSVtoRGBraw Sector 1
+4930118 HSVtoRGBraw R 124 | G 0 | B 0 | W 98
+4930307 R:222 | G:98 | B:98 | WW:0 | CW:0
+4930454 R:2249 | G:702 | B:702 | WW:0 | CW:0
+4949642 NEW: h:0, s:573, v:229, ct: 2700
+4949846 HSVtoRGBraw Sector 1
+4949962 HSVtoRGBraw R 128 | G 0 | B 0 | W 101
+4950111 R:229 | G:101 | B:101 | WW:0 | CW:0
+4950313 R:2374 | G:727 | B:727 | WW:0 | CW:0
+4969697 NEW: h:0, s:573, v:236, ct: 2700
+4969920 HSVtoRGBraw Sector 1
+4970036 HSVtoRGBraw R 132 | G 0 | B 0 | W 104
+4970169 R:236 | G:104 | B:104 | WW:0 | CW:0
+4970300 R:2503 | G:752 | B:752 | WW:0 | CW:0
+4989752 NEW: h:0, s:573, v:243, ct: 2700
+4989959 HSVtoRGBraw Sector 1
+4990071 HSVtoRGBraw R 136 | G 0 | B 0 | W 107
+4990255 R:243 | G:107 | B:107 | WW:0 | CW:0
+4990395 R:2637 | G:777 | B:777 | WW:0 | CW:0
+5009803 NEW: h:0, s:573, v:250, ct: 2700
+5010070 HSVtoRGBraw Sector 1
+5010177 HSVtoRGBraw R 140 | G 0 | B 0 | W 110
+5010360 R:250 | G:110 | B:110 | WW:0 | CW:0
+5010763 R:2776 | G:803 | B:803 | WW:0 | CW:0
+5029843 NEW: h:0, s:573, v:257, ct: 2700
+5030028 HSVtoRGBraw Sector 1
+5030193 HSVtoRGBraw R 143 | G 0 | B 0 | W 114
+5030325 R:257 | G:114 | B:114 | WW:0 | CW:0
+5030450 R:2919 | G:839 | B:839 | WW:0 | CW:0
+5049912 NEW: h:0, s:573, v:264, ct: 2700
+5050113 HSVtoRGBraw Sector 1
+5050225 HSVtoRGBraw R 147 | G 0 | B 0 | W 117
+5050424 R:264 | G:117 | B:117 | WW:0 | CW:0
+5050550 R:3067 | G:867 | B:867 | WW:0 | CW:0
+5069966 NEW: h:0, s:573, v:271, ct: 2700
+5070211 HSVtoRGBraw Sector 1
+5070318 HSVtoRGBraw R 151 | G 0 | B 0 | W 120
+5070464 R:271 | G:120 | B:120 | WW:0 | CW:0
+5070648 R:3220 | G:895 | B:895 | WW:0 | CW:0
+5090012 NEW: h:0, s:573, v:278, ct: 2700
+5090208 HSVtoRGBraw Sector 1
+5090380 HSVtoRGBraw R 155 | G 0 | B 0 | W 123
+5090521 R:278 | G:123 | B:123 | WW:0 | CW:0
+5090873 R:3379 | G:923 | B:923 | WW:0 | CW:0
+5110056 NEW: h:0, s:573, v:285, ct: 2700
+5110242 HSVtoRGBraw Sector 1
+5110352 HSVtoRGBraw R 159 | G 0 | B 0 | W 126
+5110534 R:285 | G:126 | B:126 | WW:0 | CW:0
+5110659 R:3542 | G:953 | B:953 | WW:0 | CW:0
+5130097 NEW: h:0, s:573, v:292, ct: 2700
+5130536 HSVtoRGBraw Sector 1
+5130677 HSVtoRGBraw R 163 | G 0 | B 0 | W 129
+5130837 R:292 | G:129 | B:129 | WW:0 | CW:0
+5131027 R:3710 | G:983 | B:983 | WW:0 | CW:0
+5150165 NEW: h:0, s:573, v:299, ct: 2700
+5150385 HSVtoRGBraw Sector 1
+5150501 HSVtoRGBraw R 167 | G 0 | B 0 | W 132
+5151026 R:299 | G:132 | B:132 | WW:0 | CW:0
+5151184 R:3884 | G:1013 | B:1013 | WW:0 | CW:0
+5170229 NEW: h:0, s:573, v:306, ct: 2700
+5170417 HSVtoRGBraw Sector 1
+5170529 HSVtoRGBraw R 171 | G 0 | B 0 | W 135
+5170713 R:306 | G:135 | B:135 | WW:0 | CW:0
+5170896 R:4063 | G:1044 | B:1044 | WW:0 | CW:0
+5190262 NEW: h:0, s:573, v:313, ct: 2700
+5190547 HSVtoRGBraw Sector 1
+5190656 HSVtoRGBraw R 175 | G 0 | B 0 | W 138
+5190787 R:313 | G:138 | B:138 | WW:0 | CW:0
+5191019 R:4247 | G:1076 | B:1076 | WW:0 | CW:0
+5210297 NEW: h:0, s:573, v:320, ct: 2700
+5210496 HSVtoRGBraw Sector 1
+5210609 HSVtoRGBraw R 179 | G 0 | B 0 | W 141
+5210794 R:320 | G:141 | B:141 | WW:0 | CW:0
+5211272 R:4437 | G:1109 | B:1109 | WW:0 | CW:0
+5230364 NEW: h:0, s:573, v:326, ct: 2700
+5230556 HSVtoRGBraw Sector 1
+5230667 HSVtoRGBraw R 182 | G 0 | B 0 | W 144
+5230799 R:326 | G:144 | B:144 | WW:0 | CW:0
+5231024 R:4604 | G:1142 | B:1142 | WW:0 | CW:0
+5250411 NEW: h:0, s:573, v:333, ct: 2700
+5250659 HSVtoRGBraw Sector 1
+5250765 HSVtoRGBraw R 186 | G 0 | B 0 | W 147
+5250917 R:333 | G:147 | B:147 | WW:0 | CW:0
+5251062 R:4805 | G:1176 | B:1176 | WW:0 | CW:0
+5270456 NEW: h:0, s:573, v:340, ct: 2700
+5270847 HSVtoRGBraw Sector 1
+5270973 HSVtoRGBraw R 190 | G 0 | B 0 | W 150
+5271168 R:340 | G:150 | B:150 | WW:0 | CW:0
+5271294 R:5011 | G:1210 | B:1210 | WW:0 | CW:0
+5272833 Free heap: 130489
+5290516 NEW: h:0, s:573, v:347, ct: 2700
+5290705 HSVtoRGBraw Sector 1
+5290831 HSVtoRGBraw R 194 | G 0 | B 0 | W 153
+5291047 R:347 | G:153 | B:153 | WW:0 | CW:0
+5291176 R:5223 | G:1245 | B:1245 | WW:0 | CW:0
+5310557 NEW: h:0, s:573, v:354, ct: 2700
+5311031 HSVtoRGBraw Sector 1
+5311158 HSVtoRGBraw R 198 | G 0 | B 0 | W 156
+5311302 R:354 | G:156 | B:156 | WW:0 | CW:0
+5311493 R:5440 | G:1281 | B:1281 | WW:0 | CW:0
+5330620 NEW: h:0, s:573, v:361, ct: 2700
+5330847 HSVtoRGBraw Sector 1
+5331017 HSVtoRGBraw R 202 | G 0 | B 0 | W 159
+5331148 R:361 | G:159 | B:159 | WW:0 | CW:0
+5331300 R:5664 | G:1317 | B:1317 | WW:0 | CW:0
+5350688 NEW: h:0, s:573, v:368, ct: 2700
+5350910 HSVtoRGBraw Sector 1
+5351028 HSVtoRGBraw R 206 | G 0 | B 0 | W 162
+5351214 R:368 | G:162 | B:162 | WW:0 | CW:0
+5351339 R:5894 | G:1354 | B:1354 | WW:0 | CW:0
+5370743 NEW: h:0, s:573, v:375, ct: 2700
+5371020 HSVtoRGBraw Sector 1
+5371126 HSVtoRGBraw R 210 | G 0 | B 0 | W 165
+5371256 R:375 | G:165 | B:165 | WW:0 | CW:0
+5371452 R:6130 | G:1392 | B:1392 | WW:0 | CW:0
+5390990 NEW: h:0, s:573, v:382, ct: 2700
+5391194 HSVtoRGBraw Sector 1
+5391362 HSVtoRGBraw R 213 | G 0 | B 0 | W 169
+5391493 R:382 | G:169 | B:169 | WW:0 | CW:0
+5391791 R:6372 | G:1443 | B:1443 | WW:0 | CW:0
+5411047 NEW: h:0, s:573, v:389, ct: 2700
+5411237 HSVtoRGBraw Sector 1
+5411346 HSVtoRGBraw R 217 | G 0 | B 0 | W 172
+5411528 R:389 | G:172 | B:172 | WW:0 | CW:0
+5411674 R:6620 | G:1483 | B:1483 | WW:0 | CW:0
+5431126 NEW: h:0, s:573, v:396, ct: 2700
+5431377 HSVtoRGBraw Sector 1
+5431482 HSVtoRGBraw R 221 | G 0 | B 0 | W 175
+5431615 R:396 | G:175 | B:175 | WW:0 | CW:0
+5431871 R:6875 | G:1523 | B:1523 | WW:0 | CW:0
+5451170 NEW: h:0, s:573, v:403, ct: 2700
+5451358 HSVtoRGBraw Sector 1
+5451522 HSVtoRGBraw R 225 | G 0 | B 0 | W 178
+5451667 R:403 | G:178 | B:178 | WW:0 | CW:0
+5451795 R:7136 | G:1564 | B:1564 | WW:0 | CW:0
+5471229 NEW: h:0, s:573, v:410, ct: 2700
+5471419 HSVtoRGBraw Sector 1
+5471530 HSVtoRGBraw R 229 | G 0 | B 0 | W 181
+5471733 R:410 | G:181 | B:181 | WW:0 | CW:0
+5471891 R:7404 | G:1605 | B:1605 | WW:0 | CW:0
+5491269 NEW: h:0, s:573, v:417, ct: 2700
+5491526 HSVtoRGBraw Sector 1
+5491640 HSVtoRGBraw R 233 | G 0 | B 0 | W 184
+5491774 R:417 | G:184 | B:184 | WW:0 | CW:0
+5492184 R:7678 | G:1648 | B:1648 | WW:0 | CW:0
+5511329 NEW: h:0, s:573, v:424, ct: 2700
+5511515 HSVtoRGBraw Sector 1
+5511680 HSVtoRGBraw R 237 | G 0 | B 0 | W 187
+5511842 R:424 | G:187 | B:187 | WW:0 | CW:0
+5511990 R:7959 | G:1691 | B:1691 | WW:0 | CW:0
+5531399 NEW: h:0, s:573, v:431, ct: 2700
+5531589 HSVtoRGBraw Sector 1
+5531698 HSVtoRGBraw R 241 | G 0 | B 0 | W 190
+5531918 R:431 | G:190 | B:190 | WW:0 | CW:0
+5532055 R:8247 | G:1735 | B:1735 | WW:0 | CW:0
+5551457 NEW: h:0, s:573, v:438, ct: 2700
+5551694 HSVtoRGBraw Sector 1
+5551798 HSVtoRGBraw R 245 | G 0 | B 0 | W 193
+5551951 R:438 | G:193 | B:193 | WW:0 | CW:0
+5552149 R:8542 | G:1779 | B:1779 | WW:0 | CW:0
+5571528 NEW: h:0, s:573, v:445, ct: 2700
+5571732 HSVtoRGBraw Sector 1
+5571892 HSVtoRGBraw R 249 | G 0 | B 0 | W 196
+5572084 R:445 | G:196 | B:196 | WW:0 | CW:0
+5572209 R:8843 | G:1824 | B:1824 | WW:0 | CW:0
+5591563 NEW: h:0, s:573, v:452, ct: 2700
+5591746 HSVtoRGBraw Sector 1
+5591869 HSVtoRGBraw R 253 | G 0 | B 0 | W 199
+5592056 R:452 | G:199 | B:199 | WW:0 | CW:0
+5592181 R:9152 | G:1870 | B:1870 | WW:0 | CW:0
+5611593 NEW: h:0, s:573, v:459, ct: 2700
+5611856 HSVtoRGBraw Sector 1
+5611966 HSVtoRGBraw R 257 | G 0 | B 0 | W 202
+5612112 R:459 | G:202 | B:202 | WW:0 | CW:0
+5612298 R:9468 | G:1917 | B:1917 | WW:0 | CW:0
+5631652 NEW: h:0, s:573, v:466, ct: 2700
+5631853 HSVtoRGBraw Sector 1
+5631966 HSVtoRGBraw R 261 | G 0 | B 0 | W 205
+5632152 R:466 | G:205 | B:205 | WW:0 | CW:0
+5632298 R:9791 | G:1965 | B:1965 | WW:0 | CW:0
+5651688 NEW: h:0, s:573, v:473, ct: 2700
+5651888 HSVtoRGBraw Sector 1
+5652001 HSVtoRGBraw R 264 | G 0 | B 0 | W 209
+5652148 R:473 | G:209 | B:209 | WW:0 | CW:0
+5652339 R:10121 | G:2029 | B:2029 | WW:0 | CW:0
+5671738 NEW: h:0, s:573, v:480, ct: 2700
+5671997 HSVtoRGBraw Sector 1
+5672104 HSVtoRGBraw R 268 | G 0 | B 0 | W 212
+5672249 R:480 | G:212 | B:212 | WW:0 | CW:0
+5672435 R:10458 | G:2079 | B:2079 | WW:0 | CW:0
+5691773 NEW: h:0, s:573, v:486, ct: 2700
+5691989 HSVtoRGBraw Sector 1
+5692100 HSVtoRGBraw R 272 | G 0 | B 0 | W 214
+5692283 R:486 | G:214 | B:214 | WW:0 | CW:0
+5692432 R:10754 | G:2112 | B:2112 | WW:0 | CW:0
+5711834 NEW: h:0, s:573, v:493, ct: 2700
+5712044 HSVtoRGBraw Sector 1
+5712157 HSVtoRGBraw R 276 | G 0 | B 0 | W 217
+5712291 R:493 | G:217 | B:217 | WW:0 | CW:0
+5712503 R:11105 | G:2163 | B:2163 | WW:0 | CW:0
+5731892 NEW: h:0, s:573, v:500, ct: 2700
+5732133 HSVtoRGBraw Sector 1
+5732237 HSVtoRGBraw R 280 | G 0 | B 0 | W 220
+5732366 R:500 | G:220 | B:220 | WW:0 | CW:0
+5732516 R:11464 | G:2215 | B:2215 | WW:0 | CW:0
+5751923 NEW: h:0, s:573, v:507, ct: 2700
+5752123 HSVtoRGBraw Sector 1
+5752235 HSVtoRGBraw R 283 | G 0 | B 0 | W 224
+5752429 R:507 | G:224 | B:224 | WW:0 | CW:0
+5752561 R:11831 | G:2285 | B:2285 | WW:0 | CW:0
+5771957 NEW: h:0, s:573, v:514, ct: 2700
+5772140 HSVtoRGBraw Sector 1
+5772249 HSVtoRGBraw R 287 | G 0 | B 0 | W 227
+5772378 R:514 | G:227 | B:227 | WW:0 | CW:0
+5772571 R:12205 | G:2338 | B:2338 | WW:0 | CW:0
+5772806 Free heap: 130489
+5792034 NEW: h:0, s:573, v:521, ct: 2700
+5792278 HSVtoRGBraw Sector 1
+5792382 HSVtoRGBraw R 291 | G 0 | B 0 | W 230
+5792510 R:521 | G:230 | B:230 | WW:0 | CW:0
+5792701 R:12587 | G:2392 | B:2392 | WW:0 | CW:0
+5812095 NEW: h:0, s:573, v:528, ct: 2700
+5812456 HSVtoRGBraw Sector 1
+5812635 HSVtoRGBraw R 295 | G 0 | B 0 | W 233
+5812767 R:528 | G:233 | B:233 | WW:0 | CW:0
+5812931 R:12977 | G:2447 | B:2447 | WW:0 | CW:0
+5832156 NEW: h:0, s:573, v:535, ct: 2700
+5832350 HSVtoRGBraw Sector 1
+5832462 HSVtoRGBraw R 299 | G 0 | B 0 | W 236
+5832663 R:535 | G:236 | B:236 | WW:0 | CW:0
+5832805 R:13375 | G:2503 | B:2503 | WW:0 | CW:0
+5852186 NEW: h:0, s:573, v:542, ct: 2700
+5852431 HSVtoRGBraw Sector 1
+5852537 HSVtoRGBraw R 303 | G 0 | B 0 | W 239
+5852678 R:542 | G:239 | B:239 | WW:0 | CW:0
+5852891 R:13781 | G:2560 | B:2560 | WW:0 | CW:0
+5872257 NEW: h:0, s:573, v:549, ct: 2700
+5872454 HSVtoRGBraw Sector 1
+5872618 HSVtoRGBraw R 307 | G 0 | B 0 | W 242
+5872761 R:549 | G:242 | B:242 | WW:0 | CW:0
+5872913 R:14195 | G:2618 | B:2618 | WW:0 | CW:0
+5892326 NEW: h:0, s:573, v:556, ct: 2700
+5892516 HSVtoRGBraw Sector 1
+5892626 HSVtoRGBraw R 311 | G 0 | B 0 | W 245
+5892809 R:556 | G:245 | B:245 | WW:0 | CW:0
+5892961 R:14618 | G:2676 | B:2676 | WW:0 | CW:0
+5912369 NEW: h:0, s:573, v:563, ct: 2700
+5912609 HSVtoRGBraw Sector 1
+5912715 HSVtoRGBraw R 315 | G 0 | B 0 | W 248
+5912872 R:563 | G:248 | B:248 | WW:0 | CW:0
+5913067 R:15049 | G:2736 | B:2736 | WW:0 | CW:0
+5932410 NEW: h:0, s:573, v:570, ct: 2700
+5932591 HSVtoRGBraw Sector 1
+5932752 HSVtoRGBraw R 319 | G 0 | B 0 | W 251
+5932900 R:570 | G:251 | B:251 | WW:0 | CW:0
+5933027 R:15488 | G:2796 | B:2796 | WW:0 | CW:0
+5952486 NEW: h:0, s:573, v:577, ct: 2700
+5952675 HSVtoRGBraw Sector 1
+5952784 HSVtoRGBraw R 323 | G 0 | B 0 | W 254
+5953059 R:577 | G:254 | B:254 | WW:0 | CW:0
+5953228 R:15935 | G:2857 | B:2857 | WW:0 | CW:0
+5972518 NEW: h:0, s:573, v:584, ct: 2700
+5972780 HSVtoRGBraw Sector 1
+5972907 HSVtoRGBraw R 327 | G 0 | B 0 | W 257
+5973048 R:584 | G:257 | B:257 | WW:0 | CW:0
+5973230 R:16391 | G:2919 | B:2919 | WW:0 | CW:0
+5992554 NEW: h:0, s:573, v:591, ct: 2700
+5992741 HSVtoRGBraw Sector 1
+5992936 HSVtoRGBraw R 331 | G 0 | B 0 | W 260
+5993084 R:591 | G:260 | B:260 | WW:0 | CW:0
+5993224 R:16856 | G:2982 | B:2982 | WW:0 | CW:0
+6012603 NEW: h:0, s:573, v:598, ct: 2700
+6012803 HSVtoRGBraw Sector 1
+6012931 HSVtoRGBraw R 334 | G 0 | B 0 | W 264
+6013119 R:598 | G:264 | B:264 | WW:0 | CW:0
+6013248 R:17329 | G:3067 | B:3067 | WW:0 | CW:0
+6032637 NEW: h:0, s:573, v:605, ct: 2700
+6032891 HSVtoRGBraw Sector 1
+6032997 HSVtoRGBraw R 338 | G 0 | B 0 | W 267
+6033127 R:605 | G:267 | B:267 | WW:0 | CW:0
+6033321 R:17812 | G:3132 | B:3132 | WW:0 | CW:0
+6052708 NEW: h:0, s:573, v:612, ct: 2700
+6052905 HSVtoRGBraw Sector 1
+6053069 HSVtoRGBraw R 342 | G 0 | B 0 | W 270
+6053200 R:612 | G:270 | B:270 | WW:0 | CW:0
+6053334 R:18303 | G:3198 | B:3198 | WW:0 | CW:0
+6072736 NEW: h:0, s:573, v:619, ct: 2700
+6072946 HSVtoRGBraw Sector 1
+6073058 HSVtoRGBraw R 346 | G 0 | B 0 | W 273
+6073243 R:619 | G:273 | B:273 | WW:0 | CW:0
+6073394 R:18803 | G:3265 | B:3265 | WW:0 | CW:0
+6092776 NEW: h:0, s:573, v:626, ct: 2700
+6093046 HSVtoRGBraw Sector 1
+6093152 HSVtoRGBraw R 350 | G 0 | B 0 | W 276
+6093282 R:626 | G:276 | B:276 | WW:0 | CW:0
+6093480 R:19312 | G:3333 | B:3333 | WW:0 | CW:0
+6112831 NEW: h:0, s:573, v:633, ct: 2700
+6113015 HSVtoRGBraw Sector 1
+6113178 HSVtoRGBraw R 354 | G 0 | B 0 | W 279
+6113321 R:633 | G:279 | B:279 | WW:0 | CW:0
+6113467 R:19830 | G:3402 | B:3402 | WW:0 | CW:0
+6132893 NEW: h:0, s:573, v:640, ct: 2700
+6133075 HSVtoRGBraw Sector 1
+6133183 HSVtoRGBraw R 358 | G 0 | B 0 | W 282
+6133366 R:640 | G:282 | B:282 | WW:0 | CW:0
+6133490 R:20357 | G:3471 | B:3471 | WW:0 | CW:0
+6152946 NEW: h:0, s:573, v:647, ct: 2700
+6153202 HSVtoRGBraw Sector 1
+6153308 HSVtoRGBraw R 362 | G 0 | B 0 | W 285
+6153447 R:647 | G:285 | B:285 | WW:0 | CW:0
+6153641 R:20894 | G:3542 | B:3542 | WW:0 | CW:0
+
+signal_handler: SIGINT - Ctrl+C pressed
+returning 0
+>> Normal Exit <<
+
+Thread 'Timer1' complete
+Thread 'Timer1' destroyed
+Closed "/home/pjakobs/devel/esp_rgbww_firmware/out/Host/debug/firmware/flash.bin"
+Thread 'keyboard' complete
+Thread 'keyboard' destroyed
+Goodbye!
+6324300 Shutting down the server ...
+6333498 TcpServer destroyed
+6338138 TCP 811d948 ~connection
+==1651961== Invalid free() / delete / delete[] / realloc()
+==1651961==    at 0x4044F7D: operator delete(void*, unsigned int) (vg_replace_malloc.c:1175)
+==1651961==    by 0x806D6AE: EventServer::~EventServer() (eventserver.cpp:11)
+==1651961==    by 0x806D61C: EventServer::~EventServer() (eventserver.cpp:10)
+==1651961==    by 0x8051DE4: Application::~Application() (application.cpp:155)
+==1651961==    by 0x4418B29: __run_exit_handlers (in /usr/lib/libc.so.6)
+==1651961==    by 0x4418D22: exit (in /usr/lib/libc.so.6)
+==1651961==    by 0x43FEBCE: (below main) (in /usr/lib/libc.so.6)
+==1651961==  Address 0x811d948 is 776 bytes inside data symbol "app"
+==1651961== 
+==1651961== Invalid free() / delete / delete[] / realloc()
+==1651961==    at 0x4044F7D: operator delete(void*, unsigned int) (vg_replace_malloc.c:1175)
+==1651961==    by 0x806D547: _M_destroy (std_function.h:175)
+==1651961==    by 0x806D547: _M_manager (std_function.h:203)
+==1651961==    by 0x806D547: std::_Function_handler<void (), Delegate<void ()>::Delegate<EventServer>(void (EventServer::*)(), EventServer*)::{lambda()#1}>::_M_manager(std::_Any_data&, std::_Any_data const&, std::_Manager_operation) (std_function.h:282)
+==1651961==    by 0x804B9E4: std::_Function_base::~_Function_base() (std_function.h:244)
+==1651961==    by 0x806D655: ~function (std_function.h:334)
+==1651961==    by 0x806D655: ~Delegate (Delegate.h:29)
+==1651961==    by 0x806D655: ~OsTimer64Api (Timer.h:58)
+==1651961==    by 0x806D655: ~CallbackTimer (CallbackTimer.h:73)
+==1651961==    by 0x806D655: ~DelegateCallbackTimer (Timer.h:189)
+==1651961==    by 0x806D655: ~Timer (Timer.h:262)
+==1651961==    by 0x806D655: EventServer::~EventServer() (eventserver.cpp:11)
+==1651961==    by 0x8051DE4: Application::~Application() (application.cpp:155)
+==1651961==    by 0x4418B29: __run_exit_handlers (in /usr/lib/libc.so.6)
+==1651961==    by 0x4418D22: exit (in /usr/lib/libc.so.6)
+==1651961==    by 0x43FEBCE: (below main) (in /usr/lib/libc.so.6)
+==1651961==  Address 0x45f5c08 is 0 bytes inside a block of size 12 free'd
+==1651961==    at 0x4044F7D: operator delete(void*, unsigned int) (vg_replace_malloc.c:1175)
+==1651961==    by 0x806D547: _M_destroy (std_function.h:175)
+==1651961==    by 0x806D547: _M_manager (std_function.h:203)
+==1651961==    by 0x806D547: std::_Function_handler<void (), Delegate<void ()>::Delegate<EventServer>(void (EventServer::*)(), EventServer*)::{lambda()#1}>::_M_manager(std::_Any_data&, std::_Any_data const&, std::_Manager_operation) (std_function.h:282)
+==1651961==    by 0x804B9E4: std::_Function_base::~_Function_base() (std_function.h:244)
+==1651961==    by 0x806D655: ~function (std_function.h:334)
+==1651961==    by 0x806D655: ~Delegate (Delegate.h:29)
+==1651961==    by 0x806D655: ~OsTimer64Api (Timer.h:58)
+==1651961==    by 0x806D655: ~CallbackTimer (CallbackTimer.h:73)
+==1651961==    by 0x806D655: ~DelegateCallbackTimer (Timer.h:189)
+==1651961==    by 0x806D655: ~Timer (Timer.h:262)
+==1651961==    by 0x806D655: EventServer::~EventServer() (eventserver.cpp:11)
+==1651961==    by 0x806D6A1: EventServer::~EventServer() (eventserver.cpp:11)
+==1651961==    by 0x806D61C: EventServer::~EventServer() (eventserver.cpp:10)
+==1651961==    by 0x8051DE4: Application::~Application() (application.cpp:155)
+==1651961==    by 0x4418B29: __run_exit_handlers (in /usr/lib/libc.so.6)
+==1651961==    by 0x4418D22: exit (in /usr/lib/libc.so.6)
+==1651961==    by 0x43FEBCE: (below main) (in /usr/lib/libc.so.6)
+==1651961==  Block was alloc'd at
+==1651961==    at 0x4041CEC: operator new(unsigned int) (vg_replace_malloc.c:480)
+==1651961==    by 0x806D52A: _M_create<const Delegate<void()>::Delegate<EventServer>(void (EventServer::*)(), EventServer*)::<lambda()>&> (std_function.h:161)
+==1651961==    by 0x806D52A: _M_init_functor<const Delegate<void()>::Delegate<EventServer>(void (EventServer::*)(), EventServer*)::<lambda()>&> (std_function.h:215)
+==1651961==    by 0x806D52A: _M_manager (std_function.h:198)
+==1651961==    by 0x806D52A: std::_Function_handler<void (), Delegate<void ()>::Delegate<EventServer>(void (EventServer::*)(), EventServer*)::{lambda()#1}>::_M_manager(std::_Any_data&, std::_Any_data const&, std::_Manager_operation) (std_function.h:282)
+==1651961==    by 0x804F255: std::function<void ()>::function(std::function<void ()> const&) (std_function.h:391)
+==1651961==    by 0x804F509: operator= (std_function.h:471)
+==1651961==    by 0x804F509: operator= (Delegate.h:29)
+==1651961==    by 0x804F509: setCallback (Timer.h:82)
+==1651961==    by 0x804F509: setCallback (Timer.h:254)
+==1651961==    by 0x804F509: DelegateCallbackTimer<OsTimer64Api<Timer> >::initializeMs(unsigned int, Delegate<void ()>) (Timer.h:229)
+==1651961==    by 0x806D785: EventServer::start(ApplicationWebserver&) (eventserver.cpp:32)
+==1651961==    by 0x804EE9C: Application::startServices() (application.cpp:371)
+==1651961==    by 0x8085DC2: SystemClass::queueCallback(Delegate<void ()>)::{lambda(void*)#1}::_FUN(void*) (System.cpp:117)
+==1651961==    by 0x80A2904: process (tasks.cpp:37)
+==1651961==    by 0x80A2904: host_service_tasks (tasks.cpp:112)
+==1651961==    by 0x804BA6A: host_main_loop (startup.cpp:125)
+==1651961==    by 0x804AE13: main (startup.cpp:297)
+==1651961== 
+6343413 TcpServer destroyed
+==1651961== Invalid read of size 4
+==1651961==    at 0x804DAAB: mc_free (malloc_count.cpp:269)
+==1651961==    by 0x804EBBA: TcpServer::~TcpServer() (TcpServer.h:67)
+==1651961==    by 0x8051DE4: Application::~Application() (application.cpp:155)
+==1651961==    by 0x4418B29: __run_exit_handlers (in /usr/lib/libc.so.6)
+==1651961==    by 0x4418D22: exit (in /usr/lib/libc.so.6)
+==1651961==    by 0x43FEBCE: (below main) (in /usr/lib/libc.so.6)
+==1651961==  Address 0x45dde64 is 12 bytes inside a block of size 56 free'd
+==1651961==    at 0x4044243: free (vg_replace_malloc.c:989)
+==1651961==    by 0x804EBBA: TcpServer::~TcpServer() (TcpServer.h:67)
+==1651961==    by 0x806D6A1: EventServer::~EventServer() (eventserver.cpp:11)
+==1651961==    by 0x806D61C: EventServer::~EventServer() (eventserver.cpp:10)
+==1651961==    by 0x8051DE4: Application::~Application() (application.cpp:155)
+==1651961==    by 0x4418B29: __run_exit_handlers (in /usr/lib/libc.so.6)
+==1651961==    by 0x4418D22: exit (in /usr/lib/libc.so.6)
+==1651961==    by 0x43FEBCE: (below main) (in /usr/lib/libc.so.6)
+==1651961==  Block was alloc'd at
+==1651961==    at 0x404162D: malloc (vg_replace_malloc.c:446)
+==1651961==    by 0x804D9BF: mc_malloc (malloc_count.cpp:232)
+==1651961==    by 0x804F136: allocate (WiringList.h:175)
+==1651961==    by 0x804F136: Vector (WVector.h:106)
+==1651961==    by 0x804F136: TcpServer::TcpServer() (TcpServer.h:33)
+==1651961==    by 0x804B142: EventServer (eventserver.h:9)
+==1651961==    by 0x804B142: Application (application.h:29)
+==1651961==    by 0x804B142: __static_initialization_and_destruction_0 (application.cpp:127)
+==1651961==    by 0x804B142: _GLOBAL__sub_I_app (application.cpp:598)
+==1651961==    by 0x43FED0E: __libc_start_main@@GLIBC_2.34 (in /usr/lib/libc.so.6)
+==1651961==    by 0x804B807: (below main) (in /home/pjakobs/devel/esp_rgbww_firmware/out/Host/debug/firmware/app)
+==1651961== 
+==1651961== Invalid free() / delete / delete[] / realloc()
+==1651961==    at 0x4044243: free (vg_replace_malloc.c:989)
+==1651961==    by 0x804EBBA: TcpServer::~TcpServer() (TcpServer.h:67)
+==1651961==    by 0x8051DE4: Application::~Application() (application.cpp:155)
+==1651961==    by 0x4418B29: __run_exit_handlers (in /usr/lib/libc.so.6)
+==1651961==    by 0x4418D22: exit (in /usr/lib/libc.so.6)
+==1651961==    by 0x43FEBCE: (below main) (in /usr/lib/libc.so.6)
+==1651961==  Address 0x45dde68 is 16 bytes inside a block of size 56 free'd
+==1651961==    at 0x4044243: free (vg_replace_malloc.c:989)
+==1651961==    by 0x804EBBA: TcpServer::~TcpServer() (TcpServer.h:67)
+==1651961==    by 0x806D6A1: EventServer::~EventServer() (eventserver.cpp:11)
+==1651961==    by 0x806D61C: EventServer::~EventServer() (eventserver.cpp:10)
+==1651961==    by 0x8051DE4: Application::~Application() (application.cpp:155)
+==1651961==    by 0x4418B29: __run_exit_handlers (in /usr/lib/libc.so.6)
+==1651961==    by 0x4418D22: exit (in /usr/lib/libc.so.6)
+==1651961==    by 0x43FEBCE: (below main) (in /usr/lib/libc.so.6)
+==1651961==  Block was alloc'd at
+==1651961==    at 0x404162D: malloc (vg_replace_malloc.c:446)
+==1651961==    by 0x804D9BF: mc_malloc (malloc_count.cpp:232)
+==1651961==    by 0x804F136: allocate (WiringList.h:175)
+==1651961==    by 0x804F136: Vector (WVector.h:106)
+==1651961==    by 0x804F136: TcpServer::TcpServer() (TcpServer.h:33)
+==1651961==    by 0x804B142: EventServer (eventserver.h:9)
+==1651961==    by 0x804B142: Application (application.h:29)
+==1651961==    by 0x804B142: __static_initialization_and_destruction_0 (application.cpp:127)
+==1651961==    by 0x804B142: _GLOBAL__sub_I_app (application.cpp:598)
+==1651961==    by 0x43FED0E: __libc_start_main@@GLIBC_2.34 (in /usr/lib/libc.so.6)
+==1651961==    by 0x804B807: (below main) (in /home/pjakobs/devel/esp_rgbww_firmware/out/Host/debug/firmware/app)
+==1651961== 
+6345946 TCP 811d948 ~connection
+6385574 TcpServer destroyed
+6386915 TCP 811d6c8 connection closing
+==1651961== 
+==1651961== Process terminating with default action of signal 13 (SIGPIPE)
+==1651961==    at 0x44E9AF7: write (in /usr/lib/libc.so.6)
+==1651961==    by 0x4464D4A: _IO_file_write@@GLIBC_2.1 (in /usr/lib/libc.so.6)
+==1651961==    by 0x44628E8: new_do_write (in /usr/lib/libc.so.6)
+==1651961==    by 0x4463A06: _IO_do_write@@GLIBC_2.1 (in /usr/lib/libc.so.6)
+==1651961==    by 0x4463F4E: _IO_file_overflow@@GLIBC_2.1 (in /usr/lib/libc.so.6)
+==1651961==    by 0x4466CF5: _IO_flush_all (in /usr/lib/libc.so.6)
+==1651961==    by 0x8074218: tcp_poll (in /home/pjakobs/devel/esp_rgbww_firmware/out/Host/debug/firmware/app)
+==1651961==    by 0x809EF0C: close (TcpConnection.cpp:291)
+==1651961==    by 0x809EF0C: TcpConnection::close() (TcpConnection.cpp:280)
+==1651961==    by 0x809EF56: TcpConnection::~TcpConnection() (TcpConnection.cpp:32)
+==1651961==    by 0x8051E1C: Application::~Application() (application.cpp:155)
+==1651961==    by 0x4418B29: __run_exit_handlers (in /usr/lib/libc.so.6)
+==1651961==    by 0x4418D22: exit (in /usr/lib/libc.so.6)
+==1651961== 
+==1651961== HEAP SUMMARY:
+==1651961==     in use at exit: 23,485 bytes in 49 blocks
+==1651961==   total heap usage: 828 allocs, 782 frees, 79,700 bytes allocated
+==1651961== 
+==1651961== 56 bytes in 1 blocks are possibly lost in loss record 19 of 49
+==1651961==    at 0x404162D: malloc (vg_replace_malloc.c:446)
+==1651961==    by 0x804D9BF: mc_malloc (malloc_count.cpp:232)
+==1651961==    by 0x805CC2A: allocate (WiringList.h:175)
+==1651961==    by 0x805CC2A: wiring_private::ObjectList<BssInfo>::allocate(unsigned int) (WiringList.h:188)
+==1651961==    by 0x805CD0B: Vector (WVector.h:106)
+==1651961==    by 0x805CD0B: AppWIFI::AppWIFI() (networking.cpp:35)
+==1651961==    by 0x804B02C: Application (application.h:29)
+==1651961==    by 0x804B02C: __static_initialization_and_destruction_0 (application.cpp:127)
+==1651961==    by 0x804B02C: _GLOBAL__sub_I_app (application.cpp:598)
+==1651961==    by 0x43FED0E: __libc_start_main@@GLIBC_2.34 (in /usr/lib/libc.so.6)
+==1651961==    by 0x804B807: (below main) (in /home/pjakobs/devel/esp_rgbww_firmware/out/Host/debug/firmware/app)
+==1651961== 
+==1651961== 152 bytes in 1 blocks are possibly lost in loss record 26 of 49
+==1651961==    at 0x40479D3: calloc (vg_replace_malloc.c:1675)
+==1651961==    by 0x4010CC6: UnknownInlinedFun (rtld-malloc.h:44)
+==1651961==    by 0x4010CC6: allocate_dtv (dl-tls.c:370)
+==1651961==    by 0x40117BF: _dl_allocate_tls (dl-tls.c:629)
+==1651961==    by 0x446E808: pthread_create@@GLIBC_2.34 (in /usr/lib/libc.so.6)
+==1651961==    by 0x80A26BB: execute (threads.h:180)
+==1651961==    by 0x80A26BB: CTimerThread (hw_timer.cpp:34)
+==1651961==    by 0x80A26BB: make_unique<CTimerThread, char const (&)[7]> (unique_ptr.h:1076)
+==1651961==    by 0x80A26BB: hw_timer_init (hw_timer.cpp:206)
+==1651961==    by 0x804AD75: main (startup.cpp:272)
+==1651961== 
+==1651961== 152 bytes in 1 blocks are possibly lost in loss record 27 of 49
+==1651961==    at 0x40479D3: calloc (vg_replace_malloc.c:1675)
+==1651961==    by 0x4010CC6: UnknownInlinedFun (rtld-malloc.h:44)
+==1651961==    by 0x4010CC6: allocate_dtv (dl-tls.c:370)
+==1651961==    by 0x40117BF: _dl_allocate_tls (dl-tls.c:629)
+==1651961==    by 0x446E808: pthread_create@@GLIBC_2.34 (in /usr/lib/libc.so.6)
+==1651961==    by 0x80A132F: execute (threads.h:180)
+==1651961==    by 0x80A132F: UartServer::(anonymous namespace)::uartConsoleNotify(smg_uart_t*, smg_uart_notify_code_t) (uart_server.cpp:124)
+==1651961==    by 0x80A1DB9: (anonymous namespace)::notify(smg_uart_t*, smg_uart_notify_code_t) (uart.cpp:72)
+==1651961==    by 0x80A20FA: smg_uart_init_ex (uart.cpp:326)
+==1651961==    by 0x80875DE: HardwareSerial::begin(unsigned int, SerialFormat, SerialMode, unsigned char, unsigned char) (HardwareSerial.cpp:39)
+==1651961==    by 0x8052335: begin (HardwareSerial.h:134)
+==1651961==    by 0x8052335: init() (application.cpp:131)
+==1651961==    by 0x804AE05: main (startup.cpp:294)
+==1651961== 
+==1651961== 444 (24 direct, 420 indirect) bytes in 1 blocks are definitely lost in loss record 38 of 49
+==1651961==    at 0x4041CEC: operator new(unsigned int) (vg_replace_malloc.c:480)
+==1651961==    by 0x808A50D: RGBWWLed::RGBWWLed() (RGBWWLed.cpp:32)
+==1651961==    by 0x804B044: APPLedCtrl (ledctrl.h:74)
+==1651961==    by 0x804B044: Application (application.h:29)
+==1651961==    by 0x804B044: __static_initialization_and_destruction_0 (application.cpp:127)
+==1651961==    by 0x804B044: _GLOBAL__sub_I_app (application.cpp:598)
+==1651961==    by 0x43FED0E: __libc_start_main@@GLIBC_2.34 (in /usr/lib/libc.so.6)
+==1651961==    by 0x804B807: (below main) (in /home/pjakobs/devel/esp_rgbww_firmware/out/Host/debug/firmware/app)
+==1651961== 
+==1651961== 444 (24 direct, 420 indirect) bytes in 1 blocks are definitely lost in loss record 39 of 49
+==1651961==    at 0x4041CEC: operator new(unsigned int) (vg_replace_malloc.c:480)
+==1651961==    by 0x808A538: RGBWWLed::RGBWWLed() (RGBWWLed.cpp:33)
+==1651961==    by 0x804B044: APPLedCtrl (ledctrl.h:74)
+==1651961==    by 0x804B044: Application (application.h:29)
+==1651961==    by 0x804B044: __static_initialization_and_destruction_0 (application.cpp:127)
+==1651961==    by 0x804B044: _GLOBAL__sub_I_app (application.cpp:598)
+==1651961==    by 0x43FED0E: __libc_start_main@@GLIBC_2.34 (in /usr/lib/libc.so.6)
+==1651961==    by 0x804B807: (below main) (in /home/pjakobs/devel/esp_rgbww_firmware/out/Host/debug/firmware/app)
+==1651961== 
+==1651961== 444 (24 direct, 420 indirect) bytes in 1 blocks are definitely lost in loss record 40 of 49
+==1651961==    at 0x4041CEC: operator new(unsigned int) (vg_replace_malloc.c:480)
+==1651961==    by 0x808A563: RGBWWLed::RGBWWLed() (RGBWWLed.cpp:34)
+==1651961==    by 0x804B044: APPLedCtrl (ledctrl.h:74)
+==1651961==    by 0x804B044: Application (application.h:29)
+==1651961==    by 0x804B044: __static_initialization_and_destruction_0 (application.cpp:127)
+==1651961==    by 0x804B044: _GLOBAL__sub_I_app (application.cpp:598)
+==1651961==    by 0x43FED0E: __libc_start_main@@GLIBC_2.34 (in /usr/lib/libc.so.6)
+==1651961==    by 0x804B807: (below main) (in /home/pjakobs/devel/esp_rgbww_firmware/out/Host/debug/firmware/app)
+==1651961== 
+==1651961== 444 (24 direct, 420 indirect) bytes in 1 blocks are definitely lost in loss record 41 of 49
+==1651961==    at 0x4041CEC: operator new(unsigned int) (vg_replace_malloc.c:480)
+==1651961==    by 0x808A58E: RGBWWLed::RGBWWLed() (RGBWWLed.cpp:35)
+==1651961==    by 0x804B044: APPLedCtrl (ledctrl.h:74)
+==1651961==    by 0x804B044: Application (application.h:29)
+==1651961==    by 0x804B044: __static_initialization_and_destruction_0 (application.cpp:127)
+==1651961==    by 0x804B044: _GLOBAL__sub_I_app (application.cpp:598)
+==1651961==    by 0x43FED0E: __libc_start_main@@GLIBC_2.34 (in /usr/lib/libc.so.6)
+==1651961==    by 0x804B807: (below main) (in /home/pjakobs/devel/esp_rgbww_firmware/out/Host/debug/firmware/app)
+==1651961== 
+==1651961== 444 (24 direct, 420 indirect) bytes in 1 blocks are definitely lost in loss record 42 of 49
+==1651961==    at 0x4041CEC: operator new(unsigned int) (vg_replace_malloc.c:480)
+==1651961==    by 0x808A5B9: RGBWWLed::RGBWWLed() (RGBWWLed.cpp:36)
+==1651961==    by 0x804B044: APPLedCtrl (ledctrl.h:74)
+==1651961==    by 0x804B044: Application (application.h:29)
+==1651961==    by 0x804B044: __static_initialization_and_destruction_0 (application.cpp:127)
+==1651961==    by 0x804B044: _GLOBAL__sub_I_app (application.cpp:598)
+==1651961==    by 0x43FED0E: __libc_start_main@@GLIBC_2.34 (in /usr/lib/libc.so.6)
+==1651961==    by 0x804B807: (below main) (in /home/pjakobs/devel/esp_rgbww_firmware/out/Host/debug/firmware/app)
+==1651961== 
+==1651961== 556 (24 direct, 532 indirect) bytes in 1 blocks are definitely lost in loss record 43 of 49
+==1651961==    at 0x4041CEC: operator new(unsigned int) (vg_replace_malloc.c:480)
+==1651961==    by 0x808A480: RGBWWLed::RGBWWLed() (RGBWWLed.cpp:28)
+==1651961==    by 0x804B044: APPLedCtrl (ledctrl.h:74)
+==1651961==    by 0x804B044: Application (application.h:29)
+==1651961==    by 0x804B044: __static_initialization_and_destruction_0 (application.cpp:127)
+==1651961==    by 0x804B044: _GLOBAL__sub_I_app (application.cpp:598)
+==1651961==    by 0x43FED0E: __libc_start_main@@GLIBC_2.34 (in /usr/lib/libc.so.6)
+==1651961==    by 0x804B807: (below main) (in /home/pjakobs/devel/esp_rgbww_firmware/out/Host/debug/firmware/app)
+==1651961== 
+==1651961== 556 (24 direct, 532 indirect) bytes in 1 blocks are definitely lost in loss record 44 of 49
+==1651961==    at 0x4041CEC: operator new(unsigned int) (vg_replace_malloc.c:480)
+==1651961==    by 0x808A4AF: RGBWWLed::RGBWWLed() (RGBWWLed.cpp:29)
+==1651961==    by 0x804B044: APPLedCtrl (ledctrl.h:74)
+==1651961==    by 0x804B044: Application (application.h:29)
+==1651961==    by 0x804B044: __static_initialization_and_destruction_0 (application.cpp:127)
+==1651961==    by 0x804B044: _GLOBAL__sub_I_app (application.cpp:598)
+==1651961==    by 0x43FED0E: __libc_start_main@@GLIBC_2.34 (in /usr/lib/libc.so.6)
+==1651961==    by 0x804B807: (below main) (in /home/pjakobs/devel/esp_rgbww_firmware/out/Host/debug/firmware/app)
+==1651961== 
+==1651961== 556 (24 direct, 532 indirect) bytes in 1 blocks are definitely lost in loss record 45 of 49
+==1651961==    at 0x4041CEC: operator new(unsigned int) (vg_replace_malloc.c:480)
+==1651961==    by 0x808A4DE: RGBWWLed::RGBWWLed() (RGBWWLed.cpp:30)
+==1651961==    by 0x804B044: APPLedCtrl (ledctrl.h:74)
+==1651961==    by 0x804B044: Application (application.h:29)
+==1651961==    by 0x804B044: __static_initialization_and_destruction_0 (application.cpp:127)
+==1651961==    by 0x804B044: _GLOBAL__sub_I_app (application.cpp:598)
+==1651961==    by 0x43FED0E: __libc_start_main@@GLIBC_2.34 (in /usr/lib/libc.so.6)
+==1651961==    by 0x804B807: (below main) (in /home/pjakobs/devel/esp_rgbww_firmware/out/Host/debug/firmware/app)
+==1651961== 
+==1651961== 560 (24 direct, 536 indirect) bytes in 1 blocks are definitely lost in loss record 46 of 49
+==1651961==    at 0x4041CEC: operator new(unsigned int) (vg_replace_malloc.c:480)
+==1651961==    by 0x808A451: RGBWWLed::RGBWWLed() (RGBWWLed.cpp:27)
+==1651961==    by 0x804B044: APPLedCtrl (ledctrl.h:74)
+==1651961==    by 0x804B044: Application (application.h:29)
+==1651961==    by 0x804B044: __static_initialization_and_destruction_0 (application.cpp:127)
+==1651961==    by 0x804B044: _GLOBAL__sub_I_app (application.cpp:598)
+==1651961==    by 0x43FED0E: __libc_start_main@@GLIBC_2.34 (in /usr/lib/libc.so.6)
+==1651961==    by 0x804B807: (below main) (in /home/pjakobs/devel/esp_rgbww_firmware/out/Host/debug/firmware/app)
+==1651961== 
+==1651961== LEAK SUMMARY:
+==1651961==    definitely lost: 216 bytes in 9 blocks
+==1651961==    indirectly lost: 4,232 bytes in 22 blocks
+==1651961==      possibly lost: 360 bytes in 3 blocks
+==1651961==    still reachable: 18,677 bytes in 15 blocks
+==1651961==         suppressed: 0 bytes in 0 blocks
+==1651961== Reachable blocks (those to which a pointer was found) are not shown.
+==1651961== To see them, rerun with: --leak-check=full --show-leak-kinds=all
+==1651961== 
+==1651961== For lists of detected and suppressed errors, rerun with: -s
+==1651961== ERROR SUMMARY: 16 errors from 16 contexts (suppressed: 0 from 0)

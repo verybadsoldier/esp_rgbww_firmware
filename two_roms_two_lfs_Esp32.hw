@@ -1,0 +1,43 @@
+{
+    "name": "Standard config with single ROM",
+    "comment": "Should work with any Esp32 variant",
+    "base_config": "standard",
+    "options": [
+        "4m"
+    ],
+    "partitions": {
+        "factory": {
+            "size": "1408K"
+        },
+        "lfs0": {
+            "device": "spiFlash",
+            "address": "0x00170000",
+            "size": "576K",
+            "type": "data",
+            "subtype": "littlefs",
+            "readonly": false,
+            "encrypted": false,
+            "filename": ""
+        },
+        "rom1": {
+            "device": "spiFlash",
+            "address": "0x00200000",
+            "size": "1536K",
+            "type": "app",
+            "subtype": "ota_1",
+            "readonly": false,
+            "encrypted": false,
+            "filename": ""
+        },
+        "lfs1": {
+            "device": "spiFlash",
+            "address": "0x00380000",
+            "size": "512K",
+            "type": "data",
+            "subtype": "littlefs",
+            "readonly": false,
+            "encrypted": false,
+            "filename": ""
+        }
+    }
+}

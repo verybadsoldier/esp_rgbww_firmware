@@ -1,0 +1,31 @@
+{
+	"groups":[
+	{
+		"name":"Wohnzimmer",
+		"nodes":[
+			{
+				"name":"Decke",
+				"address":"192.168.1.27"
+			},
+			{
+				"name":"Schrank",
+				"address":"192.168.1.30"
+			}
+		]
+	},
+	{
+		"name":"Küche",
+		"nodes":[
+			{
+				"name":"Decke",
+				"address":"192.168.1.25"
+			},
+			{
+				"name":"Vitrine",
+				"address":"192.168.1.31"
+			}
+		]
+	}
+]
+}
+		

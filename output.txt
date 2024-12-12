@@ -1,0 +1,251 @@
+
+esp_rgbww_firmware: Invoking 'all' for Esp8266 (debug) architecture
+/opt/Sming/Sming/project.mk:479: Warnung: Das Rezept für das Ziel „OtaNetwork-build“ wird überschrieben
+/opt/Sming/Sming/project.mk:479: Warnung: Das alte Rezept für das Ziel „OtaNetwork-build“ wird ignoriert
+/opt/Sming/Sming/project.mk:479: Warnung: Das Rezept für das Ziel „/opt/Sming/Sming/out/Esp8266/debug/build/OtaNetwork/OtaNetwork-9b8390ba70f6fb6a4d4fd409facfdb0d/OtaNetwork-9b8390ba70f6fb6a4d4fd409facfdb0d“ wird überschrieben
+/opt/Sming/Sming/project.mk:479: Warnung: Das alte Rezept für das Ziel „/opt/Sming/Sming/out/Esp8266/debug/build/OtaNetwork/OtaNetwork-9b8390ba70f6fb6a4d4fd409facfdb0d/OtaNetwork-9b8390ba70f6fb6a4d4fd409facfdb0d“ wird ignoriert
+/opt/Sming/Sming/project.mk:479: Warnung: Das Rezept für das Ziel „OtaNetwork-remove-targets“ wird überschrieben
+/opt/Sming/Sming/project.mk:479: Warnung: Das alte Rezept für das Ziel „OtaNetwork-remove-targets“ wird ignoriert
+/opt/Sming/Sming/project.mk:479: Warnung: Das Rezept für das Ziel „OtaNetwork-clean“ wird überschrieben
+/opt/Sming/Sming/project.mk:479: Warnung: Das alte Rezept für das Ziel „OtaNetwork-clean“ wird ignoriert
+/opt/Sming/Sming/project.mk:479: Warnung: Das Rezept für das Ziel „RGBWWLed-build“ wird überschrieben
+/opt/Sming/Sming/project.mk:479: Warnung: Das alte Rezept für das Ziel „RGBWWLed-build“ wird ignoriert
+/opt/Sming/Sming/project.mk:479: Warnung: Das Rezept für das Ziel „/opt/Sming/Sming/out/Esp8266/debug/build/RGBWWLed“ wird überschrieben
+/opt/Sming/Sming/project.mk:479: Warnung: Das alte Rezept für das Ziel „/opt/Sming/Sming/out/Esp8266/debug/build/RGBWWLed“ wird ignoriert
+/opt/Sming/Sming/project.mk:479: Warnung: Das Rezept für das Ziel „RGBWWLed-remove-targets“ wird überschrieben
+/opt/Sming/Sming/project.mk:479: Warnung: Das alte Rezept für das Ziel „RGBWWLed-remove-targets“ wird ignoriert
+/opt/Sming/Sming/project.mk:479: Warnung: Das Rezept für das Ziel „RGBWWLed-clean“ wird überschrieben
+/opt/Sming/Sming/project.mk:479: Warnung: Das alte Rezept für das Ziel „RGBWWLed-clean“ wird ignoriert
+make[1]: Verzeichnis „/home/pjakobs/devel/esp_rgbww_firmware“ wird betreten
+/opt/Sming/Sming/project.mk:479: Warnung: Das Rezept für das Ziel „OtaNetwork-build“ wird überschrieben
+/opt/Sming/Sming/project.mk:479: Warnung: Das alte Rezept für das Ziel „OtaNetwork-build“ wird ignoriert
+/opt/Sming/Sming/project.mk:479: Warnung: Das Rezept für das Ziel „/opt/Sming/Sming/out/Esp8266/debug/build/OtaNetwork/OtaNetwork-9b8390ba70f6fb6a4d4fd409facfdb0d/OtaNetwork-9b8390ba70f6fb6a4d4fd409facfdb0d“ wird überschrieben
+/opt/Sming/Sming/project.mk:479: Warnung: Das alte Rezept für das Ziel „/opt/Sming/Sming/out/Esp8266/debug/build/OtaNetwork/OtaNetwork-9b8390ba70f6fb6a4d4fd409facfdb0d/OtaNetwork-9b8390ba70f6fb6a4d4fd409facfdb0d“ wird ignoriert
+/opt/Sming/Sming/project.mk:479: Warnung: Das Rezept für das Ziel „OtaNetwork-remove-targets“ wird überschrieben
+/opt/Sming/Sming/project.mk:479: Warnung: Das alte Rezept für das Ziel „OtaNetwork-remove-targets“ wird ignoriert
+/opt/Sming/Sming/project.mk:479: Warnung: Das Rezept für das Ziel „OtaNetwork-clean“ wird überschrieben
+/opt/Sming/Sming/project.mk:479: Warnung: Das alte Rezept für das Ziel „OtaNetwork-clean“ wird ignoriert
+/opt/Sming/Sming/project.mk:479: Warnung: Das Rezept für das Ziel „RGBWWLed-build“ wird überschrieben
+/opt/Sming/Sming/project.mk:479: Warnung: Das alte Rezept für das Ziel „RGBWWLed-build“ wird ignoriert
+/opt/Sming/Sming/project.mk:479: Warnung: Das Rezept für das Ziel „/opt/Sming/Sming/out/Esp8266/debug/build/RGBWWLed“ wird überschrieben
+/opt/Sming/Sming/project.mk:479: Warnung: Das alte Rezept für das Ziel „/opt/Sming/Sming/out/Esp8266/debug/build/RGBWWLed“ wird ignoriert
+/opt/Sming/Sming/project.mk:479: Warnung: Das Rezept für das Ziel „RGBWWLed-remove-targets“ wird überschrieben
+/opt/Sming/Sming/project.mk:479: Warnung: Das alte Rezept für das Ziel „RGBWWLed-remove-targets“ wird ignoriert
+/opt/Sming/Sming/project.mk:479: Warnung: Das Rezept für das Ziel „RGBWWLed-clean“ wird überschrieben
+/opt/Sming/Sming/project.mk:479: Warnung: Das alte Rezept für das Ziel „RGBWWLed-clean“ wird ignoriert
+
+Building /opt/Sming/Sming/out/Esp8266/debug/lib/clib-MDNS.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp8266/debug/lib/clib-RGBWWLed.a /opt/Sming/Sming/out/Esp8266/debug/lib/clib-RGBWWLed.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp8266/debug/lib/clib-Storage-1325f1cb593ea10b1ba97cb1de3d8181.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp8266/debug/lib/clib-IFS-7d6afb2743ff8456f9ff05b2029f5067.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp8266/debug/lib/clib-LittleFS-b80663a2c17ca3bf3d776b50198f1b3e.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp8266/debug/lib/clib-JsonStreamingParser.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp8266/debug/lib/clib-ConfigDB-fb2360768850019795d384049f3ea1d1.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/Arch/Esp8266/Components/esp8266/sdk/lib/libcrypto.orig.a /opt/Sming/Sming/out/Esp8266/debug/lib/clib-esp8266-e92ce383a1d93c576825dc47f463e4fe.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp8266/debug/lib/clib-crypto.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp8266/debug/lib/clib-ssl-305ccbea31851ff9c0e9c7d5dbc67390.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp8266/debug/lib/clib-http-parser.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp8266/debug/lib/clib-libb64.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp8266/debug/lib/clib-ws_parser.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp8266/debug/lib/clib-mqtt-codec.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp8266/debug/lib/clib-libyuarel.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp8266/debug/lib/clib-esp-open-lwip-305ccbea31851ff9c0e9c7d5dbc67390.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp8266/debug/lib/clib-Network-9b8390ba70f6fb6a4d4fd409facfdb0d.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp8266/debug/tools/esptool2 /opt/Sming/Sming/out/Esp8266/debug/lib/clib-rboot.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp8266/debug/lib/clib-Ota-bcb8c4703eae71d5d05c0a6eec1f7daa.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp8266/debug/lib/clib-OtaNetwork-9b8390ba70f6fb6a4d4fd409facfdb0d.a /opt/Sming/Sming/out/Esp8266/debug/lib/clib-OtaNetwork-9b8390ba70f6fb6a4d4fd409facfdb0d.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /home/pjakobs/devel/esp_rgbww_firmware/out/Esp8266/debug/lib/clib-App-00c349e69b749a57fb65e7c354a5a85b.a
+C+ /home/pjakobs/devel/esp_rgbww_firmware/app/application.cpp
+In file included from /home/pjakobs/devel/esp_rgbww_firmware/Components/RGBWWLed/RGBWWLed.h:44,
+                 from /home/pjakobs/devel/esp_rgbww_firmware/include/RGBWWCtrl.h:53,
+                 from /home/pjakobs/devel/esp_rgbww_firmware/app/application.cpp:34:
+/home/pjakobs/devel/esp_rgbww_firmware/Components/RGBWWLed/RGBWWLedAnimation.h: In member function 'virtual void RGBWWLedAnimation::setSpeed(int)':
+/home/pjakobs/devel/esp_rgbww_firmware/Components/RGBWWLed/RGBWWLedAnimation.h:54:31: warning: unused parameter 'newspeed' [-Wunused-parameter]
+   54 |     virtual void setSpeed(int newspeed) {
+      |                           ~~~~^~~~~~~~
+/home/pjakobs/devel/esp_rgbww_firmware/Components/RGBWWLed/RGBWWLedAnimation.h: In member function 'virtual void RGBWWLedAnimation::setBrightness(int)':
+/home/pjakobs/devel/esp_rgbww_firmware/Components/RGBWWLed/RGBWWLedAnimation.h:64:36: warning: unused parameter 'newbrightness' [-Wunused-parameter]
+   64 |     virtual void setBrightness(int newbrightness) {
+      |                                ~~~~^~~~~~~~~~~~~
+In file included from /home/pjakobs/devel/esp_rgbww_firmware/include/config.h:40,
+                 from /home/pjakobs/devel/esp_rgbww_firmware/include/RGBWWCtrl.h:57,
+                 from /home/pjakobs/devel/esp_rgbww_firmware/app/application.cpp:34:
+/home/pjakobs/devel/esp_rgbww_firmware/out/ConfigDB/app-data.h: At global scope:
+/home/pjakobs/devel/esp_rgbww_firmware/out/ConfigDB/app-data.h:125:51: error: 'None' was not declared in this scope
+  125 |                 ConfigDB::Number s{const_number_t(None)};
+      |                                                   ^~~~
+/home/pjakobs/devel/esp_rgbww_firmware/out/ConfigDB/app-data.h:125:51: note: suggested alternatives:
+In file included from /home/pjakobs/devel/esp_rgbww_firmware/Components/RGBWWLed/RGBWWLed.h:40,
+                 from /home/pjakobs/devel/esp_rgbww_firmware/include/RGBWWCtrl.h:53,
+                 from /home/pjakobs/devel/esp_rgbww_firmware/app/application.cpp:34:
+/home/pjakobs/devel/esp_rgbww_firmware/Components/RGBWWLed/RGBWWTypes.h:217:5: note:   'CtrlChannel::None'
+  217 |     None,
+      |     ^~~~
+In file included from /opt/Sming/Sming/Components/IFS/src/include/IFS/Access.h:25,
+                 from /opt/Sming/Sming/Components/IFS/src/include/IFS/Stat.h:26,
+                 from /opt/Sming/Sming/Components/IFS/src/include/IFS/IFileSystem.h:30,
+                 from /opt/Sming/Sming/Components/IFS/src/include/IFS/FileSystem.h:29,
+                 from /opt/Sming/Sming/Components/IFS/src/include/IFS/Helpers.h:25,
+                 from /opt/Sming/Sming/Core/FileSystem.h:18,
+                 from /opt/Sming/Sming/Core/SmingCore.h:22,
+                 from /opt/Sming/Sming/Wiring/Arduino.h:6,
+                 from /home/pjakobs/devel/esp_rgbww_firmware/Components/RGBWWLed/RGBWWLed.h:38,
+                 from /home/pjakobs/devel/esp_rgbww_firmware/include/RGBWWCtrl.h:53,
+                 from /home/pjakobs/devel/esp_rgbww_firmware/app/application.cpp:34:
+/opt/Sming/Sming/Components/IFS/src/include/IFS/UserRole.h:30:5: note:   'IFS::UserRole::None'
+   30 |  XX(None, -, "No assigned role")                                                                                    \
+      |     ^~~~
+/opt/Sming/Sming/Components/IFS/src/include/IFS/UserRole.h:37:35: note: in definition of macro 'XX'
+   37 | #define XX(_tag, _char, _comment) _tag,
+      |                                   ^~~~
+/opt/Sming/Sming/Components/IFS/src/include/IFS/UserRole.h:38:2: note: in expansion of macro 'IFS_USER_ROLE_MAP'
+   38 |  IFS_USER_ROLE_MAP(XX)
+      |  ^~~~~~~~~~~~~~~~~
+In file included from /home/pjakobs/devel/esp_rgbww_firmware/include/config.h:40,
+                 from /home/pjakobs/devel/esp_rgbww_firmware/include/RGBWWCtrl.h:57,
+                 from /home/pjakobs/devel/esp_rgbww_firmware/app/application.cpp:34:
+/home/pjakobs/devel/esp_rgbww_firmware/out/ConfigDB/app-data.h:125:56: error: could not convert '{<expression error>}' from '<brace-enclosed initializer list>' to 'ConfigDB::Number'
+  125 |                 ConfigDB::Number s{const_number_t(None)};
+      |                                                        ^
+      |                                                        |
+      |                                                        <brace-enclosed initializer list>
+/home/pjakobs/devel/esp_rgbww_firmware/out/ConfigDB/app-data.h:126:51: error: 'None' was not declared in this scope
+  126 |                 ConfigDB::Number v{const_number_t(None)};
+      |                                                   ^~~~
+/home/pjakobs/devel/esp_rgbww_firmware/out/ConfigDB/app-data.h:126:51: note: suggested alternatives:
+In file included from /home/pjakobs/devel/esp_rgbww_firmware/Components/RGBWWLed/RGBWWLed.h:40,
+                 from /home/pjakobs/devel/esp_rgbww_firmware/include/RGBWWCtrl.h:53,
+                 from /home/pjakobs/devel/esp_rgbww_firmware/app/application.cpp:34:
+/home/pjakobs/devel/esp_rgbww_firmware/Components/RGBWWLed/RGBWWTypes.h:217:5: note:   'CtrlChannel::None'
+  217 |     None,
+      |     ^~~~
+In file included from /opt/Sming/Sming/Components/IFS/src/include/IFS/Access.h:25,
+                 from /opt/Sming/Sming/Components/IFS/src/include/IFS/Stat.h:26,
+                 from /opt/Sming/Sming/Components/IFS/src/include/IFS/IFileSystem.h:30,
+                 from /opt/Sming/Sming/Components/IFS/src/include/IFS/FileSystem.h:29,
+                 from /opt/Sming/Sming/Components/IFS/src/include/IFS/Helpers.h:25,
+                 from /opt/Sming/Sming/Core/FileSystem.h:18,
+                 from /opt/Sming/Sming/Core/SmingCore.h:22,
+                 from /opt/Sming/Sming/Wiring/Arduino.h:6,
+                 from /home/pjakobs/devel/esp_rgbww_firmware/Components/RGBWWLed/RGBWWLed.h:38,
+                 from /home/pjakobs/devel/esp_rgbww_firmware/include/RGBWWCtrl.h:53,
+                 from /home/pjakobs/devel/esp_rgbww_firmware/app/application.cpp:34:
+/opt/Sming/Sming/Components/IFS/src/include/IFS/UserRole.h:30:5: note:   'IFS::UserRole::None'
+   30 |  XX(None, -, "No assigned role")                                                                                    \
+      |     ^~~~
+/opt/Sming/Sming/Components/IFS/src/include/IFS/UserRole.h:37:35: note: in definition of macro 'XX'
+   37 | #define XX(_tag, _char, _comment) _tag,
+      |                                   ^~~~
+/opt/Sming/Sming/Components/IFS/src/include/IFS/UserRole.h:38:2: note: in expansion of macro 'IFS_USER_ROLE_MAP'
+   38 |  IFS_USER_ROLE_MAP(XX)
+      |  ^~~~~~~~~~~~~~~~~
+In file included from /home/pjakobs/devel/esp_rgbww_firmware/include/config.h:40,
+                 from /home/pjakobs/devel/esp_rgbww_firmware/include/RGBWWCtrl.h:57,
+                 from /home/pjakobs/devel/esp_rgbww_firmware/app/application.cpp:34:
+/home/pjakobs/devel/esp_rgbww_firmware/out/ConfigDB/app-data.h:126:56: error: could not convert '{<expression error>}' from '<brace-enclosed initializer list>' to 'ConfigDB::Number'
+  126 |                 ConfigDB::Number v{const_number_t(None)};
+      |                                                        ^
+      |                                                        |
+      |                                                        <brace-enclosed initializer list>
+/home/pjakobs/devel/esp_rgbww_firmware/out/ConfigDB/app-data.h:127:51: error: 'None' was not declared in this scope
+  127 |                 ConfigDB::Number h{const_number_t(None)};
+      |                                                   ^~~~
+/home/pjakobs/devel/esp_rgbww_firmware/out/ConfigDB/app-data.h:127:51: note: suggested alternatives:
+In file included from /home/pjakobs/devel/esp_rgbww_firmware/Components/RGBWWLed/RGBWWLed.h:40,
+                 from /home/pjakobs/devel/esp_rgbww_firmware/include/RGBWWCtrl.h:53,
+                 from /home/pjakobs/devel/esp_rgbww_firmware/app/application.cpp:34:
+/home/pjakobs/devel/esp_rgbww_firmware/Components/RGBWWLed/RGBWWTypes.h:217:5: note:   'CtrlChannel::None'
+  217 |     None,
+      |     ^~~~
+In file included from /opt/Sming/Sming/Components/IFS/src/include/IFS/Access.h:25,
+                 from /opt/Sming/Sming/Components/IFS/src/include/IFS/Stat.h:26,
+                 from /opt/Sming/Sming/Components/IFS/src/include/IFS/IFileSystem.h:30,
+                 from /opt/Sming/Sming/Components/IFS/src/include/IFS/FileSystem.h:29,
+                 from /opt/Sming/Sming/Components/IFS/src/include/IFS/Helpers.h:25,
+                 from /opt/Sming/Sming/Core/FileSystem.h:18,
+                 from /opt/Sming/Sming/Core/SmingCore.h:22,
+                 from /opt/Sming/Sming/Wiring/Arduino.h:6,
+                 from /home/pjakobs/devel/esp_rgbww_firmware/Components/RGBWWLed/RGBWWLed.h:38,
+                 from /home/pjakobs/devel/esp_rgbww_firmware/include/RGBWWCtrl.h:53,
+                 from /home/pjakobs/devel/esp_rgbww_firmware/app/application.cpp:34:
+/opt/Sming/Sming/Components/IFS/src/include/IFS/UserRole.h:30:5: note:   'IFS::UserRole::None'
+   30 |  XX(None, -, "No assigned role")                                                                                    \
+      |     ^~~~
+/opt/Sming/Sming/Components/IFS/src/include/IFS/UserRole.h:37:35: note: in definition of macro 'XX'
+   37 | #define XX(_tag, _char, _comment) _tag,
+      |                                   ^~~~
+/opt/Sming/Sming/Components/IFS/src/include/IFS/UserRole.h:38:2: note: in expansion of macro 'IFS_USER_ROLE_MAP'
+   38 |  IFS_USER_ROLE_MAP(XX)
+      |  ^~~~~~~~~~~~~~~~~
+In file included from /home/pjakobs/devel/esp_rgbww_firmware/include/config.h:40,
+                 from /home/pjakobs/devel/esp_rgbww_firmware/include/RGBWWCtrl.h:57,
+                 from /home/pjakobs/devel/esp_rgbww_firmware/app/application.cpp:34:
+/home/pjakobs/devel/esp_rgbww_firmware/out/ConfigDB/app-data.h:127:56: error: could not convert '{<expression error>}' from '<brace-enclosed initializer list>' to 'ConfigDB::Number'
+  127 |                 ConfigDB::Number h{const_number_t(None)};
+      |                                                        ^
+      |                                                        |
+      |                                                        <brace-enclosed initializer list>
+In file included from /home/pjakobs/devel/esp_rgbww_firmware/include/RGBWWCtrl.h:57,
+                 from /home/pjakobs/devel/esp_rgbww_firmware/app/application.cpp:34:
+/home/pjakobs/devel/esp_rgbww_firmware/include/config.h: In function 'void save(bool)':
+/home/pjakobs/devel/esp_rgbww_firmware/include/config.h:50:16: warning: unused parameter 'print' [-Wunused-parameter]
+   50 | void save(bool print = true) {
+      |           ~~~~~^~~~~~~~~~~~
+/home/pjakobs/devel/esp_rgbww_firmware/include/config.h: In function 'void config::initializeConfig(AppConfig&)':
+/home/pjakobs/devel/esp_rgbww_firmware/include/config.h:71:41: warning: unused parameter 'cfg' [-Wunused-parameter]
+   71 | inline void initializeConfig(AppConfig& cfg){
+      |                              ~~~~~~~~~~~^~~
+/home/pjakobs/devel/esp_rgbww_firmware/app/application.cpp: In member function 'void Application::init()':
+/home/pjakobs/devel/esp_rgbww_firmware/app/application.cpp:207:21: warning: unused variable 'bootslot' [-Wunused-variable]
+  207 |     uint8 bootmode, bootslot;
+      |                     ^~~~~~~~
+In file included from /home/pjakobs/devel/esp_rgbww_firmware/include/RGBWWCtrl.h:64,
+                 from /home/pjakobs/devel/esp_rgbww_firmware/app/application.cpp:34:
+/home/pjakobs/devel/esp_rgbww_firmware/include/application.h: At global scope:
+/home/pjakobs/devel/esp_rgbww_firmware/include/application.h:25:20: warning: 'fw_git_date' defined but not used [-Wunused-variable]
+   25 | static const char* fw_git_date = GITDATE;
+      |                    ^~~~~~~~~~~
+make[2]: *** [/opt/Sming/Sming/component-wrapper.mk:181: app/application.o] Fehler 1
+make[1]: *** [/opt/Sming/Sming/project.mk:481: App-build] Fehler 2
+make[1]: Verzeichnis „/home/pjakobs/devel/esp_rgbww_firmware“ wird verlassen
+make: *** [/opt/Sming/Sming/project.mk:26: all] Fehler 2
