@@ -16,8 +16,7 @@ namespace JSON
         bool startElement(const Element& element) override
         {
             debug_i("startElement: %s", element.key);
-            if (std::string(element.key) == "version")
-            {
+            if (F("version") == element.key)                {
                 version = static_cast<uint8_t>(std::stoi(element.value));
                 gotVersion = true;
                 return false;

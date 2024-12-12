@@ -148,7 +148,7 @@ void init()
 	System.onReady(SystemReadyDelegate(&Application::startServices, &app));
 }
 
-uint32_t getVersion(IDataSourceStream& input)
+int32_t getVersion(IDataSourceStream& input)
 {
 	JSON::VersionListener listener;
 	JSON::StaticStreamingParser<128> parser(&listener);
@@ -287,7 +287,7 @@ debug_i("Platform: %s\r\n", SOC);
 
 
 	AppConfig::Hardware hardware(*cfg);
-	debug_i("Application::init - hardware config loaded");
+b	debug_i("Application::init - hardware config loaded");
 	
 	uint32_t currentVersion=hardware.getVersion();
 	{
@@ -356,6 +356,7 @@ debug_i("Platform: %s\r\n", SOC);
 	Serial <<endl;
 	Serial << "#########################################################################################"<<endl;
 	*/
+	debug_i("start network init");
 	// initialize networking
 	network.init();
 	debug_i("network initizalized, ssid: %s", WifiStation.getSSID().c_str());
