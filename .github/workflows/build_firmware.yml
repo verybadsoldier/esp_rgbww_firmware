@@ -5,6 +5,9 @@ on:
     workflows: ["Build and Deploy Quasar App"]
     types:
       - completed
+  push:
+    branches:
+      - develop
 
 jobs:
   setup:
@@ -19,7 +22,7 @@ jobs:
 
       - name: Install Sming framework
         run: |
-          git clone https://github.com/SmingHub/Sming.git $HOME/Sming
+          git clone --branch develop https://github.com/SmingHub/Sming.git $HOME/Sming
           export SMING_HOME=$HOME/Sming
 
       - name: Install ESP8266 and ESP32 toolchains
