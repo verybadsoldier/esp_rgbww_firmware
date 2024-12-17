@@ -1,51 +1,195 @@
+#!/bin/bash
 
-BASE_URL=http://lightinator.de
-FW_VERSION=$(git describe --abbrev=4 --dirty --always --tags)
-WEBAPP_VERSION=$(cat ./spiffs/VERSION)
-WEBROOT=~/nginx/html
-
-cat <<EOF > version.json
-{
-	"rom":
-	{
-		"fw_version":"$FW_VERSION",
-		"url":"$BASE_URL/Esp8266/v1/rom0.bin"
-	},
-	"spiffs":
-	{
-    "webapp_version":"0.3.3",
-    "url":"http://rgbww.dronezone.de/testing/spiff_rom.bin"
-	},
-	"firmware":
-	[
-		{
-			"soc":"Esp8266",
-			"files":
-			{
-				"rom":
-				{
-					"fw_version":"$FW_VERSION",
-					"url":"$BASE_URL/Esp8266/v1/rom0.bin"
-				}
-			}
-		},
-		{
-			"soc":"Esp32",
-			"files":
-			{
-				"rom":
-				{
-					"fw_version":"$FW_VERSION",
-					"url":"$BASE_URL/Esp32/v2/rom0.bin"
-				}
-			}	
-		}
-	]
+# Function to stash changes if there are uncommitted changes
+stash_changes() {
+    if [ -n "$(git status --porcelain)" ]; then
+        echo "Stashing uncommitted changes..."
+        git stash push -m "Auto-stash before build"
+        STASHED=true
+    else
+        STASHED=false
+    fi
 }
 
-EOF
+# Function to unstash changes if they were stashed
+unstash_changes() {
+    if [ "$STASHED" = true ]; then
+        echo "Unstashing changes..."
+        git stash pop
+    fi
+}
+
+# Function to build firmware
+build_firmware() {
+    local soc=$1
+    local release=$2
+    local branch=$3
+    
+    if [ "$branch" == "stable" ]; then
+        git checkout master
+    else
+        git checkout develop
+    fi
+    
+    stash_changes
+    
+    if [ "$soc" == "esp8266" ]; then
+        make -j8 SMING_ARCH=Esp8266 SMING_RELEASE=$release COM_SPEED=1152000
+    else
+        make -j8 SMING_SOC=$soc SMING_RELEASE=$release COM_SPEED=1152000
+    fi
+    
+    unstash_changes
+}
+
+# Function to add firmware entry
+add_firmware_entry() {
+    local soc=$1
+    local type=$2
+    local branch=$3
+    local url=$4
+    
+    json=$(echo "$json" | jq --arg soc "$soc" --arg type "$type" --arg branch "$branch" --arg fw_version "$FW_VERSION" --arg url "$url" '
+        .firmware += [{
+            soc: $soc,
+            type: $type,
+            branch: $branch,
+            fw_version: $fw_version,
+            files: {
+                rom: {
+                    url: $url
+                }
+            }
+        }]
+    ')
+}
+
+# Function to add default firmware and SPIFFS entry
+add_default_entries() {
+    json=$(echo "$json" | jq --arg fw_version "$FW_VERSION" --arg base_url "$BASE_URL" '
+        .rom = {
+            fw_version: $fw_version,
+            url: "\($base_url)/Esp8266/release/rom0.bin"
+        } |
+        .spiffs = {
+            webapp_version: "0.3.3",
+            url: "http://rgbww.dronezone.de/testing/spiff_rom.bin"
+        }
+    ')
+}
+
+# Function to ensure remote directory exists
+ensure_remote_directory() {
+    local dir=$1
+    if [ "$DRY_RUN" = true ]; then
+        echo "Would create directory: $dir"
+    else
+        ssh $HOST "mkdir -p $dir"
+    fi
+}
+
+# Parse command-line arguments
+BUILD_BRANCHES=("stable" "testing")
+DRY_RUN=false
+NO_REBUILD=false
+
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --stable) BUILD_BRANCHES=("stable") ;;
+        --testing) BUILD_BRANCHES=("testing") ;;
+        --dry-run) DRY_RUN=true ;;
+        --norebuild) NO_REBUILD=true ;;
+        *) echo "Unknown parameter passed: $1"; exit 1 ;;
+    esac
+    shift
+done
+
+if [ "${#BUILD_BRANCHES[@]}" -eq 0 ]; then
+    # If there was no branch specified, build both
+    BUILD_BRANCHES=("stable" "testing")
+fi
+
+# Main script
+if [ "$NO_REBUILD" = true ]; then
+    echo "Skipping rebuild"
+else
+    SOCS=("esp8266" "esp32" "esp32c3")
+    RELEASES=("0" "1")
+    
+    for soc in "${SOCS[@]}"; do
+        for release in "${RELEASES[@]}"; do
+            for branch in "${BUILD_BRANCHES[@]}"; do
+                echo "build $soc $release $branch"
+                build_firmware $soc $release $branch
+            done
+        done
+    done
+fi
+
+HOST=lightinator.de
+BASE_URL=http://lightinator.de
+FW_VERSION=$(git describe --abbrev=4 --dirty --always --tags)
+WEBAPP_VERSION=$(cat ./WEBAPP/VERSION)
+WEBROOT=~/nginx/html
+
+# Initialize the JSON structure
+json=$(jq -n '{firmware: []}')
+
+# Add default entries
+add_default_entries
+
+# Add firmware entries and ensure remote directories exist
+for soc in "${SOCS[@]}"; do
+    for release in "${RELEASES[@]}"; do
+        for branch in "${BUILD_BRANCHES[@]}"; do
+            type="debug"
+            [ "$release" == "1" ] && type="release"
+            remote_dir="$WEBROOT/$soc/$branch/$type"
+            echo "checking $remote_dir"
+            ensure_remote_directory $remote_dir
+            if [ "$soc" == "esp8266" ]; then
+                url="$BASE_URL/$soc/$branch/$type/rom0.bin"
+                add_firmware_entry $soc $type $branch $url
+            else
+                url="$BASE_URL/$soc/$branch/$type/app.bin"
+                add_firmware_entry $soc $type $branch $url
+            fi
+        done
+    done
+done
+
+# Output the JSON to a file
+echo "$json" > version.json
+
 echo "deploying OTA files to webserver"
 cat version.json
-cp version.json $WEBROOT
-cp out/Esp8266/debug/firmware/rom0.bin $WEBROOT/Esp8266/v1
+if [ "$DRY_RUN" = true ]; then
+    echo "Would copy version.json to $HOST:$WEBROOT"
+else
+    scp version.json $HOST:$WEBROOT
+fi
 
+# Deploy firmware files
+for soc in "${SOCS[@]}"; do
+    for release in "${RELEASES[@]}"; do
+        for branch in "${BUILD_BRANCHES[@]}"; do
+            type="debug"
+            [ "$release" == "1" ] && type="release"
+            remote_dir="$WEBROOT/$soc/$branch/$type"
+            echo "$soc $branch $type"
+            if [ "$soc" == "esp8266" ]; then
+                if [ "$DRY_RUN" = true ]; then
+                    echo "Would copy out/$soc/$type/firmware/rom0.bin to $HOST:$remote_dir/"
+                else
+                    scp out/$soc/$type/firmware/rom0.bin $HOST:$remote_dir/
+                fi
+            else
+                if [ "$DRY_RUN" = true ]; then
+                    echo "Would copy out/$soc/$type/firmware/app.bin to $HOST:$remote_dir/"
+                else
+                    scp out/$soc/$type/firmware/app.bin $HOST:$remote_dir/
+                fi
+            fi
+        done
+    done
+done

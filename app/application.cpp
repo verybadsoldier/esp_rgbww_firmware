@@ -287,7 +287,7 @@ debug_i("Platform: %s\r\n", SOC);
 
 
 	AppConfig::Hardware hardware(*cfg);
-b	debug_i("Application::init - hardware config loaded");
+	debug_i("Application::init - hardware config loaded");
 	
 	uint32_t currentVersion=hardware.getVersion();
 	{
