@@ -80,7 +80,7 @@ jobs:
           SMING_SOC: ${{ matrix.soc }}
           SMING_RELEASE: ${{ matrix.release }}
         run: |
-          ls $SMING_HOME/
+          ls /tmp/
           source $SMING_HOME/../Tools/export.sh
           make
 
