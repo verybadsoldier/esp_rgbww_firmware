@@ -24,20 +24,31 @@ jobs:
           cd /tmp
           git clone https://github.com/SmingHub/Sming.git
           cd Sming/Sming
+          git checkout develop
           export SMING_HOME=$(pwd)
           ../Tools/install.sh all
 
       - name: Download SPA files artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: spa-files
-          path: ./webapp
+        run: |
+          curl -H "Authorization: token ${{ pages_token }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -o spa-files.zip \
+            -L "$(curl -H "Authorization: token ${{ pages_token }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/pljakobs/esp_rgb_webapp2/actions/artifacts | \
+            jq -r '.artifacts[] | select(.name=="spa-files") | .archive_download_url')"
+          unzip spa-files.zip -d ./webapp
 
       - name: Download fileList.h artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: fileList.h
-          path: ./include
+        run: |
+          curl -H "Authorization: token ${{ pages_token }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -o fileList.h.zip \
+            -L "$(curl -H "Authorization: token ${{ pages_token }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/pljakobs/esp_rgb_webapp2/actions/artifacts | \
+            jq -r '.artifacts[] | select(.name=="fileList.h") | .archive_download_url')"
+          unzip fileList.h.zip -d ./include
 
       - name: Check Coding Style
         env:
@@ -74,7 +85,12 @@ jobs:
           echo "<html><body><h1>Download Firmware Artifacts</h1><ul>" > dist/download/index.html
           for soc in esp8266 esp32 esp32c3; do
             for release in 0 1; do
-              echo "<li><a href='firmware-${soc}-${release}.zip'>Download firmware for ${soc} release ${release}</a></li>" >> dist/download/index.html
+              if [ $release -eq 1 ]; then
+                type="release"
+              else
+                type="debug"
+              fi
+              echo "<li><a href='firmware-${soc}-${release}.zip'>Download firmware for ${soc} (${type})</a></li>" >> dist/download/index.html
             done
           done
           echo "</ul></body></html>" >> dist/download/index.html
