@@ -63,7 +63,7 @@ jobs:
           make
 
       - name: Upload firmware artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: firmware-${{ matrix.soc }}-${{ matrix.release }}
           path: out/${{ matrix.soc }}/release/firmware/
