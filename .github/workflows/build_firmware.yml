@@ -28,13 +28,13 @@ jobs:
           ../Tools/install.sh all
 
       - name: Download SPA files artifact
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: spa-files
           path: ./webapp
 
       - name: Download fileList.h artifact
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: fileList.h
           path: ./include
