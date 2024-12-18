@@ -39,7 +39,8 @@ jobs:
           cd Sming/Sming
           git checkout develop
           export SMING_HOME=$(pwd)
-          ../Tools/install.sh all
+          ../Tools/install.sh Esp8266
+          ../Tools/install.sh Esp8266
 
       - name: Cache Node Modules
         uses: actions/cache@v3
