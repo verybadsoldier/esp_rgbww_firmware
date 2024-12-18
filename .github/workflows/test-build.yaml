@@ -1,0 +1,114 @@
+name: Application CI (no cache)
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [develop]
+  repository_dispatch:
+    types: [frontend-build-completed]
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          ref: develop
+          
+      - name: Install Sming Framework
+        run: |
+          cd /tmp
+          git clone https://github.com/SmingHub/Sming.git
+          cd Sming/Sming
+          git checkout develop
+          export SMING_HOME=$(pwd)
+          ../Tools/install.sh Esp8266
+          ../Tools/install.sh Esp32
+
+      - name: Get Latest Successful Workflow Run
+        id: get_run
+        run: |
+          latest_run_id=$(curl -s -H "Authorization: token ${{ secrets.artifact_download_token }}" \
+            "https://api.github.com/repos/pljakobs/esp_rgb_webapp2/actions/runs?status=success&branch=devel" | \
+            jq -r '.workflow_runs[0].id')
+          echo "latest_run_id=$latest_run_id" >> $GITHUB_ENV
+
+      - name: Download fileList.h artifact
+        run: |
+          if [ -f ./include/fileList.h ]; then
+            rm ./include/fileList.h
+          fi
+          artifact_url=$(curl -s -H "Authorization: token ${{ secrets.artifact_download_token }}" \
+            "https://api.github.com/repos/pljakobs/esp_rgb_webapp2/actions/runs/${{ env.latest_run_id }}/artifacts" | \
+            jq -r '.artifacts[] | select(.name=="fileList.h") | .archive_download_url')
+          curl -L -o fileList.h.zip -H "Authorization: token ${{ secrets.artifact_download_token }}" "$artifact_url"
+          unzip fileList.h.zip -d ./include
+
+      - name: Download webapp files artifact
+        run: |
+          if [ -d ./webapp ]; then
+            rm -rf ./webapp
+            mkdir .webapp
+          fi
+          artifact_url=$(curl -s -H "Authorization: token ${{ secrets.artifact_download_token }}" \
+            "https://api.github.com/repos/pljakobs/esp_rgb_webapp2/actions/runs/${{ env.latest_run_id }}/artifacts" | \
+            jq -r '.artifacts[] | select(.name=="spa-files") | .archive_download_url')
+          curl -L -o spa-files.zip -H "Authorization: token ${{ secrets.artifact_download_token }}" "$artifact_url"
+          unzip spa-files.zip -d ./webapp
+
+  build:
+    needs: setup
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        soc: [esp8266, esp32, esp32c3]
+        release: [0, 1]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Sming Environment
+        run: |
+          export SMING_HOME=/tmp/Sming/Sming
+
+      - name: Compile Application
+        env:
+          SMING_HOME: /tmp/Sming/Sming
+          SMING_SOC: ${{ matrix.soc }}
+          SMING_RELEASE: ${{ matrix.release }}
+        run: |
+          source $SMING_HOME/../Tools/export.sh
+          make
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ matrix.soc }}-${{ matrix.release }}
+          path: out/${{ matrix.soc }}/release/firmware/
+
+      - name: Create download page
+        run: |
+          mkdir -p dist/download
+          echo "<html><body><h1>Download Firmware Artifacts</h1><ul>" > dist/download/index.html
+          for soc in esp8266 esp32 esp32c3; do
+            for release in 0 1; do
+              if [ $release -eq 1 ]; then
+                type="release"
+              else
+                type="debug"
+              fi
+              echo "<li><a href='firmware-${soc}-${release}.zip'>Download firmware for ${soc} (${type})</a></li>" >> dist/download/index.html
+            done
+          done
+          echo "</ul></body></html>" >> dist/download/index.html
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          personal_token: ${{ secrets.pages_token }}
+          publish_dir: ./dist/download
+          publish_branch: gh-pages
+          force_orphan: true
