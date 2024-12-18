@@ -9,12 +9,8 @@ on:
     types: [frontend-build-completed]
 
 jobs:
-  build:
+  setup:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        soc: [esp8266, esp32, esp32c3]
-        release: [0, 1]
 
     steps:
       - uses: actions/checkout@v2
@@ -27,7 +23,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-sming-
 
-      - name: chache /opt directory
+      - name: Cache /opt Directory
         uses: actions/cache@v3
         with:
           path: /opt
@@ -43,8 +39,15 @@ jobs:
           cd Sming/Sming
           git checkout develop
           export SMING_HOME=$(pwd)
-          ../Tools/install.sh Esp32
-          ../Tools/install.sh Esp8266
+          ../Tools/install.sh all
+
+      - name: Cache Node Modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
       - name: Download SPA files artifact
         uses: actions/download-artifact@v4
@@ -52,7 +55,7 @@ jobs:
           name: spa-files
           path: ./webapp
           repository: pljakobs/esp_rgb_webapp2
-          github-token: ${{ secrets.artifact_download_token }}
+          github_token: ${{ secrets.artifact_download_token }}
 
       - name: Download fileList.h artifact
         uses: actions/download-artifact@v4
@@ -60,7 +63,7 @@ jobs:
           name: fileList.h
           path: ./include
           repository: pljakobs/esp_rgb_webapp2
-          github-token: ${{ secrets.artifact_download_token }}
+          github_token: ${{ secrets.artifact_download_token }}
 
       - name: Check Coding Style
         env:
@@ -75,6 +78,21 @@ jobs:
             echo "$DIFFS"
             exit 1
           fi
+
+  build:
+    needs: setup
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        soc: [esp8266, esp32, esp32c3]
+        release: [0, 1]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Sming Environment
+        run: |
+          export SMING_HOME=/tmp/Sming/Sming
 
       - name: Compile Application
         env:
