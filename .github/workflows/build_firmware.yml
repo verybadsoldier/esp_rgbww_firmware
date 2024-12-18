@@ -19,7 +19,16 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Cache Sming Framework
+        uses: actions/cache@v3
+        with:
+          path: /tmp/Sming
+          key: ${{ runner.os }}-sming-${{ hashFiles('**/Sming/**') }}
+          restore-keys: |
+            ${{ runner.os }}-sming-
+
       - name: Install Sming Framework
+        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           cd /tmp
           git clone https://github.com/SmingHub/Sming.git
@@ -28,27 +37,29 @@ jobs:
           export SMING_HOME=$(pwd)
           ../Tools/install.sh all
 
+      - name: Cache Node Modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
       - name: Download SPA files artifact
-        run: |
-          curl -H "Authorization: token ${{ secrets.pages_token }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            -o spa-files.zip \
-            -L "$(curl -H "Authorization: token ${{ secrets.pages_token }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/pljakobs/esp_rgb_webapp2/actions/artifacts | \
-            jq -r '.artifacts[] | select(.name=="spa-files") | .archive_download_url')"
-          unzip spa-files.zip -d ./webapp
+        uses: actions/download-artifact@v4
+        with:
+          name: spa-files
+          path: ./webapp
+          repository: pljakobs/esp_rgb_webapp2
+          github_token: ${{ secrets.artifact_download_token }}
 
       - name: Download fileList.h artifact
-        run: |
-          curl -H "Authorization: token ${{ secrets.pages_token }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            -o fileList.h.zip \
-            -L "$(curl -H "Authorization: token ${{ secrets.pages_token }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/pljakobs/esp_rgb_webapp2/actions/artifacts | \
-            jq -r '.artifacts[] | select(.name=="fileList.h") | .archive_download_url')"
-          unzip fileList.h.zip -d ./include
+        uses: actions/download-artifact@v4
+        with:
+          name: fileList.h
+          path: ./include
+          repository: pljakobs/esp_rgb_webapp2
+          github_token: ${{ secrets.artifact_download_token }}
 
       - name: Check Coding Style
         env:
@@ -98,7 +109,7 @@ jobs:
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
-          personal_token: ${{ secrets.secrets.pages_token }}
+          personal_token: ${{ secrets.pages_token }}
           publish_dir: ./dist/download
           publish_branch: gh-pages
           force_orphan: true
