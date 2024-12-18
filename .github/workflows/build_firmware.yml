@@ -27,6 +27,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-sming-
 
+      - name: chache /opt directory
+        uses: actions/cache@v2
+        with:
+          path: /opt
+          key: ${{ runner.os }}-opt-${{ hashFiles('**/Sming/**') }}
+          restore-keys: |
+            ${{ runner.os }}-opt-
+
       - name: Install Sming Framework
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
@@ -35,15 +43,8 @@ jobs:
           cd Sming/Sming
           git checkout develop
           export SMING_HOME=$(pwd)
-          ../Tools/install.sh all
-
-      - name: Cache Node Modules
-        uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+          ../Tools/install.sh Esp32
+          ../Tools/install.sh Esp8266
 
       - name: Download SPA files artifact
         uses: actions/download-artifact@v4
