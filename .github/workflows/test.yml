@@ -33,4 +33,4 @@ jobs:
             "https://api.github.com/repos/pljakobs/esp_rgb_webapp2/actions/runs/${{ env.latest_run_id }}/artifacts" | \
             jq -r '.artifacts[] | select(.name=="fileList.h") | .archive_download_url')
           curl -L -o fileList.h.zip -H "Authorization: token ${{ secrets.artifact_download_token }}" "$artifact_url"
-          unzip fileList.h.zip -d ./include
+          yes|unzip fileList.h.zip -d ./include
