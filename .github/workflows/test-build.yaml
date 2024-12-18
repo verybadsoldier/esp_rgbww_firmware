@@ -20,7 +20,7 @@ jobs:
           
       - name: Install Sming Framework
         run: |
-          cd /tmp
+          cd /opt
           git clone https://github.com/SmingHub/Sming.git
           cd Sming/Sming
           git checkout develop
