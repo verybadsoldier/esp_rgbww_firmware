@@ -72,15 +72,15 @@ jobs:
 
       - name: Set up Sming Environment
         run: |
-          export SMING_HOME=/tmp/Sming
+          export SMING_HOME=/opt/Sming
 
       - name: Compile Application
         env:
-          SMING_HOME: /tmp/Sming/Sming
+          SMING_HOME: /opt/Sming/Sming
           SMING_SOC: ${{ matrix.soc }}
           SMING_RELEASE: ${{ matrix.release }}
         run: |
-          ls /tmp/
+          ls /opt/
           source $SMING_HOME/../Tools/export.sh
           make
 
