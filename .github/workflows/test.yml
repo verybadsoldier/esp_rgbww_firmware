@@ -24,3 +24,4 @@ jobs:
           name: fileList.h
           path: ./include
           repository: pljakobs/esp_rgb_webapp2
+          github-token: ${{ secrets.artifact_download_token }}
