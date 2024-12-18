@@ -1,122 +1,57 @@
-name: Build Firmware
+name: Application CI
 
 on:
-  workflow_run:
-    workflows: ["Build and Deploy Quasar App"]
-    types:
-      - completed
   push:
-    branches:
-      - develop
+    branches: [ develop ]
+  pull_request:
+    branches: [ develop ]
 
 jobs:
-  setup:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Install dependencies
-        run: |
-          echo "Running: Install dependencies"
-          sudo apt-get update && sudo apt-get install -y git wget make
-
-      - name: Install Sming framework
-        run: |
-          echo "Running: Install Sming framework"
-          git clone --branch develop https://github.com/SmingHub/Sming.git $HOME/Sming
-          export SMING_HOME=$HOME/Sming
-
-      - name: Install ESP8266 and ESP32 toolchains
-        run: |
-          echo "Running: Install ESP8266 and ESP32 toolchains"
-          $HOME/Sming/Tools/install.sh esp32
-          $HOME/Sming/Tools/install.sh esp8266
-
-      - name: Cache Sming and toolchains
-        uses: actions/cache@v4
-        with:
-          path: |
-            $HOME/Sming
-            $HOME/.espressif
-          key: ${{ runner.os }}-sming-${{ hashFiles('**/Sming/**') }}
-          restore-keys: |
-            ${{ runner.os }}-sming-
-
-      - name: Clone esp_rgbww_firmware repository
-        run: |
-          echo "Running: Clone esp_rgbww_firmware repository"
-          git clone https://github.com/pljakobs/esp_rgbww_firmware.git
-
-      - name: Download SPA files artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: spa-files
-          path: ./esp_rgbww_firmware/webapp
-
-      - name: Download fileList.h artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: fileList.h
-          path: ./esp_rgbww_firmware/include
-
-      - name: List downloaded files
-        run: |
-          echo "Running: List downloaded files"
-          ls -R esp_rgbww_firmware/webapp && cat esp_rgbww_firmware/include/fileList.h
-
   build:
-    needs: setup
+
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        target: [esp32, esp32c3, esp8266]
-        release: [0, 1]
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Restore Sming and toolchains cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            $HOME/Sming
-            $HOME/.espressif
-          key: ${{ runner.os }}-sming-${{ hashFiles('**/Sming/**') }}
-          restore-keys: |
-            ${{ runner.os }}-sming-
-
-      - name: Set up Sming environment
-        run: |
-          echo "Running: Set up Sming environment"
-          export SMING_HOME=$HOME/Sming
-          $HOME/Sming/Tools/install.sh ${{ matrix.target }}
-
-      - name: Download SPA files artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: spa-files
-          path: ./esp_rgbww_firmware/webapp
-
-      - name: Download fileList.h artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: fileList.h
-          path: ./esp_rgbww_firmware/include
-
-      - name: Build firmware
-        run: |
-          echo "Running: Build firmware"
-          cd esp_rgbww_firmware
-          export SMING_SOC=${{ matrix.target }}
-          export SMING_RELEASE=${{ matrix.release }}
-          make clean
-          make SMING_SOC=${{ matrix.target }} SMING_RELEASE=${{ matrix.release }}
-
-      - name: Upload firmware artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: firmware-${{ matrix.target }}-${{ matrix.release }}
-          path: esp_rgbww_firmware/out/Esp32/esp32/debug/firmware/
+    - uses: actions/checkout@v2
+    - name: Install Sming Framework
+      run: |
+         cd /tmp
+         git clone https://github.com/SmingHub/Sming.git
+         cd Sming/Sming
+         export SMING_HOME=$(pwd)
+         ../Tools/install.sh all
+    - name: Check Coding Style
+      env: 
+        SMING_HOME: /tmp/Sming/Sming
+        SMING_ARCH: Host
+      run: |
+        make cs
+        DIFFS=$(git diff)
+        if [ -n "$DIFFS" ]; then
+          echo "!!! Coding Style issues Found!!!"
+          echo "    Run: 'make cs' to fix them. "
+          echo "$DIFFS"
+          exit 1
+        fi
+    - name: Compile Application for ESP8266
+      env: 
+        SMING_HOME: /tmp/Sming/Sming
+        SMING_ARCH: Esp8266
+      run: |
+        source $SMING_HOME/../Tools/export.sh
+        make
+    - name: Compile Application for Esp32
+      env: 
+        SMING_HOME: /tmp/Sming/Sming
+        SMING_SOC: esp32
+      run: |
+        source $SMING_HOME/../Tools/export.sh
+        make
+        - name: Compile Application for Esp32
+    - name: Compile Application for Esp32
+      env: 
+        SMING_HOME: /tmp/Sming/Sming
+        SMING_SOC: esp32
+      run: |
+        source $SMING_HOME/../Tools/export.sh
+        make
