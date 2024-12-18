@@ -5,7 +5,7 @@ stash_changes() {
     if [ -n "$(git status --porcelain)" ]; then
         echo "Stashing uncommitted changes..."
         git stash push -m "Auto-stash before build"
-        STASHED=true
+        STASHED=true_webapp2/blob/devel/src/components/ControllerConfigCard.vue
     else
         STASHED=false
     fi
@@ -119,6 +119,7 @@ else
     for soc in "${SOCS[@]}"; do
         for release in "${RELEASES[@]}"; do
             for branch in "${BUILD_BRANCHES[@]}"; do
+                echo "build $soc $release $branch"
                 build_firmware $soc $release $branch
             done
         done
