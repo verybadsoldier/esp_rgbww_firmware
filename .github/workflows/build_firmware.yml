@@ -2,56 +2,87 @@ name: Application CI
 
 on:
   push:
-    branches: [ develop ]
+    branches: [develop]
   pull_request:
-    branches: [ develop ]
+    branches: [develop]
+  repository_dispatch:
+    types: [frontend-build-completed]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        soc: [esp8266, esp32, esp32c3]
+        release: [0, 1]
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Install Sming Framework
-      run: |
-         cd /tmp
-         git clone https://github.com/SmingHub/Sming.git
-         cd Sming/Sming
-         export SMING_HOME=$(pwd)
-         ../Tools/install.sh all
-    - name: Check Coding Style
-      env: 
-        SMING_HOME: /tmp/Sming/Sming
-        SMING_ARCH: Host
-      run: |
-        make cs
-        DIFFS=$(git diff)
-        if [ -n "$DIFFS" ]; then
-          echo "!!! Coding Style issues Found!!!"
-          echo "    Run: 'make cs' to fix them. "
-          echo "$DIFFS"
-          exit 1
-        fi
-    - name: Compile Application for ESP8266
-      env: 
-        SMING_HOME: /tmp/Sming/Sming
-        SMING_ARCH: Esp8266
-      run: |
-        source $SMING_HOME/../Tools/export.sh
-        make
-    - name: Compile Application for Esp32
-      env: 
-        SMING_HOME: /tmp/Sming/Sming
-        SMING_SOC: esp32
-      run: |
-        source $SMING_HOME/../Tools/export.sh
-        make
-        - name: Compile Application for Esp32
-    - name: Compile Application for Esp32
-      env: 
-        SMING_HOME: /tmp/Sming/Sming
-        SMING_SOC: esp32
-      run: |
-        source $SMING_HOME/../Tools/export.sh
-        make
+      - uses: actions/checkout@v2
+
+      - name: Install Sming Framework
+        run: |
+          cd /tmp
+          git clone https://github.com/SmingHub/Sming.git
+          cd Sming/Sming
+          export SMING_HOME=$(pwd)
+          ../Tools/install.sh all
+
+      - name: Download SPA files artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: spa-files
+          path: ./webapp
+
+      - name: Download fileList.h artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: fileList.h
+          path: ./include
+
+      - name: Check Coding Style
+        env:
+          SMING_HOME: /tmp/Sming/Sming
+          SMING_ARCH: Host
+        run: |
+          make cs
+          DIFFS=$(git diff)
+          if [ -n "$DIFFS" ]; then
+            echo "!!! Coding Style issues Found!!!"
+            echo "    Run: 'make cs' to fix them. "
+            echo "$DIFFS"
+            exit 1
+          fi
+
+      - name: Compile Application
+        env:
+          SMING_HOME: /tmp/Sming/Sming
+          SMING_SOC: ${{ matrix.soc }}
+          SMING_RELEASE: ${{ matrix.release }}
+        run: |
+          source $SMING_HOME/../Tools/export.sh
+          make
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: firmware-${{ matrix.soc }}-${{ matrix.release }}
+          path: out/${{ matrix.soc }}/release/firmware/
+
+      - name: Create download page
+        run: |
+          mkdir -p dist/download
+          echo "<html><body><h1>Download Firmware Artifacts</h1><ul>" > dist/download/index.html
+          for soc in esp8266 esp32 esp32c3; do
+            for release in 0 1; do
+              echo "<li><a href='firmware-${soc}-${release}.zip'>Download firmware for ${soc} release ${release}</a></li>" >> dist/download/index.html
+            done
+          done
+          echo "</ul></body></html>" >> dist/download/index.html
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          personal_token: ${{ secrets.pages_token }}
+          publish_dir: ./dist/download
+          publish_branch: gh-pages
+          force_orphan: true
