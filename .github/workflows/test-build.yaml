@@ -72,7 +72,7 @@ jobs:
 
       - name: Set up Sming Environment
         run: |
-          export SMING_HOME=/tmp/Sming/Sming
+          export SMING_HOME=/tmp/Sming
 
       - name: Compile Application
         env:
