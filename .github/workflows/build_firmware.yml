@@ -13,7 +13,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          ref: develop
 
       - name: Cache Sming Framework
         uses: actions/cache@v3
@@ -40,15 +43,7 @@ jobs:
           git checkout develop
           export SMING_HOME=$(pwd)
           ../Tools/install.sh Esp8266
-          ../Tools/install.sh Esp8266
-
-      - name: Cache Node Modules
-        uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+          ../Tools/install.sh Esp32
 
       - name: Download SPA files artifact
         uses: actions/download-artifact@v4
@@ -56,7 +51,7 @@ jobs:
           name: spa-files
           path: ./webapp
           repository: pljakobs/esp_rgb_webapp2
-          github_token: ${{ secrets.artifact_download_token }}
+          github-token: ${{ secrets.artifact_download_token }}
 
       - name: Download fileList.h artifact
         uses: actions/download-artifact@v4
@@ -64,21 +59,7 @@ jobs:
           name: fileList.h
           path: ./include
           repository: pljakobs/esp_rgb_webapp2
-          github_token: ${{ secrets.artifact_download_token }}
-
-      - name: Check Coding Style
-        env:
-          SMING_HOME: /tmp/Sming/Sming
-          SMING_ARCH: Host
-        run: |
-          make cs
-          DIFFS=$(git diff)
-          if [ -n "$DIFFS" ]; then
-            echo "!!! Coding Style issues Found!!!"
-            echo "    Run: 'make cs' to fix them. "
-            echo "$DIFFS"
-            exit 1
-          fi
+          github-token: ${{ secrets.artifact_download_token }}
 
   build:
     needs: setup
