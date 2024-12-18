@@ -50,8 +50,8 @@ tflash
 version.json
 
 #ConfigDB directories used for host emulator tests
-app-config
-app-data
+app-config/*
+app-data/*
 # don't include the webapp files, they need to come from the deployment
 webapp/*
 
