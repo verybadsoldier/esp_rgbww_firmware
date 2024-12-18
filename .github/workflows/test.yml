@@ -18,10 +18,18 @@ jobs:
         with:
           ref: develop
 
+      - name: Get Latest Successful Workflow Run
+        id: get_run
+        run: |
+          latest_run_id=$(curl -s -H "Authorization: token ${{ secrets.artifact_download_token }}" \
+            "https://api.github.com/repos/pljakobs/esp_rgb_webapp2/actions/runs?status=success&branch=devel" | \
+            jq -r '.workflow_runs[0].id')
+          echo "latest_run_id=$latest_run_id" >> $GITHUB_ENV
+
       - name: Download fileList.h artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: fileList.h
-          path: ./include
-          repository: pljakobs/esp_rgb_webapp2
-          github-token: ${{ secrets.artifact_download_token }}
+        run: |
+          artifact_url=$(curl -s -H "Authorization: token ${{ secrets.artifact_download_token }}" \
+            "https://api.github.com/repos/pljakobs/esp_rgb_webapp2/actions/runs/${{ env.latest_run_id }}/artifacts" | \
+            jq -r '.artifacts[] | select(.name=="fileList.h") | .archive_download_url')
+          curl -L -o fileList.h.zip -H "Authorization: token ${{ secrets.artifact_download_token }}" "$artifact_url"
+          unzip fileList.h.zip -d ./include
