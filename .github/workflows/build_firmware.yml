@@ -28,7 +28,7 @@ jobs:
             ${{ runner.os }}-sming-
 
       - name: chache /opt directory
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: /opt
           key: ${{ runner.os }}-opt-${{ hashFiles('**/Sming/**') }}
@@ -52,7 +52,7 @@ jobs:
           name: spa-files
           path: ./webapp
           repository: pljakobs/esp_rgb_webapp2
-          github_token: ${{ secrets.artifact_download_token }}
+          github-token: ${{ secrets.artifact_download_token }}
 
       - name: Download fileList.h artifact
         uses: actions/download-artifact@v4
@@ -60,7 +60,7 @@ jobs:
           name: fileList.h
           path: ./include
           repository: pljakobs/esp_rgb_webapp2
-          github_token: ${{ secrets.artifact_download_token }}
+          github-token: ${{ secrets.artifact_download_token }}
 
       - name: Check Coding Style
         env:
