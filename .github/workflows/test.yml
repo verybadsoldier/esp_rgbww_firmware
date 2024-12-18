@@ -28,8 +28,8 @@ jobs:
 
       - name: Download fileList.h artifact
         run: |
-          if [ -f ./include/fileList.h.zip ]; then
-            rm ./include/fileList.h.zip
+          if [ -f ./include/fileList.h ]; then
+            rm ./include/fileList.h
           fi
           artifact_url=$(curl -s -H "Authorization: token ${{ secrets.artifact_download_token }}" \
             "https://api.github.com/repos/pljakobs/esp_rgb_webapp2/actions/runs/${{ env.latest_run_id }}/artifacts" | \
