@@ -72,6 +72,7 @@ jobs:
 
       - name: Set up Sming Environment
         run: |
+          ls /opt
           export SMING_HOME=/opt/Sming
 
       - name: Compile Application
