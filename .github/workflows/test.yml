@@ -1,0 +1,27 @@
+name: Application CI
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [develop]
+  repository_dispatch:
+    types: [frontend-build-completed]
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          ref: develop
+
+      - name: Download fileList.h artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: fileList.h
+          path: ./include
+          repository: pljakobs/esp_rgb_webapp2
+          github-token: ${{ secrets.artifact_download_token }}
