@@ -10,7 +10,8 @@ RUN apt-get -y update \
     apt-get install -y \
     git \
     sudo \
-    tzdata
+    tzdata \
+    python3.8-venv
 
 # ------------------------------------------------------------------------------
 # Fetch Sming and install tools
