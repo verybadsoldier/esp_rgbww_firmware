@@ -18,7 +18,7 @@ RUN apt-get -y update \
 
 ARG SMING_REPO=https://github.com/SmingHub/Sming
 ARG SMING_BRANCH=develop
-ARG INSTALL_ARGS=all
+ARG INSTALL_ARGS="Esp32 Esp8266"
 
 RUN git clone $SMING_REPO -b $SMING_BRANCH /opt/sming
 
