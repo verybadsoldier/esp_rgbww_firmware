@@ -44,8 +44,4 @@ RUN apt-get update && apt-get install -y \
     apt-utils \
     libusb-1.0-0 &&\
     apt autoremove
-RUN mkdir /build
-COPY build.sh /usr/bin 
-COPY prepare.sh /usr/bin
-RUN  chmod +x /usr/bin/build.sh &&\
-     chmod +x /usr/bin/prepare.sh 
+
