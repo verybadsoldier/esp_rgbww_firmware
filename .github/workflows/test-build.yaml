@@ -2,9 +2,9 @@ name: Application CI (no cache)
 
 on:
   push:
-    branches: [develop]
+    branches: []
   pull_request:
-    branches: [develop]
+    branches: []
   repository_dispatch:
     types: [frontend-build-completed]
 
