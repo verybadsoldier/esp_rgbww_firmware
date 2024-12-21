@@ -14,13 +14,16 @@ jobs:
     strategy:
       matrix:
         soc: [esp8266, esp32, esp32c3]
-        release: [0, 1]
+        release: [0, 1]WORKDIR "/opt/sming"
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
         with:
           ref: develop
+
+      - name: synchronize submodules
+        run: git submodule update --init --recursive
 
       - name: pull docker image
         run: |
