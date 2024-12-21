@@ -62,4 +62,4 @@ jobs:
           docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
             -e SMING_SOC=${{ matrix.soc }} -e SMING_RELEASE=${{ matrix.release }} \
             docker.io/pjakobs/sming:latest \
-            bash -c "source /opt/Sming/Tools/export.sh && make SMING_SOC=$SMING_SOC SMING_RELEASE=$SMING_RELEASE"
+            bash -c "source /opt/sming/Tools/export.sh && make SMING_SOC=$SMING_SOC SMING_RELEASE=$SMING_RELEASE"
