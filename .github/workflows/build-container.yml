@@ -31,4 +31,4 @@ jobs:
           context: .
           file: docker/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/sming:latest
+          tags: pjakobs/sming:latest
