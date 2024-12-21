@@ -2,15 +2,19 @@ name: Application CI
 
 on:
   push:
-    branches: []
+    branches: [develop]
   pull_request:
-    branches: []
+    branches: [develop]
   repository_dispatch:
     types: [frontend-build-completed]
 
 jobs:
   setup:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        soc: [esp8266, esp32, esp32c3]
+        release: [0, 1]
 
     steps:
       - name: Checkout Repository
@@ -18,33 +22,10 @@ jobs:
         with:
           ref: develop
 
-      - name: Cache Sming Framework
-        uses: actions/cache@v3
-        with:
-          path: /tmp/Sming
-          key: ${{ runner.os }}-sming-${{ hashFiles('**/Sming/**') }}
-          restore-keys: |
-            ${{ runner.os }}-sming-
-
-      - name: Cache /opt Directory
-        uses: actions/cache@v3
-        with:
-          path: /opt
-          key: ${{ runner.os }}-opt-${{ hashFiles('**/Sming/**') }}
-          restore-keys: |
-            ${{ runner.os }}-opt-
-
-      - name: Install Sming Framework
-        if: steps.cache.outputs.cache-hit != 'true'
+      - name: pull docker image
         run: |
-          cd /tmp
-          git clone https://github.com/SmingHub/Sming.git
-          cd Sming/Sming
-          git checkout develop
-          export SMING_HOME=$(pwd)
-          ../Tools/install.sh Esp8266
-          ../Tools/install.sh Esp32
-
+          docker pull docker.io/pjakobs/sming:latest
+          
       - name: Get Latest Successful Workflow Run
         id: get_run
         run: |
@@ -75,57 +56,10 @@ jobs:
             jq -r '.artifacts[] | select(.name=="spa-files") | .archive_download_url')
           curl -L -o spa-files.zip -H "Authorization: token ${{ secrets.artifact_download_token }}" "$artifact_url"
           unzip spa-files.zip -d ./webapp
-
-  build:
-    needs: setup
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        soc: [esp8266, esp32, esp32c3]
-        release: [0, 1]
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Set up Sming Environment
+      
+      - name: Run Build in Docker Container
         run: |
-          export SMING_HOME=/tmp/Sming/Sming
-
-      - name: Compile Application
-        env:
-          SMING_HOME: /tmp/Sming/Sming
-          SMING_SOC: ${{ matrix.soc }}
-          SMING_RELEASE: ${{ matrix.release }}
-        run: |
-          source $SMING_HOME/../Tools/export.sh
-          make
-
-      - name: Upload firmware artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: firmware-${{ matrix.soc }}-${{ matrix.release }}
-          path: out/${{ matrix.soc }}/release/firmware/
-
-      - name: Create download page
-        run: |
-          mkdir -p dist/download
-          echo "<html><body><h1>Download Firmware Artifacts</h1><ul>" > dist/download/index.html
-          for soc in esp8266 esp32 esp32c3; do
-            for release in 0 1; do
-              if [ $release -eq 1 ]; then
-                type="release"
-              else
-                type="debug"
-              fi
-              echo "<li><a href='firmware-${soc}-${release}.zip'>Download firmware for ${soc} (${type})</a></li>" >> dist/download/index.html
-            done
-          done
-          echo "</ul></body></html>" >> dist/download/index.html
-
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          personal_token: ${{ secrets.pages_token }}
-          publish_dir: ./dist/download
-          publish_branch: gh-pages
-          force_orphan: true
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
+            -e SMING_SOC=${{ matrix.soc }} -e SMING_RELEASE=${{ matrix.release }} \
+            docker.io/pjakobs/sming:latest \
+            bash -c "source /opt/Sming/Tools/export.sh && make SMING_SOC=$SMING_SOC SMING_RELEASE=$SMING_RELEASE"
