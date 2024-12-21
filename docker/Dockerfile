@@ -24,6 +24,8 @@ ARG INSTALL_ARGS="Esp32 Esp8266"
 RUN git clone $SMING_REPO -b $SMING_BRANCH /opt/sming 
 WORKDIR "/opt/sming"
 RUN git submodule update --init --recursive
+WORKDIR "/opt/sming/Sming/samples/Basic_Blink"
+RUN make SMING_SOC=Esp8266
 
 
 RUN Tools/install.sh $INSTALL_ARGS
