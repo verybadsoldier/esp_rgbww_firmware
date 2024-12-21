@@ -32,12 +32,3 @@ jobs:
           file: docker/Dockerfile
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/sming:latest
-
-      - name: Clone Sming repository
-        run: git clone --branch develop https://github.com/SmingHub/Sming.git /opt/Sming
-
-      - name: Install Esp8266
-        run: /opt/Sming/Tools/install.sh Esp8266
-
-      - name: Install Esp32
-        run: /opt/Sming/Tools/install.sh Esp32

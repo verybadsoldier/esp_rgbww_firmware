@@ -1,47 +1,28 @@
-# Use an Ubuntu base image
 FROM ubuntu:20.04
-# Set environment variables to automate tzdata setup
-ENV DEBIAN_FRONTEND=noninteractive
-ENV TZ=Europe/Berlin
 
-# Replace shell with bash so we can source files
-RUN rm /bin/sh && ln -s /bin/bash /bin/sh
+# ------------------------------------------------------------------------------
+# Pre-requisites
+# ------------------------------------------------------------------------------
 
-# Install necessary dependencies
-RUN apt-get update && apt-get install -y \
-    tzdata \
+RUN apt-get -y update \
+    && DEBIAN_FRONTEND=noninteractive \
+    TZ=Europe/London \
+    apt-get install -y \
     git \
-    make \
-    g++ \
-    gperf \
-    binutils \
-    python3 \
-    python3-serial \
-    srecord \
-    bc \
-    xz-utils \
-    flex \
-    bison \
-    libtool-bin \
-    wget \
-    unzip \
-    libncurses-dev \
-    python3-pip \
-    python3-setuptools \
-    python3-wheel \
-    python3-future \
-    cmake \
-    ninja-build \
-    ccache \
-    dfu-util \
     sudo \
-    npm \
-    clang-format \
-    apt-transport-https \
-    ca-certificates \
-    curl \
-    libssl-dev \
-    apt-utils \
-    python3.8-venv \
-    libusb-1.0-0 &&\
-    apt autoremove
+    tzdata
+
+# ------------------------------------------------------------------------------
+# Fetch Sming and install tools
+# ------------------------------------------------------------------------------
+
+ARG SMING_REPO=https://github.com/SmingHub/Sming
+ARG SMING_BRANCH=develop
+ARG INSTALL_ARGS=all
+
+RUN git clone $SMING_REPO -b $SMING_BRANCH /opt/sming
+
+WORKDIR "/opt/sming"
+
+RUN Tools/install.sh $INSTALL_ARGS
+RUN echo ". $(pwd)/Tools/export.sh" >> ~/.bashrc
