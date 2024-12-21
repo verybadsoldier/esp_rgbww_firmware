@@ -9,26 +9,26 @@ on:
     types: [frontend-build-completed]
 
 jobs:
-  setup:
+  build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         soc: [esp8266, esp32, esp32c3]
-        release: [0, 1]WORKDIR "/opt/sming"
+        release: [0, 1]
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
         with:
           ref: develop
+          submodules: true  # Ensure submodules are checked out
 
-      - name: synchronize submodules
+      - name: Synchronize submodules
         run: git submodule update --init --recursive
 
-      - name: pull docker image
-        run: |
-          docker pull docker.io/pjakobs/sming:latest
-          
+      - name: Pull Docker Image
+        run: docker pull docker.io/pjakobs/sming:latest
+
       - name: Get Latest Successful Workflow Run
         id: get_run
         run: |
@@ -52,7 +52,7 @@ jobs:
         run: |
           if [ -d ./webapp ]; then
             rm -rf ./webapp
-            mkdir .webapp
+            mkdir ./webapp
           fi
           artifact_url=$(curl -s -H "Authorization: token ${{ secrets.artifact_download_token }}" \
             "https://api.github.com/repos/pljakobs/esp_rgb_webapp2/actions/runs/${{ env.latest_run_id }}/artifacts" | \
