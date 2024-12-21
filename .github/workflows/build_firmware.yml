@@ -60,6 +60,6 @@ jobs:
       - name: Run Build in Docker Container
         run: |
           docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
-            -e SMING_SOC=${{ matrix.soc }} -e SMING_RELEASE=${{ matrix.release }} \
+            -e SOC=${{ matrix.soc }} -e RELEASE=${{ matrix.release }} \
             docker.io/pjakobs/sming:latest \
-            bash -c "source /opt/sming/Tools/export.sh && make SMING_SOC=$SMING_SOC SMING_RELEASE=$SMING_RELEASE"
+            bash -c "git config --global --add safe.directory /workspace && source /opt/sming/Tools/export.sh && make SMING_SOC=$SOC SMING_RELEASE=$RELEASE"
