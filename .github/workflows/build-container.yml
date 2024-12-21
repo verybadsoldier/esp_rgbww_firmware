@@ -1,8 +1,6 @@
 name: Build Container
 
 on:
-  push:
-    branches: [develop]
   schedule:
     - cron: '0 0 * * *'  # Runs daily at midnight UTC
 
@@ -20,9 +18,9 @@ jobs:
           current_date=$(date +%s)
           difference=$(( (current_date - latest_commit_date) / 86400 ))
           if [ $difference -le 1 ]; then
-            echo "::set-output name=updated::true"
+            echo "updated=true" >> $GITHUB_OUTPUT
           else
-            echo "::set-output name=updated::false"
+            echo "updated=false" >> $GITHUB_OUTPUT
           fi
 
   build:
@@ -48,4 +46,3 @@ jobs:
           context: .
           file: docker/Dockerfile
           push: true
-          tags: pjakobs/sming:latest
