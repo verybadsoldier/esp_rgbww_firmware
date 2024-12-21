@@ -22,9 +22,9 @@ ARG SMING_BRANCH=develop
 ARG INSTALL_ARGS="Esp32 Esp8266"
 
 RUN git clone $SMING_REPO -b $SMING_BRANCH /opt/sming 
+WORKDIR "/opt/sming"
 RUN git submodule update --init --recursive
 
-WORKDIR "/opt/sming"
 
 RUN Tools/install.sh $INSTALL_ARGS
 RUN echo ". $(pwd)/Tools/export.sh" >> ~/.bashrc
