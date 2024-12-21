@@ -15,7 +15,7 @@ jobs:
       - name: Check for updates in sminghub/sming
         id: check
         run: |
-          latest_commit=$(curl -s "https://api.github.com/repos/SmingHub/Sming/commits/develop" | jq -r '.[0].commit.committer.date')
+          latest_commit=$(curl -s "https://api.github.com/repos/SmingHub/Sming/commits/develop" | jq -r '.commit.committer.date')
           latest_commit_date=$(date -d "$latest_commit" +%s)
           current_date=$(date +%s)
           difference=$(( (current_date - latest_commit_date) / 86400 ))
