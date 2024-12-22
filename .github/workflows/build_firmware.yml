@@ -74,7 +74,7 @@ jobs:
         run: |
           docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
             docker.io/pjakobs/sming:latest \
-            bash -c "cp /workspace/out/Esp8266/debug/firmware/partitions.bin /workspace/out/Esp8266/release/firmware/"
+            bash -c "mkdir -p /workspace/out/Esp8266/release/firmware && cp /workspace/out/Esp8266/debug/firmware/partitions.bin /workspace/out/Esp8266/release/firmware/"
 
       - name: Run Build in Docker Container
         run: |
