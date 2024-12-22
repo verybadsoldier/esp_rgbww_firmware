@@ -12,6 +12,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         soc: [esp8266, esp32, esp32c3]
         release: [0, 1]
@@ -73,7 +74,7 @@ jobs:
         run: |
           docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
             docker.io/pjakobs/sming:latest \
-            bash -c "cp /workspace/out/Esp8266/debug/firmware/partmap.bin /workspace/out/Esp8266/release/firmware/"
+            bash -c "cp /workspace/out/Esp8266/debug/firmware/partitions.bin /workspace/out/Esp8266/release/firmware/"
 
       - name: Run Build in Docker Container
         run: |
