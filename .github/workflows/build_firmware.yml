@@ -59,6 +59,15 @@ jobs:
           curl -L -o spa-files.zip -H "Authorization: token ${{ secrets.artifact_download_token }}" "$artifact_url"
           unzip spa-files.zip -d ./webapp
       
+      - name: Build partition map (ESP8266 only)
+        if: ${{ matrix.soc == 'esp8266' }}
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
+            docker.io/pjakobs/sming:latest \
+            bash -c "git config --global --add safe.directory /workspace && \
+               source /opt/Sming/Tools/export.sh && \
+               make partmap-build"
+
       - name: Run Build in Docker Container
         run: |
           docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
