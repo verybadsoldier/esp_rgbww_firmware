@@ -68,6 +68,13 @@ jobs:
                source /opt/Sming/Tools/export.sh && \
                make partmap-build" SMING_SOC=${{ matrix.soc }} SMING_RELEASE=${{ matrix.release }}
 
+      - name: Copy partition map for release build (ESP8266 only)
+        if: ${{ matrix.soc == 'esp8266' && matrix.release == 1 }}
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
+            docker.io/pjakobs/sming:latest \
+            bash -c "cp /workspace/out/Esp8266/debug/firmware/partmap.bin /workspace/out/Esp8266/release/firmware/"
+
       - name: Run Build in Docker Container
         run: |
           docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
