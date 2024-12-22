@@ -64,5 +64,5 @@ jobs:
           docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
             docker.io/pjakobs/sming:latest \
             bash -c "git config --global --add safe.directory /workspace && \
-            source /opt/sming/Tools/export.sh && \
+            source /opt/Sming/Tools/export.sh && \
             make SMING_SOC=${{ matrix.soc }} SMING_RELEASE=${{ matrix.release }}"
