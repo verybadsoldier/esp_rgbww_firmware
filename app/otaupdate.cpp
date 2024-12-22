@@ -470,6 +470,7 @@ bool ApplicationOTA::switchPartitions()
 		app.restart();
 		return true;
 	}
+	return true;
 }
 //#endif
 
