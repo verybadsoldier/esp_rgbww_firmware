@@ -66,7 +66,7 @@ jobs:
             docker.io/pjakobs/sming:latest \
             bash -c "git config --global --add safe.directory /workspace && \
                source /opt/Sming/Tools/export.sh && \
-               make partmap-build"
+               make partmap-build" SMING_SOC=${{ matrix.soc }} SMING_RELEASE=${{ matrix.release }}
 
       - name: Run Build in Docker Container
         run: |
@@ -75,3 +75,29 @@ jobs:
             bash -c "git config --global --add safe.directory /workspace && \
             source /opt/Sming/Tools/export.sh && \
             make SMING_SOC=${{ matrix.soc }} SMING_RELEASE=${{ matrix.release }}"
+
+        # Determine correct artifact path based on matrix.soc and matrix.release
+      - name: Set firmware path
+        id: set_firmware_path
+        run: |
+          if [ "${{ matrix.soc }}" = "esp8266" ] && [ "${{ matrix.release }}" = "0" ]; then
+            echo "path=out/Esp8266/debug/build/app_0.out" >> $GITHUB_OUTPUT
+          elif [ "${{ matrix.soc }}" = "esp8266" ] && [ "${{ matrix.release }}" = "1" ]; then
+            echo "path=out/Esp8266/release/build/app_0.out" >> $GITHUB_OUTPUT
+          elif [ "${{ matrix.soc }}" = "esp32" ] && [ "${{ matrix.release }}" = "0" ]; then
+            echo "path=out/Esp32/debug/firmware/app.bin" >> $GITHUB_OUTPUT
+          elif [ "${{ matrix.soc }}" = "esp32" ] && [ "${{ matrix.release }}" = "1" ]; then
+            echo "path=out/Esp32/release/firmware/app.bin" >> $GITHUB_OUTPUT
+          elif [ "${{ matrix.soc }}" = "esp32c3" ] && [ "${{ matrix.release }}" = "0" ]; then
+            echo "path=out/Esp32/esp32c3/debug/firmware/app.bin" >> $GITHUB_OUTPUT
+          elif [ "${{ matrix.soc }}" = "esp32c3" ] && [ "${{ matrix.release }}" = "1" ]; then
+            echo "path=out/Esp32/esp32c3/release/firmware/app.bin" >> $GITHUB_OUTPUT
+          else
+            echo "path=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: firmware-${{ matrix.soc }}-release-${{ matrix.release }}
+          path: ${{ steps.set_firmware_path.outputs.path }}
