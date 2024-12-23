@@ -9,8 +9,8 @@ on:
   workflow_dispatch:
     inputs:
         someParameter:
-        description: "Optional parameter"
-        required: false
+          description: "Optional parameter"
+          required: false
 jobs:
   get-version:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
@@ -87,72 +87,72 @@ jobs:
           cat <<EOF > firmware.json
           {
             "firmware": [
-            {
-                "soc": "esp8266",
-                "type": "debug",
-                "branch": "testing",
-                "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
-                "files": {
-                "rom": {
-                    "url": "download/esp8266/testing/debug/rom0.bin"
+                {
+                    "soc": "esp8266",
+                    "type": "debug",
+                    "branch": "testing",
+                    "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
+                    "files": {
+                        "rom": {
+                            "url": "download/esp8266/testing/debug/rom0.bin"
+                        }
+                    }
+                },
+                {
+                    "soc": "esp8266",
+                    "type": "release",
+                    "branch": "testing",
+                    "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
+                    "files": {
+                        "rom": {
+                            "url": "download/esp8266/testing/release/rom0.bin"
+                        }
+                    }
+                },
+                {
+                    "soc": "esp32",
+                    "type": "debug",
+                    "branch": "testing",
+                    "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
+                    "files": {
+                        "rom": {
+                            "url": "download/esp32/testing/debug/app.bin"
+                        }
+                    }
+                },
+                {
+                    "soc": "esp32",
+                    "type": "release",
+                    "branch": "testing",
+                    "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
+                    "files": {
+                        "rom": {
+                            "url": "download/esp32/testing/release"
+                        }
+                    }
+                },
+                {
+                    "soc": "esp32c3",
+                    "type": "debug",
+                    "branch": "testing",
+                    "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
+                    "files": {
+                        "rom": {
+                            "url": "download/esp32c3/testing/debug"
+                        }
+                    }
+                },
+                {
+                    "soc": "esp32c3",
+                    "type": "release",
+                    "branch": "testing",
+                    "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
+                    "files": {
+                        "rom": {
+                            "url": "download/esp32c3/testing/release"
+                        }
+                    }
                 }
-                }
-            },
-            {
-                "soc": "esp8266",
-                "type": "release",
-                "branch": "testing",
-                "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
-                "files": {
-                "rom": {
-                    "url": "download/esp8266/testing/release/rom0.bin"
-                }
-                }
-            },
-            {
-                "soc": "esp32",
-                "type": "debug",
-                "branch": "testing",
-                "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
-                "files": {
-                "rom": {
-                    "url": "download/esp32/testing/debug/app.bin"
-                }
-                }
-            },
-            {
-                "soc": "esp32",
-                "type": "release",
-                "branch": "testing",
-                "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
-                "files": {
-                "rom": {
-                    "url": "download/esp32/testing/release"
-                }
-                }
-            },
-            {
-                "soc": "esp32c3",
-                "type": "debug",
-                "branch": "testing",
-                "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
-                "files": {
-                "rom": {
-                    "url": "download/esp32c3/testing/debug"
-                }
-                }
-            },
-            {
-                "soc": "esp32c3",
-                "type": "release",
-                "branch": "testing",
-                "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
-                "files": {
-                "rom": {
-                    "url": "download/esp32c3/testing/release"
-                }
-                }
-            }
             ],
             "rom": {
                 "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
@@ -163,7 +163,7 @@ jobs:
                 "url": "http://rgbww.dronezone.de/testing/spiff_rom.bin"
             }
           }
-        EOF
+          EOF
   
         # Commit and push to gh-pages
       - name: Commit and push changes
