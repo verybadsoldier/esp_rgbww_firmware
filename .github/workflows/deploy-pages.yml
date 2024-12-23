@@ -2,10 +2,8 @@ name: Publish Firmware
 
 on:
     workflow_run:
-        workflows:
-        - build_application  # Must match the name in build_firmware.yml
-        types:
-        - completed
+        workflows: [ "build_application" ] # Must match the name in build_firmware.yml
+        types: [ "completed" ]
 
 jobs:
     get-version:

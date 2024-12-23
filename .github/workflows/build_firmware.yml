@@ -53,10 +53,7 @@ jobs:
           if [ -d ./webapp ]; then
             rm -rf ./webapp
             mkdir ./webapp
-          fi
-          artifact_url=$(curl -s -H "Authorization: token ${{ secrets.artifact_download_token }}" \
-            "https://api.github.com/repos/pljakobs/esp_rgb_webapp2/actions/runs/${{ env.latest_run_id }}/artifacts" | \
-            jq -r '.artifacts[] | select(.name=="spa-files") | .archive_download_url')
+          fioutlect(.name=="spa-files") | .archive_download_url')
           curl -L -o spa-files.zip -H "Authorization: token ${{ secrets.artifact_download_token }}" "$artifact_url"
           unzip spa-files.zip -d ./webapp
       
@@ -89,9 +86,9 @@ jobs:
         id: set_firmware_path
         run: |
           if [ "${{ matrix.soc }}" = "esp8266" ] && [ "${{ matrix.release }}" = "0" ]; then
-            echo "path=out/Esp8266/debug/build/app_0.out" >> $GITHUB_OUTPUT
+            echo "path=out/Esp8266/debug/firmware/rom0.bin" >> $GITHUB_OUTPUT
           elif [ "${{ matrix.soc }}" = "esp8266" ] && [ "${{ matrix.release }}" = "1" ]; then
-            echo "path=out/Esp8266/release/build/app_0.out" >> $GITHUB_OUTPUT
+            echo "path=out/Esp8266/release/firmware/rom0.bin" >> $GITHUB_OUTPUT
           elif [ "${{ matrix.soc }}" = "esp32" ] && [ "${{ matrix.release }}" = "0" ]; then
             echo "path=out/Esp32/esp32/debug/firmware/app.bin" >> $GITHUB_OUTPUT
           elif [ "${{ matrix.soc }}" = "esp32" ] && [ "${{ matrix.release }}" = "1" ]; then
