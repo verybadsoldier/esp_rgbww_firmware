@@ -76,8 +76,6 @@ private:
     void onUpdate(HttpRequest &request, HttpResponse &response);
     void onConnect(HttpRequest &request, HttpResponse &response);
     void onHosts(HttpRequest &request, HttpResponse &response);
-    void onPresets(HttpRequest &request, HttpResponse &response);
-    void onScenes(HttpRequest &request, HttpResponse &response);
     void onPing(HttpRequest &request, HttpResponse &response);
     void onStop(HttpRequest &request, HttpResponse &response);
     void onSkip(HttpRequest &request, HttpResponse &response);
@@ -93,8 +91,7 @@ private:
     void sendApiResponse(HttpResponse &response, JsonObjectStream* stream, HttpStatus code = HTTP_STATUS_OK);
     void sendApiCode(HttpResponse &response, API_CODES code, String msg = "");
 
-    void onUpload(HttpRequest &request, HttpResponse &response);
-    void onObject(HttpRequest &request, HttpResponse &response);
+    //void onUpload(HttpRequest &request, HttpResponse &response);
     bool checkHeap(HttpResponse &response);
 
     static bool isPrintable(String& str);
@@ -105,7 +102,6 @@ private:
 
     void wsConnected(WebsocketConnection& socket);
     void wsDisconnected(WebsocketConnection& socket);
-    String makeId();
 };
 
 #endif // APP_WEBSERVER_H_
