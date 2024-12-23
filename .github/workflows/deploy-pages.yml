@@ -6,6 +6,11 @@ on:
       - "Application CI"  # Must match the name in build_firmware.yml
     types:
       - completed
+  workflow_dispatch:
+    inputs:
+        someParameter:
+        description: "Optional parameter"
+        required: false
 jobs:
   get-version:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
@@ -150,12 +155,12 @@ jobs:
             }
             ],
             "rom": {
-            "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
-            "url": "download/esp8266/testing/release/rom0.bin"
+                "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
+                "url": "download/esp8266/testing/release/rom0.bin"
             },
             "spiffs": {
-            "webapp_version": "0.3.3",
-            "url": "http://rgbww.dronezone.de/testing/spiff_rom.bin"
+                "webapp_version": "0.3.3",
+                "url": "http://rgbww.dronezone.de/testing/spiff_rom.bin"
             }
           }
         EOF
