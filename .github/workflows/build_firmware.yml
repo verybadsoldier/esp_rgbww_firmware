@@ -53,7 +53,10 @@ jobs:
           if [ -d ./webapp ]; then
             rm -rf ./webapp
             mkdir ./webapp
-          fioutlect(.name=="spa-files") | .archive_download_url')
+          fi
+          artifact_url=$(curl -s -H "Authorization: token ${{ secrets.artifact_download_token }}" \
+          "https://api.github.com/repos/pljakobs/esp_rgb_webapp2/actions/runs/${{ env.latest_run_id }}/artifacts" | \
+          jq -r '.artifacts[] | select(.name=="spa-files") | .archive_download_url')
           curl -L -o spa-files.zip -H "Authorization: token ${{ secrets.artifact_download_token }}" "$artifact_url"
           unzip spa-files.zip -d ./webapp
       
