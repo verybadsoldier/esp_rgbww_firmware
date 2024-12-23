@@ -3,7 +3,7 @@ name: Publish Firmware
 on:
     workflow_run:
         workflows:
-        - "Application CI"  # Must match the name in build_firmware.yml
+        - build_application  # Must match the name in build_firmware.yml
         types:
         - completed
 
