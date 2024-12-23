@@ -108,11 +108,11 @@ jobs:
         id: set_artifact_name
         run: |
           if [ "${{ matrix.release }}" = "1" ]; then
-            echo "artifact_name=firmware-${{ matrix.soc }}-release" >> $GITHUB_ENV
+            echo "artifact_name=lightinator-${{ matrix.soc }}-release" >> $GITHUB_OUTPUT
           else
-            echo "artifact_name=firmware-${{ matrix.soc }}-debug" >> $GITHUB_ENV
+            echo "artifact_name=lightinator-${{ matrix.soc }}-debug" >> $GITHUB_OUTPUT
           fi
-
+      
       - name: Upload firmware artifact
         uses: actions/upload-artifact@v3
         with:
