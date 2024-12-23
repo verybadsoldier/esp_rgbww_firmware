@@ -45,37 +45,37 @@ jobs:
 
         # Download each artifact from the build_firmware workflow and move it to the correct path
         - name: Download esp8266 debug
-          uses: actions/download-artifact@v3
+          uses: actions/download-artifact@v4
           with:
             name: lightinator-esp8266-debug
             path: download/esp8266/${{ steps.get_fw_info.outputs.fw_branch }}/debug
 
         - name: Download esp8266 release
-          uses: actions/download-artifact@v3
+          uses: actions/download-artifact@v4
           with:
             name: lightinator-esp8266-release
             path: download/esp8266/${{ steps.get_fw_info.outputs.fw_branch }}/release
 
         - name: Download esp32 debug
-          uses: actions/download-artifact@v3
+          uses: actions/download-artifact@v4
           with:
             name: lightinator-esp32-debug
             path: download/esp32/${{ steps.get_fw_info.outputs.fw_branch }}/debug
 
         - name: Download esp32 release
-          uses: actions/download-artifact@v3
+          uses: actions/download-artifact@v4
           with:
             name: lightinator-esp32-release
             path: download/esp32/${{ steps.get_fw_info.outputs.fw_branch }}/release
 
         - name: Download esp32c3 debug
-          uses: actions/download-artifact@v3
+          uses: actions/download-artifact@v4
           with:
             name: lightinator-esp32c3-debug
             path: download/esp32c3/${{ steps.get_fw_info.outputs.fw_branch }}/debug
 
         - name: Download esp32c3 release
-          uses: actions/download-artifact@v3
+          uses: actions/download-artifact@v4
           with:
             name: lightinator-esp32c3-release
             path: download/esp32c3/${{ steps.get_fw_info.outputs.fw_branch }}/release
