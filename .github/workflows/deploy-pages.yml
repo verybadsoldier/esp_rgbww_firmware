@@ -6,11 +6,7 @@ on:
       - "Application CI"  # Must match the name in build_firmware.yml
     types:
       - completed
-  workflow_dispatch:
-    inputs:
-        someParameter:
-          description: "Optional parameter"
-          required: false
+
 jobs:
   get-version:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
