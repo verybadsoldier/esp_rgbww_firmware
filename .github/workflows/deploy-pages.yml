@@ -24,7 +24,7 @@ jobs:
           echo "fw_version=$version" >> $GITHUB_OUTPUT
           echo "fw_branch=$branch" >> $GITHUB_OUTPUT
 
-  publish:
+publish:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
