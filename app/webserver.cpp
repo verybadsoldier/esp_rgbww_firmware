@@ -1556,7 +1556,7 @@ String ApplicationWebserver::makeId()
      * freely and technically, objects can even be renamed.
      */
 	char ___id[8];
-	sprintf(___id, "%07ld", (uint32_t)micros() % 10000000);
+	//sprintf(___id, "%07ld", (uint32_t)micros() % 10000000);
 	String __id = String(___id);
 	String chipId = String(system_get_chip_id());
 	String objectId = chipId + "-" + __id;
@@ -1571,3 +1571,4 @@ void ApplicationWebserver::setCorsHeaders(HttpResponse& response)
 	response.setAllowCrossDomainOrigin("*");
 	response.setHeader(F("Access-Control-Allow-Headers"), F("Content-Type"));
 }
+ESP8266

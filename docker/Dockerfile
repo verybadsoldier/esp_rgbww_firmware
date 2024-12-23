@@ -36,3 +36,9 @@ RUN echo ". $(pwd)/Tools/export.sh" >> ~/.bashrc
 WORKDIR "/opt/Sming/Sming/"
 RUN make python-requirements 
 RUN make submodules
+
+WORKDIR "/opt/Sming/samples/Basic_WiFi"
+RUN "make SMING_SOC=esp8266"
+RUN "make SMING_SOC=esp32"
+RUN "make SMING_SOC=esp32c3"
+
