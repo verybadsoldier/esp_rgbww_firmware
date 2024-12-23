@@ -104,8 +104,17 @@ jobs:
             echo "path=" >> $GITHUB_OUTPUT
           fi
 
+      - name: Set artifact name
+        id: set_artifact_name
+        run: |
+          if [ "${{ matrix.release }}" = "1" ]; then
+            echo "artifact_name=firmware-${{ matrix.soc }}-release" >> $GITHUB_ENV
+          else
+            echo "artifact_name=firmware-${{ matrix.soc }}-debug" >> $GITHUB_ENV
+          fi
+
       - name: Upload firmware artifact
         uses: actions/upload-artifact@v3
         with:
-          name: firmware-${{ matrix.soc }}-release-${{ matrix.release }}
+          name: ${{ steps.set_artifact_name.outputs.artifact_name }}
           path: ${{ steps.set_firmware_path.outputs.path }}
