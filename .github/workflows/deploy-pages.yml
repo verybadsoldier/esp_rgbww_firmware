@@ -1,6 +1,5 @@
 name: Publish_Firmware
 on:
-    workflow_dispatch:
     workflow_run:
         workflows: [ 'build_application' ] # Must match the name in build_firmware.yml
         types: [ completed ]
