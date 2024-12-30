@@ -1,15 +1,15 @@
 name: Publish_Firmware
 on:
-    workflow_run:
-        workflows: [ 'build_application' ] # Must match the name in build_firmware.yml
-        types: [ completed ]
+  workflow_run:
+    workflows: ["build_application"] # Must match the name in build_firmware.yml
+    types: [completed]
 
 jobs:
-    get-version:
-      runs-on: ubuntu-latest
-      //if: ${{ github.event.workflow_run.conclusion == 'success' }}
+  get-version:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
-      steps:
+    steps:
       - name: Checkout repository
         uses: actions/checkout@v2
 
@@ -21,150 +21,150 @@ jobs:
           echo "fw_version=$version" >> $GITHUB_OUTPUT
           echo "fw_branch=$branch" >> $GITHUB_OUTPUT
 
-    publish:
-        if: ${{ github.event.workflow_run.conclusion == 'success' }}
-        runs-on: ubuntu-latest
+  publish:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
 
-        steps:
-        - name: Checkout gh-pages branch
-          uses: actions/checkout@v2
-          with:
-            ref: gh-pages
+    steps:
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v2
+        with:
+          ref: gh-pages
 
-        - name: Create directories
-          run: |
-            mkdir -p download/esp8266/${{ steps.get_fw_info.outputs.fw_branch }}/debug
-            mkdir -p download/esp8266/${{ steps.get_fw_info.outputs.fw_branch }}/release
-            mkdir -p download/esp32/${{ steps.get_fw_info.outputs.fw_branch }}/debug
-            mkdir -p download/esp32/${{ steps.get_fw_info.outputs.fw_branch }}/release
-            mkdir -p download/esp32c3/${{ steps.get_fw_info.outputs.fw_branch }}/debug
-            mkdir -p download/esp32c3/${{ steps.get_fw_info.outputs.fw_branch }}/release
+      - name: Create directories
+        run: |
+          mkdir -p download/esp8266/${{ steps.get_fw_info.outputs.fw_branch }}/debug
+          mkdir -p download/esp8266/${{ steps.get_fw_info.outputs.fw_branch }}/release
+          mkdir -p download/esp32/${{ steps.get_fw_info.outputs.fw_branch }}/debug
+          mkdir -p download/esp32/${{ steps.get_fw_info.outputs.fw_branch }}/release
+          mkdir -p download/esp32c3/${{ steps.get_fw_info.outputs.fw_branch }}/debug
+          mkdir -p download/esp32c3/${{ steps.get_fw_info.outputs.fw_branch }}/release
 
-        # Download each artifact from the build_firmware workflow and move it to the correct path
-        - name: Download esp8266 debug
-          uses: actions/download-artifact@v4
-          with:
-            name: lightinator-esp8266-debug
-            path: download/esp8266/${{ steps.get_fw_info.outputs.fw_branch }}/debug
+      # Download each artifact from the build_firmware workflow and move it to the correct path
+      - name: Download esp8266 debug
+        uses: actions/download-artifact@v4
+        with:
+          name: lightinator-esp8266-debug
+          path: download/esp8266/${{ steps.get_fw_info.outputs.fw_branch }}/debug
 
-        - name: Download esp8266 release
-          uses: actions/download-artifact@v4
-          with:
-            name: lightinator-esp8266-release
-            path: download/esp8266/${{ steps.get_fw_info.outputs.fw_branch }}/release
+      - name: Download esp8266 release
+        uses: actions/download-artifact@v4
+        with:
+          name: lightinator-esp8266-release
+          path: download/esp8266/${{ steps.get_fw_info.outputs.fw_branch }}/release
 
-        - name: Download esp32 debug
-          uses: actions/download-artifact@v4
-          with:
-            name: lightinator-esp32-debug
-            path: download/esp32/${{ steps.get_fw_info.outputs.fw_branch }}/debug
+      - name: Download esp32 debug
+        uses: actions/download-artifact@v4
+        with:
+          name: lightinator-esp32-debug
+          path: download/esp32/${{ steps.get_fw_info.outputs.fw_branch }}/debug
 
-        - name: Download esp32 release
-          uses: actions/download-artifact@v4
-          with:
-            name: lightinator-esp32-release
-            path: download/esp32/${{ steps.get_fw_info.outputs.fw_branch }}/release
+      - name: Download esp32 release
+        uses: actions/download-artifact@v4
+        with:
+          name: lightinator-esp32-release
+          path: download/esp32/${{ steps.get_fw_info.outputs.fw_branch }}/release
 
-        - name: Download esp32c3 debug
-          uses: actions/download-artifact@v4
-          with:
-            name: lightinator-esp32c3-debug
-            path: download/esp32c3/${{ steps.get_fw_info.outputs.fw_branch }}/debug
+      - name: Download esp32c3 debug
+        uses: actions/download-artifact@v4
+        with:
+          name: lightinator-esp32c3-debug
+          path: download/esp32c3/${{ steps.get_fw_info.outputs.fw_branch }}/debug
 
-        - name: Download esp32c3 release
-          uses: actions/download-artifact@v4
-          with:
-            name: lightinator-esp32c3-release
-            path: download/esp32c3/${{ steps.get_fw_info.outputs.fw_branch }}/release
-        
-        - name: Generate firmware.json
-          run: |
-            cat <<EOF > firmware.json
-            {
-                "firmware": [
-                    {
-                        "soc": "esp8266",
-                        "type": "debug",
-                        "branch": "${{ steps.get_fw_info.outputs.fw_branch }}",
-                        "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
-                        "files": {
-                            "rom": {
-                                "url": "download/esp8266/${{ steps.get_fw_info.outputs.fw_branch }}/debug/rom0.bin"
-                            }
-                        }
-                    },
-                    {
-                        "soc": "esp8266",
-                        "type": "release",
-                        "branch": "${{ steps.get_fw_info.outputs.fw_branch }}",
-                        "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
-                        "files": {
-                            "rom": {
-                                "url": "download/esp8266/${{ steps.get_fw_info.outputs.fw_branch }}/release/rom0.bin"
-                            }
-                        }
-                    },
-                    {
-                        "soc": "esp32",
-                        "type": "debug",
-                        "branch": "${{ steps.get_fw_info.outputs.fw_branch }}",
-                        "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
-                        "files": {
-                            "rom": {
-                                "url": "download/esp32/${{ steps.get_fw_info.outputs.fw_branch }}/debug/app.bin"
-                            }
-                        }
-                    },
-                    {
-                        "soc": "esp32",
-                        "type": "release",
-                        "branch": "${{ steps.get_fw_info.outputs.fw_branch }}",
-                        "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
-                        "files": {
-                            "rom": {
-                                "url": "download/esp32/${{ steps.get_fw_info.outputs.fw_branch }}/release"
-                            }
-                        }
-                    },
-                    {
-                        "soc": "esp32c3",
-                        "type": "debug",
-                        "branch": "${{ steps.get_fw_info.outputs.fw_branch }}",
-                        "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
-                        "files": {
-                            "rom": {
-                                "url": "download/esp32c3/${{ steps.get_fw_info.outputs.fw_branch }}/debug"
-                            }
-                        }
-                    },
-                    {
-                        "soc": "esp32c3",
-                        "type": "release",
-                        "branch": "${{ steps.get_fw_info.outputs.fw_branch }}",
-                        "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
-                        "files": {
-                            "rom": {
-                                "url": "download/esp32c3/${{ steps.get_fw_info.outputs.fw_branch }}/release"
-                            }
-                        }
-                    }
-                ],
-                "rom": {
-                    "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
-                    "url": "download/esp8266/${{ steps.get_fw_info.outputs.fw_branch }}/release/rom0.bin"
-                },
-                "spiffs": {
-                    "webapp_version": "0.3.3",
-                    "url": "http://rgbww.dronezone.de/testing/spiff_rom.bin"
-                }
-            }
-            EOF
-    
-            # Commit and push to gh-pages
-        - name: Commit and push changes
-          run: |
-            git config user.name "GitHub Actions"
-            git config user.email "actions@github.com"
-            git add .
-            git commit -m "Publish firmware artifacts and JSON" || echo "No changes to commit"
-            git push origin gh-pages
+      - name: Download esp32c3 release
+        uses: actions/download-artifact@v4
+        with:
+          name: lightinator-esp32c3-release
+          path: download/esp32c3/${{ steps.get_fw_info.outputs.fw_branch }}/release
+
+      - name: Generate firmware.json
+        run: |
+          cat <<EOF > firmware.json
+          {
+              "firmware": [
+                  {
+                      "soc": "esp8266",
+                      "type": "debug",
+                      "branch": "${{ steps.get_fw_info.outputs.fw_branch }}",
+                      "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
+                      "files": {
+                          "rom": {
+                              "url": "download/esp8266/${{ steps.get_fw_info.outputs.fw_branch }}/debug/rom0.bin"
+                          }
+                      }
+                  },
+                  {
+                      "soc": "esp8266",
+                      "type": "release",
+                      "branch": "${{ steps.get_fw_info.outputs.fw_branch }}",
+                      "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
+                      "files": {
+                          "rom": {
+                              "url": "download/esp8266/${{ steps.get_fw_info.outputs.fw_branch }}/release/rom0.bin"
+                          }
+                      }
+                  },
+                  {
+                      "soc": "esp32",
+                      "type": "debug",
+                      "branch": "${{ steps.get_fw_info.outputs.fw_branch }}",
+                      "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
+                      "files": {
+                          "rom": {
+                              "url": "download/esp32/${{ steps.get_fw_info.outputs.fw_branch }}/debug/app.bin"
+                          }
+                      }
+                  },
+                  {
+                      "soc": "esp32",
+                      "type": "release",
+                      "branch": "${{ steps.get_fw_info.outputs.fw_branch }}",
+                      "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
+                      "files": {
+                          "rom": {
+                              "url": "download/esp32/${{ steps.get_fw_info.outputs.fw_branch }}/release/app.bin"
+                          }
+                      }
+                  },
+                  {
+                      "soc": "esp32c3",
+                      "type": "debug",
+                      "branch": "${{ steps.get_fw_info.outputs.fw_branch }}",
+                      "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
+                      "files": {
+                          "rom": {
+                              "url": "download/esp32c3/${{ steps.get_fw_info.outputs.fw_branch }}/debug/app.bin"
+                          }
+                      }
+                  },
+                  {
+                      "soc": "esp32c3",
+                      "type": "release",
+                      "branch": "${{ steps.get_fw_info.outputs.fw_branch }}",
+                      "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
+                      "files": {
+                          "rom": {
+                              "url": "download/esp32c3/${{ steps.get_fw_info.outputs.fw_branch }}/release/app.bin"
+                          }
+                      }
+                  }
+              ],
+              "rom": {
+                  "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
+                  "url": "download/esp8266/${{ steps.get_fw_info.outputs.fw_branch }}/release/rom0.bin"
+              },
+              "spiffs": {
+                  "webapp_version": "0.3.3",
+                  "url": "http://rgbww.dronezone.de/testing/spiff_rom.bin"
+              }
+          }
+          EOF
+
+          # Commit and push to gh-pages
+      - name: Commit and push changes
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add .
+          git commit -m "Publish firmware artifacts and JSON" || echo "No changes to commit"
+          git push origin gh-pages
