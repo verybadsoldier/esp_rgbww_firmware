@@ -168,4 +168,3 @@ jobs:
           git add .
           git commit -m "Publish firmware artifacts and JSON" || echo "No changes to commit"
           git push origin gh-pages
-mastermaster
