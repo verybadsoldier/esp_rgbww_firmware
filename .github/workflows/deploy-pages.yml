@@ -8,6 +8,8 @@ jobs:
   get-version:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    strategy:
+      fail-fast: false
 
     steps:
       - name: Checkout repository
@@ -31,6 +33,14 @@ jobs:
         with:
           ref: gh-pages
 
+      - name: Get Latest Successful Workflow Run
+        id: get_run
+        run: |
+          latest_run_id=$(curl -s -H "Authorization: token ${{ secrets.artifact_download_token }}" \
+            "https://api.github.com/repos/pljakobs/esp_rgb_webapp2/actions/runs?status=success&branch=devel" | \
+            jq -r '.workflow_runs[]| select(.name=="frontendBuild")|.id'|head -n 1)
+          echo "latest_run_id=$latest_run_id" >> $GITHUB_ENV
+
       - name: Create directories
         run: |
           mkdir -p download/esp8266/${{ steps.get_fw_info.outputs.fw_branch }}/debug
@@ -44,36 +54,42 @@ jobs:
       - name: Download esp8266 debug
         uses: actions/download-artifact@v4
         with:
+          run-id: ${{ steps.get_run.outputs.latest_run_id }}
           name: lightinator-esp8266-debug
           path: download/esp8266/${{ steps.get_fw_info.outputs.fw_branch }}/debug
 
       - name: Download esp8266 release
         uses: actions/download-artifact@v4
         with:
+          run-id: ${{ steps.get_run.outputs.latest_run_id }}
           name: lightinator-esp8266-release
           path: download/esp8266/${{ steps.get_fw_info.outputs.fw_branch }}/release
 
       - name: Download esp32 debug
         uses: actions/download-artifact@v4
         with:
+          run-id: ${{ steps.get_run.outputs.latest_run_id }}
           name: lightinator-esp32-debug
           path: download/esp32/${{ steps.get_fw_info.outputs.fw_branch }}/debug
 
       - name: Download esp32 release
         uses: actions/download-artifact@v4
         with:
+          run-id: ${{ steps.get_run.outputs.latest_run_id }}
           name: lightinator-esp32-release
           path: download/esp32/${{ steps.get_fw_info.outputs.fw_branch }}/release
 
       - name: Download esp32c3 debug
         uses: actions/download-artifact@v4
         with:
+          run-id: ${{ steps.get_run.outputs.latest_run_id }}
           name: lightinator-esp32c3-debug
           path: download/esp32c3/${{ steps.get_fw_info.outputs.fw_branch }}/debug
 
       - name: Download esp32c3 release
         uses: actions/download-artifact@v4
         with:
+          run-id: ${{ steps.get_run.outputs.latest_run_id }}
           name: lightinator-esp32c3-release
           path: download/esp32c3/${{ steps.get_fw_info.outputs.fw_branch }}/release
 
