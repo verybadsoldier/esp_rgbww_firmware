@@ -54,7 +54,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           github-token: ${{ secrets.artifact_download_token }}
-          run-id: ${{ steps.get_run.outputs.latest_run_id }}
+          run-id: ${{ env.latest_run_id }}
           name: lightinator-esp8266-debug
           path: download/esp8266/${{ steps.get_fw_info.outputs.fw_branch }}/debug
 
@@ -62,7 +62,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           github-token: ${{ secrets.artifact_download_token }}
-          run-id: ${{ steps.get_run.outputs.latest_run_id }}
+          run-id: ${{ env.latest_run_id }}
           name: lightinator-esp8266-release
           path: download/esp8266/${{ steps.get_fw_info.outputs.fw_branch }}/release
 
@@ -70,7 +70,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           github-token: ${{ secrets.artifact_download_token }}
-          run-id: ${{ steps.get_run.outputs.latest_run_id }}
+          run-id: ${{ env.latest_run_id }}
           name: lightinator-esp32-debug
           path: download/esp32/${{ steps.get_fw_info.outputs.fw_branch }}/debug
 
@@ -78,7 +78,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           github-token: ${{ secrets.artifact_download_token }}
-          run-id: ${{ steps.get_run.outputs.latest_run_id }}
+          run-id: ${{ env.latest_run_id }}
           name: lightinator-esp32-release
           path: download/esp32/${{ steps.get_fw_info.outputs.fw_branch }}/release
 
@@ -86,7 +86,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           github-token: ${{ secrets.artifact_download_token }}
-          run-id: ${{ steps.get_run.outputs.latest_run_id }}
+          run-id: ${{ env.latest_run_id }}
           name: lightinator-esp32c3-debug
           path: download/esp32c3/${{ steps.get_fw_info.outputs.fw_branch }}/debug
 
@@ -94,7 +94,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           github-token: ${{ secrets.artifact_download_token }}
-          run-id: ${{ steps.get_run.outputs.latest_run_id }}
+          run-id: ${{ env.latest_run_id }}
           name: lightinator-esp32c3-release
           path: download/esp32c3/${{ steps.get_fw_info.outputs.fw_branch }}/release
 
