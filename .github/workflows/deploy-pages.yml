@@ -216,30 +216,3 @@ jobs:
           git add .
           git commit -m "Publish firmware artifacts and JSON" || echo "No changes to commit"
           git push origin gh-pages
-
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.5.3
-        with:
-          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
-
-      - name: configure variables
-        run: |
-          echo "deploy_user=github-deploy" >> $GITHUB_ENV
-          echo "deploy_server=lightinator.de" >> $GITHUB_ENV
-          echo "deploy_path=~/nginx/html" >> $GITHUB_ENV          
-          echo "fw_branch=${{ needs.get-version.outputs.fw_branch }}" >> $GITHUB_ENV
-
-      - name: Add server to known_hosts
-        run: |
-          ssh-keyscan ${{ env.deploy_server }} >> ~/.ssh/known_hosts
-
-      - name: Deploy to External Server
-        run: |
-          scp -r download/esp8266 ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/
-          scp -r download/esp32 ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/
-          scp -r download/esp32c3 ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/
-          scp version.json ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/
-
-      - name: Change ownership of uploaded files
-        run: |
-          ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "chown -R github-deploy:nginx ${{ env.deploy_path }}/*"
