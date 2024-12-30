@@ -125,14 +125,14 @@
  * Transition:
  * 
  * When an lfs aware firmware is first flashed via OTA, the partition scheme has to be changed and existing data has to be copied.
- * The data to copy is rather limited, primarily, it will have to be the .config and .color files. Both should be in RAM once the 
- * system has initialized and thus a true copy may not even be necessary.
+ * The data to copy is rather limited, primarily, it will have to be the .config and .color files. since the new ConfigDB system will come up with an 
+ * empty database, it might be possible to just import the existing .config file. 
  * 
  * The bigger challenge is that, once the file system has been changed, there will be no way back to the oder firmware other than re-flashing it.
  * This means that the other rom partition, not having been updated, is no longer able to run, it will result in a 404 error because it cannot
  * find the webapp (that used to be in the spiffs partition) and it won't find it's configuration, so it will default to an RGB light.
  * This is the identical behaviour to the old "filesystem not mounted" case.
- * One way around this would be to immedieately start another OTA once the first one has completed.
+ * One way around this would be to immediately start another OTA once the first one has completed.
  * 
  * the first OTA to the new layout thus will have to take care of a few extra
  * things like:
@@ -242,8 +242,7 @@ void ApplicationOTA::doSwitch()
 }
 
 /*
-void ApplicationOTA::reset() {
-    debug_i("ApplicationOTA::reset");
+void ApplicationOTA::reset() {reset");
     status = OTASTATUS::OTA_NOT_UPDATING;
     if (otaUpdater)
         delete otaUpdater;

@@ -1,4 +1,4 @@
-name: build_application
+name: firmwareBuild
 
 on:
   push:
@@ -59,7 +59,7 @@ jobs:
           jq -r '.artifacts[] | select(.name=="spa-files") | .archive_download_url')
           curl -L -o spa-files.zip -H "Authorization: token ${{ secrets.artifact_download_token }}" "$artifact_url"
           unzip spa-files.zip -d ./webapp
-      
+
       - name: Build partition map (ESP8266 only)
         if: ${{ matrix.soc == 'esp8266' }}
         run: |
@@ -112,7 +112,7 @@ jobs:
           else
             echo "artifact_name=lightinator-${{ matrix.soc }}-debug" >> $GITHUB_OUTPUT
           fi
-      
+
       - name: Upload firmware artifact
         uses: actions/upload-artifact@v4
         with:
