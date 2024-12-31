@@ -221,3 +221,7 @@ jobs:
           scp -r download/esp32 ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/downloads/
           scp -r download/esp32c3 ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/downloads/
           scp version.json ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/
+
+      - name: Change ownership of uploaded files
+        run: |
+          ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "sudo chown -R github-deploy:nginx ${{ env.deploy_path }}/*"
