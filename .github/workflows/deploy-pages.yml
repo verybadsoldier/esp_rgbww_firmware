@@ -198,3 +198,22 @@ jobs:
           git add .
           git commit -m "Publish firmware artifacts and JSON" || echo "No changes to commit"
           git push origin gh-pages
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
+
+      - name: configure variables
+        run: |
+          echo "deploy_user=github-deploy" >> $GITHUB_ENV
+          echo "deploy_server=lightinator.de" >> $GITHUB_ENV
+          echo "deploy_path=~/nginx/html" >> $GITHUB_ENV          
+          echo "fw_branch=${{ steps.get_fw_info.outputs.fw_branch }}" >> $GITHUB_ENV
+
+      - name: Deploy to External Server
+        run: |
+          scp -r download/esp8266/${{ env.fw_branch }}/* ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/downloads/esp8266/${{ env.fw_branch }}
+          scp -r download/esp32/${{ env.fw_branch }}/* ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/downloads/esp32/${{ env.fw_branch }}
+          scp -r download/esp32c3/${{ env.fw_branch }}/* ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/downloads/esp32c3/${{ env.fw_branch }}
+          scp version.json ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/downloads
