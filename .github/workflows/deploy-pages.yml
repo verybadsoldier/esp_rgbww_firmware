@@ -1,15 +1,13 @@
 name: Publish_Firmware
 on:
   workflow_run:
-    workflows: ["build_application"] # Must match the name in build_firmware.yml
+    workflows: ["build_application"]
     types: [completed]
 
 jobs:
   get-version:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    strategy:
-      fail-fast: false
 
     steps:
       - name: Checkout repository
@@ -20,12 +18,15 @@ jobs:
         run: |
           version=$(git describe --abbrev=4 --dirty --always --tags)
           branch=$(git rev-parse --abbrev-ref HEAD)
-          echo "fw_version=$version" >> $GITHUB_OUTPUT
-          echo "fw_branch=$branch" >> $GITHUB_OUTPUT
+          echo "fw_version=$version" >> $GITHUB_ENV
+          echo "fw_branch=$branch" >> $GITHUB_ENV
+          echo "::set-output name=fw_version::$version"
+          echo "::set-output name=fw_branch::$branch"
 
   publish:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
+    needs: get-version
 
     steps:
       - name: Checkout gh-pages branch
@@ -37,75 +38,66 @@ jobs:
         id: get_run
         run: |
           latest_run_id=$(curl -s -H "Authorization: token ${{ secrets.artifact_download_token }}" \
-            "https://api.github.com/repos/pljakobs/esp_rgbww_firmware/actions/runs?status=success"|jq -r '.workflow_runs[]| select(.name == "build_application")|.id'|head -n 1)
+            "https://api.github.com/repos/pljakobs/esp_rgbww_firmware/actions/runs?status=success" | \
+            jq -r '.workflow_runs[] | select(.name == "build_application") | .id' | head -n 1)
           echo "latest_run_id=$latest_run_id" >> $GITHUB_ENV
 
       - name: Create directories
         run: |
-          mkdir -p download/esp8266/${{ steps.get_fw_info.outputs.fw_branch }}/debug
-          mkdir -p download/esp8266/${{ steps.get_fw_info.outputs.fw_branch }}/release
-          mkdir -p download/esp32/${{ steps.get_fw_info.outputs.fw_branch }}/debug
-          mkdir -p download/esp32/${{ steps.get_fw_info.outputs.fw_branch }}/release
-          mkdir -p download/esp32c3/${{ steps.get_fw_info.outputs.fw_branch }}/debug
-          mkdir -p download/esp32c3/${{ steps.get_fw_info.outputs.fw_branch }}/release
+          mkdir -p download/esp8266/${{ needs.get-version.outputs.fw_branch }}/debug
+          mkdir -p download/esp8266/${{ needs.get-version.outputs.fw_branch }}/release
+          mkdir -p download/esp32/${{ needs.get-version.outputs.fw_branch }}/debug
+          mkdir -p download/esp32/${{ needs.get-version.outputs.fw_branch }}/release
+          mkdir -p download/esp32c3/${{ needs.get-version.outputs.fw_branch }}/debug
+          mkdir -p download/esp32c3/${{ needs.get-version.outputs.fw_branch }}/release
 
-      - name: Create _headers file
-        run: |
-          cat <<EOF > _headers
-          /*
-            Access-Control-Allow-Origin: *
-            Access-Control-Allow-Methods: GET, OPTIONS
-            Access-Control-Allow-Headers: Content-Type
-          EOF
-
-      # Download each artifact from the build_firmware workflow and move it to the correct path
       - name: Download esp8266 debug
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v2
         with:
           github-token: ${{ secrets.artifact_download_token }}
           run-id: ${{ env.latest_run_id }}
           name: lightinator-esp8266-debug
-          path: download/esp8266/${{ steps.get_fw_info.outputs.fw_branch }}/debug
+          path: download/esp8266/${{ needs.get-version.outputs.fw_branch }}/debug
 
       - name: Download esp8266 release
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v2
         with:
           github-token: ${{ secrets.artifact_download_token }}
           run-id: ${{ env.latest_run_id }}
           name: lightinator-esp8266-release
-          path: download/esp8266/${{ steps.get_fw_info.outputs.fw_branch }}/release
+          path: download/esp8266/${{ needs.get-version.outputs.fw_branch }}/release
 
       - name: Download esp32 debug
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v2
         with:
           github-token: ${{ secrets.artifact_download_token }}
           run-id: ${{ env.latest_run_id }}
           name: lightinator-esp32-debug
-          path: download/esp32/${{ steps.get_fw_info.outputs.fw_branch }}/debug
+          path: download/esp32/${{ needs.get-version.outputs.fw_branch }}/debug
 
       - name: Download esp32 release
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v2
         with:
           github-token: ${{ secrets.artifact_download_token }}
           run-id: ${{ env.latest_run_id }}
           name: lightinator-esp32-release
-          path: download/esp32/${{ steps.get_fw_info.outputs.fw_branch }}/release
+          path: download/esp32/${{ needs.get-version.outputs.fw_branch }}/release
 
       - name: Download esp32c3 debug
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v2
         with:
           github-token: ${{ secrets.artifact_download_token }}
           run-id: ${{ env.latest_run_id }}
           name: lightinator-esp32c3-debug
-          path: download/esp32c3/${{ steps.get_fw_info.outputs.fw_branch }}/debug
+          path: download/esp32c3/${{ needs.get-version.outputs.fw_branch }}/debug
 
       - name: Download esp32c3 release
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v2
         with:
           github-token: ${{ secrets.artifact_download_token }}
           run-id: ${{ env.latest_run_id }}
           name: lightinator-esp32c3-release
-          path: download/esp32c3/${{ steps.get_fw_info.outputs.fw_branch }}/release
+          path: download/esp32c3/${{ needs.get-version.outputs.fw_branch }}/release
 
       - name: Generate version.json
         run: |
@@ -115,73 +107,73 @@ jobs:
                   {
                       "soc": "esp8266",
                       "type": "debug",
-                      "branch": "${{ steps.get_fw_info.outputs.fw_branch }}",
-                      "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
+                      "branch": "${{ needs.get-version.outputs.fw_branch }}",
+                      "fw_version": "${{ needs.get-version.outputs.fw_version }}",
                       "files": {
                           "rom": {
-                              "url": "download/esp8266/${{ steps.get_fw_info.outputs.fw_branch }}/debug/rom0.bin"
+                              "url": "download/esp8266/${{ needs.get-version.outputs.fw_branch }}/debug/rom0.bin"
                           }
                       }
                   },
                   {
                       "soc": "esp8266",
                       "type": "release",
-                      "branch": "${{ steps.get_fw_info.outputs.fw_branch }}",
-                      "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
+                      "branch": "${{ needs.get-version.outputs.fw_branch }}",
+                      "fw_version": "${{ needs.get-version.outputs.fw_version }}",
                       "files": {
                           "rom": {
-                              "url": "download/esp8266/${{ steps.get_fw_info.outputs.fw_branch }}/release/rom0.bin"
+                              "url": "download/esp8266/${{ needs.get-version.outputs.fw_branch }}/release/rom0.bin"
                           }
                       }
                   },
                   {
                       "soc": "esp32",
                       "type": "debug",
-                      "branch": "${{ steps.get_fw_info.outputs.fw_branch }}",
-                      "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
+                      "branch": "${{ needs.get-version.outputs.fw_branch }}",
+                      "fw_version": "${{ needs.get-version.outputs.fw_version }}",
                       "files": {
                           "rom": {
-                              "url": "download/esp32/${{ steps.get_fw_info.outputs.fw_branch }}/debug/app.bin"
+                              "url": "download/esp32/${{ needs.get-version.outputs.fw_branch }}/debug/app.bin"
                           }
                       }
                   },
                   {
                       "soc": "esp32",
                       "type": "release",
-                      "branch": "${{ steps.get_fw_info.outputs.fw_branch }}",
-                      "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
+                      "branch": "${{ needs.get-version.outputs.fw_branch }}",
+                      "fw_version": "${{ needs.get-version.outputs.fw_version }}",
                       "files": {
                           "rom": {
-                              "url": "download/esp32/${{ steps.get_fw_info.outputs.fw_branch }}/release/app.bin"
+                              "url": "download/esp32/${{ needs.get-version.outputs.fw_branch }}/release/app.bin"
                           }
                       }
                   },
                   {
                       "soc": "esp32c3",
                       "type": "debug",
-                      "branch": "${{ steps.get_fw_info.outputs.fw_branch }}",
-                      "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
+                      "branch": "${{ needs.get-version.outputs.fw_branch }}",
+                      "fw_version": "${{ needs.get-version.outputs.fw_version }}",
                       "files": {
                           "rom": {
-                              "url": "download/esp32c3/${{ steps.get_fw_info.outputs.fw_branch }}/debug/app.bin"
+                              "url": "download/esp32c3/${{ needs.get-version.outputs.fw_branch }}/debug/app.bin"
                           }
                       }
                   },
                   {
                       "soc": "esp32c3",
                       "type": "release",
-                      "branch": "${{ steps.get_fw_info.outputs.fw_branch }}",
-                      "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
+                      "branch": "${{ needs.get-version.outputs.fw_branch }}",
+                      "fw_version": "${{ needs.get-version.outputs.fw_version }}",
                       "files": {
                           "rom": {
-                              "url": "download/esp32c3/${{ steps.get_fw_info.outputs.fw_branch }}/release/app.bin"
+                              "url": "download/esp32c3/${{ needs.get-version.outputs.fw_branch }}/release/app.bin"
                           }
                       }
                   }
               ],
               "rom": {
-                  "fw_version": "${{ steps.get_fw_version.outputs.fw_version }}",
-                  "url": "download/esp8266/${{ steps.get_fw_info.outputs.fw_branch }}/release/rom0.bin"
+                  "fw_version": "${{ needs.get-version.outputs.fw_version }}",
+                  "url": "download/esp8266/${{ needs.get-version.outputs.fw_branch }}/release/rom0.bin"
               },
               "spiffs": {
                   "webapp_version": "0.3.3",
@@ -190,7 +182,6 @@ jobs:
           }
           EOF
 
-          # Commit and push to gh-pages
       - name: Commit and push changes
         run: |
           git config user.name "GitHub Actions"
@@ -209,7 +200,7 @@ jobs:
           echo "deploy_user=github-deploy" >> $GITHUB_ENV
           echo "deploy_server=lightinator.de" >> $GITHUB_ENV
           echo "deploy_path=~/nginx/html" >> $GITHUB_ENV          
-          echo "fw_branch=${{ steps.get_fw_info.outputs.fw_branch }}" >> $GITHUB_ENV
+          echo "fw_branch=${{ needs.get-version.outputs.fw_branch }}" >> $GITHUB_ENV
 
       - name: Add server to known_hosts
         run: |
@@ -224,4 +215,4 @@ jobs:
 
       - name: Change ownership of uploaded files
         run: |
-          ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "sudo chown -R github-deploy:nginx ${{ env.deploy_path }}/*"
+          ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "chown -R github-deploy:nginx ${{ env.deploy_path }}/*"
