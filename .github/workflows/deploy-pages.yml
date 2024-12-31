@@ -49,6 +49,15 @@ jobs:
           mkdir -p download/esp32c3/${{ steps.get_fw_info.outputs.fw_branch }}/debug
           mkdir -p download/esp32c3/${{ steps.get_fw_info.outputs.fw_branch }}/release
 
+      - name: Create _headers file
+        run: |
+          cat <<EOF > _headers
+          /*
+            Access-Control-Allow-Origin: *
+            Access-Control-Allow-Methods: GET, OPTIONS
+            Access-Control-Allow-Headers: Content-Type
+          EOF
+
       # Download each artifact from the build_firmware workflow and move it to the correct path
       - name: Download esp8266 debug
         uses: actions/download-artifact@v4
