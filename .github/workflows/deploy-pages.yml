@@ -107,9 +107,9 @@ jobs:
           name: lightinator-esp32c3-release
           path: download/esp32c3/${{ steps.get_fw_info.outputs.fw_branch }}/release
 
-      - name: Generate firmware.json
+      - name: Generate version.json
         run: |
-          cat <<EOF > firmware.json
+          cat <<EOF > version.json
           {
               "firmware": [
                   {
