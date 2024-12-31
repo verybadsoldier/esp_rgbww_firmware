@@ -216,4 +216,4 @@ jobs:
           scp -r download/esp8266/${{ env.fw_branch }}/* ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/downloads/esp8266/${{ env.fw_branch }}
           scp -r download/esp32/${{ env.fw_branch }}/* ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/downloads/esp32/${{ env.fw_branch }}
           scp -r download/esp32c3/${{ env.fw_branch }}/* ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/downloads/esp32c3/${{ env.fw_branch }}
-          scp version.json ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/downloads
+          scp version.json ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/
