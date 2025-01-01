@@ -20,8 +20,8 @@ jobs:
           branch=$(git rev-parse --abbrev-ref HEAD)
           echo "fw_version=$version" >> $GITHUB_ENV
           echo "fw_branch=$branch" >> $GITHUB_ENV
-          echo "::set-output name=fw_version::$version"
-          echo "::set-output name=fw_branch::$branch"
+          echo "fw_version=$version" >> $GITHUB_OUTPUT
+          echo "fw_branch=$branch" >> $GITHUB_OUTPUT
 
   publish:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
@@ -159,7 +159,8 @@ jobs:
                   },
                   {
                       "soc": "esp32c3",
-                      "type": "release",downloadtputs.fw_branch }}",
+                      "type": "release",
+                      "branch": "${{ needs.get-version.outputs.fw_branch }}",
                       "fw_version": "${{ needs.get-version.outputs.fw_version }}",
                       "files": {
                           "rom": {
