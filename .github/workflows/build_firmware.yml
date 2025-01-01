@@ -82,6 +82,7 @@ jobs:
             docker.io/pjakobs/sming:latest \
             bash -c "git config --global --add safe.directory /workspace && \
             source /opt/Sming/Tools/export.sh && \
+            make configdb-rebuild && \
             make SMING_SOC=${{ matrix.soc }} SMING_RELEASE=${{ matrix.release }} DISABLE_WERROR=1 COM_SPEED=115200"
 
         # Determine correct artifact path based on matrix.soc and matrix.release
