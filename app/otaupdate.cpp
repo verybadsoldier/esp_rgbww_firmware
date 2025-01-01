@@ -298,8 +298,28 @@ void ApplicationOTA::afterOTA()
     * so this is still the old firmware running
     */
 
+    /*
+	 * clear the hardware description parts of ConfigDB 
+	 * an update may chose to change these fields if the
+	 * capabilities have changed. Locally stored data is 
+	 * no longer valid after any update (it probably should not
+	 * even be in the afterOTA method but somewhere in the main
+	 * path)
+	 */
 	if(status == OTASTATUS::OTA_SUCCESS_REBOOT) {
 		debug_i("afterOta, rom Slot=%i", app.getRomSlot());
+	{
+		AppConfig::General  general(*cfg);
+		if (auto generalUpdate= general.update()){
+			generalUpdate.supportedColorModels.loadArrayDefaults();
+		}
+	}
+	{
+		AppConfig::Hardware hardware(*cfg);
+		if(auto hardwareUpdate=hardware.update()){
+			hardwareUpdate.availablePins.loadArrayDefaults();
+		}
+	}
 
 // ToDo: so the ota has been successful, now what?
 #ifdef ARCH_ESP8266
