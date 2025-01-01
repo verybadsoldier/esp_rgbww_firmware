@@ -3,6 +3,7 @@ on:
   workflow_run:
     workflows: ["build_application"]
     types: [completed]
+  workflow_dispatch:
 
 jobs:
   get-version:
@@ -24,6 +25,16 @@ jobs:
           echo "fw_branch=$branch" >> $GITHUB_ENV
           echo "fw_version=$version" >> $GITHUB_OUTPUT
           echo "fw_branch=$branch" >> $GITHUB_OUTPUT
+          echo "::set-output name=fw_version::$version"
+          echo "::set-output name=fw_branch::$branch"
+        outputs:
+          fw_version: ${{ steps.get_fw_info.outputs.fw_version }}
+          fw_branch: ${{ steps.get_fw_info.outputs.fw_branch }}
+
+      - name: Debug Outputs in get-version
+        run: |
+          echo "fw_version=$version"
+          echo "fw_branch=$branch"
 
   publish:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
