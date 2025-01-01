@@ -17,7 +17,7 @@ jobs:
       - name: Get firmware version and branch
         id: get_fw_info
         run: |
-          version=$(git describe --abbrev=4 --dirty --always --tags)
+          version="$(git describe --abbrev=4 --dirty --always --tags)"
           branch=$(git rev-parse --abbrev-ref HEAD)
           echo "fw_version=$version" 
           echo "fw_branch=$branch" 
@@ -152,7 +152,7 @@ jobs:
                       }
                   },
                   {
-                      "soc": "esp32",
+                      "soc": "esp32",download
                       "type": "release",
                       "branch": "${{ needs.get-version.outputs.fw_branch }}",
                       "fw_version": "${{ needs.get-version.outputs.fw_version }}",
@@ -222,9 +222,9 @@ jobs:
 
       - name: Deploy to External Server
         run: |
-          scp -r download/esp8266 ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/downloads/
-          scp -r download/esp32 ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/downloads/
-          scp -r download/esp32c3 ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/downloads/
+          scp -r download/esp8266 ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/
+          scp -r download/esp32 ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/
+          scp -r download/esp32c3 ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/
           scp version.json ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/
 
       - name: Change ownership of uploaded files
