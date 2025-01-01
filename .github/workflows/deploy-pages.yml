@@ -13,11 +13,18 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          ref: develop
+
+      - name: ensure develop is actually checked out
+        run: |
+          git checkout develop
 
       - name: Get firmware version and branch
         id: get_fw_info
         run: |
-          version="$(git describe --abbrev=4 --dirty --always --tags)"
+          version=$(git describe --abbrev=4 --dirty --always --tags)
           branch=$(git rev-parse --abbrev-ref HEAD)
           echo "fw_version=$version" 
           echo "fw_branch=$branch" 
