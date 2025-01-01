@@ -41,7 +41,7 @@
             "items":{
                 "type":"string"
             },
-            "default":["RGB", "RGBW", "RGBWW", "RGBWWCW"]
+            "default":["RGB", "RGBWW", "RGBCW", "RGBWWCW"]
         },
         "current_pin_config_name":{
           "type":"string",
