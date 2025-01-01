@@ -159,7 +159,7 @@ jobs:
                       }
                   },
                   {
-                      "soc": "esp32",download
+                      "soc": "esp32",
                       "type": "release",
                       "branch": "${{ needs.get-version.outputs.fw_branch }}",
                       "fw_version": "${{ needs.get-version.outputs.fw_version }}",
