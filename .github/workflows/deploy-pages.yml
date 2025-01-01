@@ -18,6 +18,8 @@ jobs:
         run: |
           version=$(git describe --abbrev=4 --dirty --always --tags)
           branch=$(git rev-parse --abbrev-ref HEAD)
+          echo "fw_version=$version" 
+          echo "fw_branch=$branch" 
           echo "fw_version=$version" >> $GITHUB_ENV
           echo "fw_branch=$branch" >> $GITHUB_ENV
           echo "fw_version=$version" >> $GITHUB_OUTPUT
