@@ -309,13 +309,13 @@ void ApplicationOTA::afterOTA()
 	if(status == OTASTATUS::OTA_SUCCESS_REBOOT) {
 		debug_i("afterOta, rom Slot=%i", app.getRomSlot());
 	{
-		AppConfig::General  general(*cfg);
+		AppConfig::General  general(*app.cfg);
 		if (auto generalUpdate= general.update()){
 			generalUpdate.supportedColorModels.loadArrayDefaults();
 		}
 	}
 	{
-		AppConfig::Hardware hardware(*cfg);
+		AppConfig::Hardware hardware(*app.cfg);
 		if(auto hardwareUpdate=hardware.update()){
 			hardwareUpdate.availablePins.loadArrayDefaults();
 		}
