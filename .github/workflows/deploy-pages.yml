@@ -197,6 +197,8 @@ jobs:
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.5.3
         with:
+          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
+
       - name: configure variables
         run: |
           echo "deploy_user=github-deploy" >> $GITHUB_ENV
