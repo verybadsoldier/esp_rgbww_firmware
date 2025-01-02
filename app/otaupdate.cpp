@@ -182,6 +182,26 @@
     Since keeping the config partition is only really required when updating OTA on an ESP8266, the
     hwconfig can be simplified to always provide two roms and two lfs partitions. 
  */
+
+
+/*
+ * OTA for the different platforms
+ * ESP8266:
+ * - technically working albeit with some quirks:
+ *   - it currently still deals with ROM slot numbers which is not a thing in the new OTA anymore, ToDo: remove this
+ *   - it's sort of sprinkled around a bit, ToDo: consolidate 
+ *   - when upgrading from the old firmware:
+ * 	   - generally does work. The partition table is re-written and the new file systems are created
+ *     - currently the new firmware is written to whatever the next partition is (which is fine) but since 
+ *       the filesystem is being changed, booting into the old firmware will fail as there is no spiffs anymore
+ *     - not saving any configuration -> since this is a one-time transitional requirement, the Idea is that 
+ *       the user will save the config manually before OTA and restore it later. 
+ *     - currently, to satisfy the need for a SPIFFS ROM image, I pull the original (old) spiffs image. ToDo: provide empty SPIFFS image
+ *     - on systems with a failing flash where spiffs has already failed, the OTA may fail, it's currently unclear what the failure mode is
+ * 	   - a manual (curl -X POST http://{ip-address}/update -H 'Content-Type: application/json' --data '{"rom":{"url":"http://lightinator.de/download/esp8266/develop/debug/rom0.bin"}}')
+ *       usually fixes hat. Sometimes, though, the controller first does not re-join the network, so it has to be reconfigured.
+ *       this behaviour might have to do with wether rom0 or rom1 was active when triggering the OTA.
+*/
 #include <otaupdate.h>
 #include <RGBWWCtrl.h>
 
@@ -198,7 +218,7 @@ void ApplicationOTA::start(String romurl)
 	debug_i("ApplicationOTA::start nextBootPartition: %s %#06x at slot %i", part.name().c_str(), part.address(),
 			rboot_get_current_rom());
 #endif
-	// flash rom to position indicated in the rBoot config rom table
+	// flash rom to position indicated in the rBoot config rom table(temporarily) remove the sussess requirement from deploy-pages.yml
 	otaUpdater->addItem(romurl, part);
 
 	ota.begin(part);
@@ -278,8 +298,28 @@ void ApplicationOTA::afterOTA()
     * so this is still the old firmware running
     */
 
+    /*
+	 * clear the hardware description parts of ConfigDB 
+	 * an update may chose to change these fields if the
+	 * capabilities have changed. Locally stored data is 
+	 * no longer valid after any update (it probably should not
+	 * even be in the afterOTA method but somewhere in the main
+	 * path)
+	 */
 	if(status == OTASTATUS::OTA_SUCCESS_REBOOT) {
 		debug_i("afterOta, rom Slot=%i", app.getRomSlot());
+	{
+		AppConfig::General  general(*app.cfg);
+		if (auto generalUpdate= general.update()){
+			generalUpdate.supportedColorModels.loadArrayDefaults();
+		}
+	}
+	{
+		AppConfig::Hardware hardware(*app.cfg);
+		if(auto hardwareUpdate=hardware.update()){
+			hardwareUpdate.availablePins.loadArrayDefaults();
+		}
+	}
 
 // ToDo: so the ota has been successful, now what?
 #ifdef ARCH_ESP8266

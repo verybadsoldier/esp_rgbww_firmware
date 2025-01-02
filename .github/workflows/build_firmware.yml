@@ -12,7 +12,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         soc: [esp8266, esp32, esp32c3]
         release: [0, 1]
@@ -34,7 +34,7 @@ jobs:
         run: |
           latest_run_id=$(curl -s -H "Authorization: token ${{ secrets.artifact_download_token }}" \
             "https://api.github.com/repos/pljakobs/esp_rgb_webapp2/actions/runs?status=success&branch=devel" | \
-            jq -r '.workflow_runs[0].id')
+            jq -r '.workflow_runs[]| select(.name=="frontendBuild")|.id'|head -n 1)
           echo "latest_run_id=$latest_run_id" >> $GITHUB_ENV
 
       - name: Download fileList.h artifact
@@ -82,7 +82,8 @@ jobs:
             docker.io/pjakobs/sming:latest \
             bash -c "git config --global --add safe.directory /workspace && \
             source /opt/Sming/Tools/export.sh && \
-            make SMING_SOC=${{ matrix.soc }} SMING_RELEASE=${{ matrix.release }} DISABLE_WERROR=1"
+            make configdb-rebuild && \
+            make SMING_SOC=${{ matrix.soc }} SMING_RELEASE=${{ matrix.release }} DISABLE_WERROR=1 COM_SPEED=115200"
 
         # Determine correct artifact path based on matrix.soc and matrix.release
       - name: Set firmware path
