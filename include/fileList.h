@@ -1,5 +1,3 @@
-#pragma once
-
 #define FILE_LIST(XX) \
 	XX(VERSION, "VERSION") \
 	XX(RgbwwLayout_css, "assets/RgbwwLayout.css.gz") \
@@ -12,6 +10,9 @@
 	XX(badge_outlined_svg, "icons/badge_outlined.svg.gz") \
 	XX(check_outlined_svg, "icons/check_outlined.svg.gz") \
 	XX(close_outlined_svg, "icons/close_outlined.svg.gz") \
+	XX(cloud_download_svg, "icons/cloud_download.svg.gz") \
+	XX(cloud_upload_svg, "icons/cloud_upload.svg.gz") \
+	XX(description_svg, "icons/description.svg.gz") \
 	XX(exposure_outlined_svg, "icons/exposure_outlined.svg.gz") \
 	XX(favicon, "icons/favicon.ico") \
 	XX(help_outlined_svg, "icons/help_outlined.svg.gz") \
@@ -30,6 +31,7 @@
 	XX(network_wifi_locked_FILL0_wght400_GRAD0_opsz24_svg, "icons/network_wifi_locked_FILL0_wght400_GRAD0_opsz24.svg.gz") \
 	XX(palette_outlined_svg, "icons/palette_outlined.svg.gz") \
 	XX(report_problem_outlined_svg, "icons/report_problem_outlined.svg.gz") \
+	XX(save_outlined_svg, "icons/save_outlined.svg.gz") \
 	XX(security_outlined_svg, "icons/security_outlined.svg.gz") \
 	XX(settings_outlined_svg, "icons/settings_outlined.svg.gz") \
 	XX(signal_wifi_statusbar_null_FILL0_wght400_GRAD0_opsz24_svg, "icons/signal_wifi_statusbar_null_FILL0_wght400_GRAD0_opsz24.svg.gz") \

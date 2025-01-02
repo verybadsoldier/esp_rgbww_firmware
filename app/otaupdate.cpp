@@ -207,6 +207,14 @@
 
 void ApplicationOTA::start(String romurl)
 {
+	/*
+	 * setting up the OTA infrastructure
+	 * adding the romurl to the OTA updater
+	 * setting the callback
+	 * calling beforeOTA() for any user defined actions before the OTA starts
+	 * output some information on the ota
+	 * start the actual updater
+	*/
 	debug_i("ApplicationOTA::start");
 	app.wsBroadcast(F("ota_status"), F("started"));
 	otaUpdater.reset(new Ota::Network::HttpUpgrader);
@@ -246,8 +254,13 @@ void ApplicationOTA::start(String romurl)
 	otaUpdater->start();
 }
 
-void ApplicationOTA::doSwitch()
+void ApplicationOTA::doSwitch()		// m_printHex("entry:", entryData,sizeof(Storage::esp_partition_info_t));
+
 {
+	/*
+	 * switch from the old partition (before) to the new partition (after)
+	 * this is being called after the OTA has been successful and before the restart
+	*/
 	auto before = ota.getRunningPartition();
 	auto after = ota.getNextBootPartition();
 
@@ -356,6 +369,7 @@ void ApplicationOTA::afterOTA()
 
 /*
 * OTA callback - after the new rom has been written but before restart
+* currently only finishes the ota procss (ota.end()) and sets the next boot partition
 */
 void ApplicationOTA::upgradeCallback(Ota::Network::HttpUpgrader& client, bool result)
 {
@@ -407,7 +421,8 @@ void ApplicationOTA::checkAtBoot()
 bool ApplicationOTA::createLFS(uint8_t slot)
 {
 	/*
-   * Create the target LittleFS filesystem, format then mount
+    * Create the target LittleFS filesystem, format then mount
+	* this should really be using the partition handle or name, not the slot
    */
 	String fsName = F("littlefs") + String(slot);
 	auto targetPart = Storage::findPartition(fsName);
@@ -428,6 +443,10 @@ bool ApplicationOTA::createLFS(uint8_t slot)
 #if defined(ARCH_ESP8266) || defined(ARCH_ESP32)
 bool ApplicationOTA::copyContent(std::unique_ptr<IFS::FileSystem> src, std::unique_ptr<IFS::FileSystem> dst)
 {
+	/*
+	 * ToDo: think about how to handle the "spare" file system. 
+	 * blindly compying probably is not the way
+	 */
 	// Copy files
 	IFS::FileCopier copier(*src, *dst);
 
@@ -455,9 +474,14 @@ bool ApplicationOTA::copyContent(std::unique_ptr<IFS::FileSystem> src, std::uniq
 }
 
 #endif
-#ifdef ARCH_ESP8266
+#ifdef ARCH_ESP8266 // this is a transitional function, only necessary for updates on the ESP8266
 bool ApplicationOTA::switchPartitions()
 {
+	/*
+	 * switch partitions from spiffs to lfs
+	 * after first migrating an ESP8622 to the new version, the filesystem needs to be re-initialized
+	 * For this, if there are no lfs[01] partitions, we will edit the partition table in flight.
+	*/
 	if(!Storage::findPartition(F("lfs1")) && !Storage::findPartition(F("lfs0"))) {
 		std::vector<Storage::esp_partition_info_t> partitionTable = getEditablePartitionTable();
 		//if present, delete spiffs1 to make space
@@ -475,15 +499,15 @@ bool ApplicationOTA::switchPartitions()
 			}
 		}
 
-		int offset = 0x300000;
+		int offset = LFS1_OFFSET;
 		if(!addPartition(partitionTable, F("lfs1"), static_cast<uint8_t>(Storage::Partition::Type::data),
-						 static_cast<uint8_t>(Storage::Partition::SubType::Data::littlefs), offset, 0x0f8000, 0x00)) {
+						 static_cast<uint8_t>(Storage::Partition::SubType::Data::littlefs), offset, LFS1_SIZE, 0x00)) {
 			debug_i("ApplicationOTA::checkAtBoot failed to add lfs1");
 			return false;
 		}
-		offset = 0x100000;
+		offset = LFS0_OFFSET;
 		if(!addPartition(partitionTable, F("lfs0"), static_cast<uint8_t>(Storage::Partition::Type::data),
-						 static_cast<uint8_t>(Storage::Partition::SubType::Data::littlefs), offset, 0x0f8000, 0x00)) {
+						 static_cast<uint8_t>(Storage::Partition::SubType::Data::littlefs), offset, LFS0_SIZE, 0x00)) {
 			debug_i("ApplicationOTA::checkAtBoot failed to add lfs0");
 			return false;
 		}
@@ -502,9 +526,6 @@ bool ApplicationOTA::switchPartitions()
 		createLFS(1);
 		createLFS(0);
 
-		//debug_i("OTA_post, saving config");
-		//app.cfg.save();
-
 		debug_i("OTA_post, switchPartitions => restart");
 		app.restart();
 		return true;
@@ -514,6 +535,7 @@ bool ApplicationOTA::switchPartitions()
 //#endif
 
 //#ifdef ARCH_ESP8266
+/* I don'T think this is being used, nor should it be used
 bool ApplicationOTA::switchPartition(uint8_t slot)
 {
 	String spiffsPartName = F("spiffs") + String(slot);
@@ -545,6 +567,7 @@ bool ApplicationOTA::switchPartition(uint8_t slot)
 		return false;
 	}
 }
+*/
 #endif
 
 void ApplicationOTA::saveStatus(OTASTATUS status)
@@ -620,7 +643,6 @@ bool ApplicationOTA::addPartition(std::vector<Storage::esp_partition_info_t>& pa
 	newPartition.magic = 0x50AA;
 	strncpy(newPartition.name, name.c_str(), sizeof(newPartition.name));
 	newPartition.type = static_cast<Storage::Partition::Type>(type);
-	//newPartition.subtype=static_cast<Storage::Partition::subtype>(subType);
 	newPartition.subtype = subType;
 	newPartition.offset = start;
 	newPartition.size = size;
@@ -682,7 +704,6 @@ bool ApplicationOTA::savePartitionTable(std::vector<Storage::esp_partition_info_
 	entries.insert(entries.end(), headerData, headerData + sizeof(Storage::esp_partition_info_t));
 
 	for(const auto& partition : partitionTable) {
-		// Add the magic number
 		Serial << "Adding Partition " << partition.name << endl;
 
 		// Add the partition entry
@@ -696,7 +717,6 @@ bool ApplicationOTA::savePartitionTable(std::vector<Storage::esp_partition_info_
 		entry.flags = partition.flags;
 		uint8_t* entryData = reinterpret_cast<uint8_t*>(&entry);
 		entries.insert(entries.end(), entryData, entryData + sizeof(Storage::esp_partition_info_t));
-		// m_printHex("entry:", entryData,sizeof(Storage::esp_partition_info_t));
 		if(sizeof(Storage::esp_partition_info_t) % 16 != 0) {
 			printf("\n");
 		}

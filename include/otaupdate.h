@@ -38,6 +38,15 @@
 #include <LittleFS.h>
 #include <IFS/FileCopier.h>
 
+#ifdef ARCH_ESP8266
+// Flash Blocks 2 and 4 are used for user file systems
+#define LFS0_OFFSET 0x100000
+#define LFS0_SIZE 0x0f8000
+
+#define LFS1_OFFSET 0x300000
+#define LFS1_SIZE 0x0f8000
+#endif 
+
 enum class MigrateResult {
 	failure,
 	alreadyUpgraded,
@@ -81,13 +90,31 @@ public:
 
 
 protected:
-    std::unique_ptr<Ota::Network::HttpUpgrader> otaUpdater;
     uint8 rom_slot;
+    Storage::Partition dataPartition;
+
+    OtaUpgrader ota;
+    std::unique_ptr<Ota::Network::HttpUpgrader> otaUpdater;
     OTASTATUS status = OTASTATUS::OTA_NOT_UPDATING;
+   
+    void upgradeCallback(Ota::Network::HttpUpgrader& client, bool result);
+    void reset();
+    void beforeOTA();
+    void afterOTA();
+    void doSwitch();
+
+    void saveStatus(OTASTATUS status);
+    OTASTATUS loadStatus();
+    
+    Storage::Partition findSpiffsPartition(Storage::Partition appPart);
+    // bool switchPartition(uint8_t slot);
+    bool switchPartitions();
+    friend Application;
 
 #if defined(ARCH_ESP8266)||defined(ARCH_ESP32)
     bool copyContent(std::unique_ptr<IFS::FileSystem> src, std::unique_ptr<IFS::FileSystem> dst);
 #endif
+
 #if ARCH_ESP8266
 /*
     * functions to manipulate the partition table
@@ -102,20 +129,6 @@ protected:
     bool createLFS(uint8_t slot);
 #endif 
 
-protected:
-    Storage::Partition dataPartition;
-    OtaUpgrader ota;
-    void upgradeCallback(Ota::Network::HttpUpgrader& client, bool result);
-    void reset();
-    void beforeOTA();
-    void afterOTA();
-    void doSwitch();
-    void saveStatus(OTASTATUS status);
-    OTASTATUS loadStatus();
-    Storage::Partition findSpiffsPartition(Storage::Partition appPart);
-    bool switchPartition(uint8_t slot);
-    bool switchPartitions();
-    friend Application;
 };
 
 #endif // OTAUPDATE_H_
