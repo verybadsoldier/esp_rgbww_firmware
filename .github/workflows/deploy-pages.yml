@@ -96,6 +96,7 @@ jobs:
           name: lightinator-esp32-debug
           path: download/esp32/${{ needs.get-version.outputs.fw_branch }}/debug
 
+
       - name: Download esp32 release
         uses: actions/download-artifact@v4
         with:
@@ -107,6 +108,7 @@ jobs:
       - name: Download esp32c3 debug
         uses: actions/download-artifact@v4
         with:
+
           github-token: ${{ secrets.artifact_download_token }}
           run-id: ${{ env.latest_run_id }}
           name: lightinator-esp32c3-debug

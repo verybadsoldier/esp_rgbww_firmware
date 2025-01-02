@@ -82,7 +82,6 @@ public:
 
 protected:
     std::unique_ptr<Ota::Network::HttpUpgrader> otaUpdater;
-    uint8 rom_slot;
     OTASTATUS status = OTASTATUS::OTA_NOT_UPDATING;
 
 #if defined(ARCH_ESP8266)||defined(ARCH_ESP32)
