@@ -70,7 +70,7 @@ jobs:
         run: |
           latest_run_id=$(curl -s -H "Authorization: token ${{ secrets.artifact_download_token }}" \
             "https://api.github.com/repos/pljakobs/esp_rgbww_firmware/actions/runs?status=success" | \
-            jq -r '.workflow_runs[] | select(.name == "buised: no input filesld_application") | .id' | head -n 1)
+            jq -r '.workflow_runs[] | select(.name == "firmwareBuild") | .id' | head -n 1)
           echo "latest_run_id=$latest_run_id" >> $GITHUB_ENV
 
       - name: Create directories
