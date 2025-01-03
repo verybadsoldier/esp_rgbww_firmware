@@ -223,7 +223,6 @@ jobs:
           echo "deploy_path=~/nginx/html" >> $GITHUB_ENV          
           echo "fw_branch=${{ needs.get-version.outputs.fw_branch }}" >> $GITHUB_ENV
 
-      - name: Add server to known_hostssed: no input files
       - name: Deploy to External Server
         run: |
           scp -r download/esp8266 ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/
