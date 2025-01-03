@@ -96,7 +96,6 @@ jobs:
           name: lightinator-esp32-debug
           path: download/esp32/${{ needs.get-version.outputs.fw_branch }}/debug
 
-
       - name: Download esp32 release
         uses: actions/download-artifact@v4
         with:
@@ -108,7 +107,6 @@ jobs:
       - name: Download esp32c3 debug
         uses: actions/download-artifact@v4
         with:
-
           github-token: ${{ secrets.artifact_download_token }}
           run-id: ${{ env.latest_run_id }}
           name: lightinator-esp32c3-debug
@@ -134,7 +132,7 @@ jobs:
                       "fw_version": "${{ needs.get-version.outputs.fw_version }}",
                       "files": {
                           "rom": {
-                              "url": "download/esp8266/${{ needs.get-version.outputs.fw_branch }}/debug/rom0.bin"
+                              "url": "%host%/download/esp8266/${{ needs.get-version.outputs.fw_branch }}/debug/rom0.bin"
                           }
                       }
                   },
@@ -145,7 +143,7 @@ jobs:
                       "fw_version": "${{ needs.get-version.outputs.fw_version }}",
                       "files": {
                           "rom": {
-                              "url": "download/esp8266/${{ needs.get-version.outputs.fw_branch }}/release/rom0.bin"
+                              "url": "%host%/download/esp8266/${{ needs.get-version.outputs.fw_branch }}/release/rom0.bin"
                           }
                       }
                   },
@@ -156,7 +154,7 @@ jobs:
                       "fw_version": "${{ needs.get-version.outputs.fw_version }}",
                       "files": {
                           "rom": {
-                              "url": "download/esp32/${{ needs.get-version.outputs.fw_branch }}/debug/app.bin"
+                              "url": "%host%/download/esp32/${{ needs.get-version.outputs.fw_branch }}/debug/app.bin"
                           }
                       }
                   },
@@ -167,7 +165,7 @@ jobs:
                       "fw_version": "${{ needs.get-version.outputs.fw_version }}",
                       "files": {
                           "rom": {
-                              "url": "download/esp32/${{ needs.get-version.outputs.fw_branch }}/release/app.bin"
+                              "url": "%host%/download/esp32/${{ needs.get-version.outputs.fw_branch }}/release/app.bin"
                           }
                       }
                   },
@@ -178,7 +176,7 @@ jobs:
                       "fw_version": "${{ needs.get-version.outputs.fw_version }}",
                       "files": {
                           "rom": {
-                              "url": "download/esp32c3/${{ needs.get-version.outputs.fw_branch }}/debug/app.bin"
+                              "url": "%host%/download/esp32c3/${{ needs.get-version.outputs.fw_branch }}/debug/app.bin"
                           }
                       }
                   },
@@ -189,7 +187,7 @@ jobs:
                       "fw_version": "${{ needs.get-version.outputs.fw_version }}",
                       "files": {
                           "rom": {
-                              "url": "download/esp32c3/${{ needs.get-version.outputs.fw_branch }}/release/app.bin"
+                              "url": "%host%/download/esp32c3/${{ needs.get-version.outputs.fw_branch }}/release/app.bin"
                           }
                       }
                   }
@@ -234,7 +232,7 @@ jobs:
           scp -r download/esp8266 ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/
           scp -r download/esp32 ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/
           scp -r download/esp32c3 ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/
-          scp version.json ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/
+          sed <version.json -i "s/%host%/http:\/\/${{ env.deploy_server }}/g"|ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "cat >${{ env.deploy_path }}/version.json"
 
       - name: Change ownership of uploaded files
         run: |
