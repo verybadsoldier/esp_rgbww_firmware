@@ -19,8 +19,7 @@ jobs:
         run: |
           echo "deploy_user=github-deploy" >> $GITHUB_ENV
           echo "deploy_server=lightinator.de" >> $GITHUB_ENV
-          echo "deploy_path=~/nginx/html" >> $GITHUB_ENV          
-          echo "fw_branch=${{ needs.get-version.outputs.fw_branch }}" >> $GITHUB_ENV
+          echo "deploy_path=~/nginx/html" >> $GITHUB_ENV
 
       - name: Deploy to External Server
         run: |
