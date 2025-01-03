@@ -216,6 +216,10 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.DEPLOY_KEY }}
 
+      - name: Add server to known_hosts
+        run: |
+          ssh-keyscan ${{ env.deploy_server }} >> ~/.ssh/known_hosts
+
       - name: configure variables
         run: |
           echo "deploy_user=github-deploy" >> $GITHUB_ENV
