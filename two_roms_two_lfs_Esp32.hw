@@ -22,9 +22,19 @@
         "rom1": {
             "device": "spiFlash",
             "address": "0x00200000",
-            "size": "1536K",
+            "size": "1472K",
             "type": "app",
             "subtype": "ota_1",
+            "readonly": false,
+            "encrypted": false,
+            "filename": ""
+        },
+        "otadata": {
+            "device": "spiFlash",
+            "address": "0x0037e000",
+            "size": "8K",
+            "type": "data",
+            "subtype": "ota",
             "readonly": false,
             "encrypted": false,
             "filename": ""
