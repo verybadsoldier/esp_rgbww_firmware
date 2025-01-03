@@ -214,10 +214,18 @@ void ApplicationOTA::start(String romurl)
 
 	auto part = ota.getNextBootPartition();
 
-#if ESP8266
+/*
+	 * Applications should always include a sanity check to ensure partitions being updated are
+	 * not in use. This should always included the application partition but should also consider
+	 * filing system partitions, etc. which may be actively in use.
+	 */
+	if(part == ota.getRunningPartition()) {
+		Serial << F("May be running in temporary mode. Please reboot and try again.") << endl;
+		return;
+	}
+
 	debug_i("ApplicationOTA::start nextBootPartition: %s %#06x at slot %i", part.name().c_str(), part.address(),
 			rboot_get_current_rom());
-#endif
 	// flash rom to position indicated in the rBoot config rom table(temporarily) remove the sussess requirement from deploy-pages.yml
 	otaUpdater->addItem(romurl, part);
 
@@ -308,18 +316,7 @@ void ApplicationOTA::afterOTA()
 	 */
 	if(status == OTASTATUS::OTA_SUCCESS_REBOOT) {
 		debug_i("afterOta, rom Slot=%i", app.getRomSlot());
-	{
-		AppConfig::General  general(*app.cfg);
-		if (auto generalUpdate= general.update()){
-			generalUpdate.supportedColorModels.loadArrayDefaults();
-		}
-	}
-	{
-		AppConfig::Hardware hardware(*app.cfg);
-		if(auto hardwareUpdate=hardware.update()){
-			hardwareUpdate.availablePins.loadArrayDefaults();
-		}
-	}
+
 
 // ToDo: so the ota has been successful, now what?
 #ifdef ARCH_ESP8266
@@ -362,19 +359,21 @@ void ApplicationOTA::upgradeCallback(Ota::Network::HttpUpgrader& client, bool re
 	debug_i("ApplicationOTA::rBootCallback");
 	if(result == true) {
 		ota.end();
+		
+		afterOTA();
 
 		auto part = ota.getNextBootPartition();
 		debug_i("ApplicationOTA::rBootCallback next boot partition: %s", part.name().c_str());
 		ota.setBootPartition(part);
+		debut_i("configured next boot partition");
 		status = OTASTATUS::OTA_SUCCESS_REBOOT;
+		debug_i("OTA callback done, rebooting");
+		System.restart();
 	} else {
 		status = OTASTATUS::OTA_FAILED;
 		ota.abort();
 		debug_i("OTA failed");
 	}
-	afterOTA();
-	debug_i("OTA callback done, rebooting");
-	System.restart();
 }
 
 void ApplicationOTA::checkAtBoot()

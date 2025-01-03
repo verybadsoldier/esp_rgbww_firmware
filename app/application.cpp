@@ -252,6 +252,9 @@ debug_i("Platform: %s\r\n", SOC);
 	}
 #endif
 
+debug.i("Application::init - check running partition");
+auto part=app.ota.getRunningPartition();
+debug_i("Application::init - running partition %s", part.name());
 // list spiffs partitions
 //listSpiffsPartitions();
 
@@ -346,7 +349,18 @@ debug_i("Platform: %s\r\n", SOC);
 			}
 
 		} else {
-			debug_i("ConfigDB already initialized. starting");
+			debug_i("ConfigDB already initialized. resetting hardware definition");
+			{
+			if (auto generalUpdate= general.update()){
+				generalUpdate.supportedColorModels.loadArrayDefaults();
+				}
+			}
+			{
+				AppConfig::Hardware hardware(*app.cfg);
+				if(auto hardwareUpdate=hardware.update()){
+					hardwareUpdate.availablePins.loadArrayDefaults();
+				}
+			}
 		}
 	}
 	/*
