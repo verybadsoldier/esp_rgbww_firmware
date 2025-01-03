@@ -60,7 +60,7 @@ jobs:
         run: |
           latest_run_id=$(curl -s -H "Authorization: token ${{ secrets.artifact_download_token }}" \
             "https://api.github.com/repos/pljakobs/esp_rgbww_firmware/actions/runs?status=success" | \
-            jq -r '.workflow_runs[] | select(.name == "build_application") | .id' | head -n 1)
+            jq -r '.workflow_runs[] | select(.name == "buised: no input filesld_application") | .id' | head -n 1)
           echo "latest_run_id=$latest_run_id" >> $GITHUB_ENV
 
       - name: Create directories
@@ -223,16 +223,13 @@ jobs:
           echo "deploy_path=~/nginx/html" >> $GITHUB_ENV          
           echo "fw_branch=${{ needs.get-version.outputs.fw_branch }}" >> $GITHUB_ENV
 
-      - name: Add server to known_hosts
-        run: |
-          ssh-keyscan ${{ env.deploy_server }} >> ~/.ssh/known_hosts
-
+      - name: Add server to known_hostssed: no input files
       - name: Deploy to External Server
         run: |
           scp -r download/esp8266 ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/
           scp -r download/esp32 ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/
           scp -r download/esp32c3 ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/
-          sed <version.json -i "s/%host%/http:\/\/${{ env.deploy_server }}/g"|ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "cat >${{ env.deploy_path }}/version.json"
+          sed <version.json -e "s/%host%/http:\/\/${{ env.deploy_server }}/"|ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "cat >${{ env.deploy_path }}/version.json"
 
       - name: Change ownership of uploaded files
         run: |
