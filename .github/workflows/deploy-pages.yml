@@ -1,10 +1,14 @@
 name: Publish_Firmware
 on:
   workflow_run:
+<<<<<<< HEAD
     workflows: ["firmwareBuild"] # Must match the name in build_firmware.yml
     types: [completed]
   workflow_run:
     workflows: ["build_application"]
+=======
+    workflows: ["firmwareBuild"]
+>>>>>>> f423290 (publish_firmware was not listening for  the right build workflow name)
     types: [completed]
   workflow_dispatch:
 

@@ -23,9 +23,7 @@ jobs:
         with:
           ref: develop
 
-      - name: Synchronize submodules
-        run: git submodule update --init --recursive
-
+      - name: Synchronize submobuild_application
       - name: Pull Docker Image
         run: docker pull docker.io/pjakobs/sming:latest
 
@@ -43,14 +41,7 @@ jobs:
             rm ./include/fileList.h
           fi
           artifact_url=$(curl -s -H "Authorization: token ${{ secrets.artifact_download_token }}" \
-            "https://api.github.com/repos/pljakobs/esp_rgb_webapp2/actions/runs/${{ env.latest_run_id }}/artifacts" | \
-            jq -r '.artifacts[] | select(.name=="fileList.h") | .archive_download_url')
-          curl -L -o fileList.h.zip -H "Authorization: token ${{ secrets.artifact_download_token }}" "$artifact_url"
-          unzip fileList.h.zip -d ./include
-
-      - name: Download webapp files artifact
-        run: |
-          if [ -d ./webapp ]; then
+            "https://api.githbuild_application ]; then
             rm -rf ./webapp
             mkdir ./webapp
           fi
