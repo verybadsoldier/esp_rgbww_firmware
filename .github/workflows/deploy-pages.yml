@@ -124,6 +124,14 @@ jobs:
         run: |
           cat <<EOF > version.json
           {
+              "rom": {
+                  "fw_version": "${{ needs.get-version.outputs.fw_version }}",
+                  "url": "download/esp8266/${{ needs.get-version.outputs.fw_branch }}/release/rom0.bin"
+              },
+              "spiffs": {
+                  "webapp_version": "0.3.3",
+                  "url": "http://rgbww.dronezone.de/testing/spiff_rom.bin"
+              },
               "firmware": [
                   {
                       "soc": "esp8266",
@@ -192,14 +200,6 @@ jobs:
                       }
                   }
               ],
-              "rom": {
-                  "fw_version": "${{ needs.get-version.outputs.fw_version }}",
-                  "url": "download/esp8266/${{ needs.get-version.outputs.fw_branch }}/release/rom0.bin"
-              },
-              "spiffs": {
-                  "webapp_version": "0.3.3",
-                  "url": "http://rgbww.dronezone.de/testing/spiff_rom.bin"
-              }
           }
           EOF
 
