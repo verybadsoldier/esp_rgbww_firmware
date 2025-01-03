@@ -95,6 +95,7 @@ protected:
 
     OtaUpgrader ota;
     std::unique_ptr<Ota::Network::HttpUpgrader> otaUpdater;
+    uint8 rom_slot;
     OTASTATUS status = OTASTATUS::OTA_NOT_UPDATING;
    
     void upgradeCallback(Ota::Network::HttpUpgrader& client, bool result);
