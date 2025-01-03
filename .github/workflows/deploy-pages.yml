@@ -1,21 +1,11 @@
 name: Publish_Firmware
 on:
   workflow_run:
-<<<<<<< HEAD
-    workflows: ["firmwareBuild"] # Must match the name in build_firmware.yml
-    types: [completed]
-  workflow_run:
-    workflows: ["build_application"]
-=======
     workflows: ["firmwareBuild"]
->>>>>>> f423290 (publish_firmware was not listening for  the right build workflow name)
     types: [completed]
   workflow_dispatch:
 
 jobs:
-  get-version:
-    runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
   get-version:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
@@ -122,7 +112,7 @@ jobs:
           name: lightinator-esp32c3-debug
           path: download/esp32c3/${{ needs.get-version.outputs.fw_branch }}/debug
 
-      - name: Download esp32cmaster3 release
+      - name: Download esp32c3 release
         uses: actions/download-artifact@v4
         with:
           github-token: ${{ secrets.artifact_download_token }}
@@ -220,29 +210,3 @@ jobs:
           git add .
           git commit -m "Publish firmware artifacts and JSON" || echo "No changes to commit"
           git push origin gh-pages
-<<<<<<< HEAD
-=======
-
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.5.3
-        with:
-          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
-
-      - name: configure variables
-        run: |
-          echo "deploy_user=github-deploy" >> $GITHUB_ENV
-          echo "deploy_server=lightinator.de" >> $GITHUB_ENV
-          echo "deploy_path=~/nginx/html" >> $GITHUB_ENV          
-          echo "fw_branch=${{ needs.get-version.outputs.fw_branch }}" >> $GITHUB_ENV
-
-      - name: Deploy to External Server
-        run: |
-          scp -r download/esp8266 ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/
-          scp -r download/esp32 ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/
-          scp -r download/esp32c3 ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/
-          sed <version.json -e "s/%host%/http:\/\/${{ env.deploy_server }}/"|ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "cat >${{ env.deploy_path }}/version.json"
-
-      - name: Change ownership of uploaded files
-        run: |
-          ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "chown -R github-deploy:nginx ${{ env.deploy_path }}/*"
->>>>>>> 5ac551c (removed double name line from deploy-pages.json)
