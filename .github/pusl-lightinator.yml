@@ -1,0 +1,33 @@
+name: upload-to-server
+on:
+  workflow_run:
+    workflows: ["Publish_Firmware"]
+    types: [completed]
+  workflow_dispatch:
+  
+  jobs:
+  upload-to-server:
+    runs-on: ubuntu-latest  
+    - steps:
+        - name: Setup SSH
+          uses: webfactory/ssh-agent@v0.5.3
+          with:
+            ssh-private-key: ${{ secrets.DEPLOY_KEY }}
+
+        - name: configure variables
+          run: |
+            echo "deploy_user=github-deploy" >> $GITHUB_ENV
+            echo "deploy_server=lightinator.de" >> $GITHUB_ENV
+            echo "deploy_path=~/nginx/html" >> $GITHUB_ENV          
+            echo "fw_branch=${{ needs.get-version.outputs.fw_branch }}" >> $GITHUB_ENV
+
+        - name: Deploy to External Server
+          run: |
+            scp -r download/esp8266 ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/
+            scp -r download/esp32 ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/
+            scp -r download/esp32c3 ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/
+            sed <version.json -e "s/%host%/http:\/\/${{ env.deploy_server }}/"|ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "cat >${{ env.deploy_path }}/version.json"
+
+        - name: Change ownership of uploaded files
+          run: |
+            ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "chown -R github-deploy:nginx ${{ env.deploy_path }}/*"
