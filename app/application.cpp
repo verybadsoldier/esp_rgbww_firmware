@@ -252,8 +252,8 @@ debug_i("Platform: %s\r\n", SOC);
 	}
 #endif
 
-debug.i("Application::init - check running partition");
-auto part=app.ota.getRunningPartition();
+debug_i("Application::init - check running partition");
+auto part=app.ota.ota.getRunningPartition();
 debug_i("Application::init - running partition %s", part.name());
 // list spiffs partitions
 //listSpiffsPartitions();

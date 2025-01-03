@@ -224,8 +224,7 @@ void ApplicationOTA::start(String romurl)
 		return;
 	}
 
-	debug_i("ApplicationOTA::start nextBootPartition: %s %#06x at slot %i", part.name().c_str(), part.address(),
-			rboot_get_current_rom());
+	debug_i("ApplicationOTA::start nextBootPartition: %s %#06x", part.name().c_str(), part.address());
 	// flash rom to position indicated in the rBoot config rom table(temporarily) remove the sussess requirement from deploy-pages.yml
 	otaUpdater->addItem(romurl, part);
 
@@ -359,13 +358,13 @@ void ApplicationOTA::upgradeCallback(Ota::Network::HttpUpgrader& client, bool re
 	debug_i("ApplicationOTA::rBootCallback");
 	if(result == true) {
 		ota.end();
-		
+
 		afterOTA();
 
 		auto part = ota.getNextBootPartition();
 		debug_i("ApplicationOTA::rBootCallback next boot partition: %s", part.name().c_str());
 		ota.setBootPartition(part);
-		debut_i("configured next boot partition");
+		debug_i("configured next boot partition");
 		status = OTASTATUS::OTA_SUCCESS_REBOOT;
 		debug_i("OTA callback done, rebooting");
 		System.restart();
