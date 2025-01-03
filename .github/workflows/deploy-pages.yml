@@ -216,15 +216,15 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.DEPLOY_KEY }}
 
-      - name: Add server to known_hosts
-        run: |
-          ssh-keyscan ${{ env.deploy_server }} >> ~/.ssh/known_hosts
-
       - name: configure variables
         run: |
           echo "deploy_user=github-deploy" >> $GITHUB_ENV
           echo "deploy_server=lightinator.de" >> $GITHUB_ENV
           echo "deploy_path=~/nginx/html" >> $GITHUB_ENV
+
+      - name: Add server to known_hosts
+        run: |
+          ssh-keyscan ${{ env.deploy_server }} >> ~/.ssh/known_hosts
 
       - name: Deploy to External Server
         run: |
