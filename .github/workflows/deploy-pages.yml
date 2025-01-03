@@ -138,7 +138,7 @@ jobs:
                       "fw_version": "${{ needs.get-version.outputs.fw_version }}",
                       "files": {
                           "rom": {
-                              "url": "download/esp8266/${{ needs.get-version.outputs.fw_branch }}/debug/rom0.bin"
+                              "url": "%host%/download/esp8266/${{ needs.get-version.outputs.fw_branch }}/debug/rom0.bin"
                           }
                       }
                   },
@@ -149,7 +149,7 @@ jobs:
                       "fw_version": "${{ needs.get-version.outputs.fw_version }}",
                       "files": {
                           "rom": {
-                              "url": "download/esp8266/${{ needs.get-version.outputs.fw_branch }}/release/rom0.bin"
+                              "url": "%host%/download/esp8266/${{ needs.get-version.outputs.fw_branch }}/release/rom0.bin"
                           }
                       }
                   },
@@ -160,7 +160,7 @@ jobs:
                       "fw_version": "${{ needs.get-version.outputs.fw_version }}",
                       "files": {
                           "rom": {
-                              "url": "download/esp32/${{ needs.get-version.outputs.fw_branch }}/debug/app.bin"
+                              "url": "%host%/download/esp32/${{ needs.get-version.outputs.fw_branch }}/debug/app.bin"
                           }
                       }
                   },
@@ -171,7 +171,7 @@ jobs:
                       "fw_version": "${{ needs.get-version.outputs.fw_version }}",
                       "files": {
                           "rom": {
-                              "url": "download/esp32/${{ needs.get-version.outputs.fw_branch }}/release/app.bin"
+                              "url": "%host%/download/esp32/${{ needs.get-version.outputs.fw_branch }}/release/app.bin"
                           }
                       }
                   },
@@ -182,7 +182,7 @@ jobs:
                       "fw_version": "${{ needs.get-version.outputs.fw_version }}",
                       "files": {
                           "rom": {
-                              "url": "download/esp32c3/${{ needs.get-version.outputs.fw_branch }}/debug/app.bin"
+                              "url": "%host%/download/esp32c3/${{ needs.get-version.outputs.fw_branch }}/debug/app.bin"
                           }
                       }
                   },
@@ -193,7 +193,7 @@ jobs:
                       "fw_version": "${{ needs.get-version.outputs.fw_version }}",
                       "files": {
                           "rom": {
-                              "url": "download/esp32c3/${{ needs.get-version.outputs.fw_branch }}/release/app.bin"
+                              "url": "%host%/download/esp32c3/${{ needs.get-version.outputs.fw_branch }}/release/app.bin"
                           }
                       }
                   }
