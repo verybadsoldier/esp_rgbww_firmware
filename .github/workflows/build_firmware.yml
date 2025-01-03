@@ -23,7 +23,11 @@ jobs:
         with:
           ref: develop
 
-      - name: Synchronize submobuild_application
+      - name: Synchronize submodules
+        run: |
+          git submodule sync --recursive
+          git submodule update --init --recursive
+
       - name: Pull Docker Image
         run: docker pull docker.io/pjakobs/sming:latest
 
