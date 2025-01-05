@@ -337,7 +337,7 @@
           "type":"integer",
           "default":0
         },
-        "available-pins":{
+        "available_pins":{
           "type":"array",
           "items":{
             "type":"object",

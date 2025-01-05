@@ -282,6 +282,10 @@ void ApplicationOTA::beforeOTA()
 	/*
     * this is being executed before otaUpdater->start
     */
+   auto boot_partitions=ota.getBootPartitions();
+   for (auto bootpart: boot_partitions){
+	   debug_i("ApplicationOTA::beforeOTA boot partition: %s", bootpart.name());
+   }
 
 	/*
      * ToDo few differnt situations here:
