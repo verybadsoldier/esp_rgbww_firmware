@@ -23,9 +23,7 @@ void mdnsHandler::start()
 	} // end of ConfigDB network context
 	  //responder.begin(app.cfg.network.connection.mdnshostname.c_str());
 	responder.addService(ledControllerAPIService);
-	responder.addService(ledControllerWebAppService);
-	responder.addService(ledControllerWSService);
-
+	
 	//create an empty hosts array to store recieved host entries
 	hosts = hostsDoc.createNestedArray("hosts");
 
@@ -91,7 +89,8 @@ bool mdnsHandler::onMessage(mDNS::Message& message)
 	struct {
 		String hostName;
 		IpAddress ipAddr;
-		int ttl;
+		uint ttl;
+		uint ID;
 	} info;
 
 	answer = message[mDNS::ResourceType::A];
@@ -105,7 +104,7 @@ bool mdnsHandler::onMessage(mDNS::Message& message)
 	debug_i("found Host %s with IP %s and TTL %i", info.hostName.c_str(), info.ipAddr.toString().c_str(), info.ttl);
 #endif
 
-	addHost(info.hostName, info.ipAddr.toString(), info.ttl); //add host to list
+	addHost(info.hostName, info.ipAddr.toString(), info.ttl, info.ID); //add host to list
 	return true;
 }
 
