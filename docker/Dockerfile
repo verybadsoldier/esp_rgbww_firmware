@@ -38,7 +38,7 @@ RUN make python-requirements
 RUN make submodules
 
 WORKDIR "/opt/Sming/samples/Basic_WiFi"
-RUN "source ~/.bashrc && make SMING_SOC=esp8266"
-RUN "source ~/.bashrc && make SMING_SOC=esp32"
-RUN "source ~/.bashrc && make SMING_SOC=esp32c3"
+RUN source ~/.bashrc && make SMING_SOC=esp8266
+RUN source ~/.bashrc && make SMING_SOC=esp32
+RUN source ~/.bashrc && make SMING_SOC=esp32c3
 
