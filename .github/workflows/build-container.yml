@@ -2,7 +2,8 @@ name: Build Container
 
 on:
   schedule:
-    - cron: "2 10 * * *" # Runs daily at midnight UTC
+    - cron: "2 10 * * *" # Runs daily at 2:10  UTC
+  workflow_dispatch:
 
 jobs:
   check-updates:
@@ -26,7 +27,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     needs: check-updates
-    if: needs.check-updates.outputs.updated == 'true'
+    if: needs.check-updates.outputs.updated == 'true' || github.event_name == 'workflow_dispatch'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
