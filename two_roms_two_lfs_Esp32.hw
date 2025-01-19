@@ -1,11 +1,14 @@
 {
     "name": "two roms, two lfs partitions",
     "comment": "Should work with any Esp32 variant",
-    "base_config": "single-rom-for-ota",
+    "base_config": "standard",
     "options": [
         "4m"
     ],
     "partitions": {
+        "factory":{
+            "size":"0k"
+        },
         "rom0": {
             "device": "spiFlash",
             "address": "0x010000",
@@ -46,9 +49,5 @@
             "encrypted": false,
             "filename": ""
         },
-        "otadata": {
-            "device": "spiFlash",
-            "address": "0x003fe000"
-        }
     }
 }
