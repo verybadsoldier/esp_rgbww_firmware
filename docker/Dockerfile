@@ -29,16 +29,27 @@ RUN apt-get -y update \
 
 RUN git clone $SMING_REPO -b $SMING_BRANCH /opt/Sming 
 
-WORKDIR "/opt/Sming"
-RUN Tools/install.sh $INSTALL_ARGS
-RUN echo ". $(pwd)/Tools/export.sh" >> ~/.bashrc
-
-WORKDIR "/opt/Sming/Sming/"
-RUN make python-requirements 
-RUN make submodules
 SHELL ["/bin/bash", "-c"]
-WORKDIR "/opt/Sming/samples/Basic_WiFi"
-RUN source ~/.bashrc && make SMING_SOC=esp8266
-RUN source ~/.bashrc && make SMING_SOC=esp32
-RUN source ~/.bashrc && make SMING_SOC=esp32c3
+WORKDIR "/opt/Sming"
+RUN Tools/install.sh $INSTALL_ARGS 
+RUN echo "source /opt/Sming/Tools/export.sh" >> ~/.bashrc 
+RUN cat  "/opt/Sming/Tools/export.sh"
 
+
+# ------------------------------------------------------------------------------
+# build base components
+# ------------------------------------------------------------------------------
+    
+WORKDIR "/opt/Sming/Sming/"
+RUN make python-requirements && \
+    make submodules
+WORKDIR "/opt/Sming/samples/Basic_WiFi"
+RUN source ~/.bashrc && \
+    source /opt/Sming/Tools/export.sh && \
+    make SMING_SOC=esp8266
+RUN source ~/.bashrc && \
+    source /opt/Sming/Tools/export.sh && \
+    make SMING_SOC=esp32
+RUN source ~/.bashrc && \
+    source /opt/Sming/Tools/export.sh && \
+    make SMING_SOC=esp32c3
