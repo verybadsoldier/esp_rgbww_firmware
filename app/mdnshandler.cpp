@@ -107,7 +107,7 @@ bool mdnsHandler::onMessage(mDNS::Message& message)
 			info.ID=txt["id"].toInt();
 		}
 #ifdef DEBUG_MDNS
-	debug_i("found Host %s with IP %s and TTL %i", info.hostName.c_str(), info.ipAddr.toString().c_str(), info.ttl);
+	debug_i("found Host %s with ID %i, IP %s and TTL %i", info.hostName.c_str(),info.ID, info.ipAddr.toString().c_str(), info.ttl);
 #endif
 
 	addHost(info.hostName, info.ipAddr.toString(), info.ttl, info.ID); //add host to list
@@ -156,23 +156,17 @@ void mdnsHandler::sendSearch()
 	}
 }
 
-void mdnsHandler::sendSearchCb(void* pTimerArg)
-{
+void mdnsHandler::sendSearchCb(void* pTimerArg) {
 #ifdef DEBUG_MDNS
-	debug_i("sendSearchCb called");
+    debug_i("sendSearchCb called");
 #endif
-	mdnsHandler* pThis = static_cast<mdnsHandler*>(pTimerArg);
-	pThis->sendSearch();
+    mdnsHandler* pThis = static_cast<mdnsHandler*>(pTimerArg);
+    pThis->sendSearch();
 }
 
 void mdnsHandler::addHost(const String& hostname, const String& ip_address, int ttl, unsigned int id)
 {
-/*
-     * ToDo: this is currently an ugly implementation, as it needs both, the hosts 
-     * JsonArray and the app.cfg.network.mdnsHosts string, wasting memory
-     * however, it's the most convenient way to pass the list from here to the webserver
-     * without having to pass object references around
-     */
+	
 #ifdef DEBUG_MDNS
 	debug_i("Adding host %s with IP %s and ttl %i", hostname.c_str(), ip_address.c_str(), ttl);
 #endif
@@ -187,9 +181,15 @@ void mdnsHandler::addHost(const String& hostname, const String& ip_address, int 
 	String hostString;
 	JsonVariant host;
 
-	bool knownHost,updateHost = false;
+	bool knownHost =false;
+	bool updateHost = false;
+
+	String hostsString;
+	serializeJsonPretty(hostsDoc, hostString);
+	
 	for (size_t i = 0; i < hosts.size(); ++i) {
     	host = hosts[i];
+		debug_i("Checking host with ID %u", host[F("id")].as<unsigned int>());
 	    if (host[F("id")] == _id) {
 #ifdef DEBUG_MDNS
         debug_i("Hostname %s already in list", _hostname.c_str());
@@ -207,38 +207,36 @@ void mdnsHandler::addHost(const String& hostname, const String& ip_address, int 
 				updateHost = true;
 			}
 			knownHost = true;
+			sendWsUpdate(F("updated_host"), host);
 			break;
 		}
 	}
-
-	if(!knownHost || updateHost) {
+	if(!knownHost) {
+		debug_i("updating or adding host %s", _hostname.c_str());
 		newHost = hosts.createNestedObject();
 		newHost[F("hostname")] = _hostname;
 		newHost[F("ip_address")] = _ip_address;
 		newHost[F("ttl")] = _ttl;
 		newHost[F("id")] = _id;
-		serializeJsonPretty(newHost, hostString);
-	
-	    JsonRpcMessage msg(knownHost ? F("updated_host") : F("new_host"));
+		sendWsUpdate(F("new_host"), newHost);
+	}
+}
 
-		if(!knownHost) {
-			JsonObject root = msg.getParams();
-			root.set(newHost);
-	#ifdef DEBUG_MDNS
-			debug_i("new host: %s", hostString.c_str());
-	#endif
-		} else if(updateHost) {
-			JsonObject root = msg.getParams();
-			root.set(newHost);
-		}
-
+void mdnsHandler::sendWsUpdate(const String& type, JsonObject host){
+	String hostString;
+	if (serializeJsonPretty(host, hostString)) {
+		JsonRpcMessage msg(type);
+		JsonObject root = msg.getParams();
+		root.set(host);
 		String jsonStr = Json::serialize(msg.getRoot());
 		app.wsBroadcast(jsonStr);
 	}
 }
 
-String mdnsHandler::getHosts()
-{
+String mdnsHandler::getHosts(){
+	/*
+     * ToDo: write a version that returns a stream 
+     */
 	String mdnsHosts;
 	serializeJson(hostsDoc, mdnsHosts);
 	//Serial.printf("\nnew hosts document:\n %s",mdnsHosts.c_str());

@@ -8,7 +8,7 @@
 #define JSON_SIZE 2048
 
 // activate debug output
-//#define DEBUG_MDNS 
+// #define DEBUG_MDNS 
 
 /**
  * @class mdnsHandler
@@ -28,6 +28,7 @@ class mdnsHandler: public mDNS::Responder {
         }
         bool onMessage(mDNS::Message& message);
         void addHost(const String& hostname, const String& ip_address, int ttl, unsigned int id);
+        void sendWsUpdate(const String& type, JsonObject host);
         String getHosts();
 
     private:
@@ -60,11 +61,13 @@ class LEDControllerAPIService : public mDNS::Service{
 		    return 80;
     	};
 	    void addText(mDNS::Resource::TXT& txt) override{
-            txt.add("ty=rgbwwctrWas hilft l");
+            txt.add("ty=rgbwwctrl");
             #ifdef ESP8266
             txt.add("mo=esp8266");
             #elif defined(ESP32)
             txt.add("mo=esp32");
+            #elif defined(ESP32C3)
+            txt.add("mo=esp32c3");
             #endif
             txt.add("fn=LED Controller API");
             txt.add("id=" + String(system_get_chip_id()));
