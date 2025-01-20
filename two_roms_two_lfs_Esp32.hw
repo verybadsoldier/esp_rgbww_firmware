@@ -7,7 +7,7 @@
     ],
     "partitions": {
         "factory":{
-            "size":"0k"
+            "size":"0K"
         },
         "rom0": {
             "device": "spiFlash",

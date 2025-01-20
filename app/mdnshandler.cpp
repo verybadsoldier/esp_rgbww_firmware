@@ -13,8 +13,6 @@ void mdnsHandler::start()
 	static mDNS::Responder responder;
 
 	static LEDControllerAPIService ledControllerAPIService;
-	static LEDControllerWebAppService ledControllerWebAppService;
-	static LEDControllerWSService ledControllerWSService;
 
 	//start the mDNS responder with the configured services, using the configured hostname
 	{
@@ -100,6 +98,14 @@ bool mdnsHandler::onMessage(mDNS::Message& message)
 		info.ipAddr = String(answer->getRecordString());
 		info.ttl = answer->getTtl();
 	}
+	
+	answer = message[mDNS::ResourceType::TXT];
+		if(answer!=nullptr){
+			debug_i("mDNS ressource type TXT");
+			mDNS::Resource::TXT txt(*answer);
+			//mDNS::printAnswer(Serial, *answer);
+			info.ID=txt["id"].toInt();
+		}
 #ifdef DEBUG_MDNS
 	debug_i("found Host %s with IP %s and TTL %i", info.hostName.c_str(), info.ipAddr.toString().c_str(), info.ttl);
 #endif
@@ -159,7 +165,7 @@ void mdnsHandler::sendSearchCb(void* pTimerArg)
 	pThis->sendSearch();
 }
 
-void mdnsHandler::addHost(const String& hostname, const String& ip_address, int ttl)
+void mdnsHandler::addHost(const String& hostname, const String& ip_address, int ttl, uint id)
 {
 /*
      * ToDo: this is currently an ugly implementation, as it needs both, the hosts 
@@ -172,40 +178,61 @@ void mdnsHandler::addHost(const String& hostname, const String& ip_address, int 
 #endif
 	String _hostname, _ip_address;
 	int _ttl;
+	uint _id;
 	_hostname = hostname;
 	_ip_address = ip_address;
 	_ttl = ttl;
+	_id = id;
+	JsonObject newHost;
+	String hostString;
+	JsonVariant host;
 
-	bool knownHost = false;
-	for(JsonVariant host : hosts) {
-		if(host[F("hostname")] == _hostname && host[F("ip_address")] == _ip_address) {
+	bool knownHost,updateHost = false;
+	for (size_t i = 0; i < hosts.size(); ++i) {
+    	host = hosts[i];
+	    if (host[F("id")] == _id) {
 #ifdef DEBUG_MDNS
-			debug_i("Hostname %s already in list", _hostname.c_str());
+        debug_i("Hostname %s already in list", _hostname.c_str());
 #endif
-			if(_ttl != -1)
-				host[F("ttl")] = _ttl; //reset ttl
+			if (_ttl != -1) {
+				host[F("ttl")] = _ttl; // reset ttl
+				updateHost = true;
+			}
+			if (_ip_address != host[F("ip_address")]) { // update IP address
+				host[F("ip_address")] = _ip_address;
+				updateHost = true;
+			}
+			if (_hostname != host[F("hostname")]) { // update hostname
+				host[F("hostname")] = _hostname;
+				updateHost = true;
+			}
 			knownHost = true;
 			break;
 		}
 	}
 
-	if(!knownHost) {
-		JsonObject newHost = hosts.createNestedObject();
-
+	if(!knownHost || updateHost) {
+		newHost = hosts.createNestedObject();
 		newHost[F("hostname")] = _hostname;
 		newHost[F("ip_address")] = _ip_address;
 		newHost[F("ttl")] = _ttl;
-		String newHostString;
-		serializeJsonPretty(newHost, newHostString);
-#ifdef DEBUG_MDNS
-		debug_i("new host: %s", newHostString.c_str());
-#endif
+		newHost[F("id")] = _id;
+		serializeJsonPretty(newHost, hostString);
+	
+	    JsonRpcMessage msg(knownHost ? F("updated_host") : F("new_host"));
 
-		JsonRpcMessage msg(F("new_host"));
-		JsonObject root = msg.getParams();
-		root.set(newHost);
+		if(!knownHost) {
+			JsonObject root = msg.getParams();
+			root.set(newHost);
+	#ifdef DEBUG_MDNS
+			debug_i("new host: %s", hostString.c_str());
+	#endif
+		} else if(updateHost) {
+			JsonObject root = msg.getParams();
+			root.set(newHost);
+		}
+
 		String jsonStr = Json::serialize(msg.getRoot());
-
 		app.wsBroadcast(jsonStr);
 	}
 }
