@@ -87,8 +87,8 @@ bool mdnsHandler::onMessage(mDNS::Message& message)
 	struct {
 		String hostName;
 		IpAddress ipAddr;
-		uint ttl;
-		uint ID;
+		unsigned int ttl;
+		unsigned int ID;
 	} info;
 
 	answer = message[mDNS::ResourceType::A];
@@ -165,7 +165,7 @@ void mdnsHandler::sendSearchCb(void* pTimerArg)
 	pThis->sendSearch();
 }
 
-void mdnsHandler::addHost(const String& hostname, const String& ip_address, int ttl, uint id)
+void mdnsHandler::addHost(const String& hostname, const String& ip_address, int ttl, unsigned int id)
 {
 /*
      * ToDo: this is currently an ugly implementation, as it needs both, the hosts 
@@ -178,7 +178,7 @@ void mdnsHandler::addHost(const String& hostname, const String& ip_address, int 
 #endif
 	String _hostname, _ip_address;
 	int _ttl;
-	uint _id;
+	unsigned int _id;
 	_hostname = hostname;
 	_ip_address = ip_address;
 	_ttl = ttl;
