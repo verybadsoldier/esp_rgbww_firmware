@@ -166,7 +166,11 @@ void mdnsHandler::sendSearchCb(void* pTimerArg) {
 
 void mdnsHandler::addHost(const String& hostname, const String& ip_address, int ttl, unsigned int id)
 {
-	
+	/*
+	* ToDo: to avoid getting faulty data (such as the same host showing up with different IDs), 
+	* I may have to implement a CRC mechanism for the mDNS data
+	*/
+	if(id==1) return; //invalid ID
 #ifdef DEBUG_MDNS
 	debug_i("Adding host %s with IP %s and ttl %i", hostname.c_str(), ip_address.c_str(), ttl);
 #endif
