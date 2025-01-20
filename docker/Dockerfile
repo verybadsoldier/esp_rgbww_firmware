@@ -35,11 +35,6 @@ RUN Tools/install.sh $INSTALL_ARGS
 RUN echo "source /opt/Sming/Tools/export.sh" >> ~/.bashrc 
 RUN cat  "/opt/Sming/Tools/export.sh"
 
-
-# ------------------------------------------------------------------------------
-# build base components
-# ------------------------------------------------------------------------------
-    
 WORKDIR "/opt/Sming/Sming/"
 RUN make python-requirements && \
     make submodules
