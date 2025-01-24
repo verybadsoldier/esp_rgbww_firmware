@@ -62,6 +62,9 @@ void ApplicationWebserver::init()
 	paths.set(F("/connect"), HttpPathDelegate(&ApplicationWebserver::onConnect, this));
 	paths.set(F("/ping"), HttpPathDelegate(&ApplicationWebserver::onPing, this));
 	paths.set(F("/hosts"), HttpPathDelegate(&ApplicationWebserver::onHosts, this));
+	paths.set(F("/presets"), HttpPathDelegate(&ApplicationWebserver::onPresets, this));
+
+	// redirectors for initial configuration
 	paths.set(F("/canonical.html"), HttpPathDelegate(&ApplicationWebserver::onIndex, this));
 	paths.set(F("/generate_204"), HttpPathDelegate(&ApplicationWebserver::onIndex, this));
 	paths.set(F("/static/hotspot.txt"), HttpPathDelegate(&ApplicationWebserver::onIndex, this));
@@ -659,9 +662,7 @@ void ApplicationWebserver::onColorPost(HttpRequest& request, HttpResponse& respo
  * @param request The HTTP request object.
  * @param response The HTTP response object.
  */
-void ApplicationWebserver::onColor(HttpRequest& request, HttpResponse& response)
-{
-	debug_i("onColor");
+void ApplicationWebserver::onColor(HttpRequest& request, HttpResponse& response){
 	if(!authenticated(request, response)) {
 		return;
 	}
@@ -1239,6 +1240,58 @@ void ApplicationWebserver::onHosts(HttpRequest& request, HttpResponse& response)
 	setCorsHeaders(response);
 	response.setContentType(F("application/json"));
 	response.sendString(app.network.getMdnsHosts());
+
+	return;
+}
+
+void ApplicationWebserver::onPresets(HttpRequest& request, HttpResponse& response){
+	if(request.method != HTTP_POST && request.method != HTTP_GET && request.method != HTTP_OPTIONS) {
+		sendApiCode(response, API_CODES::API_BAD_REQUEST, "not GET or OPTIONS request");
+		return;
+	}
+
+	if(request.method == HTTP_OPTIONS) {
+		// probably a CORS request
+		sendApiCode(response, API_CODES::API_SUCCESS, "");
+		debug_i("HTTP_OPTIONS Request, sent API_SUCCSSS");
+		return;
+	}
+
+	if(request.method==HTTP_GET){
+
+		setCorsHeaders(response);
+
+		response.setContentType(F("application/json"));
+
+		/*AppData::Presets presets(*app.data);
+		auto presetsStream = presets.createExportStream(ConfigDB::Json::format);
+		//auto options = presetsStream->getOptions();
+		//options.rootStyle = ConfigDB::RootStyle::object;
+		//presetsStream->setOptions(options);
+		*/
+
+		auto dataStream = app.data->createExportStream(ConfigDB::Json::format);
+
+		response.sendDataStream(dataStream.release(), MIME_JSON);
+
+	} else if (request.method==HTTP_POST){
+
+		auto bodyStream = request.getBodyStream();
+		if(bodyStream) {
+			debug_i("received presets bodyStream");
+			ConfigDB::Status status = app.data->importFromStream(ConfigDB::Json::format, *bodyStream);
+			if(status){
+				debug_i("successfully updated presets");
+				sendApiCode(response, API_CODES::API_SUCCESS, "successfully updated presets");
+			}else{
+				debug_i("could not update presets");
+				sendApiCode(response, API_CODES::API_BAD_REQUEST, "could not update presets");
+			}
+		}else{
+			debug_i("could not get bodyStream");
+			sendApiCode(response, API_CODES::API_BAD_REQUEST, "could not get bodyStream");
+		}
+	}
 
 	return;
 }

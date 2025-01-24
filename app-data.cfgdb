@@ -31,27 +31,6 @@
         }
       }
     },
-    "controllers": {
-      "type": "array",
-      "store":true,
-      "items": {
-        "type": "object",
-        "properties": {
-          "id":{
-            "type":"integer"
-          },
-          "ip": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "last-seen": {
-            "type": "integer"
-          }
-        }
-      }
-    },
     "scenes":{
       "type":"array",
       "store":true,

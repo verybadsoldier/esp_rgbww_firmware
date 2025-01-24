@@ -389,7 +389,7 @@ debug_i("Application::init - running partition %s", part.name());
 	debug_i("pin config string %s", fileMap["pin_config"]);
 
 	// ConfigDB: temp only: create an example preset
-	/*
+	
 	{
 		AppData::Presets::OuterUpdater presets(*data);
 
@@ -414,7 +414,7 @@ debug_i("Application::init - running partition %s", part.name());
 		rawUpdater.setWw(255);
 		rawUpdater.setCw(255);
 	}
-	*/
+	
 }
 void Application::initButtons()
 {
