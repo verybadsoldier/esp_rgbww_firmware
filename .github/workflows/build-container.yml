@@ -37,7 +37,7 @@ jobs:
       - name: extract Sming version
         id: extract_version
         run: |
-          SMING_VERSION=${ grep '#define SMING_.*_VERSION' /opt/Sming/Sming/Core/SmingVersion.h|awk '{print $3}'|paste -sd '.' - }
+          SMING_VERSION=$() grep '#define SMING_.*_VERSION' /opt/Sming/Sming/Core/SmingVersion.h|awk '{print $3}'|paste -sd '.' - )
           echo "SMING_VERSION=$SMING_VERSION" >> $GITHUB_ENV
 
       - name: Login to DockerHub
