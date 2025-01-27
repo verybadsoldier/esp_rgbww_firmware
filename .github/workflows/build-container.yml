@@ -54,4 +54,4 @@ jobs:
           context: .
           file: docker/Dockerfile
           push: true
-          tags: pjakobs/sming:latest, ${{ steps.extract_version.outputs.SMING_VERSION }}, ${{ steps.extract_version.outputs.SMING_BRANCH }}
+          tags: pjakobs/sming:latest:, pjakobs/sming:latest:${{ steps.extract_version.outputs.SMING_VERSION }}, pjakobs/sming:latest:${{ steps.extract_version.outputs.SMING_BRANCH }}

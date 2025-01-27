@@ -101,7 +101,6 @@ bool mdnsHandler::onMessage(mDNS::Message& message)
 	
 	answer = message[mDNS::ResourceType::TXT];
 		if(answer!=nullptr){
-			debug_i("mDNS ressource type TXT");
 			mDNS::Resource::TXT txt(*answer);
 			//mDNS::printAnswer(Serial, *answer);
 			info.ID=txt["id"].toInt();
@@ -193,8 +192,7 @@ void mdnsHandler::addHost(const String& hostname, const String& ip_address, int 
 	
 	for (size_t i = 0; i < hosts.size(); ++i) {
     	host = hosts[i];
-		debug_i("Checking host with ID %u", host[F("id")].as<unsigned int>());
-	    if (host[F("id")] == _id) {
+		if (host[F("id")] == _id) {
 #ifdef DEBUG_MDNS
         debug_i("Hostname %s already in list", _hostname.c_str());
 #endif

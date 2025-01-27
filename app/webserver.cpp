@@ -1282,10 +1282,10 @@ void ApplicationWebserver::onPresets(HttpRequest& request, HttpResponse& respons
 			ConfigDB::Status status = app.data->importFromStream(ConfigDB::Json::format, *bodyStream);
 			if(status){
 				debug_i("successfully updated presets");
-				sendApiCode(response, API_CODES::API_SUCCESS, "successfully updated presets");
+				sendApiCode(response, API_CODES::API_SUCCESS, status.toString());
 			}else{
 				debug_i("could not update presets");
-				sendApiCode(response, API_CODES::API_BAD_REQUEST, "could not update presets");
+				sendApiCode(response, API_CODES::API_BAD_REQUEST, status.toString());
 			}
 		}else{
 			debug_i("could not get bodyStream");

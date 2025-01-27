@@ -414,6 +414,30 @@ debug_i("Application::init - running partition %s", part.name());
 		rawUpdater.setWw(255);
 		rawUpdater.setCw(255);
 	}
+	{
+		debug_i("creating example scene");
+		AppData::Scenes::OuterUpdater scenes(*data);
+		auto scene = scenes.addItem();
+		scene.setName("example-scene");
+
+		{
+			auto item=scene.settings.addItem();
+			item.setControllerId(1234567);
+			auto hsvUpdater=item.color.toHsv();
+			hsvUpdater.setH(0);
+			hsvUpdater.setS(100);
+			hsvUpdater.setV(100);
+		}
+
+		{
+			auto item=scene.settings.addItem();
+			item.setControllerId(7654321);
+			auto hsvUpdater=item.color.toHsv();
+			hsvUpdater.setH(60);
+			hsvUpdater.setS(50);
+			hsvUpdater.setV(100);
+		}
+	}
 	
 }
 void Application::initButtons()
