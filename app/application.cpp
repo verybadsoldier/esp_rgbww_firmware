@@ -33,7 +33,6 @@
 #include <FlashString/Stream.hpp>
 #include <fileMap.h>
 
-
 #if ARCH_ESP8266
 #define PART0 "lfs0"
 #elif ARCH_ESP32
