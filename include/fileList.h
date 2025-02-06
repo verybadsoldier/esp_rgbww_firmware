@@ -5,6 +5,8 @@
 	XX(i18n_js, "assets/i18n.js.gz") \
 	XX(index_css, "assets/index.css.gz") \
 	XX(index_js, "assets/index.js.gz") \
+	XX(registerSvgIcon_css, "assets/registerSvgIcon.css.gz") \
+	XX(registerSvgIcon_js, "assets/registerSvgIcon.js.gz") \
 	XX(pinconfig, "config/pinconfig.json") \
 	XX(arrow_drop_down_svg, "icons/arrow_drop_down.svg.gz") \
 	XX(badge_outlined_svg, "icons/badge_outlined.svg.gz") \
@@ -12,6 +14,7 @@
 	XX(close_outlined_svg, "icons/close_outlined.svg.gz") \
 	XX(cloud_download_svg, "icons/cloud_download.svg.gz") \
 	XX(cloud_upload_svg, "icons/cloud_upload.svg.gz") \
+	XX(delete_svg, "icons/delete.svg.gz") \
 	XX(description_svg, "icons/description.svg.gz") \
 	XX(exposure_outlined_svg, "icons/exposure_outlined.svg.gz") \
 	XX(favicon, "icons/favicon.ico") \

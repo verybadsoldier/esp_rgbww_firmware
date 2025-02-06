@@ -33,6 +33,7 @@
 #include <FlashString/Stream.hpp>
 #include <fileMap.h>
 
+
 #if ARCH_ESP8266
 #define PART0 "lfs0"
 #elif ARCH_ESP32
@@ -282,7 +283,7 @@ debug_i("Application::init - running partition %s", part.name());
 #endif
 
 	// initialize config and data
-	cfg = std::make_unique<AppConfig>(configDB_PATH);
+	cfg =  std::make_unique<AppConfig>(configDB_PATH);
 	data = std::make_unique<AppData>(dataDB_PATH);
 
 	// verify if there is a new version of the hardware config
@@ -390,11 +391,11 @@ debug_i("Application::init - running partition %s", part.name());
 	// ConfigDB: temp only: create an example preset
 	
 	{
-		AppData::Presets::OuterUpdater presets(*data);
+		AppData::Root::OuterUpdater appData(*data);
 
-		presets.clear();
+		appData.presets.clear();
 
-		auto preset = presets.addItem();
+		auto preset = appData.presets.addItem();
 		preset.setName("example-hsv");
 		preset.setFavorite(true);
 		auto hsvUpdater = preset.color.toHsv();
@@ -403,8 +404,11 @@ debug_i("Application::init - running partition %s", part.name());
 		hsvUpdater.setV(100);
 	}
 	{
-		AppData::Presets::OuterUpdater presets(*data);
-		auto preset = presets.addItem();
+		AppData::Root::OuterUpdater appData(*data);
+
+		appData.presets.clear();
+
+		auto preset = appData.presets.addItem();
 		preset.setName("example-raw");
 		auto rawUpdater = preset.color.toRaw();
 		rawUpdater.setR(255);
@@ -413,6 +417,7 @@ debug_i("Application::init - running partition %s", part.name());
 		rawUpdater.setWw(255);
 		rawUpdater.setCw(255);
 	}
+	/*
 	{
 		debug_i("creating example scene");
 		AppData::Scenes::OuterUpdater scenes(*data);
@@ -437,6 +442,7 @@ debug_i("Application::init - running partition %s", part.name());
 			hsvUpdater.setV(100);
 		}
 	}
+	*/
 	
 }
 void Application::initButtons()
