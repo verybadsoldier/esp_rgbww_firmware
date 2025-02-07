@@ -33,7 +33,7 @@ RUN git clone $SMING_REPO -b $SMING_BRANCH /opt/Sming
 
 WORKDIR "/opt/Sming"
 RUN git submodule set-url Sming/Libraries/ConfigDB $CONFIGDB_REPO && \
-    git submodule set-branch develop Sming/Libraries/ConfigDB && \
+    git submodule set-branch --branch develop Sming/Libraries/ConfigDB && \
     git submodule update --init --recursive
 
 SHELL ["/bin/bash", "-c"]
