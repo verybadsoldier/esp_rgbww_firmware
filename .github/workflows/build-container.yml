@@ -36,16 +36,15 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-
       - name: Clone SmingHub/Sming repository
         run: |
-          git clone --branch develop --depth 1 https://github.com/SmingHub/Sming.git sming-repo
+          git clone --branch develop https://github.com/SmingHub/Sming.git sming-repo
 
       - name: Get latest tag from SmingHub/Sming
         id: get_sming_tag
         run: |
           cd sming-repo
-          SMING_TAG=$(git describe --tags --abbrev=0)
+          SMING_TAG=$(git describe --abbrev=4 --dirty --always --tags)
           echo "SMING_TAG=$SMING_TAG" >> $GITHUB_ENV
 
       - name: Login to DockerHub
