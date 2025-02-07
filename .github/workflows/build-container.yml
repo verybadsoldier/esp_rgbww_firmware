@@ -40,6 +40,7 @@ jobs:
       - name: extract Sming version
         id: extract_version
         run: |
+          cd ${{ github.workspace }}/Sming
           SMING_VERSION=$( git describe --tags --abbrev=0 )
           echo "SMING_VERSION=$SMING_VERSION" >> $GITHUB_ENV
           SMING_BRANCH=$( git rev-parse --abbrev-ref HEAD )
