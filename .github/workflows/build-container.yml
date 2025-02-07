@@ -53,6 +53,6 @@ jobs:
           context: .
           file: docker/Dockerfile
           push: true
-          tags: 
+          tags: |
             pjakobs/sming:latest
             pjakobs/sming:${{ steps.get_latest_tag.outputs.tag }}
