@@ -31,9 +31,13 @@ RUN apt-get -y update \
 
 RUN git clone $SMING_REPO -b $SMING_BRANCH /opt/Sming 
 
+# ------------------------------------------------------------------------------
+# temporarily fetch the updated ConfigDB submodule
+# ------------------------------------------------------------------------------
 WORKDIR "/opt/Sming"
 RUN git submodule set-url Sming/Libraries/ConfigDB $CONFIGDB_REPO && \
     git submodule set-branch --branch develop Sming/Libraries/ConfigDB && \
+    git checkout develop && \
     git submodule update --init --recursive
 
 SHELL ["/bin/bash", "-c"]
@@ -55,3 +59,5 @@ RUN source ~/.bashrc && \
 RUN source ~/.bashrc && \
     source /opt/Sming/Tools/export.sh && \
     make SMING_SOC=esp32c3
+
+WORKDIR /

@@ -9,6 +9,7 @@
 	XX(registerSvgIcon_js, "assets/registerSvgIcon.js.gz") \
 	XX(pinconfig, "config/pinconfig.json") \
 	XX(arrow_drop_down_svg, "icons/arrow_drop_down.svg.gz") \
+	XX(arrow_forward_svg, "icons/arrow_forward.svg.gz") \
 	XX(badge_outlined_svg, "icons/badge_outlined.svg.gz") \
 	XX(check_outlined_svg, "icons/check_outlined.svg.gz") \
 	XX(close_outlined_svg, "icons/close_outlined.svg.gz") \
