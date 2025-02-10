@@ -1,6 +1,6 @@
 FROM ubuntu:20.04
 
-ARG SMING_REPO=https://github.com/SmingHub/Sming
+ARG SMING_REPO=https://github.com/pljakobs/Sming
 
 ARG SMING_BRANCH=develop
 ARG INSTALL_ARGS="Esp32 Esp8266"
