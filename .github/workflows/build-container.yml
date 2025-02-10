@@ -38,7 +38,7 @@ jobs:
 
       - name: Clone SmingHub/Sming repository
         run: |
-          git clone --branch develop https://github.com/SmingHub/Sming.git sming-repo
+          git clone --branch develop https://github.com/pljakobs/Sming.git sming-repo
 
       - name: Get latest tag from SmingHub/Sming
         id: get_sming_tag
