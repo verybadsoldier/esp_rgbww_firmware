@@ -1,8 +1,6 @@
 FROM ubuntu:20.04
 
 ARG SMING_REPO=https://github.com/SmingHub/Sming
-ARG CONFIGDB_REPO=https://github.com/mikee47/ConfigDB
-ARG CONFIGDB_BRANCH=feature/named-selector-range
 
 ARG SMING_BRANCH=develop
 ARG INSTALL_ARGS="Esp32 Esp8266"
@@ -31,15 +29,6 @@ RUN apt-get -y update \
 # ------------------------------------------------------------------------------
 
 RUN git clone $SMING_REPO -b $SMING_BRANCH /opt/Sming 
-
-# ------------------------------------------------------------------------------
-# temporarily fetch the updated ConfigDB submodule
-# ------------------------------------------------------------------------------
-WORKDIR "/opt/Sming"
-RUN git submodule set-url Sming/Libraries/ConfigDB $CONFIGDB_REPO && \
-    git submodule set-branch --branch develop Sming/Libraries/ConfigDB && \
-    git checkout $CONFIGDB_BRANCH && \
-    git submodule update --init --recursive
 
 SHELL ["/bin/bash", "-c"]
 WORKDIR "/opt/Sming"
