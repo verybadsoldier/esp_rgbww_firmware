@@ -3,6 +3,3 @@
 	path = Components/RGBWWLed
 	url = https://github.com/pljakobs/RGBWWled.git
 	branch = develop
-[submodule "ConfigDB"]
-	path = Components/ConfigDB
-	url = https://github.com/mikee47/ConfigDB
