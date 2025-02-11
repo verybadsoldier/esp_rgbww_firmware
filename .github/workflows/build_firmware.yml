@@ -39,46 +39,50 @@ jobs:
 
       - name: Download fileList.h artifact
         run: |
-          if [ -f /workspace/include/fileList.h ]; then
-            rm /workspace/include/fileList.h
+          if [ -f ./include/fileList.h ]; then
+            echo "removing fileList.h"
+            rm ./include/fileList.h
           fi
           artifact_url=https://pljakobs.github.io/esp_rgb_webapp2/fileList.h
           curl -L -o fileList.h "$artifact_url"
-          mv fileList.h /workspace/include
+          mv fileList.h ./include
 
       - name: Download webapp files artifact
         run: |
-          if [ -d /workspace/webapp ]; then
-            rm -rf /workspace/webapp
-            mkdir /workspace/webapp
+          if [ -d ./webapp ]; then
+            echo "removing and re-creating webapp directory"
+            rm -rf ./webapp
+            mkdir ./webapp
           fi
           artifact_url=https://pljakobs.github.io/esp_rgb_webapp2/spa-files.zip
           curl -L -o spa-files.zip "$artifact_url"
-          unzip spa-files.zip -d /workspace/webapp
-          mv /workspace/webapp/dist/spa/* /workspace/webapp
-          rm -rf /workspace/webapp/dist/spa
+          unzip spa-files.zip -d ./webapp
+          mv ./webapp/dist/spa/* ./webapp
+          rm -rf ./webapp/dist/spa
+          echo "webapp files version"
+          cat ./webapp/VERSION
 
       - name: Build partition map (ESP8266 only)
         if: ${{ matrix.soc == 'esp8266' }}
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
+          docker run --rm -v ${{ github.workspace }}:. -w . \
             docker.io/pjakobs/sming:latest \
-            bash -c "git config --global --add safe.directory /workspace && \
+            bash -c "git config --global --add safe.directory . && \
                source /opt/Sming/Tools/export.sh && \
                make partmap-build" SMING_SOC=${{ matrix.soc }} SMING_RELEASE=${{ matrix.release }}
 
       - name: Copy partition map for release build (ESP8266 only)
         if: ${{ matrix.soc == 'esp8266' && matrix.release == 1 }}
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
+          docker run --rm -v ${{ github.workspace }}:. -w . \
             docker.io/pjakobs/sming:latest \
-            bash -c "mkdir -p /workspace/out/Esp8266/release/firmware && cp /workspace/out/Esp8266/debug/firmware/partitions.bin /workspace/out/Esp8266/release/firmware/"
+            bash -c "mkdir -p ./out/Esp8266/release/firmware && cp ./out/Esp8266/debug/firmware/partitions.bin ./out/Esp8266/release/firmware/"
 
       - name: Run Build in Docker Container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
+          docker run --rm -v ${{ github.workspace }}:. -w . \
             docker.io/pjakobs/sming:latest \
-            bash -c "git config --global --add safe.directory /workspace && \
+            bash -c "git config --global --add safe.directory . && \
             source /opt/Sming/Tools/export.sh && \
             make configdb-rebuild && \
             make SMING_SOC=${{ matrix.soc }} SMING_RELEASE=${{ matrix.release }} DISABLE_WERROR=1 COM_SPEED=115200"
