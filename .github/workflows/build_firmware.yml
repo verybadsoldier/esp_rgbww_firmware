@@ -34,24 +34,24 @@ jobs:
 
       - name: Download fileList.h artifact
         run: |
-          if [ -f ./include/fileList.h ]; then
-            rm ./include/fileList.h
+          if [ -f /workspace/include/fileList.h ]; then
+            rm /workspace/include/fileList.h
           fi
           artifact_url=https://pljakobs.github.io/esp_rgb_webapp2/fileList.h
           curl -L -o fileList.h "$artifact_url"
-          mv fileList.h ./include
+          mv fileList.h /workspace/include
 
       - name: Download webapp files artifact
         run: |
-          if [ -d ./webapp ]; then
-            rm -rf ./webapp
-            mkdir ./webapp
+          if [ -d /workspace/webapp ]; then
+            rm -rf /workspace/webapp
+            mkdir /workspace/webapp
           fi
           artifact_url=https://pljakobs.github.io/esp_rgb_webapp2/spa-files.zip
           curl -L -o spa-files.zip "$artifact_url"
-          unzip spa-files.zip -d ./webapp
-          mv ./webapp/dist/spa/* ./webapp
-          rm -rf ./webapp/dist/spa
+          unzip spa-files.zip -d /workspace/webapp
+          mv /workspace/webapp/dist/spa/* /workspace/webapp
+          rm -rf /workspace/webapp/dist/spa
 
       - name: Build partition map (ESP8266 only)
         if: ${{ matrix.soc == 'esp8266' }}
