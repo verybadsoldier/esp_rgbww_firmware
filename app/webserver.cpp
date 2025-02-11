@@ -27,8 +27,7 @@
 
 #include <fileMap.h>
 
-#define NOCACHE
-#define DEBUG_OBJECT_API
+//#define NOCACHE
 
 ApplicationWebserver::ApplicationWebserver()
 {

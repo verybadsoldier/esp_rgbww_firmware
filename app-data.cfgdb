@@ -30,7 +30,24 @@
         }
       }
     },
-    "groups":{
+    "controllers":{
+      "type":"array",
+      "items":{
+        "type":"object",
+        "properties":{
+          "id":{
+            "type":"integer"
+          },
+          "name":{
+            "type":"string"
+          },
+          "ip-address":{
+            "type":"string"
+          }
+        }
+      }
+    },
+        "groups":{
       "type":"array",
       "items":{
         "type":"object",
@@ -40,8 +57,8 @@
           },
           "IDs":{
             "type":"array",
-            "items":{
-             "type":"string"
+            "items": {
+             "type":"integer"
             }
           }
         }
