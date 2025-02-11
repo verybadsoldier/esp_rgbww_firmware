@@ -30,6 +30,23 @@
         }
       }
     },
+    "groups":{
+      "type":"array",
+      "items":{
+        "type":"object",
+        "properties":{
+          "name":{
+            "type":"string"
+          },
+          "IDs":{
+            "type":"array",
+            "items":{
+             "type":"string"
+            }
+          }
+        }
+      }
+    },
     "scenes":{
       "type":"array",
       "items":{
