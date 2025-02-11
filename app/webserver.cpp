@@ -253,7 +253,7 @@ void ApplicationWebserver::onFile(HttpRequest& request, HttpResponse& response)
 #endif
 // Use client caching for better performance.
 #ifndef NOCACHE
-	response->setCache(86400, true);
+	response.setCache(86400, true);
 #endif
 
 	String fileName = request.uri.Path;
