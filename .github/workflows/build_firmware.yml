@@ -39,7 +39,7 @@ jobs:
           fi
           artifact_url=https://pljakobs.github.io/esp_rgb_webapp2/fileList.h
           curl -L -o fileList.h "$artifact_url"
-          mv fileList.h -d ./include
+          mv fileList.h ./include
 
       - name: Download webapp files artifact
         run: |
