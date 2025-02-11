@@ -32,6 +32,11 @@ jobs:
       - name: Pull Docker Image
         run: docker pull docker.io/pjakobs/sming:latest
 
+      - name: list directory
+        run: |
+          pwd  
+          ls -la
+
       - name: Download fileList.h artifact
         run: |
           if [ -f /workspace/include/fileList.h ]; then
