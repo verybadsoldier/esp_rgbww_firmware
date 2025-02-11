@@ -83,7 +83,7 @@ private:
     void onContinue(HttpRequest &request, HttpResponse &response);
     void onBlink(HttpRequest &request, HttpResponse &response);
     void onToggle(HttpRequest &request, HttpResponse &response);
-    void onPresets(HttpRequest &request, HttpResponse &response);
+    void onData(HttpRequest &request, HttpResponse &response);
     
 
     void onColorGet(HttpRequest &request, HttpResponse &response);
