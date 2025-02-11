@@ -74,7 +74,7 @@ jobs:
       - name: Copy partition map for release build (ESP8266 only)
         if: ${{ matrix.soc == 'esp8266' && matrix.release == 1 }}
         run: |
-          docker run --rm -v ${{ github.workspace }}:. -w . \
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
             docker.io/pjakobs/sming:latest \
             bash -c "mkdir -p ./out/Esp8266/release/firmware && cp ./out/Esp8266/debug/firmware/partitions.bin ./out/Esp8266/release/firmware/"
 
