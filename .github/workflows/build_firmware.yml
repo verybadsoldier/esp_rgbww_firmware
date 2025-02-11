@@ -67,7 +67,7 @@ jobs:
         run: |
           docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
             docker.io/pjakobs/sming:latest \
-            bash -c "git config --global --add safe.directory . && \
+            bash -c "git config --global --add safe.directory /workspace && \
                source /opt/Sming/Tools/export.sh && \
                make partmap-build" SMING_SOC=${{ matrix.soc }} SMING_RELEASE=${{ matrix.release }}
 
@@ -82,7 +82,7 @@ jobs:
         run: |
           docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
             docker.io/pjakobs/sming:latest \
-            bash -c "git config --global --add safe.directory . && \
+            bash -c "git config --global --add safe.directory /workspace && \
             source /opt/Sming/Tools/export.sh && \
             make configdb-rebuild && \
             make SMING_SOC=${{ matrix.soc }} SMING_RELEASE=${{ matrix.release }} DISABLE_WERROR=1 COM_SPEED=115200"
