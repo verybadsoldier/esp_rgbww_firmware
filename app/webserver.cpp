@@ -417,8 +417,6 @@ void ApplicationWebserver::onConfig(HttpRequest& request, HttpResponse& response
              * - if color setttings changed - reconfigure controller (see below)
              **********************************/
 
-			// update and save settings if we haven`t received any error until now
-
 			// bool restart = root[F("restart")] | false;
 
 			String newIP, newSSID;
