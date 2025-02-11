@@ -65,7 +65,7 @@ jobs:
       - name: Build partition map (ESP8266 only)
         if: ${{ matrix.soc == 'esp8266' }}
         run: |
-          docker run --rm -v ${{ github.workspace }}:. -w . \
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
             docker.io/pjakobs/sming:latest \
             bash -c "git config --global --add safe.directory . && \
                source /opt/Sming/Tools/export.sh && \
@@ -80,7 +80,7 @@ jobs:
 
       - name: Run Build in Docker Container
         run: |
-          docker run --rm -v ${{ github.workspace }}:. -w . \
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
             docker.io/pjakobs/sming:latest \
             bash -c "git config --global --add safe.directory . && \
             source /opt/Sming/Tools/export.sh && \
