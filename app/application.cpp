@@ -537,21 +537,31 @@ bool Application::delayedCMD(String cmd, int delay)
 {
 	debug_i("Application::delayedCMD cmd: %s - delay: %i", cmd.c_str(), delay);
 	if(cmd.equals(F("reset"))) {
+		wsBroadcast(F("notification"), F("Controller will reset and restart"));
+		wsBroadcast(F("webapp_cmd"), F("reload"));
 		_systimer.initializeMs(delay, TimerDelegate(&Application::reset, this)).startOnce();
 	} else if(cmd.equals(F("restart"))) {
+		wsBroadcast(F("notification"), F("Controller will restart"));
+		wsBroadcast(F("webapp_cmd"), F("reload"));
 		_systimer.initializeMs(delay, TimerDelegate(&Application::restart, this)).startOnce();
 	} else if(cmd.equals(F("stopap"))) {
+		wsBroadcast(F("notification"), F("Controller will disable the access point"));
 		network.stopAp(2000);
 	} else if(cmd.equals(F("forget_wifi"))) {
+		wsBroadcast(F("notification"), F("Controller will reset wifi settings"));
 		_systimer.initializeMs(delay, TimerDelegate(&AppWIFI::forgetWifi, &network)).startOnce();
 	} else if(cmd.equals(F("forget_wifi_and_restart"))) {
+		wsBroadcast(F("notification"), F("Controller will reset wifi settings and restart"));
 		network.forgetWifi();
+		wsBroadcast(F("webapp_cmd"), F("reload"));
 		_systimer.initializeMs(delay, TimerDelegate(&Application::forget_wifi_and_restart, this)).startOnce();
 	} else if(cmd.equals(F("umountfs"))) {
 		//umountfs();
 	} else if(cmd.equals(F("mountfs"))) {
 		//
 	} else if(cmd.equals(F("switch_rom"))) {
+		wsBroadcast(F("notification"), F("Controller will switch to other rom"));
+		wsBroadcast(F("webapp_cmd"), F("reload"));
 #if ARCH_ESP8266
 		switchRom();
 //_systimer.initializeMs(delay, TimerDelegate(&Application::restart, this)).startOnce();

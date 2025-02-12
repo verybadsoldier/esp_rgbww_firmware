@@ -392,6 +392,7 @@ void ApplicationWebserver::onConfig(HttpRequest& request, HttpResponse& response
 		/* ConfigDB importFomStream */
 		String oldIP, oldSSID;
 		bool mqttEnabled, dhcpEnabled;
+		int oldColorMode;
 		{
 			debug_i("ApplicationWebserver::onConfig storing old settings");
 			AppConfig::Network network(*app.cfg);
@@ -399,6 +400,8 @@ void ApplicationWebserver::onConfig(HttpRequest& request, HttpResponse& response
 			oldSSID = network.ap.getSsid();
 			mqttEnabled = network.mqtt.getEnabled();
 			dhcpEnabled=network.connection.getDhcp();
+			AppConfig::Color color(*app.cfg);
+			oldColorMode=color.getColorMode();
 		}
 
 		auto bodyStream = request.getBodyStream();
@@ -420,6 +423,7 @@ void ApplicationWebserver::onConfig(HttpRequest& request, HttpResponse& response
 
 			String newIP, newSSID;
 			bool newMqttEnabled,newDhcpEnabled;
+			int newColorMode;
 			{
 				debug_i("ApplicationWebserver::onConfig geting new ip settings");
 				AppConfig::Network network(*app.cfg);
@@ -427,23 +431,25 @@ void ApplicationWebserver::onConfig(HttpRequest& request, HttpResponse& response
 				newSSID = network.ap.getSsid();
 				newMqttEnabled = network.mqtt.getEnabled();
 				newDhcpEnabled=network.connection.getDhcp();
+				AppConfig::Color color(*app.cfg);
+				newColorMode=color.getColorMode();
 			}
 			
 			if(oldIP != newIP) {
 				//if (restart) {
 				debug_i("ApplicationWebserver::onConfig ip settings changed - rebooting");
 				app.delayedCMD(F("restart"), 3000); // wait 3s to first send response
-
-				//json[F("data")] = "restart";
-				//}
+				String msg = F("new IP, ")+newIP+F(" - controller will restart");
+				app.wsBroadcast(F("notification"), msg);
 			}
 			if(oldSSID != newSSID) {
 				//
 				if(WifiAccessPoint.isEnabled()) {
 					debug_i("ApplicationWebserver::onConfig wifiap settings changed - rebooting");
-					app.delayedCMD(F("restart"), 3000); // wait 3s to first send response
 					// report the fact that the system will restart to the frontend
-					//json[F("data")] = "restart";
+					String msg = F("new SSID, ")+newSSID+F(" - controller will restart");
+					app.wsBroadcast(F("notification"), msg);
+					app.delayedCMD(F("restart"), 3000); // wait 3s to first send response
 				}
 			}
 			if(mqttEnabled != newMqttEnabled) {
@@ -467,8 +473,18 @@ void ApplicationWebserver::onConfig(HttpRequest& request, HttpResponse& response
 					WifiStation.enableDHCP(true);
 				}else{
 					debug_i("ApplicationWebserver::onConfig ip settings changed - rebooting");
+					String msg = F("new IP, ")+newIP+F(" - controller will restart");
+					app.wsBroadcast(F("notification"), msg);
 					app.delayedCMD(F("restart"), 3000); // wait 3s to first send response
 				}
+			}
+			debug_i("ApplicationWebserver::onConfig %i, %i",newColorMode,oldColorMode);
+			if (newColorMode!=oldColorMode){
+				// color Mode has been updated, requires reconfiguration, will restart for now
+				debug_i("ApplicationWebserver::onConfig color settings changed - restarting");
+				String msg=F("Color Mode changed, controller will restart");
+				app.wsBroadcast(F("notification"), msg);
+				app.delayedCMD(F("restart"), 1000); // wait 1s to first send response
 			}
 
 
@@ -538,7 +554,7 @@ void ApplicationWebserver::onInfo(HttpRequest& request, HttpResponse& response)
 	data[F("current_rom")] = String(app.ota.getRomPartition().name());
 #endif
 	data[F("git_version")] = fw_git_version;
-	data[F("build type")] = BUILD_TYPE;
+	data[F("build_type")] = BUILD_TYPE;
 	data[F("git_date")] = fw_git_date;
 	data[F("webapp_version")] = WEBAPP_VERSION;
 	data[F("sming")] = SMING_VERSION;
