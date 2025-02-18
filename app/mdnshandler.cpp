@@ -227,11 +227,7 @@ void mdnsHandler::addHost(const String& hostname, const String& ip_address, int 
 void mdnsHandler::sendWsUpdate(const String& type, JsonObject host){
 	String hostString;
 	if (serializeJsonPretty(host, hostString)) {
-		JsonRpcMessage msg(type);
-		JsonObject root = msg.getParams();
-		root.set(host);
-		String jsonStr = Json::serialize(msg.getRoot());
-		app.wsBroadcast(jsonStr);
+		app.wsBroadcast(type,hostString);
 	}
 }
 

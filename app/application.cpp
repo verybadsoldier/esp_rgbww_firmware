@@ -706,15 +706,26 @@ int Application::getRomSlot()
 }
 #endif
 
+/*
+*	send a jsonrpc message from a fully constructed JsonRpcMessage object string
+*/
 void Application::wsBroadcast(String message)
 {
-	debug_i("Application::wsBroadcast");
-	app.webserver.wsBroadcast(message);
+	static char buffer[MAX_LOG_LINE_SIZE];//max log line size for wsBroadcast
+	message.toCharArray(buffer, MAX_LOG_LINE_SIZE);
+	size_t length = message.length();
+	if(length>MAX_LOG_LINE_SIZE) length=MAX_LOG_LINE_SIZE;
+
+	app.webserver.wsSendBroadcast(buffer, length);
 }
 
+/*
+*	build a jsonrpc message from a command and a parameters string
+*/
 void Application::wsBroadcast(String cmd, String message)
 {
 	JsonRpcMessage msg(cmd);
+	msg.setId(jsonrpc_id++);
 	JsonObject root = msg.getParams();
 	root[F("message")] = message;
 	String jsonStr = Json::serialize(msg.getRoot());
