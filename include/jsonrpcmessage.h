@@ -3,7 +3,7 @@
 #include <RGBWWLed/RGBWWLed.h>
 #include <JsonObjectStream.h>
 
-
+#define MAX_JSON_MESSAGE_LENGTH 1024
 class JsonRpcMessage {
 public:
     JsonRpcMessage(const String& name);
@@ -11,6 +11,8 @@ public:
     void setId(int id);
     JsonObject getParams();
     JsonObject getRoot();
+    //void setParams(String params);
+    void setPrarams(JsonVariant params);
 
 private:
     JsonObjectStream _stream;

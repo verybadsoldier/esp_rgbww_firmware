@@ -31,6 +31,12 @@ void JsonRpcMessage::setId(int id)
 	json[F("id")] = id;
 }
 
+void JsonRpcMessage::setPrarams(JsonVariant params)
+{
+	auto p = getParams();
+	p=params;
+}
+
 ////////////////////////////////////////
 
 JsonRpcMessageIn::JsonRpcMessageIn(const String& json) : _doc(1024)

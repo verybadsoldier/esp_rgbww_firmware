@@ -728,6 +728,7 @@ void Application::wsBroadcast(String cmd, String message)
 	msg.setId(jsonrpc_id++);
 	JsonObject root = msg.getParams();
 	root[F("message")] = message;
+
 	String jsonStr = Json::serialize(msg.getRoot());
 	wsBroadcast(jsonStr);
 }
