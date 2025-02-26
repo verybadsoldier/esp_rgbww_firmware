@@ -43,6 +43,7 @@ public:
 
     void wsBroadcast(String message);
     void wsBroadcast(String cmd, String message);
+    void wsBroadcast(const String& cmd, const JsonObject& params);
 
     void listSpiffsPartitions();
     
@@ -100,6 +101,8 @@ private:
     Timer _checkRamTimer;
     uint32_t _uptimeMinutes;
     std::array<int, 17> _lastToggles;
+
+    uint32_t jsonrpc_id = 0;
 };
 // forward declaration for global vars
 extern Application app;

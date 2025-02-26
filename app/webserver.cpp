@@ -99,25 +99,16 @@ void ApplicationWebserver::wsDisconnected(WebsocketConnection& socket)
 	debug_i("===>nr of websockets: %i", webSockets.size());
 }
 
-void ApplicationWebserver::wsBroadcast(String message)
+/*
+*	send a websocket broadcast
+*/
+void ICACHE_FLASH_ATTR ApplicationWebserver::wsSendBroadcast(const char* buffer, size_t length)
 {
-	HttpConnection* connection = nullptr;
-	String remoteIP;
-	auto tcpConnections = getConnections();
-	debug_i("=== Websocket Broadcast === -> %s", message.c_str());
-	debug_i("===>nr of tcpConnections: %i", tcpConnections.size());
-	for(auto& connection : tcpConnections) { // Iterate over all active sockets
-		remoteIP = String(connection->getRemoteIp().toString());
-		debug_i("====> remote: %s", remoteIP.c_str());
-	}
-	debug_i("=========================================");
-	debug_i("===>nr of websockets: %i", webSockets.size());
-	for(auto& socket : webSockets) { // Iterate over all active sockets
-		connection = socket->getConnection();
-		remoteIP = String(connection->getRemoteIp().toString());
-		debug_i("====> sending to socket %s", remoteIP.c_str());
-		socket->send(message, WS_FRAME_TEXT); // Send the message to each socket
-	}
+    if (!webSockets.isEmpty()) {
+        WebsocketConnection* socket = webSockets[0];
+        // Use firstSocket as needed
+        socket->broadcast(buffer, length, WS_FRAME_TEXT);
+    }
 }
 
 void ApplicationWebserver::start()
@@ -253,7 +244,8 @@ void ApplicationWebserver::onFile(HttpRequest& request, HttpResponse& response)
 #endif
 // Use client caching for better performance.
 #ifndef NOCACHE
-	response.setCache(86400, true);
+	//response.setCache(86400, true);
+	response.setHeader(F("Cache-Control"),F("public, max-age=604800, immutable"));
 #endif
 
 	String fileName = request.uri.Path;
@@ -288,7 +280,8 @@ void ApplicationWebserver::onFile(HttpRequest& request, HttpResponse& response)
 				response.headers[HTTP_HEADER_LOCATION] = F("http://") + WifiAccessPoint.getIP().toString() + "/";
 			} else {
 #ifndef NOCACHE
-				response.setCache(86400, true); // It's important to use cache for better performance.
+				//response.setCache(604800, true); // It's important to use cache for better performance.
+				response.setHeader(F("Cache-Control"),F("public, max-age=604800, immutable"));
 #endif
 				response.code = HTTP_STATUS_OK;
 				response.sendFile(fileName);
@@ -439,7 +432,7 @@ void ApplicationWebserver::onConfig(HttpRequest& request, HttpResponse& response
 				//if (restart) {
 				debug_i("ApplicationWebserver::onConfig ip settings changed - rebooting");
 				app.delayedCMD(F("restart"), 3000); // wait 3s to first send response
-				String msg = F("new IP, ")+newIP+F(" - controller will restart");
+				String msg = F("new IP, ")+newIP;
 				app.wsBroadcast(F("notification"), msg);
 			}
 			if(oldSSID != newSSID) {
@@ -447,7 +440,7 @@ void ApplicationWebserver::onConfig(HttpRequest& request, HttpResponse& response
 				if(WifiAccessPoint.isEnabled()) {
 					debug_i("ApplicationWebserver::onConfig wifiap settings changed - rebooting");
 					// report the fact that the system will restart to the frontend
-					String msg = F("new SSID, ")+newSSID+F(" - controller will restart");
+					String msg = F("new SSID, ")+newSSID;
 					app.wsBroadcast(F("notification"), msg);
 					app.delayedCMD(F("restart"), 3000); // wait 3s to first send response
 				}
@@ -473,7 +466,7 @@ void ApplicationWebserver::onConfig(HttpRequest& request, HttpResponse& response
 					WifiStation.enableDHCP(true);
 				}else{
 					debug_i("ApplicationWebserver::onConfig ip settings changed - rebooting");
-					String msg = F("new IP, ")+newIP+F(" - controller will restart");
+					String msg = F("new IP, ")+newIP;
 					app.wsBroadcast(F("notification"), msg);
 					app.delayedCMD(F("restart"), 3000); // wait 3s to first send response
 				}
@@ -482,7 +475,7 @@ void ApplicationWebserver::onConfig(HttpRequest& request, HttpResponse& response
 			if (newColorMode!=oldColorMode){
 				// color Mode has been updated, requires reconfiguration, will restart for now
 				debug_i("ApplicationWebserver::onConfig color settings changed - restarting");
-				String msg=F("Color Mode changed, controller will restart");
+				String msg=F("Color Mode changed");
 				app.wsBroadcast(F("notification"), msg);
 				app.delayedCMD(F("restart"), 1000); // wait 1s to first send response
 			}

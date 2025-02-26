@@ -202,5 +202,5 @@ void EventServer::sendToClients(JsonRpcMessage& rpcMsg)
 		pClient->sendString(jsonStr);
 	}
 
-	webServer->wsBroadcast(jsonStr);
-}
+	app.wsBroadcast(jsonStr);
+  }
