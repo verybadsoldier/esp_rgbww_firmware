@@ -139,12 +139,11 @@ void mdnsHandler::sendSearch()
 			debug_i("Removing host %s from list", host[F("hostname")].as<const char*>());
 
 			// notify websocket clients
-			JsonRpcMessage msg(F("removed_host"));
-			JsonObject root = msg.getParams();
+		
+			JsonObject root ;
 			root[F("hostname")] = host[F("hostname")];
-			String jsonStr = Json::serialize(msg.getRoot());
 
-			app.wsBroadcast(jsonStr);
+			app.wsBroadcast(F("removed_host"), root);
 			hosts.remove(i);
 			--i;
 		}
@@ -182,7 +181,7 @@ void mdnsHandler::addHost(const String& hostname, const String& ip_address, int 
 	_id = id;
 	JsonObject newHost;
 	String hostString;
-	JsonVariant host;
+	JsonObject host;
 
 	bool knownHost =false;
 	bool updateHost = false;
@@ -209,7 +208,7 @@ void mdnsHandler::addHost(const String& hostname, const String& ip_address, int 
 				updateHost = true;
 			}
 			knownHost = true;
-			sendWsUpdate(F("updated_host"), host);
+			app.wsBroadcast(F("updated_host"), host);
 			break;
 		}
 	}
@@ -220,12 +219,13 @@ void mdnsHandler::addHost(const String& hostname, const String& ip_address, int 
 		newHost[F("ip_address")] = _ip_address;
 		newHost[F("ttl")] = _ttl;
 		newHost[F("id")] = _id;
-		sendWsUpdate(F("new_host"), newHost);
+		app.wsBroadcast(F("new_host"), newHost);
 	}
 }
 
 void mdnsHandler::sendWsUpdate(const String& type, JsonObject host){
 	String hostString;
+	
 	if (serializeJsonPretty(host, hostString)) {
 		app.wsBroadcast(type,hostString);
 	}

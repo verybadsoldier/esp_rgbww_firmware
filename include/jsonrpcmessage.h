@@ -12,7 +12,6 @@ public:
     JsonObject getParams();
     JsonObject getRoot();
     //void setParams(String params);
-    void setPrarams(JsonVariant params);
 
 private:
     JsonObjectStream _stream;

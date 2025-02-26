@@ -733,6 +733,19 @@ void Application::wsBroadcast(String cmd, String message)
 	wsBroadcast(jsonStr);
 }
 
+void Application::wsBroadcast(const String& cmd, const JsonObject& params)
+{
+	JsonRpcMessage msg(cmd);
+	msg.setId(jsonrpc_id++);
+	JsonObject root = msg.getParams();
+    for (JsonPair kv : params) {
+        root[kv.key()] = kv.value();
+    }
+	String jsonStr = Json::serialize(msg.getRoot());
+	debug_i("Application::wsBroadcast: %s", jsonStr.c_str());
+	wsBroadcast(jsonStr);
+}
+
 void Application::onCommandRelay(const String& method, const JsonObject& params)
 {
 	debug_i("Application::onCommandRelay");

@@ -244,7 +244,8 @@ void ApplicationWebserver::onFile(HttpRequest& request, HttpResponse& response)
 #endif
 // Use client caching for better performance.
 #ifndef NOCACHE
-	response.setCache(86400, true);
+	//response.setCache(86400, true);
+	response.setHeader(F("Cache-Control"),F("public, max-age=604800, immutable"));
 #endif
 
 	String fileName = request.uri.Path;
@@ -279,7 +280,8 @@ void ApplicationWebserver::onFile(HttpRequest& request, HttpResponse& response)
 				response.headers[HTTP_HEADER_LOCATION] = F("http://") + WifiAccessPoint.getIP().toString() + "/";
 			} else {
 #ifndef NOCACHE
-				response.setCache(86400, true); // It's important to use cache for better performance.
+				//response.setCache(604800, true); // It's important to use cache for better performance.
+				response.setHeader(F("Cache-Control"),F("public, max-age=604800, immutable"));
 #endif
 				response.code = HTTP_STATUS_OK;
 				response.sendFile(fileName);

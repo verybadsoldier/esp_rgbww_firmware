@@ -43,6 +43,7 @@ public:
 
     void wsBroadcast(String message);
     void wsBroadcast(String cmd, String message);
+    void wsBroadcast(const String& cmd, const JsonObject& params);
 
     void listSpiffsPartitions();
     
