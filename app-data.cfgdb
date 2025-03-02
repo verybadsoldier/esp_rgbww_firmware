@@ -17,11 +17,8 @@
           "color": {
             "$ref":"defs/$defs/color"
           },
-          "ts": {
-            "type": "integer"
-          },
           "id":{
-            "type":"integer"
+            "type":"string"
           },
           "favorite":{
             "type":"boolean",
@@ -36,7 +33,7 @@
         "type":"object",
         "properties":{
           "id":{
-            "type":"integer"
+            "type":"string"
           },
           "name":{
             "type":"string"
@@ -47,7 +44,7 @@
         }
       }
     },
-    "groups":{
+      "groups":{
       "type":"array",
       "items":{
         "type":"object",
@@ -55,10 +52,13 @@
           "name":{
             "type":"string"
           },
-          "IDs":{
+          "group_id":{
+            "type":"string"
+          },
+          "controller_ids":{
             "type":"array",
             "items": {
-             "type":"integer"
+             "type":"string"
             }
           }
         }
@@ -72,13 +72,19 @@
           "name":{
             "type":"string"
           },
+          "scene_id":{
+            "type":"string"
+          },
+          "group_id":{
+            "type":"string"
+          },
           "settings":{
             "type":"array",
             "items":{
               "type":"object",
               "properties":{
                 "controller_id":{
-                  "type":"integer"
+                  "type":"string"
                 },
                 "color": {
                   "$ref":"defs/$defs/color"

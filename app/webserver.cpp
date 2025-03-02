@@ -383,19 +383,22 @@ void ApplicationWebserver::onConfig(HttpRequest& request, HttpResponse& response
 		debug_i("======================\nHTTP POST request received, ");
 
 		/* ConfigDB importFomStream */
-		String oldIP, oldSSID;
+		String oldIP, oldSSID, oldDeviceName;
 		bool mqttEnabled, dhcpEnabled;
 		int oldColorMode;
 		{
 			debug_i("ApplicationWebserver::onConfig storing old settings");
 			AppConfig::Network network(*app.cfg);
+			AppConfig::General general(*app.cfg);
 			oldIP = network.connection.getIp();
 			oldSSID = network.ap.getSsid();
 			mqttEnabled = network.mqtt.getEnabled();
 			dhcpEnabled=network.connection.getDhcp();
 			AppConfig::Color color(*app.cfg);
 			oldColorMode=color.getColorMode();
+			oldDeviceName=general.getDeviceName();
 		}
+		
 
 		auto bodyStream = request.getBodyStream();
 		if(bodyStream) {
@@ -414,18 +417,20 @@ void ApplicationWebserver::onConfig(HttpRequest& request, HttpResponse& response
 
 			// bool restart = root[F("restart")] | false;
 
-			String newIP, newSSID;
+			String newIP, newSSID,newDeviceName;
 			bool newMqttEnabled,newDhcpEnabled;
 			int newColorMode;
 			{
 				debug_i("ApplicationWebserver::onConfig geting new ip settings");
 				AppConfig::Network network(*app.cfg);
+				AppConfig::General general(*app.cfg);
 				newIP = network.connection.getIp();
 				newSSID = network.ap.getSsid();
 				newMqttEnabled = network.mqtt.getEnabled();
 				newDhcpEnabled=network.connection.getDhcp();
 				AppConfig::Color color(*app.cfg);
 				newColorMode=color.getColorMode();
+				newDeviceName=general.getDeviceName();
 			}
 			
 			if(oldIP != newIP) {
@@ -471,6 +476,14 @@ void ApplicationWebserver::onConfig(HttpRequest& request, HttpResponse& response
 					app.delayedCMD(F("restart"), 3000); // wait 3s to first send response
 				}
 			}
+			if(oldDeviceName!=newDeviceName){
+				String msg = F("new Device Name, ")+newDeviceName;
+				AppConfig::Network::OuterUpdater network(*app.cfg);
+				network.mdns.setName(newDeviceName);
+				app.wsBroadcast(F("notification"), msg);
+				app.delayedCMD(F("restart"),1000);
+			}
+
 			debug_i("ApplicationWebserver::onConfig %i, %i",newColorMode,oldColorMode);
 			if (newColorMode!=oldColorMode){
 				// color Mode has been updated, requires reconfiguration, will restart for now

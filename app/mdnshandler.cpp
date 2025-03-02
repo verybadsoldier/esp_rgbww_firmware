@@ -27,12 +27,12 @@ void mdnsHandler::start()
 
 	//serch for the esprgbwwAIP service. This is used in the onMessage handler to filter out unwanted messages.
 	//to fulter for a number of services, this would have to be adapted a bit.
-	setSearchName(F("esprgbwwAPI.") + service);
+	setSearchName(F("esprgbwwAPI.") + service);width: 200p
 
 	//query mDNS at regular intervals
 	_mdnsSearchTimer.setCallback(mdnsHandler::sendSearchCb, this);
 	_mdnsSearchTimer.setIntervalMs(_mdnsTimerInterval);
-	_mdnsSearchTimer.startOnce();
+	_mdnsSearchTimer.startOnce();width: 200p
 	mDNS::server.addHandler(*this);
 }
 
