@@ -67,6 +67,7 @@ private:
     Timer _timer;
     BssList _networks;
     IpAddress _ApIP;
+    IpAddress IP;
 
     CONNECTION_STATUS _client_status;
 

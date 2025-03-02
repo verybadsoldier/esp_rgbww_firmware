@@ -201,9 +201,7 @@ void AppWIFI::init()
 		WifiStation.connect();
 	}
 }
-
-/**
- * @brief Connects to a Wi-Fi network.
+/*
  * 
  * @param ssid The SSID of the Wi-Fi network.
  * @param new_con Flag indicating whether it is a new connection or not.
@@ -329,10 +327,11 @@ void AppWIFI::_STAGotIP(IpAddress ip, IpAddress mask, IpAddress gateway)
 		stopAp(1000);
 	}
 
+	IP=ip.toString();
 	{
 		AppConfig::General general(*app.cfg);
 		AppConfig::Network network(*app.cfg);
-		debug_i("AppWIFI::_STAGotIP - device_name %s mdnshostname %s", general.getDeviceName().c_str(),
+		debug_i("AppWIFI::_STAGotIP - device_name %s hostname %s", general.getDeviceName().c_str(),
 				network.mdns.getName().c_str());
 		if(network.mdns.getName().length() > 0) {
 			debug_i("AppWIFI::_STAGotIP - setting mdns hostname to %s", network.mdns.getName().c_str());
@@ -344,9 +343,12 @@ void AppWIFI::_STAGotIP(IpAddress ip, IpAddress mask, IpAddress gateway)
 
 	{
 		AppConfig::Network network(*app.cfg);
+		/*
 		if(network.connection.getDhcp()) {
 			ipAddress = "dhcp";
 		}
+			*/
+		ipAddress=ip.toString();
 		mdnsHandler.addHost(network.mdns.getName(), ipAddress, -1, system_get_chip_id());
 
 		broadcastWifiStatus();
