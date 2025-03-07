@@ -49,6 +49,7 @@ void mdnsHandler::start()
  */
 bool mdnsHandler::onMessage(mDNS::Message& message)
 {
+	bool msgHasA, msgHasTXT=false;
 #ifdef DEBUG_MDNS
 	debug_i("onMessage handler called");
 #endif
@@ -97,20 +98,27 @@ bool mdnsHandler::onMessage(mDNS::Message& message)
 		info.hostName = info.hostName.substring(0, info.hostName.lastIndexOf(".local"));
 		info.ipAddr = String(answer->getRecordString());
 		info.ttl = answer->getTtl();
+		msgHasA=true;
 	}
 	
 	answer = message[mDNS::ResourceType::TXT];
-		if(answer!=nullptr){
-			mDNS::Resource::TXT txt(*answer);
-			//mDNS::printAnswer(Serial, *answer);
-			info.ID=txt["id"].toInt();
-		}
-#ifdef DEBUG_MDNS
-	debug_i("found Host %s with ID %i, IP %s and TTL %i", info.hostName.c_str(),info.ID, info.ipAddr.toString().c_str(), info.ttl);
-#endif
+	if(answer!=nullptr){
+		mDNS::Resource::TXT txt(*answer);
+		//mDNS::printAnswer(Serial, *answer);
+		info.ID=txt["id"].toInt();
+		msgHasTXT=true;
+	}
+	if(msgHasA && msgHasTXT){
+		#ifdef DEBUG_MDNS
+		debug_i("found Host %s with ID %i, IP %s and TTL %i", info.hostName.c_str(),info.ID, info.ipAddr.toString().c_str(), info.ttl);
+		#endif
 
-	addHost(info.hostName, info.ipAddr.toString(), info.ttl, info.ID); //add host to list
-	return true;
+		addHost(info.hostName, info.ipAddr.toString(), info.ttl, info.ID); //add host to list
+		return true;
+	}else{
+		return false;
+	
+	}
 }
 
 /**

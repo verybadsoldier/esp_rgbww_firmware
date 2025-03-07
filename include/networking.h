@@ -78,6 +78,8 @@ private:
     void broadcastWifiStatus();
     void broadcastWifiStatus(String message);
     void scanCompleted(bool succeeded, BssList& list);
+
+    
 };
 
 

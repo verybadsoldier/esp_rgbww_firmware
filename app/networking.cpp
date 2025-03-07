@@ -21,6 +21,7 @@
  */
 #include <RGBWWCtrl.h>
 #include "mdnshandler.cpp"
+
 #define DNS_PORT 53
 
 mdnsHandler mdnsHandler;
@@ -294,7 +295,7 @@ void AppWIFI::_STAConnected(const String& ssid, MacAddress bssid, uint8_t channe
 		WifiStation.setHostname(device_name);
 		{
 			AppConfig::Network::OuterUpdater network(*app.cfg);
-			network.mdns.setName(device_name);
+			network.mdns.setName(app.sanitizeName(device_name));
 		} // end ConfigDB network updater context
 	}	 // end ConfigDB general context
 	broadcastWifiStatus(F("Connected to WiFi"));
@@ -316,11 +317,6 @@ void AppWIFI::_STAConnected(const String& ssid, MacAddress bssid, uint8_t channe
 void AppWIFI::_STAGotIP(IpAddress ip, IpAddress mask, IpAddress gateway)
 {
 	debug_i("AppWIFI::_STAGotIP");
-	_con_ctr = 0;
-	_client_status = CONNECTION_STATUS::CONNECTED;
-
-	// if we have a new connection, wait 90 seconds otherwise
-	// disable the accesspoint mode directly
 	if(_new_connection) {
 		stopAp(90000);
 	} else {
@@ -348,8 +344,13 @@ void AppWIFI::_STAGotIP(IpAddress ip, IpAddress mask, IpAddress gateway)
 			ipAddress = "dhcp";
 		}
 			*/
+		uint32_t id;
+		
+		id = system_get_chip_id();	
+
 		ipAddress=ip.toString();
-		mdnsHandler.addHost(network.mdns.getName(), ipAddress, -1, system_get_chip_id());
+		debug_i("adding mdns host %s with ip %s and id %s", network.mdns.getName().c_str(), ipAddress.c_str(), String(id).c_str());
+		mdnsHandler.addHost(network.mdns.getName(), ipAddress, -1, id);
 
 		broadcastWifiStatus();
 

@@ -86,6 +86,16 @@ public:
     JsonProcessor jsonproc;
     NtpClient* pNtpclient = nullptr;
 
+    String sanitizeName(const String& input){
+        String result = input;
+    for (int i = 0; i < result.length(); i++) {
+        if (result[i] == '_') {
+            result[i] = '-';
+        }
+    }
+    return result;
+    }
+
 private:
     void loadbootinfo();
     void listFiles();

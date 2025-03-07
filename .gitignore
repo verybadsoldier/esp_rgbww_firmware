@@ -67,3 +67,5 @@ html/*
 latex
 latex/*
 
+debug_Esp32.hw
+include/fileList.h

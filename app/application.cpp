@@ -742,7 +742,7 @@ void Application::wsBroadcast(const String& cmd, const JsonObject& params)
         root[kv.key()] = kv.value();
     }
 	String jsonStr = Json::serialize(msg.getRoot());
-	debug_i("Application::wsBroadcast: %s", jsonStr.c_str());
+	//debug_i("Application::wsBroadcast: %s", jsonStr.c_str());
 	wsBroadcast(jsonStr);
 }
 
