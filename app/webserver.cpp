@@ -479,7 +479,7 @@ void ApplicationWebserver::onConfig(HttpRequest& request, HttpResponse& response
 			if(oldDeviceName!=newDeviceName){
 				String msg = F("new Device Name, ")+newDeviceName;
 				AppConfig::Network::OuterUpdater network(*app.cfg);
-				network.mdns.setName(newDeviceName);
+				network.mdns.setName(app.sanitizeName(newDeviceName));
 				app.wsBroadcast(F("notification"), msg);
 				app.delayedCMD(F("restart"),1000);
 			}

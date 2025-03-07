@@ -61,17 +61,15 @@ class LEDControllerAPIService : public mDNS::Service{
 		    return 80;
     	};
 	    void addText(mDNS::Resource::TXT& txt) override{
-            txt.add("ty=rgbwwctrl");
             #ifdef ESP8266
-            txt.add("mo=esp8266");
+            txt.add(F("mo=esp8266"));
             #elif defined(ESP32)
-            txt.add("mo=esp32");
+            txt.add(F("mo=esp32"));
             #elif defined(ESP32C3)
-            txt.add("mo=esp32c3");
+            txt.add(F()"mo=esp32c3"));
             #endif
-            txt.add("fn=LED Controller API");
-            txt.add("id=" + String(system_get_chip_id()));
-            txt.add("path=/");
+            txt.add(F("fn=LED Controller API"));
+            txt.add(F("id=") + String(system_get_chip_id()));
         }
     private:
 };

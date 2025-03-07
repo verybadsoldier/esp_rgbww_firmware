@@ -8,6 +8,7 @@
 	XX(registerSvgIcon_css, "assets/registerSvgIcon.css.gz") \
 	XX(registerSvgIcon_js, "assets/registerSvgIcon.js.gz") \
 	XX(pinconfig, "config/pinconfig.json") \
+	XX(api_svg, "icons/api.svg.gz") \
 	XX(arrow_drop_down_svg, "icons/arrow_drop_down.svg.gz") \
 	XX(arrow_forward_svg, "icons/arrow_forward.svg.gz") \
 	XX(article_svg, "icons/article.svg.gz") \
@@ -21,6 +22,7 @@
 	XX(exposure_outlined_svg, "icons/exposure_outlined.svg.gz") \
 	XX(favicon, "icons/favicon.ico") \
 	XX(help_outlined_svg, "icons/help_outlined.svg.gz") \
+	XX(home_svg, "icons/home.svg.gz") \
 	XX(hub_outlined_svg, "icons/hub_outlined.svg.gz") \
 	XX(info_outlined_svg, "icons/info_outlined.svg.gz") \
 	XX(lightbulb_outlined_svg, "icons/lightbulb_outlined.svg.gz") \
@@ -38,6 +40,7 @@
 	XX(palette_outlined_svg, "icons/palette_outlined.svg.gz") \
 	XX(report_problem_outlined_svg, "icons/report_problem_outlined.svg.gz") \
 	XX(save_outlined_svg, "icons/save_outlined.svg.gz") \
+	XX(scene_svg, "icons/scene.svg.gz") \
 	XX(security_outlined_svg, "icons/security_outlined.svg.gz") \
 	XX(settings_outlined_svg, "icons/settings_outlined.svg.gz") \
 	XX(signal_wifi_statusbar_null_FILL0_wght400_GRAD0_opsz24_svg, "icons/signal_wifi_statusbar_null_FILL0_wght400_GRAD0_opsz24.svg.gz") \
