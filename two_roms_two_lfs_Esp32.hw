@@ -6,7 +6,7 @@
         "4m"
     ],
     "partitions": {
-        "facttory":{
+        "factory":{
             "size": 0
         },
         "rom0": {
