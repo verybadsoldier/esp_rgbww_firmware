@@ -52,6 +52,9 @@
           "name":{
             "type":"string"
           },
+          "ts":{
+            "type":integer
+          },
           "group_id":{
             "type":"string"
           },
@@ -71,6 +74,9 @@
         "properties":{
           "name":{
             "type":"string"
+          },
+          "ts":{
+            "type":integer
           },
           "scene_id":{
             "type":"string"
