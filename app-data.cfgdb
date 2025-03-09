@@ -53,9 +53,9 @@
             "type":"string"
           },
           "ts":{
-            "type":integer
+            "type":"integer"
           },
-          "group_id":{
+          "id":{
             "type":"string"
           },
           "controller_ids":{
@@ -76,9 +76,9 @@
             "type":"string"
           },
           "ts":{
-            "type":integer
+            "type":"integer"
           },
-          "scene_id":{
+          "id":{
             "type":"string"
           },
           "group_id":{
