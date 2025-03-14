@@ -23,6 +23,9 @@
           "favorite":{
             "type":"boolean",
             "default":false
+          },
+          "ts":{
+            "type":"integer"
           }
         }
       }
