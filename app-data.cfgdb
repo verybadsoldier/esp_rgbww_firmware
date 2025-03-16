@@ -96,7 +96,19 @@
                   "type":"string"
                 },
                 "color": {
-                  "$ref":"defs/$defs/color"
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    {"$ref":"defs/$defs/hsv"},
+                    {"$ref":"defs/$defs/hsvct"},
+                    {"$ref":"defs/$defs/raw"}
+                  ]
                 }
               }
             }
