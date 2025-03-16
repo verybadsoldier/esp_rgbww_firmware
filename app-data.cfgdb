@@ -97,20 +97,28 @@
                 },
                 "color": {
                   "oneOf": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        }
-                      }
-                    },
+                    { "$ref": "#/$defs/preset_def" },
                     {"$ref":"defs/$defs/hsv"},
                     {"$ref":"defs/$defs/hsvct"},
                     {"$ref":"defs/$defs/raw"}
                   ]
                 }
               }
+            }
+          }
+        }
+      }
+    }
+  },
+    "$defs": {
+    "preset_def": {
+      "type": "object",
+      "properties": {
+        "Preset": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
             }
           }
         }
