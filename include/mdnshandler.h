@@ -66,11 +66,30 @@ class LEDControllerAPIService : public mDNS::Service{
             #elif defined(ESP32)
             txt.add(F("mo=esp32"));
             #elif defined(ESP32C3)
-            txt.add(F()"mo=esp32c3"));
+            txt.add(F("mo=esp32c3"));
             #endif
             txt.add(F("fn=LED Controller API"));
             txt.add(F("id=") + String(system_get_chip_id()));
         }
     private:
 };
+class LEDControllerWebService : public mDNS::Service{
+    public:
 
+        String getInstance() override{
+		    return F("lightinator") ;
+        }
+        String getName() override{
+		    return F("http");
+        }
+        Protocol getProtocol() override{
+		    return Protocol::Tcp;
+	    }
+        uint16_t getPort() override{
+		    return 80;
+    	};
+	    void addText(mDNS::Resource::TXT& txt) override{
+            txt.add(F("fn=LED Controller"));
+        }
+    private:
+};

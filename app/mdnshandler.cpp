@@ -13,6 +13,7 @@ void mdnsHandler::start()
 	static mDNS::Responder responder;
 
 	static LEDControllerAPIService ledControllerAPIService;
+	static LEDControllerWebService ledControllerWebService;
 
 	//start the mDNS responder with the configured services, using the configured hostname
 	{
@@ -21,6 +22,7 @@ void mdnsHandler::start()
 	} // end of ConfigDB network context
 	  //responder.begin(app.cfg.network.connection.mdnshostname.c_str());
 	responder.addService(ledControllerAPIService);
+	responder.addService(ledControllerWebService);
 	
 	//create an empty hosts array to store recieved host entries
 	hosts = hostsDoc.createNestedArray("hosts");
