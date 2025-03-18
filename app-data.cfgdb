@@ -26,6 +26,10 @@
           },
           "ts":{
             "type":"integer"
+          },
+          "icon":{
+            "type":"string",
+            "default":"palette"
           }
         }
       }
@@ -43,6 +47,10 @@
           },
           "ip-address":{
             "type":"string"
+          },
+          "icon":{
+            "type":"string",
+            "default":"led-strip-variant"
           }
         }
       }
@@ -61,6 +69,10 @@
           "id":{
             "type":"string"
           },
+          "icon":{
+            "type":"string",
+            "default":"light_groups"
+          }
           "controller_ids":{
             "type":"array",
             "items": {
@@ -87,6 +99,14 @@
           "group_id":{
             "type":"string"
           },
+          "favorite":{
+            "type":"boolean",
+            "default":false
+          },
+          "icon":{
+            "type":"string",
+            "default":"scene"
+          }
           "settings":{
             "type":"array",
             "items":{
