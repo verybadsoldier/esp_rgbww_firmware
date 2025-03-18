@@ -72,7 +72,7 @@
           "icon":{
             "type":"string",
             "default":"light_groups"
-          }
+          },
           "controller_ids":{
             "type":"array",
             "items": {
@@ -106,7 +106,7 @@
           "icon":{
             "type":"string",
             "default":"scene"
-          }
+          },
           "settings":{
             "type":"array",
             "items":{
