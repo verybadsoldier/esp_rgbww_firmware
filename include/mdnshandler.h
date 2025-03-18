@@ -42,7 +42,6 @@ class mdnsHandler: public mDNS::Responder {
 
         static void sendSearchCb(void* pTimerArg);
         void sendSearch();
-        
 };
 
 class LEDControllerAPIService : public mDNS::Service{

@@ -29,6 +29,8 @@
 
 //#define NOCACHE
 
+// ToDo: think about implementing a parameterized API to read objects from appData by id
+
 ApplicationWebserver::ApplicationWebserver()
 {
 	_running = false;
