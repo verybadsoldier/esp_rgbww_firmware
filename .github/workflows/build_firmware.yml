@@ -114,13 +114,13 @@ jobs:
             elif [ "${{ matrix.soc }}" = "esp8266" ] && [ "${{ matrix.release }}" = "1" ] && [ "${{ matrix.single }}" = "1" ]; then
               echo "path=out/Esp8266/release/firmware/app-merged.bin" >> $GITHUB_OUTPUT
             elif [ "${{ matrix.soc }}" = "esp32" ] && [ "${{ matrix.release }}" = "0" ] && [ "${{ matrix.single }}" = "1" ]; then
-              echo "path=out/Esp32/esp32/debug/firmware/app-merged" >> $GITHUB_OUTPUT
+              echo "path=out/Esp32/esp32/debug/firmware/app-merged.bin" >> $GITHUB_OUTPUT
             elif [ "${{ matrix.soc }}" = "esp32" ] && [ "${{ matrix.release }}" = "1" ] && [ "${{ matrix.single }}" = "1" ]; then
-              echo "path=out/Esp32/esp32/release/firmware/app-merged" >> $GITHUB_OUTPUT
+              echo "path=out/Esp32/esp32/release/firmware/app-merged.bin" >> $GITHUB_OUTPUT
             elif [ "${{ matrix.soc }}" = "esp32c3" ] && [ "${{ matrix.release }}" = "0" ] && [ "${{ matrix.single }}" = "1" ]; then
-              echo "path=out/Esp32/esp32c3/debug/firmware/app-merged" >> $GITHUB_OUTPUT
+              echo "path=out/Esp32/esp32c3/debug/firmware/app-merged.bin" >> $GITHUB_OUTPUT
             elif [ "${{ matrix.soc }}" = "esp32c3" ] && [ "${{ matrix.release }}" = "1" ] && [ "${{ matrix.single }}" = "1" ]; then
-              echo "path=out/Esp32/esp32c3/release/firmware/app-merged" >> $GITHUB_OUTPUT
+              echo "path=out/Esp32/esp32c3/release/firmware/app-merged.bin" >> $GITHUB_OUTPUT
             else
               echo "path=" >> $GITHUB_OUTPUT
             fi
