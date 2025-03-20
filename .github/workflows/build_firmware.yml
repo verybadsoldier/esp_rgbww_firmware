@@ -128,10 +128,15 @@ jobs:
       - name: Set artifact name
         id: set_artifact_name
         run: |
-          if [ "${{ matrix.release }}" = "1" ]; then
-            echo "artifact_name=lightinator-${{ matrix.soc }}-release" >> $GITHUB_OUTPUT
+          if [ "${{ matrix.single }}" = "1" ]; then
+            tag="-single_image"
           else
-            echo "artifact_name=lightinator-${{ matrix.soc }}-debug" >> $GITHUB_OUTPUT
+            tag=""
+          fi
+          if [ "${{ matrix.release }}" = "1" ]; then
+            echo "artifact_name=lightinator-${{ matrix.soc }}-release"$tag >> $GITHUB_OUTPUT
+          else
+            echo "artifact_name=lightinator-${{ matrix.soc }}-debug"$tag >> $GITHUB_OUTPUT
           fi
 
       - name: Upload firmware artifact
