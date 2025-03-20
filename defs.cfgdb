@@ -60,6 +60,12 @@
             "minimum": 0,
             "maximum": 359,
             "alias":"hue"
+        },
+        "ct":{
+          "type":"integer",
+          "maximum":10000,
+          "minimum":0,
+          "alias":"colortemp"
         }
       }
     },
