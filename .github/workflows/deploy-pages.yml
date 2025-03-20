@@ -120,6 +120,54 @@ jobs:
           name: lightinator-esp32c3-release
           path: download/esp32c3/${{ needs.get-version.outputs.fw_branch }}/release
 
+      - name: Download esp8266 debug
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ secrets.artifact_download_token }}
+          run-id: ${{ env.latest_run_id }}
+          name: lightinator-esp8266-debug-single_image
+          path: download/esp8266/${{ needs.get-version.outputs.fw_branch }}/debug
+
+      - name: Download esp8266 release
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ secrets.artifact_download_token }}
+          run-id: ${{ env.latest_run_id }}
+          name: lightinator-esp8266-release-single_image
+          path: download/esp8266/${{ needs.get-version.outputs.fw_branch }}/release
+
+      - name: Download esp32 debug
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ secrets.artifact_download_token }}
+          run-id: ${{ env.latest_run_id }}
+          name: lightinator-esp32-debug-single_image
+          path: download/esp32/${{ needs.get-version.outputs.fw_branch }}/debug
+
+      - name: Download esp32 release
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ secrets.artifact_download_token }}
+          run-id: ${{ env.latest_run_id }}
+          name: lightinator-esp32-release-single_image
+          path: download/esp32/${{ needs.get-version.outputs.fw_branch }}/release
+
+      - name: Download esp32c3 debug
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ secrets.artifact_download_token }}
+          run-id: ${{ env.latest_run_id }}
+          name: lightinator-esp32c3-debug-single_image
+          path: download/esp32c3/${{ needs.get-version.outputs.fw_branch }}/debug
+
+      - name: Download esp32c3 release
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ secrets.artifact_download_token }}
+          run-id: ${{ env.latest_run_id }}
+          name: lightinator-esp32c3-release-single_image
+          path: download/esp32c3/${{ needs.get-version.outputs.fw_branch }}/release
+  
       - name: Generate version.json
         run: |
           cat <<EOF > version.json
