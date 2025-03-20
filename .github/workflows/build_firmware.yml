@@ -17,6 +17,7 @@ jobs:
       matrix:
         soc: [esp8266, esp32, esp32c3]
         release: [0, 1]
+        single: [0, 1]
 
     steps:
       - name: Checkout Repository
@@ -75,32 +76,54 @@ jobs:
 
       - name: Run Build in Docker Container
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
-            docker.io/pjakobs/sming:latest \
-            bash -c "git config --global --add safe.directory /workspace && \
-            source /opt/Sming/Tools/export.sh && \
-            make configdb-rebuild && \
-            make SMING_SOC=${{ matrix.soc }} SMING_RELEASE=${{ matrix.release }} DISABLE_WERROR=1 COM_SPEED=115200"
+          if [ "${{ matrix.single }}" = "0" ]; then 
+            docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
+              docker.io/pjakobs/sming:latest \
+              bash -c "git config --global --add safe.directory /workspace && \
+              source /opt/Sming/Tools/export.sh && \
+              make configdb-rebuild && \
+              make SMING_SOC=${{ matrix.soc }} SMING_RELEASE=${{ matrix.release }} DISABLE_WERROR=1 COM_SPEED=115200" 
+          else 
+            docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
+              docker.io/pjakobs/sming:latest \
+              bash -c "git config --global --add safe.directory /workspace && \
+              source /opt/Sming/Tools/export.sh && \
+              make configdb-rebuild && \
+              make mergeflash SMING_SOC=${{ matrix.soc }} SMING_RELEASE=${{ matrix.release }} DISABLE_WERROR=1 COM_SPEED=115200" 
+          fi
 
         # Determine correct artifact path based on matrix.soc and matrix.release
       - name: Set firmware path
         id: set_firmware_path
         run: |
-          if [ "${{ matrix.soc }}" = "esp8266" ] && [ "${{ matrix.release }}" = "0" ]; then
-            echo "path=out/Esp8266/debug/firmware/rom0.bin" >> $GITHUB_OUTPUT
-          elif [ "${{ matrix.soc }}" = "esp8266" ] && [ "${{ matrix.release }}" = "1" ]; then
-            echo "path=out/Esp8266/release/firmware/rom0.bin" >> $GITHUB_OUTPUT
-          elif [ "${{ matrix.soc }}" = "esp32" ] && [ "${{ matrix.release }}" = "0" ]; then
-            echo "path=out/Esp32/esp32/debug/firmware/app.bin" >> $GITHUB_OUTPUT
-          elif [ "${{ matrix.soc }}" = "esp32" ] && [ "${{ matrix.release }}" = "1" ]; then
-            echo "path=out/Esp32/esp32/release/firmware/app.bin" >> $GITHUB_OUTPUT
-          elif [ "${{ matrix.soc }}" = "esp32c3" ] && [ "${{ matrix.release }}" = "0" ]; then
-            echo "path=out/Esp32/esp32c3/debug/firmware/app.bin" >> $GITHUB_OUTPUT
-          elif [ "${{ matrix.soc }}" = "esp32c3" ] && [ "${{ matrix.release }}" = "1" ]; then
-            echo "path=out/Esp32/esp32c3/release/firmware/app.bin" >> $GITHUB_OUTPUT
-          else
-            echo "path=" >> $GITHUB_OUTPUT
-          fi
+          run: |
+            if [ "${{ matrix.soc }}" = "esp8266" ] && [ "${{ matrix.release }}" = "0" ] && [ "${{ matrix.single }}" = "0" ]; then
+              echo "path=out/Esp8266/debug/firmware/rom0.bin" >> $GITHUB_OUTPUT
+            elif [ "${{ matrix.soc }}" = "esp8266" ] && [ "${{ matrix.release }}" = "1" ] && [ "${{ matrix.single }}" = "0" ]; then
+              echo "path=out/Esp8266/release/firmware/rom0.bin" >> $GITHUB_OUTPUT
+            elif [ "${{ matrix.soc }}" = "esp32" ] && [ "${{ matrix.release }}" = "0" ] && [ "${{ matrix.single }}" = "0" ]; then
+              echo "path=out/Esp32/esp32/debug/firmware/app.bin" >> $GITHUB_OUTPUT
+            elif [ "${{ matrix.soc }}" = "esp32" ] && [ "${{ matrix.release }}" = "1" ] && [ "${{ matrix.single }}" = "0" ]; then
+              echo "path=out/Esp32/esp32/release/firmware/app.bin" >> $GITHUB_OUTPUT
+            elif [ "${{ matrix.soc }}" = "esp32c3" ] && [ "${{ matrix.release }}" = "0" ] && [ "${{ matrix.single }}" = "0" ]; then
+              echo "path=out/Esp32/esp32c3/debug/firmware/app.bin" >> $GITHUB_OUTPUT
+            elif [ "${{ matrix.soc }}" = "esp32c3" ] && [ "${{ matrix.release }}" = "1" ] && [ "${{ matrix.single }}" = "0" ]; then
+              echo "path=out/Esp32/esp32c3/release/firmware/app.bin" >> $GITHUB_OUTPUT
+            elif [ "${{ matrix.soc }}" = "esp8266" ] && [ "${{ matrix.release }}" = "0" ] && [ "${{ matrix.single }}" = "1" ]; then
+              echo "path=out/Esp8266/debug/firmware/rom0.bin" >> $GITHUB_OUTPUT
+            elif [ "${{ matrix.soc }}" = "esp8266" ] && [ "${{ matrix.release }}" = "1" ] && [ "${{ matrix.single }}" = "1" ]; then
+              echo "path=out/Esp8266/release/firmware/rom0.bin" >> $GITHUB_OUTPUT
+            elif [ "${{ matrix.soc }}" = "esp32" ] && [ "${{ matrix.release }}" = "0" ] && [ "${{ matrix.single }}" = "1" ]; then
+              echo "path=out/Esp32/esp32/debug/firmware/app.bin" >> $GITHUB_OUTPUT
+            elif [ "${{ matrix.soc }}" = "esp32" ] && [ "${{ matrix.release }}" = "1" ] && [ "${{ matrix.single }}" = "1" ]; then
+              echo "path=out/Esp32/esp32/release/firmware/app.bin" >> $GITHUB_OUTPUT
+            elif [ "${{ matrix.soc }}" = "esp32c3" ] && [ "${{ matrix.release }}" = "0" ] && [ "${{ matrix.single }}" = "1" ]; then
+              echo "path=out/Esp32/esp32c3/debug/firmware/app.bin" >> $GITHUB_OUTPUT
+            elif [ "${{ matrix.soc }}" = "esp32c3" ] && [ "${{ matrix.release }}" = "1" ] && [ "${{ matrix.single }}" = "1" ]; then
+              echo "path=out/Esp32/esp32c3/release/firmware/app.bin" >> $GITHUB_OUTPUT
+            else
+              echo "path=" >> $GITHUB_OUTPUT
+            fi
 
       - name: Set artifact name
         id: set_artifact_name
