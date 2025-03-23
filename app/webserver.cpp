@@ -385,7 +385,7 @@ void ApplicationWebserver::onConfig(HttpRequest& request, HttpResponse& response
 		debug_i("======================\nHTTP POST request received, ");
 
 		/* ConfigDB importFomStream */
-		String oldIP, oldSSID, oldDeviceName;
+		String oldIP, oldSSID, oldDeviceName, oldChannels;
 		bool mqttEnabled, dhcpEnabled;
 		int oldColorMode;
 		{
@@ -399,6 +399,7 @@ void ApplicationWebserver::onConfig(HttpRequest& request, HttpResponse& response
 			AppConfig::Color color(*app.cfg);
 			oldColorMode=color.getColorMode();
 			oldDeviceName=general.getDeviceName();
+			oldChannels=general.getChannels();
 		}
 		
 
@@ -419,7 +420,7 @@ void ApplicationWebserver::onConfig(HttpRequest& request, HttpResponse& response
 
 			// bool restart = root[F("restart")] | false;
 
-			String newIP, newSSID,newDeviceName;
+			String newIP, newSSID,newDeviceName, newChannels;
 			bool newMqttEnabled,newDhcpEnabled;
 			int newColorMode;
 			{
@@ -433,6 +434,7 @@ void ApplicationWebserver::onConfig(HttpRequest& request, HttpResponse& response
 				AppConfig::Color color(*app.cfg);
 				newColorMode=color.getColorMode();
 				newDeviceName=general.getDeviceName();
+				newChannels=general.getChannels();
 			}
 			
 			if(oldIP != newIP) {
@@ -477,6 +479,11 @@ void ApplicationWebserver::onConfig(HttpRequest& request, HttpResponse& response
 					app.wsBroadcast(F("notification"), msg);
 					app.delayedCMD(F("restart"), 3000); // wait 3s to first send response
 				}
+			}
+			if(oldChannels!=newChannels){
+				String msg = F("Channel config has changed - rebooting ");
+				app.wsBroadcast(F("notification"), msg);
+				app.delayedCMD(F("restart"),1000);
 			}
 			if(oldDeviceName!=newDeviceName){
 				String msg = F("new Device Name, ")+newDeviceName;
