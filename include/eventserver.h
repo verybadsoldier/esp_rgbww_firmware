@@ -35,6 +35,10 @@ private:
 
 	bool enabled;
 
+	// event throtteling parameters
+	unsigned long _lastEventTime = 0;      // Timestamp of last event sent
+    const unsigned long _minEventInterval = 500; // 500ms = 2 per second max
+	
 	ChannelOutput _lastRaw;
 	// websocket interface
     ApplicationWebserver* webServer;
