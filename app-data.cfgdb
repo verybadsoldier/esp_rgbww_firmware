@@ -15,6 +15,21 @@
             "type": "string"
           },
           "color": {
+            "d":{
+              "type":"integer"
+            },
+            "t":{
+              "type":"integer"
+            },
+            "s":{
+              "type":"integer"
+            },
+            "cmd":{
+              "type":"string"
+            },
+            "q":{
+              "type":"string"
+            },
             "$ref":"defs/$defs/color"
           },
           "id":{
@@ -107,6 +122,30 @@
             "type":"string",
             "default":"scene"
           },
+          "transition":{
+            "type":"object",
+            "properties":{
+              "d":{
+                "type":"integer"
+              },
+      
+              "t":{
+                "type":"integer"
+              },
+              "s":{
+                "type":"integer"
+              },
+              "cmd":{
+                "type":"string"
+              },
+              "q":{
+                "type":"string"
+              },
+              "r":{
+                "type":"boolean"
+              }
+            }
+          },
           "settings":{
             "type":"array",
             "items":{
@@ -114,6 +153,34 @@
               "properties":{
                 "controller_id":{
                   "type":"string"
+                },
+                "pos":{
+                  "type":"integer"
+                },
+                "transition":{
+                  "type":"object",
+                  "properties":{
+                    "d":{
+                      "type":"integer"
+                    },
+            
+                    "t":{
+                      "type":"integer"
+                    },
+                    "s":{
+                      "type":"integer"
+                      
+                    },
+                    "cmd":{
+                      "type":"string"
+                    },
+                    "q":{
+                      "type":"string"
+                    },
+                    "r":{
+                      "type":"boolean"
+                    }
+                  }
                 },
                 "color": {
                   "oneOf": [

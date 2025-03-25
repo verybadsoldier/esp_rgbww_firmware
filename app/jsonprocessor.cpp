@@ -1,5 +1,6 @@
 #include <RGBWWCtrl.h>
 
+#define MIN_HEAP_FREE 8192
 /**
  * @brief Processes the color JSON data.
  *
@@ -14,7 +15,7 @@
 bool JsonProcessor::onColor(const String& json, String& msg, bool relay)
 {
 	debug_e("JsonProcessor::onColor: %s", json.c_str());
-	StaticJsonDocument<256> doc;
+	StaticJsonDocument<400> doc;
 	Json::deserialize(doc, json);
 	return onColor(doc.as<JsonObject>(), msg, relay);
 }
@@ -33,12 +34,18 @@ bool JsonProcessor::onColor(const String& json, String& msg, bool relay)
 bool JsonProcessor::onColor(JsonObject root, String& msg, bool relay)
 {
 	bool result = false;
+	if(system_get_free_heap_size()<MIN_HEAP_FREE) {
+		debug_i("out of memory in processing onColor");
+		msg = "out of memory in processing onColor";
+		return false;
+	}
 	auto cmds = root[F("cmds")].as<JsonArray>();
 	if(!cmds.isNull()) {
 		Vector<String> errors;
 		// multi command post (needs testing)
 		debug_i("  multi command post");
 		for(unsigned i = 0; i < cmds.size(); ++i) {
+			debug_i("command %i: %s", i, cmds[i].as<String>().c_str());
 			String msg;
 			if(!onSingleColorCommand(cmds[i], msg))
 				errors.add(msg);
@@ -48,10 +55,10 @@ bool JsonProcessor::onColor(JsonObject root, String& msg, bool relay)
 			result = true;
 		else {
 			String msg;
-			debug_i("  multi command post, %s", msg.c_str());
 			for(unsigned i = 0; i < errors.size(); ++i)
-				msg += errors[i] + "|";
+				msg += String(i) + ": " + errors[i] + "|";
 			result = false;
+			debug_i("  multi command post, %s", msg.c_str());
 		}
 	} else {
 		debug_i("  single command post %s", msg.c_str());
@@ -349,6 +356,7 @@ bool JsonProcessor::onSingleColorCommand(JsonObject root, String& errorMsg)
 	RequestParameters params;
 	parseRequestParams(root, params);
 	if(params.checkParams(errorMsg) != 0) {
+		debug_i("checkParams failed:",errorMsg.c_str());
 		return false;
 	}
 

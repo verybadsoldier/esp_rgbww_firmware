@@ -669,6 +669,7 @@ void ApplicationWebserver::onColorPost(HttpRequest& request, HttpResponse& respo
 		return;
 	}
 
+	debug_i("received color update with body legth %i and content %s", body.length(),body.c_str());
 	String msg;
 
 	if(!app.jsonproc.onColor(body, msg)) {

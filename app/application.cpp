@@ -176,9 +176,9 @@ void Application::uptimeCounter()
 
 void Application::checkRam()
 {
-	/*
+	
 	debug_i("Free heap: %d", system_get_free_heap_size());
-	*/
+	
 	/* 
 	String _client_status = WifiStation.getConnectionStatusName();
 	debug_i("wifi conection Status: %s", _client_status.c_str());
@@ -600,6 +600,7 @@ bool Application::mountfs(int slot)
      */
 	debug_i("mounting host file system");
 	fileSetFileSystem(&IFS::Host::getFileSystem());
+	return true;
 #else
 	/*
      * on device file system
