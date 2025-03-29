@@ -267,7 +267,7 @@ jobs:
           version="${{ needs.get-version.outputs.fw_version }}"
           deploy_server="lightinator.de"
           
-          # Define all combinations to update
+          # Define all combinations to update - only for non-single-image builds
           for soc in esp8266 esp32 esp32c3; do
             for type in debug release; do
               # Determine correct file path based on soc
@@ -281,11 +281,7 @@ jobs:
               url="http://$deploy_server/download/$soc/$branch/$type/$file"
               ./update_version.py version.json add $soc $type $branch "$version" "$url"
               
-              # Also update single image entries
-              if [ -d "download/$soc/$branch/$type/single_image" ]; then
-                single_url="http://$deploy_server/download/$soc/$branch/$type/single_image/app-merged.bin"
-                ./update_version.py version.json add "${soc}_single" $type $branch "$version" "$single_url"
-              fi
+              # We're not adding single image entries to version.json per requirements
             done
           done
           
