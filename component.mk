@@ -1,5 +1,5 @@
 COMPONENT_SEARCH_DIRS := $(PROJECT_DIR)/Components
-COMPONENT_DEPENDS += MDNS RGBWWLed LittleFS ConfigDB ArduinoJson6 OtaNetwork 
+COMPONENT_DEPENDS += MDNS RGBWWLed LittleFS ConfigDB ArduinoJson6 OtaNetwork
 
 # Set default number of jobs to twice the number of available processors
 NUM_JOBS := $(shell echo $(($(nproc) * 2)))

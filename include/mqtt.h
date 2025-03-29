@@ -25,6 +25,9 @@ public:
     void publishCommand(const String& method, const JsonObject& params);
     void publishTransitionFinished(const String& name, bool requeued);
 
+    void initHomeAssistant();
+    void handleHomeAssistantCommand(const String& message);
+
 private:
     void connectDelayed(int delay = 2000);
     void connect();
@@ -33,6 +36,19 @@ private:
     void publish(const String& topic, const String& data, bool retain);
 
     String buildTopic(const String& suffix);
+
+    // Home Assistant specific
+    bool _haEnabled = false;
+    String _haDiscoveryPrefix;
+    String _haNodeId;
+    bool _haConfigPublished = false;
+    
+    // Home Assistant methods
+    void publishHomeAssistantConfig();
+    String buildHATopic(const String& component, const String& entityId, const String& suffix);
+    void publishHAState(const ChannelOutput& raw, const HSVCT* pHsv);
+    void processHACommand(const String& message);
+
 
     MqttClient* mqtt = nullptr;
     bool _running = false;
