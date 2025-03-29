@@ -75,41 +75,47 @@ jobs:
         with:
           ref: gh-pages
           
-      # Create download directories for all branches
+      # Create download directories for all branches (with version)
       - name: Create directories
         run: |
-          for branch in stable testing develop; do
-            for soc in esp8266 esp32 esp32c3; do
-              mkdir -p download/$soc/$branch/debug
-              mkdir -p download/$soc/$branch/release
-              mkdir -p download/$soc/$branch/debug/single_image
-              mkdir -p download/$soc/$branch/release/single_image
-            done
+          branch="${{ needs.get-version.outputs.fw_branch }}"
+          version="${{ needs.get-version.outputs.fw_version }}"
+          # Create versioned directory structure
+          for soc in esp8266 esp32 esp32c3; do
+            mkdir -p download/$branch/$version/$soc/debug
+            mkdir -p download/$branch/$version/$soc/release
+            mkdir -p download/$branch/$version/$soc/debug/single_image
+            mkdir -p download/$branch/$version/$soc/release/single_image
           done
+          
+          # Also create symlinks for "latest" version
+          mkdir -p download/$branch/latest
+          ln -sfn ../$version download/$branch/latest/current
           
       # Download artifacts for the current branch
       - name: Download artifacts
         run: |
           branch="${{ needs.get-version.outputs.fw_branch }}"
+          version="${{ needs.get-version.outputs.fw_version }}"
           latest_run_id=$(curl -s -H "Authorization: token ${{ secrets.artifact_download_token }}" \
             "https://api.github.com/repos/pljakobs/esp_rgbww_firmware/actions/runs?status=success" | \
             jq -r '.workflow_runs[] | select(.name == "firmwareBuild") | .id' | head -n 1)
           echo "latest_run_id=$latest_run_id" >> $GITHUB_ENV
           
-          # Define all combinations for artifact downloads
+          # Define all combinations for artifact downloads with version in path
           combinations=(
-            "esp8266 debug 0 download/$branch/esp8266/debug"
-            "esp8266 release 0 download/$branch/esp8266/release"
-            "esp32 debug 0 download/$branch/esp32/debug"
-            "esp32 release 0 download/$branch/esp32/release"
-            "esp32c3 debug 0 download/$branch/esp32c3/debug"
-            "esp32c3 release 0 download/$branch/esp32c3/release"
-            "esp8266 debug 1 download/$branch/esp8266/debug/single_image"
-            "esp8266 release 1 download/$branch/esp8266/release/single_image"
-            "esp32 debug 1 download/$branch/esp32/debug/single_image"
-            "esp32 release 1 download/$branch/esp32/release/single_image"
-            "esp32c3 debug 1 download/$branch/esp32c3/debug/single_image"
-            "esp32c3 release 1 download/$branch/esp32c3/release/single_image"
+            "esp8266 debug 0 download/$branch/$version/esp8266/debug"
+            "esp8266 release 0 download/$branch/$version/esp8266/release"
+            "esp32 debug 0 download/$branch/$version/esp32/debug"
+            "esp32 release 0 download/$branch/$version/esp32/release"
+            "esp32c3 debug 0 download/$branch/$version/esp32c3/debug"
+            "esp32c3 release 0 download/$branch/$version/esp32c3/release"
+            "esp8266 debug 1 download/$branch/$version/esp8266/debug/single_image"
+            "esp8266 release 1 download/$branch/$version/esp8266/release/single_image"
+            "esp32 debug 1 download/$branch/$version/esp32/debug/single_image"
+            "esp32 release 1 download/$branch/$version/esp32/release/single_image"
+            "esp32c3 debug 1 download/$branch/$version/esp32c3/debug/single_image"
+            "esp32c3 release 1 download/$branch/$version/esp32c3/release/single_image"
           )
           
           for combo in "${combinations[@]}"; do
@@ -128,7 +134,7 @@ jobs:
               artifact_name="lightinator-${soc}-debug${tag}-${branch}"
             fi
             
-            echo "Downloading $artifact_name"
+            echo "Downloading $artifact_name to $path"
             
             # Create directory and download
             mkdir -p "$path"
@@ -168,7 +174,7 @@ jobs:
               data = {
                   "rom": {
                       "fw_version": "V5.0-1-develop",
-                      "url": "http://lightinator.de/download/esp8266/develop/release/rom0.bin"
+                      "url": "http://lightinator.de/download/develop/V5.0-1-develop/esp8266/release/rom0.bin"
                   },
                   "spiffs": {
                       "webapp_version": "0.3.3",
@@ -262,7 +268,7 @@ jobs:
             curl -L -o version.json https://lightinator.de/version.json
             if [ ! -f "version.json" ] || [ ! -s "version.json" ]; then
               echo "Failed to download version.json, creating a new one"
-              ./update_version.py version.json add esp8266 release stable "V5.0-init-stable" "http://lightinator.de/download/esp8266/stable/release/rom0.bin"
+              ./update_version.py version.json add esp8266 release stable "V5.0-init-stable" "http://lightinator.de/download/stable/V5.0-init-stable/esp8266/release/rom0.bin"
             fi
           fi
           
@@ -283,8 +289,8 @@ jobs:
                 file="app.bin"
               fi
               
-              # Update entry in version.json
-              url="http://$deploy_server/download/$soc/$branch/$type/$file"
+              # Update entry in version.json with versioned path
+              url="http://$deploy_server/download/$branch/$version/$soc/$type/$file"
               ./update_version.py version.json add $soc $type $branch "$version" "$url"
               
               # We're not adding single image entries to version.json per requirements
@@ -318,26 +324,32 @@ jobs:
       - name: Deploy to External Server
         run: |
           branch="${{ needs.get-version.outputs.fw_branch }}"
+          version="${{ needs.get-version.outputs.fw_version }}"
           
-          # Copy only the files for this branch
+          # Create directories with version in path
           for soc in esp8266 esp32 esp32c3; do
-            ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "mkdir -p ${{ env.deploy_path }}/download/$soc/$branch/debug"
-            ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "mkdir -p ${{ env.deploy_path }}/download/$soc/$branch/release"
-            ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "mkdir -p ${{ env.deploy_path }}/download/$soc/$branch/debug/single_image"
-            ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "mkdir -p ${{ env.deploy_path }}/download/$soc/$branch/release/single_image"
+            ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "mkdir -p ${{ env.deploy_path }}/download/$branch/$version/$soc/debug"
+            ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "mkdir -p ${{ env.deploy_path }}/download/$branch/$version/$soc/release"
+            ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "mkdir -p ${{ env.deploy_path }}/download/$branch/$version/$soc/debug/single_image"
+            ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "mkdir -p ${{ env.deploy_path }}/download/$branch/$version/$soc/release/single_image"
             
-            scp -r download/$soc/$branch/debug/* ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/$soc/$branch/debug/
-            scp -r download/$soc/$branch/release/* ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/$soc/$branch/release/
+            # Copy files with version in path
+            scp -r download/$branch/$version/$soc/debug/* ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/$branch/$version/$soc/debug/
+            scp -r download/$branch/$version/$soc/release/* ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/$branch/$version/$soc/release/
             
             # Copy single image files if they exist
-            if [ -d "download/$soc/$branch/debug/single_image" ] && [ "$(ls -A download/$soc/$branch/debug/single_image)" ]; then
-              scp -r download/$soc/$branch/debug/single_image/* ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/$soc/$branch/debug/single_image/
+            if [ -d "download/$branch/$version/$soc/debug/single_image" ] && [ "$(ls -A download/$branch/$version/$soc/debug/single_image)" ]; then
+              scp -r download/$branch/$version/$soc/debug/single_image/* ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/$branch/$version/$soc/debug/single_image/
             fi
             
-            if [ -d "download/$soc/$branch/release/single_image" ] && [ "$(ls -A download/$soc/$branch/release/single_image)" ]; then
-              scp -r download/$soc/$branch/release/single_image/* ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/$soc/$branch/release/single_image/
+            if [ -d "download/$branch/$version/$soc/release/single_image" ] && [ "$(ls -A download/$branch/$version/$soc/release/single_image)" ]; then
+              scp -r download/$branch/$version/$soc/release/single_image/* ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/$branch/$version/$soc/release/single_image/
             fi
           done
+          
+          # Create latest symlink on server
+          ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "mkdir -p ${{ env.deploy_path }}/download/$branch/latest && \
+            ln -sfn ../$version ${{ env.deploy_path }}/download/$branch/latest/current"
           
           # Replace placeholders and upload version.json
           sed <version.json -e "s/%host%/http:\/\/${{ env.deploy_server }}/" | ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "cat >${{ env.deploy_path }}/version.json"
