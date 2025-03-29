@@ -1,16 +1,13 @@
-name: firmwareBuild
+name: Publish_Firmware
 
 on:
-  push:
-    branches: [stable, testing, develop]
-  pull_request:
-    branches: [stable, testing, develop]
-  repository_dispatch:
-    types: [frontend-build-completed]
+  workflow_run:
+    workflows: ["firmwareBuild"]
+    types: [completed]
   workflow_dispatch:
     inputs:
       branch:
-        description: 'Branch to build'
+        description: 'Branch to deploy'
         required: true
         default: 'develop'
         type: choice
@@ -20,172 +17,325 @@ on:
           - develop
 
 jobs:
-  build:
+  get-version:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: true
-      matrix:
-        soc: [esp8266, esp32, esp32c3]
-        release: [0, 1]
-        single: [0, 1]
-
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    outputs:
+      fw_version: ${{ steps.version.outputs.fw_version }}
+      fw_branch: ${{ steps.version.outputs.fw_branch }}
+      
     steps:
-      - name: Determine branch
+      - name: Get Branch
         id: get_branch
         run: |
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             echo "branch=${{ github.event.inputs.branch }}" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event_name }}" == "push" ]; then
-            echo "branch=${{ github.ref_name }}" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event_name }}" == "pull_request" ]; then
-            echo "branch=${{ github.head_ref }}" >> $GITHUB_OUTPUT
           else
             echo "branch=develop" >> $GITHUB_OUTPUT
           fi
 
-      - name: Checkout Repository
+      - name: Get Latest Successful Workflow Run
+        id: get_run
+        run: |
+          latest_run_id=$(curl -s -H "Authorization: token ${{ secrets.artifact_download_token }}" \
+            "https://api.github.com/repos/pljakobs/esp_rgbww_firmware/actions/runs?status=success" | \
+            jq -r '.workflow_runs[] | select(.name == "firmwareBuild") | .id' | head -n 1)
+          echo "latest_run_id=$latest_run_id" >> $GITHUB_OUTPUT
+          echo "latest_run_id=$latest_run_id" >> $GITHUB_ENV
+          
+      - name: Download version info
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ secrets.artifact_download_token }}
+          run-id: ${{ env.latest_run_id }}
+          name: version-info-${{ steps.get_branch.outputs.branch }}
+          path: ./version-info
+          
+      - name: Load version info
+        id: version
+        run: |
+          source ./version-info/version-info.txt
+          echo "fw_version=$fw_version" >> $GITHUB_OUTPUT
+          echo "fw_branch=$fw_branch" >> $GITHUB_OUTPUT
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: get-version
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    
+    steps:
+      - name: Checkout gh-pages branch
         uses: actions/checkout@v3
         with:
-          ref: ${{ steps.get_branch.outputs.branch }}
-          fetch-depth: 0
-
-      - name: Get firmware version
-        id: get_fw_info
-        run: |
-          branch="${{ steps.get_branch.outputs.branch }}"
-          build_num=${{ github.run_number }}
-          version="V5.0-${build_num}-${branch}"
-          echo "fw_version=$version" >> $GITHUB_OUTPUT
-          echo "fw_branch=$branch" >> $GITHUB_OUTPUT
-
-      - name: Synchronize submodules
-        run: |
-          git submodule sync --recursive
-          git submodule update --init --recursive
-
-      - name: Pull Docker Image
-        run: docker pull docker.io/pjakobs/sming:latest
-
-      - name: Download fileList.h artifact
-        run: |
-          if [ -f ./include/fileList.h ]; then
-            echo "removing fileList.h"
-            rm ./include/fileList.h
-          fi
-          artifact_url=https://pljakobs.github.io/esp_rgb_webapp2/fileList.h
-          curl -L -o fileList.h "$artifact_url"
-          mv fileList.h ./include
-
-      - name: Download webapp files artifact
-        run: |
-          if [ -d ./webapp ]; then
-            echo "removing and re-creating webapp directory"
-            rm -rf ./webapp
-            mkdir ./webapp
-          fi
-          artifact_url=https://pljakobs.github.io/esp_rgb_webapp2/spa-files.zip
-          curl -L -o spa-files.zip "$artifact_url"
-          unzip spa-files.zip -d ./webapp
-          mv ./webapp/dist/spa/* ./webapp
-          rm -rf ./webapp/dist/spa
-          echo "webapp files version"
-          cat ./webapp/VERSION
-
-      - name: Build partition map (ESP8266 only)
-        if: ${{ matrix.soc == 'esp8266' }}
-        run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
-            docker.io/pjakobs/sming:latest \
-            bash -c "git config --global --add safe.directory /workspace && \
-               source /opt/Sming/Tools/export.sh && \
-               make partmap-build" SMING_SOC=${{ matrix.soc }} SMING_RELEASE=${{ matrix.release }}
-
-      - name: Copy partition map for release build (ESP8266 only)
-        if: ${{ matrix.soc == 'esp8266' && matrix.release == 1 }}
-        run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
-            docker.io/pjakobs/sming:latest \
-            bash -c "mkdir -p ./out/Esp8266/release/firmware && cp ./out/Esp8266/debug/firmware/partitions.bin ./out/Esp8266/release/firmware/"
-
-      - name: Run Build in Docker Container
-        run: |
-          if [ "${{ matrix.single }}" = "0" ]; then 
-            docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
-              docker.io/pjakobs/sming:latest \
-              bash -c "git config --global --add safe.directory /workspace && \
-              source /opt/Sming/Tools/export.sh && \
-              make configdb-rebuild && \
-              make SMING_SOC=${{ matrix.soc }} SMING_RELEASE=${{ matrix.release }} DISABLE_WERROR=1 COM_SPEED=115200" 
-          else 
-            docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
-              docker.io/pjakobs/sming:latest \
-              bash -c "git config --global --add safe.directory /workspace && \
-              source /opt/Sming/Tools/export.sh && \
-              make configdb-rebuild && \
-              make mergeflash SMING_SOC=${{ matrix.soc }} SMING_RELEASE=${{ matrix.release }} DISABLE_WERROR=1 COM_SPEED=115200" 
-          fi
-
-      - name: Set firmware path
-        id: set_firmware_path
-        run: |
-          if [ "${{ matrix.soc }}" = "esp8266" ] && [ "${{ matrix.release }}" = "0" ] && [ "${{ matrix.single }}" = "0" ]; then
-            echo "path=out/Esp8266/debug/firmware/rom0.bin" >> $GITHUB_OUTPUT
-          elif [ "${{ matrix.soc }}" = "esp8266" ] && [ "${{ matrix.release }}" = "1" ] && [ "${{ matrix.single }}" = "0" ]; then
-            echo "path=out/Esp8266/release/firmware/rom0.bin" >> $GITHUB_OUTPUT
-          elif [ "${{ matrix.soc }}" = "esp32" ] && [ "${{ matrix.release }}" = "0" ] && [ "${{ matrix.single }}" = "0" ]; then
-            echo "path=out/Esp32/esp32/debug/firmware/app.bin" >> $GITHUB_OUTPUT
-          elif [ "${{ matrix.soc }}" = "esp32" ] && [ "${{ matrix.release }}" = "1" ] && [ "${{ matrix.single }}" = "0" ]; then
-            echo "path=out/Esp32/esp32/release/firmware/app.bin" >> $GITHUB_OUTPUT
-          elif [ "${{ matrix.soc }}" = "esp32c3" ] && [ "${{ matrix.release }}" = "0" ] && [ "${{ matrix.single }}" = "0" ]; then
-            echo "path=out/Esp32/esp32c3/debug/firmware/app.bin" >> $GITHUB_OUTPUT
-          elif [ "${{ matrix.soc }}" = "esp32c3" ] && [ "${{ matrix.release }}" = "1" ] && [ "${{ matrix.single }}" = "0" ]; then
-            echo "path=out/Esp32/esp32c3/release/firmware/app.bin" >> $GITHUB_OUTPUT
-          elif [ "${{ matrix.soc }}" = "esp8266" ] && [ "${{ matrix.release }}" = "0" ] && [ "${{ matrix.single }}" = "1" ]; then
-            echo "path=out/Esp8266/debug/firmware/app-merged.bin" >> $GITHUB_OUTPUT
-          elif [ "${{ matrix.soc }}" = "esp8266" ] && [ "${{ matrix.release }}" = "1" ] && [ "${{ matrix.single }}" = "1" ]; then
-            echo "path=out/Esp8266/release/firmware/app-merged.bin" >> $GITHUB_OUTPUT
-          elif [ "${{ matrix.soc }}" = "esp32" ] && [ "${{ matrix.release }}" = "0" ] && [ "${{ matrix.single }}" = "1" ]; then
-            echo "path=out/Esp32/esp32/debug/firmware/app-merged.bin" >> $GITHUB_OUTPUT
-          elif [ "${{ matrix.soc }}" = "esp32" ] && [ "${{ matrix.release }}" = "1" ] && [ "${{ matrix.single }}" = "1" ]; then
-            echo "path=out/Esp32/esp32/release/firmware/app-merged.bin" >> $GITHUB_OUTPUT
-          elif [ "${{ matrix.soc }}" = "esp32c3" ] && [ "${{ matrix.release }}" = "0" ] && [ "${{ matrix.single }}" = "1" ]; then
-            echo "path=out/Esp32/esp32c3/debug/firmware/app-merged.bin" >> $GITHUB_OUTPUT
-          elif [ "${{ matrix.soc }}" = "esp32c3" ] && [ "${{ matrix.release }}" = "1" ] && [ "${{ matrix.single }}" = "1" ]; then
-            echo "path=out/Esp32/esp32c3/release/firmware/app-merged.bin" >> $GITHUB_OUTPUT
-          else
-            echo "path=" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Set artifact name
-        id: set_artifact_name
-        run: |
-          if [ "${{ matrix.single }}" = "1" ]; then
-            tag="-single_image"
-          else
-            tag=""
-          fi
-          if [ "${{ matrix.release }}" = "1" ]; then
-            echo "artifact_name=lightinator-${{ matrix.soc }}-release${tag}-${{ steps.get_branch.outputs.branch }}" >> $GITHUB_OUTPUT
-          else
-            echo "artifact_name=lightinator-${{ matrix.soc }}-debug${tag}-${{ steps.get_branch.outputs.branch }}" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Upload firmware artifact
-        if: ${{ steps.set_firmware_path.outputs.path != '' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ steps.set_artifact_name.outputs.artifact_name }}
-          path: ${{ steps.set_firmware_path.outputs.path }}
+          ref: gh-pages
           
-      - name: Create version info file
+      # Create download directories for all branches
+      - name: Create directories
         run: |
-          echo "fw_version=${{ steps.get_fw_info.outputs.fw_version }}" > version-info.txt
-          echo "fw_branch=${{ steps.get_branch.outputs.branch }}" >> version-info.txt
-        
-      - name: Save version info
-        # Only upload version info from one specific matrix combination to avoid conflicts
-        if: ${{ matrix.soc == 'esp8266' && matrix.release == 0 && matrix.single == 0 }}
-        uses: actions/upload-artifact@v4
+          for branch in stable testing develop; do
+            for soc in esp8266 esp32 esp32c3; do
+              mkdir -p download/$soc/$branch/debug
+              mkdir -p download/$soc/$branch/release
+              mkdir -p download/$soc/$branch/debug/single_image
+              mkdir -p download/$soc/$branch/release/single_image
+            done
+          done
+          
+      # Download artifacts for the current branch
+      - name: Download artifacts
+        run: |
+          branch="${{ needs.get-version.outputs.fw_branch }}"
+          latest_run_id=$(curl -s -H "Authorization: token ${{ secrets.artifact_download_token }}" \
+            "https://api.github.com/repos/pljakobs/esp_rgbww_firmware/actions/runs?status=success" | \
+            jq -r '.workflow_runs[] | select(.name == "firmwareBuild") | .id' | head -n 1)
+          echo "latest_run_id=$latest_run_id" >> $GITHUB_ENV
+          
+          # Define all combinations for artifact downloads
+          combinations=(
+            "esp8266 debug 0 download/$branch/esp8266/debug"
+            "esp8266 release 0 download/$branch/esp8266/release"
+            "esp32 debug 0 download/$branch/esp32/debug"
+            "esp32 release 0 download/$branch/esp32/release"
+            "esp32c3 debug 0 download/$branch/esp32c3/debug"
+            "esp32c3 release 0 download/$branch/esp32c3/release"
+            "esp8266 debug 1 download/$branch/esp8266/debug/single_image"
+            "esp8266 release 1 download/$branch/esp8266/release/single_image"
+            "esp32 debug 1 download/$branch/esp32/debug/single_image"
+            "esp32 release 1 download/$branch/esp32/release/single_image"
+            "esp32c3 debug 1 download/$branch/esp32c3/debug/single_image"
+            "esp32c3 release 1 download/$branch/esp32c3/release/single_image"
+          )
+          
+          for combo in "${combinations[@]}"; do
+            read -r soc build_type single_img path <<< "$combo"
+            
+            # Determine artifact name
+            if [ "$single_img" = "1" ]; then
+              tag="-single_image"
+            else
+              tag=""
+            fi
+            
+            if [ "$build_type" = "release" ]; then
+              artifact_name="lightinator-${soc}-release${tag}-${branch}"
+            else
+              artifact_name="lightinator-${soc}-debug${tag}-${branch}"
+            fi
+            
+            echo "Downloading $artifact_name"
+            
+            # Create directory and download
+            mkdir -p "$path"
+            
+            # Download the artifact - continue on errors
+            actions/download-artifact@v4 \
+              --github-token ${{ secrets.artifact_download_token }} \
+              --run-id ${{ env.latest_run_id }} \
+              --name "$artifact_name" \
+              --path "$path" || echo "Failed to download $artifact_name"
+          done
+          
+      # Copy Python script to update version.json
+      - name: Setup version.json updater
+        run: |
+          cat > update_version.py << 'EOF'
+          #!/usr/bin/env python3
+          
+          import json
+          import os
+          import sys
+
+          def load_json(file_path):
+              if not os.path.exists(file_path):
+                  return None
+              with open(file_path, 'r') as file:
+                  try:
+                      return json.load(file)
+                  except json.JSONDecodeError:
+                      return None
+
+          def save_json(data, file_path):
+              with open(file_path, 'w') as file:
+                  json.dump(data, file, indent=4)
+
+          def prime_json(file_path):
+              data = {
+                  "rom": {
+                      "fw_version": "V5.0-1-develop",
+                      "url": "http://lightinator.de/download/esp8266/develop/release/rom0.bin"
+                  },
+                  "spiffs": {
+                      "webapp_version": "0.3.3",
+                      "url": "http://rgbww.dronezone.de/testing/spiff_rom.bin"
+                  },
+                  "firmware": []
+              }
+              save_json(data, file_path)
+              return data
+
+          def add_or_update_entry(data, soc, type_, branch, fw_version, url):
+              new_entry = {
+                  "soc": soc,
+                  "type": type_,
+                  "branch": branch,
+                  "fw_version": fw_version,
+                  "files": {
+                      "rom": {
+                          "url": url
+                      }
+                  }
+              }
+              for i, entry in enumerate(data['firmware']):
+                  if (entry['soc'] == soc and
+                      entry['type'] == type_ and
+                      entry['branch'] == branch):
+                      data['firmware'][i] = new_entry
+                      if soc == 'esp8266' and type_ == 'release' and branch == 'stable':
+                          data['rom'] = new_entry['files']['rom']
+                      return data
+              data['firmware'].append(new_entry)
+              if soc == 'esp8266' and type_ == 'release' and branch == 'stable':
+                  data['rom'] = {
+                      "fw_version": fw_version,
+                      "url": url
+                  }
+              return data
+
+          def delete_entry(data, soc, type_, branch):
+              data['firmware'] = [entry for entry in data['firmware'] if not (
+                  entry['soc'] == soc and entry['type'] == type_ and entry['branch'] == branch)]
+              return data
+
+          def main():
+              if len(sys.argv) < 2:
+                  print("Usage: script.py <json_file> [add|delete] [soc type branch fw_version url|soc type branch]")
+                  return
+
+              file_path = sys.argv[1]
+              action = sys.argv[2]
+
+              data = load_json(file_path)
+              if data is None:
+                  data = prime_json(file_path)
+
+              if action == 'add':
+                  if len(sys.argv) < 7:
+                      print("Usage: script.py <json_file> add <soc> <type> <branch> <fw_version> <url>")
+                      return
+                  soc = sys.argv[3]
+                  type_ = sys.argv[4]
+                  branch = sys.argv[5]
+                  fw_version = sys.argv[6]
+                  url = sys.argv[7]
+                  data = add_or_update_entry(data, soc, type_, branch, fw_version, url)
+              elif action == 'delete':
+                  if len(sys.argv) < 6:
+                      print("Usage: script.py <json_file> delete <soc> <type> <branch>")
+                      return
+                  soc = sys.argv[3]
+                  type_ = sys.argv[4]
+                  branch = sys.argv[5]
+                  data = delete_entry(data, soc, type_, branch)
+              else:
+                  print("Invalid action. Use add or delete.")
+                  return
+
+              save_json(data, file_path)
+
+          if __name__ == "__main__":
+              main()
+          EOF
+          
+          chmod +x update_version.py
+      
+      # Download version.json from lightinator.de if it doesn't exist locally
+      - name: Get version.json
+        run: |
+          if [ ! -f "version.json" ]; then
+            echo "Downloading version.json from lightinator.de"
+            curl -L -o version.json https://lightinator.de/version.json
+            if [ ! -f "version.json" ] || [ ! -s "version.json" ]; then
+              echo "Failed to download version.json, creating a new one"
+              ./update_version.py version.json add esp8266 release stable "V5.0-init-stable" "http://lightinator.de/download/esp8266/stable/release/rom0.bin"
+            fi
+          fi
+          
+      # Update version.json using the Python script for each firmware combination
+      - name: Update version.json
+        run: |
+          branch="${{ needs.get-version.outputs.fw_branch }}"
+          version="${{ needs.get-version.outputs.fw_version }}"
+          deploy_server="lightinator.de"
+          
+          # Define all combinations to update - only for non-single-image builds
+          for soc in esp8266 esp32 esp32c3; do
+            for type in debug release; do
+              # Determine correct file path based on soc
+              if [ "$soc" = "esp8266" ]; then
+                file="rom0.bin"
+              else
+                file="app.bin"
+              fi
+              
+              # Update entry in version.json
+              url="http://$deploy_server/download/$soc/$branch/$type/$file"
+              ./update_version.py version.json add $soc $type $branch "$version" "$url"
+              
+              # We're not adding single image entries to version.json per requirements
+            done
+          done
+          
+      - name: Commit and push changes
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add .
+          git commit -m "Publish firmware for ${{ needs.get-version.outputs.fw_branch }} branch, version ${{ needs.get-version.outputs.fw_version }}" || echo "No changes to commit"
+          git push origin gh-pages
+          
+      # Setup and deploy to your external server
+      - name: Setup SSH and deploy
+        uses: webfactory/ssh-agent@v0.7.0
         with:
-          name: version-info-${{ steps.get_branch.outputs.branch }}
-          path: version-info.txt
+          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
+          
+      - name: Configure variables
+        run: |
+          echo "deploy_user=github-deploy" >> $GITHUB_ENV
+          echo "deploy_server=lightinator.de" >> $GITHUB_ENV
+          echo "deploy_path=~/nginx/html" >> $GITHUB_ENV
+          
+      - name: Add server to known_hosts
+        run: |
+          ssh-keyscan ${{ env.deploy_server }} >> ~/.ssh/known_hosts
+          
+      - name: Deploy to External Server
+        run: |
+          branch="${{ needs.get-version.outputs.fw_branch }}"
+          
+          # Copy only the files for this branch
+          for soc in esp8266 esp32 esp32c3; do
+            ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "mkdir -p ${{ env.deploy_path }}/download/$soc/$branch/debug"
+            ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "mkdir -p ${{ env.deploy_path }}/download/$soc/$branch/release"
+            ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "mkdir -p ${{ env.deploy_path }}/download/$soc/$branch/debug/single_image"
+            ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "mkdir -p ${{ env.deploy_path }}/download/$soc/$branch/release/single_image"
+            
+            scp -r download/$soc/$branch/debug/* ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/$soc/$branch/debug/
+            scp -r download/$soc/$branch/release/* ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/$soc/$branch/release/
+            
+            # Copy single image files if they exist
+            if [ -d "download/$soc/$branch/debug/single_image" ] && [ "$(ls -A download/$soc/$branch/debug/single_image)" ]; then
+              scp -r download/$soc/$branch/debug/single_image/* ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/$soc/$branch/debug/single_image/
+            fi
+            
+            if [ -d "download/$soc/$branch/release/single_image" ] && [ "$(ls -A download/$soc/$branch/release/single_image)" ]; then
+              scp -r download/$soc/$branch/release/single_image/* ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/$soc/$branch/release/single_image/
+            fi
+          done
+          
+          # Replace placeholders and upload version.json
+          sed <version.json -e "s/%host%/http:\/\/${{ env.deploy_server }}/" | ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "cat >${{ env.deploy_path }}/version.json"
+          
+      - name: Change ownership of uploaded files
+        run: |
+          ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "chown -R github-deploy:nginx ${{ env.deploy_path }}/*"
