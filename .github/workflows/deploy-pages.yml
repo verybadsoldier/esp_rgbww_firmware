@@ -84,11 +84,7 @@ jobs:
       # Create Jekyll config to exclude download directory
       - name: Create Jekyll config
         run: |
-          cat > _config.yml << EOF
-exclude:
-  - download
-  - esp_firmware_repo
-EOF
+          echo -e "exclude:\n  - download\n  - esp_firmware_repo" > _config.yml
           
       # Create download directories for all branches (with version)
       - name: Create directories
