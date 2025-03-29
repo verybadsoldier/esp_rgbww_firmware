@@ -31,7 +31,13 @@ jobs:
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             echo "branch=${{ github.event.inputs.branch }}" >> $GITHUB_OUTPUT
           else
-            echo "branch=develop" >> $GITHUB_OUTPUT
+            # For workflow_run events, get the branch from the triggering workflow
+            triggering_branch=$(curl -s -H "Authorization: token ${{ secrets.artifact_download_token }}" \
+              "https://api.github.com/repos/pljakobs/esp_rgbww_firmware/actions/runs/${{ github.event.workflow_run.id }}" | \
+              jq -r '.head_branch')
+            
+            echo "Triggering workflow was on branch: $triggering_branch"
+            echo "branch=$triggering_branch" >> $GITHUB_OUTPUT
           fi
 
       - name: Get Latest Successful Workflow Run

@@ -98,7 +98,7 @@ jobs:
             docker.io/pjakobs/sming:latest \
             bash -c "git config --global --add safe.directory /workspace && \
                source /opt/Sming/Tools/export.sh && \
-               make partmap-build" SMING_SOC=${{ matrix.soc }} SMING_RELEASE=${{ matrix.release }}
+               make partmap-build SMING_SOC=${{ matrix.soc }} SMING_RELEASE=${{ matrix.release }}"
 
       - name: Copy partition map for release build (ESP8266 only)
         if: ${{ matrix.soc == 'esp8266' && matrix.release == 1 }}
@@ -111,6 +111,7 @@ jobs:
         run: |
           if [ "${{ matrix.single }}" = "0" ]; then 
             docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
+              -e GITHUB_RUN_NUMBER=${{ github.run_number }} \
               docker.io/pjakobs/sming:latest \
               bash -c "git config --global --add safe.directory /workspace && \
               source /opt/Sming/Tools/export.sh && \
@@ -118,6 +119,7 @@ jobs:
               make SMING_SOC=${{ matrix.soc }} SMING_RELEASE=${{ matrix.release }} DISABLE_WERROR=1 COM_SPEED=115200" 
           else 
             docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace \
+              -e GITHUB_RUN_NUMBER=${{ github.run_number }} \
               docker.io/pjakobs/sming:latest \
               bash -c "git config --global --add safe.directory /workspace && \
               source /opt/Sming/Tools/export.sh && \

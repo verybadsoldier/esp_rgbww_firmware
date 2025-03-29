@@ -51,7 +51,12 @@ endif
 CUSTOM_TARGETS += check_versions
 
 #### GIT VERSION Information #####
-GIT_VERSION = $(shell git describe --abbrev=4 --dirty --always --tags)"-["$(shell git rev-parse --abbrev-ref HEAD)"]"
+ifdef GITHUB_RUN_NUMBER
+  GIT_VERSION = V5.0-$(GITHUB_RUN_NUMBER)-$(shell git rev-parse --abbrev-ref HEAD)
+else
+  # For local builds, use the git describe approach
+  GIT_VERSION = $(shell git describe --abbrev=4 --dirty --always --tags)"-["$(shell git rev-parse --abbrev-ref HEAD)"]"
+endif
 GIT_DATE = $(firstword $(shell git --no-pager show --date=short --format="%ad" --name-only))
 SMING_GITVERSION =	$(shell git -C $(SMING_HOME)/.. describe --abbrev=4 --dirty --always --tags)"-["$(shell git -C $(SMING_HOME)/.. rev-parse --abbrev-ref HEAD)"]"
 WEBAPP_VERSION = $(shell cat $(PROJECT_DIR)/webapp/VERSION)
