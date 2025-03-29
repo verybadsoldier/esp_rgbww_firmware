@@ -177,10 +177,13 @@ jobs:
           name: ${{ steps.set_artifact_name.outputs.artifact_name }}
           path: ${{ steps.set_firmware_path.outputs.path }}
           
+      - name: Create version info file
+        run: |
+          echo "fw_version=${{ steps.get_fw_info.outputs.fw_version }}" > version-info.txt
+          echo "fw_branch=${{ steps.get_branch.outputs.branch }}" >> version-info.txt
+        
       - name: Save version info
         uses: actions/upload-artifact@v4
         with:
           name: version-info-${{ steps.get_branch.outputs.branch }}
-          path: |
-            echo "fw_version=${{ steps.get_fw_info.outputs.fw_version }}" > version-info.txt
-            echo "fw_branch=${{ steps.get_fw_info.outputs.branch }}" >> version-info.txt
+          path: version-info.txt
