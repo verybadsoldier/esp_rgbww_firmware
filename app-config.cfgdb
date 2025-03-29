@@ -280,6 +280,20 @@
                 }
               }
             }
+          },
+          "homeassistant": {
+            "enable": {
+              "type": "boolean",
+              "default": false
+            },
+            "discovery_prefix": {
+              "type": "string",
+              "default": "homeassistant"
+            },
+            "node_id": {
+              "type": "string",
+              "default": ""  // Will default to device ID if empty
+            }
           }
         },
         "ntp":{
