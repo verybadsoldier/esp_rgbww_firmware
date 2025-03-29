@@ -2,12 +2,22 @@ name: firmwareBuild
 
 on:
   push:
-    branches: [develop]
+    branches: [stable, testing, develop]
   pull_request:
-    branches: [develop]
+    branches: [stable, testing, develop]
   repository_dispatch:
     types: [frontend-build-completed]
   workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to build'
+        required: true
+        default: 'develop'
+        type: choice
+        options:
+          - stable
+          - testing
+          - develop
 
 jobs:
   build:
@@ -20,10 +30,33 @@ jobs:
         single: [0, 1]
 
     steps:
+      - name: Determine branch
+        id: get_branch
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "branch=${{ github.event.inputs.branch }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "push" ]; then
+            echo "branch=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "pull_request" ]; then
+            echo "branch=${{ github.head_ref }}" >> $GITHUB_OUTPUT
+          else
+            echo "branch=develop" >> $GITHUB_OUTPUT
+          fi
+
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
-          ref: develop
+          ref: ${{ steps.get_branch.outputs.branch }}
+          fetch-depth: 0
+
+      - name: Get firmware version
+        id: get_fw_info
+        run: |
+          branch="${{ steps.get_branch.outputs.branch }}"
+          build_num=${{ github.run_number }}
+          version="V5.0-${build_num}-${branch}"
+          echo "fw_version=$version" >> $GITHUB_OUTPUT
+          echo "fw_branch=$branch" >> $GITHUB_OUTPUT
 
       - name: Synchronize submodules
         run: |
@@ -92,38 +125,36 @@ jobs:
               make mergeflash SMING_SOC=${{ matrix.soc }} SMING_RELEASE=${{ matrix.release }} DISABLE_WERROR=1 COM_SPEED=115200" 
           fi
 
-        # Determine correct artifact path based on matrix.soc and matrix.release
       - name: Set firmware path
         id: set_firmware_path
         run: |
-          run: |
-            if [ "${{ matrix.soc }}" = "esp8266" ] && [ "${{ matrix.release }}" = "0" ] && [ "${{ matrix.single }}" = "0" ]; then
-              echo "path=out/Esp8266/debug/firmware/rom0.bin" >> $GITHUB_OUTPUT
-            elif [ "${{ matrix.soc }}" = "esp8266" ] && [ "${{ matrix.release }}" = "1" ] && [ "${{ matrix.single }}" = "0" ]; then
-              echo "path=out/Esp8266/release/firmware/rom0.bin" >> $GITHUB_OUTPUT
-            elif [ "${{ matrix.soc }}" = "esp32" ] && [ "${{ matrix.release }}" = "0" ] && [ "${{ matrix.single }}" = "0" ]; then
-              echo "path=out/Esp32/esp32/debug/firmware/app.bin" >> $GITHUB_OUTPUT
-            elif [ "${{ matrix.soc }}" = "esp32" ] && [ "${{ matrix.release }}" = "1" ] && [ "${{ matrix.single }}" = "0" ]; then
-              echo "path=out/Esp32/esp32/release/firmware/app.bin" >> $GITHUB_OUTPUT
-            elif [ "${{ matrix.soc }}" = "esp32c3" ] && [ "${{ matrix.release }}" = "0" ] && [ "${{ matrix.single }}" = "0" ]; then
-              echo "path=out/Esp32/esp32c3/debug/firmware/app.bin" >> $GITHUB_OUTPUT
-            elif [ "${{ matrix.soc }}" = "esp32c3" ] && [ "${{ matrix.release }}" = "1" ] && [ "${{ matrix.single }}" = "0" ]; then
-              echo "path=out/Esp32/esp32c3/release/firmware/app.bin" >> $GITHUB_OUTPUT
-            elif [ "${{ matrix.soc }}" = "esp8266" ] && [ "${{ matrix.release }}" = "0" ] && [ "${{ matrix.single }}" = "1" ]; then
-              echo "path=out/Esp8266/debug/firmware/app-merged.bin" >> $GITHUB_OUTPUT
-            elif [ "${{ matrix.soc }}" = "esp8266" ] && [ "${{ matrix.release }}" = "1" ] && [ "${{ matrix.single }}" = "1" ]; then
-              echo "path=out/Esp8266/release/firmware/app-merged.bin" >> $GITHUB_OUTPUT
-            elif [ "${{ matrix.soc }}" = "esp32" ] && [ "${{ matrix.release }}" = "0" ] && [ "${{ matrix.single }}" = "1" ]; then
-              echo "path=out/Esp32/esp32/debug/firmware/app-merged.bin" >> $GITHUB_OUTPUT
-            elif [ "${{ matrix.soc }}" = "esp32" ] && [ "${{ matrix.release }}" = "1" ] && [ "${{ matrix.single }}" = "1" ]; then
-              echo "path=out/Esp32/esp32/release/firmware/app-merged.bin" >> $GITHUB_OUTPUT
-            elif [ "${{ matrix.soc }}" = "esp32c3" ] && [ "${{ matrix.release }}" = "0" ] && [ "${{ matrix.single }}" = "1" ]; then
-              echo "path=out/Esp32/esp32c3/debug/firmware/app-merged.bin" >> $GITHUB_OUTPUT
-            elif [ "${{ matrix.soc }}" = "esp32c3" ] && [ "${{ matrix.release }}" = "1" ] && [ "${{ matrix.single }}" = "1" ]; then
-              echo "path=out/Esp32/esp32c3/release/firmware/app-merged.bin" >> $GITHUB_OUTPUT
-            else
-              echo "path=" >> $GITHUB_OUTPUT
-            fi
+          if [ "${{ matrix.soc }}" = "esp8266" ] && [ "${{ matrix.release }}" = "0" ] && [ "${{ matrix.single }}" = "0" ]; then
+            echo "path=out/Esp8266/debug/firmware/rom0.bin" >> $GITHUB_OUTPUT
+          elif [ "${{ matrix.soc }}" = "esp8266" ] && [ "${{ matrix.release }}" = "1" ] && [ "${{ matrix.single }}" = "0" ]; then
+            echo "path=out/Esp8266/release/firmware/rom0.bin" >> $GITHUB_OUTPUT
+          elif [ "${{ matrix.soc }}" = "esp32" ] && [ "${{ matrix.release }}" = "0" ] && [ "${{ matrix.single }}" = "0" ]; then
+            echo "path=out/Esp32/esp32/debug/firmware/app.bin" >> $GITHUB_OUTPUT
+          elif [ "${{ matrix.soc }}" = "esp32" ] && [ "${{ matrix.release }}" = "1" ] && [ "${{ matrix.single }}" = "0" ]; then
+            echo "path=out/Esp32/esp32/release/firmware/app.bin" >> $GITHUB_OUTPUT
+          elif [ "${{ matrix.soc }}" = "esp32c3" ] && [ "${{ matrix.release }}" = "0" ] && [ "${{ matrix.single }}" = "0" ]; then
+            echo "path=out/Esp32/esp32c3/debug/firmware/app.bin" >> $GITHUB_OUTPUT
+          elif [ "${{ matrix.soc }}" = "esp32c3" ] && [ "${{ matrix.release }}" = "1" ] && [ "${{ matrix.single }}" = "0" ]; then
+            echo "path=out/Esp32/esp32c3/release/firmware/app.bin" >> $GITHUB_OUTPUT
+          elif [ "${{ matrix.soc }}" = "esp8266" ] && [ "${{ matrix.release }}" = "0" ] && [ "${{ matrix.single }}" = "1" ]; then
+            echo "path=out/Esp8266/debug/firmware/app-merged.bin" >> $GITHUB_OUTPUT
+          elif [ "${{ matrix.soc }}" = "esp8266" ] && [ "${{ matrix.release }}" = "1" ] && [ "${{ matrix.single }}" = "1" ]; then
+            echo "path=out/Esp8266/release/firmware/app-merged.bin" >> $GITHUB_OUTPUT
+          elif [ "${{ matrix.soc }}" = "esp32" ] && [ "${{ matrix.release }}" = "0" ] && [ "${{ matrix.single }}" = "1" ]; then
+            echo "path=out/Esp32/esp32/debug/firmware/app-merged.bin" >> $GITHUB_OUTPUT
+          elif [ "${{ matrix.soc }}" = "esp32" ] && [ "${{ matrix.release }}" = "1" ] && [ "${{ matrix.single }}" = "1" ]; then
+            echo "path=out/Esp32/esp32/release/firmware/app-merged.bin" >> $GITHUB_OUTPUT
+          elif [ "${{ matrix.soc }}" = "esp32c3" ] && [ "${{ matrix.release }}" = "0" ] && [ "${{ matrix.single }}" = "1" ]; then
+            echo "path=out/Esp32/esp32c3/debug/firmware/app-merged.bin" >> $GITHUB_OUTPUT
+          elif [ "${{ matrix.soc }}" = "esp32c3" ] && [ "${{ matrix.release }}" = "1" ] && [ "${{ matrix.single }}" = "1" ]; then
+            echo "path=out/Esp32/esp32c3/release/firmware/app-merged.bin" >> $GITHUB_OUTPUT
+          else
+            echo "path=" >> $GITHUB_OUTPUT
+          fi
 
       - name: Set artifact name
         id: set_artifact_name
@@ -134,13 +165,22 @@ jobs:
             tag=""
           fi
           if [ "${{ matrix.release }}" = "1" ]; then
-            echo "artifact_name=lightinator-${{ matrix.soc }}-release"$tag >> $GITHUB_OUTPUT
+            echo "artifact_name=lightinator-${{ matrix.soc }}-release${tag}-${{ steps.get_branch.outputs.branch }}" >> $GITHUB_OUTPUT
           else
-            echo "artifact_name=lightinator-${{ matrix.soc }}-debug"$tag >> $GITHUB_OUTPUT
+            echo "artifact_name=lightinator-${{ matrix.soc }}-debug${tag}-${{ steps.get_branch.outputs.branch }}" >> $GITHUB_OUTPUT
           fi
 
       - name: Upload firmware artifact
+        if: ${{ steps.set_firmware_path.outputs.path != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.set_artifact_name.outputs.artifact_name }}
           path: ${{ steps.set_firmware_path.outputs.path }}
+          
+      - name: Save version info
+        uses: actions/upload-artifact@v4
+        with:
+          name: version-info-${{ steps.get_branch.outputs.branch }}
+          path: |
+            echo "fw_version=${{ steps.get_fw_info.outputs.fw_version }}" > version-info.txt
+            echo "fw_branch=${{ steps.get_fw_info.outputs.branch }}" >> version-info.txt
