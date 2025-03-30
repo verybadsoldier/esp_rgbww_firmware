@@ -71,10 +71,14 @@ jobs:
       - name: Download version info
         uses: actions/download-artifact@v4
         with:
-          github-token: ${{ secrets.artifact_download_token }}
-          run-id: ${{ env.latest_run_id }}
-          name: version-info-${{ steps.get_branch.outputs.branch }}
+          github_token: ${{ secrets.artifact_download_token }}
+          workflow: build_firmware.yml
+          branch: ${{ env.source_branch }}
+          name: version-info-${{ env.source_branch }}
           path: ./version-info
+          check_artifacts: true
+          search_artifacts: true
+          if_no_artifact_found: warn
           
       - name: Load version info
         id: version
