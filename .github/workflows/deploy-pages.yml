@@ -196,15 +196,7 @@ jobs:
               # We're not adding single image entries to version.json per requirements
             done
           done
-          
-      - name: Commit and push changes
-        run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          git add .
-          git commit -m "Publish firmware for ${{ needs.get-version.outputs.fw_branch }} branch, version ${{ needs.get-version.outputs.fw_version }}" || echo "No changes to commit"
-          git push origin gh-pages
-          
+                  
       # Setup and deploy to your external server
       - name: Setup SSH and deploy
         uses: webfactory/ssh-agent@v0.7.0
