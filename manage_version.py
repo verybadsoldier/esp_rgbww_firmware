@@ -119,6 +119,8 @@ def add_or_update_entry(data, soc, type_, branch, fw_version, url):
                     "type": original_type,
                     "branch": original_branch,
                     "fw_version": fw_version,
+                    "version":fw_version,
+                    # Add version key for backward compatibility
                     "files": {
                         "rom": {
                             "url": url
