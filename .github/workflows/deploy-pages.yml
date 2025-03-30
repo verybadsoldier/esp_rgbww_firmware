@@ -23,6 +23,7 @@ jobs:
     outputs:
       fw_version: ${{ steps.version.outputs.fw_version }}
       fw_branch: ${{ steps.version.outputs.fw_branch }}
+      latest_run_id: ${{ steps.get_run.outputs.latest_run_id }}  
       
     steps:
 
@@ -144,7 +145,7 @@ jobs:
             # Download the artifact - continue on errors
             curl -s -H "Authorization: token ${{ secrets.artifact_download_token }}" \
               -o /tmp/artifact_list.json \
-              "https://api.github.com/repos/pljakobs/esp_rgbww_firmware/actions/runs/${{ env.latest_run_id }}/artifacts"
+              "https://api.github.com/repos/pljakobs/esp_rgbww_firmware/actions/runs/${{ needs.get-version.outputs.latest_run_id }}/artifacts"
             
             artifact_url=$(cat /tmp/artifact_list.json | jq -r ".artifacts[] | select(.name == \"$artifact_name\") | .archive_download_url")
             
