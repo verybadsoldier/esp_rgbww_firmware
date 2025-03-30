@@ -99,20 +99,22 @@ jobs:
       # Create download directories for all branches (with version)
       - name: Create directories
         run: |
-          branch="${{ needs.get-version.outputs.fw_branch }}"
+          source_branch="${{ needs.get-version.outputs.fw_branch }}"
+          target_branch="${{ github.event.workflow_run.workflow == 'firmwareBuild' && github.ref_name != source_branch ? github.ref_name : source_branch }}"
+          version="${{ needs.get-version.outputs.fw_version }}"
           version="${{ needs.get-version.outputs.fw_version }}"
           # Create versioned directory structure
           for soc in esp8266 esp32 esp32c3; do
-            mkdir -p download/$branch/$version/$soc/debug
-            mkdir -p download/$branch/$version/$soc/release
-            mkdir -p download/$branch/$version/$soc/debug/single_image
-            mkdir -p download/$branch/$version/$soc/release/single_image
+            mkdir -p download/$target_branch/$version/$soc/debug
+            mkdir -p download/$target_branch/$version/$soc/release
+            mkdir -p download/$target_branch/$version/$soc/debug/single_image
+            mkdir -p download/$target_branch/$version/$soc/release/single_image
           done
           
           # Create version.txt file instead of symlink
-          mkdir -p download/$branch/latest
-          echo "$version" > download/$branch/latest/version.txt
-          echo "<html><head><meta http-equiv=\"refresh\" content=\"0; URL=../$version/\"></head></html>" > download/$branch/latest/index.html
+          mkdir -p download/$target_branch/latest
+          echo "$version" > download/$target_branch/latest/version.txt
+          echo "<html><head><meta http-equiv=\"refresh\" content=\"0; URL=../$version/\"></head></html>" > download/$target_branch/latest/index.html
           
       # Download artifacts for the current branch
       - name: Download artifacts
@@ -186,7 +188,8 @@ jobs:
       # Update version.json using the manage_version.py script
       - name: Update version.json
         run: |
-          branch="${{ needs.get-version.outputs.fw_branch }}"
+          source_branch="${{ needs.get-version.outputs.fw_branch }}"
+          target_branch="${{ github.event.workflow_run.workflow == 'firmwareBuild' && github.ref_name != source_branch ? github.ref_name : source_branch }}"
           version="${{ needs.get-version.outputs.fw_version }}"
           deploy_server="lightinator.de"
           
@@ -201,8 +204,8 @@ jobs:
               fi
               
               # Update entry in version.json with versioned path
-              url="http://$deploy_server/download/$branch/$version/$soc/$type/$file"
-              python3 esp_firmware_repo/manage_version.py version.json add $soc $type $branch "$version" "$url"
+              url="http://$deploy_server/download/$target_branch/$version/$soc/$type/$file"
+              python3 esp_firmware_repo/manage_version.py version.json add $soc $type $target_branch "$version" "$url"
               
               # We're not adding single image entries to version.json per requirements
             done
@@ -226,34 +229,35 @@ jobs:
           
       - name: Deploy to External Server
         run: |
-          branch="${{ needs.get-version.outputs.fw_branch }}"
+          source_branch="${{ needs.get-version.outputs.fw_branch }}"
+          target_branch="${{ github.event.workflow_run.workflow == 'firmwareBuild' && github.ref_name != source_branch ? github.ref_name : source_branch }}"
           version="${{ needs.get-version.outputs.fw_version }}"
           
           # Create directories with version in path
           for soc in esp8266 esp32 esp32c3; do
-            ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "mkdir -p ${{ env.deploy_path }}/download/$branch/$version/$soc/debug"
-            ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "mkdir -p ${{ env.deploy_path }}/download/$branch/$version/$soc/release"
-            ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "mkdir -p ${{ env.deploy_path }}/download/$branch/$version/$soc/debug/single_image"
-            ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "mkdir -p ${{ env.deploy_path }}/download/$branch/$version/$soc/release/single_image"
+            ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "mkdir -p ${{ env.deploy_path }}/download/$target_branch/$version/$soc/debug"
+            ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "mkdir -p ${{ env.deploy_path }}/download/$target_branch/$version/$soc/release"
+            ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "mkdir -p ${{ env.deploy_path }}/download/$target_branch/$version/$soc/debug/single_image"
+            ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "mkdir -p ${{ env.deploy_path }}/download/$target_branch/$version/$soc/release/single_image"
             
             # Copy files with version in path
-            scp -r download/$branch/$version/$soc/debug/* ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/$branch/$version/$soc/debug/ || true
-            scp -r download/$branch/$version/$soc/release/* ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/$branch/$version/$soc/release/ || true
+            scp -r download/$target_branch/$version/$soc/debug/* ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/$target_branch/$version/$soc/debug/ || true
+            scp -r download/$target_branch/$version/$soc/release/* ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/$target_branch/$version/$soc/release/ || true
             
             # Copy single image files if they exist
-            if [ -d "download/$branch/$version/$soc/debug/single_image" ] && [ "$(ls -A download/$branch/$version/$soc/debug/single_image)" ]; then
-              scp -r download/$branch/$version/$soc/debug/single_image/* ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/$branch/$version/$soc/debug/single_image/ || true
+            if [ -d "download/$target_branch/$version/$soc/debug/single_image" ] && [ "$(ls -A download/$target_branch/$version/$soc/debug/single_image)" ]; then
+              scp -r download/$target_branch/$version/$soc/debug/single_image/* ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/$target_branch/$version/$soc/debug/single_image/ || true
             fi
             
-            if [ -d "download/$branch/$version/$soc/release/single_image" ] && [ "$(ls -A download/$branch/$version/$soc/release/single_image)" ]; then
-              scp -r download/$branch/$version/$soc/release/single_image/* ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/$branch/$version/$soc/release/single_image/ || true
+            if [ -d "download/$target_branch/$version/$soc/release/single_image" ] && [ "$(ls -A download/$target_branch/$version/$soc/release/single_image)" ]; then
+              scp -r download/$target_branch/$version/$soc/release/single_image/* ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/$target_branch/$version/$soc/release/single_image/ || true
             fi
           done
           
           # Create version file and redirect instead of symlink
-          ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "mkdir -p ${{ env.deploy_path }}/download/$branch/latest && \
-            echo \"$version\" > ${{ env.deploy_path }}/download/$branch/latest/version.txt && \
-            echo '<html><head><meta http-equiv=\"refresh\" content=\"0; URL=../'$version'/\"></head></html>' > ${{ env.deploy_path }}/download/$branch/latest/index.html"
+          ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "mkdir -p ${{ env.deploy_path }}/download/$target_branch/latest && \
+            echo \"$version\" > ${{ env.deploy_path }}/download/$target_branch/latest/version.txt && \
+            echo '<html><head><meta http-equiv=\"refresh\" content=\"0; URL=../'$version'/\"></head></html>' > ${{ env.deploy_path }}/download/$target_branch/latest/index.html"
           
           # Replace placeholders and upload version.json
           sed <version.json -e "s/%host%/http:\/\/${{ env.deploy_server }}/" | ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "cat >${{ env.deploy_path }}/version.json"
