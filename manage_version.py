@@ -140,6 +140,7 @@ def add_or_update_entry(data, soc, type_, branch, fw_version, url):
                     "type": original_type,
                     "branch": original_branch,
                     "fw_version": fw_version,
+                    "version":fw_version,
                     "files": {
                         "rom": {
                             "url": url
@@ -158,6 +159,7 @@ def add_or_update_entry(data, soc, type_, branch, fw_version, url):
             "type": type_,
             "branch": branch,
             "fw_version": fw_version,
+            "version":fw_version,
             "files": {
                 "rom": {
                     "url": url
