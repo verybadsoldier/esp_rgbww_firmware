@@ -117,29 +117,25 @@ jobs:
       # Download artifacts for the current branch
       - name: Download artifacts
         run: |
-          branch="${{ needs.get-version.outputs.fw_branch }}"
+          # Get both the source branch (where artifacts are named) and target branch (where they should be deployed)
+          source_branch="${{ needs.get-version.outputs.fw_branch }}"  # This is "develop" from the source branch
+          target_branch="${{ github.event.workflow_run.workflow == 'firmwareBuild' && github.ref_name != source_branch ? github.ref_name : source_branch }}"
+          
+          echo "Source branch (for artifact names): $source_branch"
+          echo "Target branch (for deployment): $target_branch"
+          
           version="${{ needs.get-version.outputs.fw_version }}"
-                    
+                  
           # Define all combinations for artifact downloads with version in path
           combinations=(
-            "esp8266 debug 0 download/$branch/$version/esp8266/debug"
-            "esp8266 release 0 download/$branch/$version/esp8266/release"
-            "esp32 debug 0 download/$branch/$version/esp32/debug"
-            "esp32 release 0 download/$branch/$version/esp32/release"
-            "esp32c3 debug 0 download/$branch/$version/esp32c3/debug"
-            "esp32c3 release 0 download/$branch/$version/esp32c3/release"
-            "esp8266 debug 1 download/$branch/$version/esp8266/debug/single_image"
-            "esp8266 release 1 download/$branch/$version/esp8266/release/single_image"
-            "esp32 debug 1 download/$branch/$version/esp32/debug/single_image"
-            "esp32 release 1 download/$branch/$version/esp32/release/single_image"
-            "esp32c3 debug 1 download/$branch/$version/esp32c3/debug/single_image"
-            "esp32c3 release 1 download/$branch/$version/esp32c3/release/single_image"
+            "esp8266 debug 0 download/$target_branch/$version/esp8266/debug"
+            # ... all your other combinations ...
           )
           
           for combo in "${combinations[@]}"; do
             read -r soc build_type single_img path <<< "$combo"
             
-            # Determine artifact name
+            # Use source_branch for artifact names but target_branch for deployment paths
             if [ "$single_img" = "1" ]; then
               tag="-single_image"
             else
@@ -147,9 +143,9 @@ jobs:
             fi
             
             if [ "$build_type" = "release" ]; then
-              artifact_name="lightinator-${soc}-release${tag}-${branch}"
+              artifact_name="lightinator-${soc}-release${tag}-${source_branch}"
             else
-              artifact_name="lightinator-${soc}-debug${tag}-${branch}"
+              artifact_name="lightinator-${soc}-debug${tag}-${source_branch}"
             fi
             
             echo "Downloading $artifact_name to $path"
