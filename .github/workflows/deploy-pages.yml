@@ -48,7 +48,8 @@ jobs:
         id: get_run
         run: |
           latest_run_id=$(curl -s -H "Authorization: token ${{ secrets.artifact_download_token }}" \
-          "https://api.github.com/repos/pljakobs/esp_rgbww_firmware/actions/runs?status=success&name=firmwareBuild&per_page=1"|jq -r '.workflow_runs[] | .id') \
+          "https://api.github.com/repos/pljakobs/esp_rgbww_firmware/actions/runs?status=success&name=firmwareBuild&per_page=1"|jq -r '.workflow_runs[] | .id');
+          echo "Latest successful run ID: $latest_run_id"
           echo "latest_run_id=$latest_run_id" >> $GITHUB_OUTPUT
           echo "latest_run_id=$latest_run_id" >> $GITHUB_ENV
           
