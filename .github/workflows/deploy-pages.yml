@@ -100,8 +100,15 @@ jobs:
       - name: Create directories
         run: |
           source_branch="${{ needs.get-version.outputs.fw_branch }}"
-          target_branch="${{ github.event.workflow_run.workflow == 'firmwareBuild' && github.ref_name != source_branch ? github.ref_name : source_branch }}"
-          version="${{ needs.get-version.outputs.fw_version }}"
+          if [ "${{ github.event.workflow_run.workflow }}" == "firmwareBuild" ] && [ "${{ github.ref_name }}" != "$source_branch" ]; then
+            target_branch="${{ github.ref_name }}"
+          else
+            target_branch="$source_branch"
+          fi
+
+          echo "Source branch: $source_branch"
+          echo "Target branch: $target_branch"
+          
           version="${{ needs.get-version.outputs.fw_version }}"
           # Create versioned directory structure
           for soc in esp8266 esp32 esp32c3; do
