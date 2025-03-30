@@ -5,12 +5,27 @@ import os
 import sys
 import re
 import shutil
+import requests
 from urllib.parse import urlparse
 
-def load_json(file_path):
-    if not os.path.exists(file_path):
+def load_json(file_path_or_url):
+    # Check if the input is a URL
+    if file_path_or_url.startswith('http://') or file_path_or_url.startswith('https://'):
+        try:
+            response = requests.get(file_path_or_url, timeout=10)
+            response.raise_for_status()  # Raise an exception for HTTP errors
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching from URL: {e}")
+            return None
+        except json.JSONDecodeError as e:
+            print(f"Error parsing JSON from URL: {e}")
+            return None
+    
+    # Handle local file
+    if not os.path.exists(file_path_or_url):
         return None
-    with open(file_path, 'r') as file:
+    with open(file_path_or_url, 'r') as file:
         try:
             return json.load(file)
         except json.JSONDecodeError:
@@ -238,7 +253,18 @@ def delete_entry(data, soc, type_, branch, fw_version=None, delete_files=False):
     
     return data
 
-def list_entries(data, soc=None, type_=None, branch=None, include_history=False):
+def is_url_accessible(url):
+    """Check if a URL is accessible (returns 200 status code)"""
+    try:
+        response = requests.head(url, timeout=5)
+        if response.status_code == 405:  # Method not allowed, try GET instead
+            response = requests.get(url, timeout=5, stream=True)
+            response.close()  # Don't download the whole file
+        return response.status_code == 200
+    except requests.RequestException:
+        return False
+
+def list_entries(data, soc=None, type_=None, branch=None, include_history=False, check_urls=False):
     # Get entries from firmware array
     filtered_entries = data['firmware']
     
@@ -268,6 +294,15 @@ def list_entries(data, soc=None, type_=None, branch=None, include_history=False)
             entry['is_history'] = False
             
         filtered_entries.extend(history_entries)
+    
+    # Check URL accessibility if requested
+    if check_urls:
+        for entry in filtered_entries:
+            try:
+                url = entry['files']['rom']['url']
+                entry['url_accessible'] = is_url_accessible(url)
+            except KeyError:
+                entry['url_accessible'] = False
     
     return filtered_entries
 
@@ -359,23 +394,71 @@ def cull_history(data, dry_run=False):
     return data
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: script.py <json_file> [add|delete|list] [arguments]")
+    if len(sys.argv) < 3:
+        print("Usage: script.py <json_file_or_url> [add|delete|list|cull] [arguments]")
         return
 
-    file_path = sys.argv[1]
+    file_path_or_url = sys.argv[1]
     action = sys.argv[2]
 
-    data = load_json(file_path)
+    # Load the data
+    data = load_json(file_path_or_url)
     if data is None:
-        data = prime_json(file_path)
-        
+        if not (file_path_or_url.startswith('http://') or file_path_or_url.startswith('https://')):
+            # Only create a new file if it's a local path
+            data = prime_json(file_path_or_url)
+        else:
+            print(f"Cannot retrieve data from URL: {file_path_or_url}")
+            return
+    
     # Ensure history array exists in existing files
     if "history" not in data:
         data["history"] = []
 
+    # Handle read-only operations that work with both local files and URLs
+    if action == 'list':
+        if len(sys.argv) < 3:
+            print("Usage: script.py <json_file_or_url> list [soc] [type] [branch] [--history] [--check-urls]")
+            return
+        
+        soc = None
+        type_ = None
+        branch = None
+        include_history = False
+        check_urls = False
+        
+        # Parse arguments
+        for i in range(3, len(sys.argv)):
+            if sys.argv[i] == "--history":
+                include_history = True
+            elif sys.argv[i] == "--check-urls":
+                check_urls = True
+            elif soc is None:
+                soc = sys.argv[i]
+            elif type_ is None:
+                type_ = sys.argv[i]
+            elif branch is None:
+                branch = sys.argv[i]
+        
+        if check_urls:
+            print("Checking URL accessibility (this may take a moment)...")
+        
+        entries = list_entries(data, soc, type_, branch, include_history, check_urls)
+        print(f"Found {len(entries)} entries:")
+        for entry in sorted(entries, key=lambda e: (e['branch'], e['soc'], e['type'], extract_build_number(e['fw_version']), e.get('is_history', False)), reverse=True):
+            history_marker = "[HISTORY] " if entry.get('is_history', False) else ""
+            url_status = " [✓]" if check_urls and entry.get('url_accessible', False) else " [✗]" if check_urls else ""
+            print(f"{history_marker}{entry['soc']}/{entry['type']}/{entry['branch']}: {entry['fw_version']}{url_status} - {entry['files']['rom']['url']}")
+        return  # No need to save for list operation
+
+    # For actions that modify the data, ensure we're not working with a URL
+    if file_path_or_url.startswith('http://') or file_path_or_url.startswith('https://'):
+        print(f"Cannot modify a remote URL. Please download the file first.")
+        return
+
+    # Handle write operations (only for local files)
     if action == 'add':
-        if len(sys.argv) < 7:
+        if len(sys.argv) < 8:
             print("Usage: script.py <json_file> add <soc> <type> <branch> <fw_version> <url>")
             return
         soc = sys.argv[3]
@@ -402,33 +485,6 @@ def main():
                 fw_version = sys.argv[i]
         
         data = delete_entry(data, soc, type_, branch, fw_version, delete_files)
-    elif action == 'list':
-        if len(sys.argv) < 3:
-            print("Usage: script.py <json_file> list [soc] [type] [branch] [--history]")
-            return
-        
-        soc = None
-        type_ = None
-        branch = None
-        include_history = False
-        
-        # Parse arguments
-        for i in range(3, len(sys.argv)):
-            if sys.argv[i] == "--history":
-                include_history = True
-            elif soc is None:
-                soc = sys.argv[i]
-            elif type_ is None:
-                type_ = sys.argv[i]
-            elif branch is None:
-                branch = sys.argv[i]
-        
-        entries = list_entries(data, soc, type_, branch, include_history)
-        print(f"Found {len(entries)} entries:")
-        for entry in sorted(entries, key=lambda e: (e['branch'], e['soc'], e['type'], extract_build_number(e['fw_version']), e.get('is_history', False)), reverse=True):
-            history_marker = "[HISTORY] " if entry.get('is_history', False) else ""
-            print(f"{history_marker}{entry['soc']}/{entry['type']}/{entry['branch']}: {entry['fw_version']} - {entry['files']['rom']['url']}")
-
     elif action == 'cull':
         # Parse arguments
         dry_run = False
@@ -438,14 +494,13 @@ def main():
                 
         print(f"Culling history entries (dry run: {dry_run})")
         data = cull_history(data, dry_run)
-        
     else:
         print("Invalid action. Use add, delete, list, or cull.")
         return
 
     # Only save if we made changes and not in a dry run
     if action in ['add', 'delete'] or (action == 'cull' and not dry_run):
-        save_json(data, file_path)
+        save_json(data, file_path_or_url)
 
 
 if __name__ == "__main__":
