@@ -25,6 +25,10 @@ jobs:
       fw_branch: ${{ steps.version.outputs.fw_branch }}
       
     steps:
+
+      - name: Disable Jekyll processing
+        run: touch .nojekyll
+
       - name: Get Branch
         id: get_branch
         run: |
@@ -69,23 +73,13 @@ jobs:
     needs: get-version
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     
-    steps:
-      - name: Checkout gh-pages branch
-        uses: actions/checkout@v3
-        with:
-          ref: gh-pages
-          
+    steps:   
       # Checkout main repository to get manage_version.py
       - name: Checkout main repository
         uses: actions/checkout@v3
         with:
           path: esp_firmware_repo
-          
-      # Create Jekyll config to exclude download directory
-      - name: Create Jekyll config
-        run: |
-          echo -e "exclude:\n  - download\n  - esp_firmware_repo" > _config.yml
-          
+              
       # Create download directories for all branches (with version)
       - name: Create directories
         run: |
@@ -177,14 +171,9 @@ jobs:
       # Download version.json from lightinator.de if it doesn't exist locally
       - name: Get version.json
         run: |
-          if [ ! -f "version.json" ]; then
-            echo "Downloading version.json from lightinator.de"
-            curl -L -o version.json https://lightinator.de/version.json
-            if [ ! -f "version.json" ] || [ ! -s "version.json" ]; then
-              echo "Failed to download version.json, creating a new one"
-              python3 esp_firmware_repo/manage_version.py version.json add esp8266 release stable "V5.0-init-stable" "http://lightinator.de/download/stable/V5.0-init-stable/esp8266/release/rom0.bin"
-            fi
-          fi
+          echo "Attempting to download version.json from lightinator.de"
+          curl -L -s -o version.json https://lightinator.de/version.json || echo "Could not download version.json"
+    
           
       # Update version.json using the manage_version.py script
       - name: Update version.json
