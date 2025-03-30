@@ -26,7 +26,6 @@ jobs:
       latest_run_id: ${{ steps.get_run.outputs.latest_run_id }}  
       
     steps:
-
       - name: Disable Jekyll processing
         run: touch .nojekyll
 
@@ -89,7 +88,27 @@ jobs:
     needs: get-version
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     
-    steps:   
+    steps:
+      # Setup branch variables once at the beginning
+      - name: Setup branch variables
+        run: |
+          source_branch="${{ needs.get-version.outputs.fw_branch }}"
+          
+          if [ "${{ github.event.workflow_run.workflow }}" == "firmwareBuild" ] && [ "${{ github.ref_name }}" != "$source_branch" ]; then
+            target_branch="${{ github.ref_name }}"
+          else
+            target_branch="$source_branch"
+          fi
+          
+          echo "Source branch (for artifact names): $source_branch"
+          echo "Target branch (for deployment): $target_branch"
+          echo "Version: ${{ needs.get-version.outputs.fw_version }}"
+          
+          # Export to environment variables for later steps
+          echo "source_branch=$source_branch" >> $GITHUB_ENV
+          echo "target_branch=$target_branch" >> $GITHUB_ENV
+          echo "version=${{ needs.get-version.outputs.fw_version }}" >> $GITHUB_ENV
+   
       # Checkout main repository to get manage_version.py
       - name: Checkout main repository
         uses: actions/checkout@v3
@@ -99,46 +118,36 @@ jobs:
       # Create download directories for all branches (with version)
       - name: Create directories
         run: |
-          source_branch="${{ needs.get-version.outputs.fw_branch }}"
-          if [ "${{ github.event.workflow_run.workflow }}" == "firmwareBuild" ] && [ "${{ github.ref_name }}" != "$source_branch" ]; then
-            target_branch="${{ github.ref_name }}"
-          else
-            target_branch="$source_branch"
-          fi
-
-          echo "Source branch: $source_branch"
-          echo "Target branch: $target_branch"
-          
-          version="${{ needs.get-version.outputs.fw_version }}"
           # Create versioned directory structure
           for soc in esp8266 esp32 esp32c3; do
-            mkdir -p download/$target_branch/$version/$soc/debug
-            mkdir -p download/$target_branch/$version/$soc/release
-            mkdir -p download/$target_branch/$version/$soc/debug/single_image
-            mkdir -p download/$target_branch/$version/$soc/release/single_image
+            mkdir -p download/${{ env.target_branch }}/${{ env.version }}/$soc/debug
+            mkdir -p download/${{ env.target_branch }}/${{ env.version }}/$soc/release
+            mkdir -p download/${{ env.target_branch }}/${{ env.version }}/$soc/debug/single_image
+            mkdir -p download/${{ env.target_branch }}/${{ env.version }}/$soc/release/single_image
           done
           
           # Create version.txt file instead of symlink
-          mkdir -p download/$target_branch/latest
-          echo "$version" > download/$target_branch/latest/version.txt
-          echo "<html><head><meta http-equiv=\"refresh\" content=\"0; URL=../$version/\"></head></html>" > download/$target_branch/latest/index.html
+          mkdir -p download/${{ env.target_branch }}/latest
+          echo "${{ env.version }}" > download/${{ env.target_branch }}/latest/version.txt
+          echo "<html><head><meta http-equiv=\"refresh\" content=\"0; URL=../${{ env.version }}/\"></head></html>" > download/${{ env.target_branch }}/latest/index.html
           
       # Download artifacts for the current branch
       - name: Download artifacts
         run: |
-          # Get both the source branch (where artifacts are named) and target branch (where they should be deployed)
-          source_branch="${{ needs.get-version.outputs.fw_branch }}"  # This is "develop" from the source branch
-          target_branch="${{ github.event.workflow_run.workflow == 'firmwareBuild' && github.ref_name != source_branch ? github.ref_name : source_branch }}"
-          
-          echo "Source branch (for artifact names): $source_branch"
-          echo "Target branch (for deployment): $target_branch"
-          
-          version="${{ needs.get-version.outputs.fw_version }}"
-                  
           # Define all combinations for artifact downloads with version in path
           combinations=(
-            "esp8266 debug 0 download/$target_branch/$version/esp8266/debug"
-            # ... all your other combinations ...
+            "esp8266 debug 0 download/${{ env.target_branch }}/${{ env.version }}/esp8266/debug"
+            "esp8266 release 0 download/${{ env.target_branch }}/${{ env.version }}/esp8266/release"
+            "esp32 debug 0 download/${{ env.target_branch }}/${{ env.version }}/esp32/debug"
+            "esp32 release 0 download/${{ env.target_branch }}/${{ env.version }}/esp32/release"
+            "esp32c3 debug 0 download/${{ env.target_branch }}/${{ env.version }}/esp32c3/debug"
+            "esp32c3 release 0 download/${{ env.target_branch }}/${{ env.version }}/esp32c3/release"
+            "esp8266 debug 1 download/${{ env.target_branch }}/${{ env.version }}/esp8266/debug/single_image"
+            "esp8266 release 1 download/${{ env.target_branch }}/${{ env.version }}/esp8266/release/single_image"
+            "esp32 debug 1 download/${{ env.target_branch }}/${{ env.version }}/esp32/debug/single_image"
+            "esp32 release 1 download/${{ env.target_branch }}/${{ env.version }}/esp32/release/single_image"
+            "esp32c3 debug 1 download/${{ env.target_branch }}/${{ env.version }}/esp32c3/debug/single_image"
+            "esp32c3 release 1 download/${{ env.target_branch }}/${{ env.version }}/esp32c3/release/single_image"
           )
           
           for combo in "${combinations[@]}"; do
@@ -152,9 +161,9 @@ jobs:
             fi
             
             if [ "$build_type" = "release" ]; then
-              artifact_name="lightinator-${soc}-release${tag}-${source_branch}"
+              artifact_name="lightinator-${soc}-release${tag}-${{ env.source_branch }}"
             else
-              artifact_name="lightinator-${soc}-debug${tag}-${source_branch}"
+              artifact_name="lightinator-${soc}-debug${tag}-${{ env.source_branch }}"
             fi
             
             echo "Downloading $artifact_name to $path"
@@ -195,9 +204,6 @@ jobs:
       # Update version.json using the manage_version.py script
       - name: Update version.json
         run: |
-          source_branch="${{ needs.get-version.outputs.fw_branch }}"
-          target_branch="${{ github.event.workflow_run.workflow == 'firmwareBuild' && github.ref_name != source_branch ? github.ref_name : source_branch }}"
-          version="${{ needs.get-version.outputs.fw_version }}"
           deploy_server="lightinator.de"
           
           # Define all combinations to update - only for non-single-image builds
@@ -211,8 +217,8 @@ jobs:
               fi
               
               # Update entry in version.json with versioned path
-              url="http://$deploy_server/download/$target_branch/$version/$soc/$type/$file"
-              python3 esp_firmware_repo/manage_version.py version.json add $soc $type $target_branch "$version" "$url"
+              url="http://$deploy_server/download/${{ env.target_branch }}/${{ env.version }}/$soc/$type/$file"
+              python3 esp_firmware_repo/manage_version.py version.json add $soc $type ${{ env.target_branch }} "${{ env.version }}" "$url"
               
               # We're not adding single image entries to version.json per requirements
             done
@@ -236,35 +242,31 @@ jobs:
           
       - name: Deploy to External Server
         run: |
-          source_branch="${{ needs.get-version.outputs.fw_branch }}"
-          target_branch="${{ github.event.workflow_run.workflow == 'firmwareBuild' && github.ref_name != source_branch ? github.ref_name : source_branch }}"
-          version="${{ needs.get-version.outputs.fw_version }}"
-          
           # Create directories with version in path
           for soc in esp8266 esp32 esp32c3; do
-            ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "mkdir -p ${{ env.deploy_path }}/download/$target_branch/$version/$soc/debug"
-            ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "mkdir -p ${{ env.deploy_path }}/download/$target_branch/$version/$soc/release"
-            ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "mkdir -p ${{ env.deploy_path }}/download/$target_branch/$version/$soc/debug/single_image"
-            ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "mkdir -p ${{ env.deploy_path }}/download/$target_branch/$version/$soc/release/single_image"
+            ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "mkdir -p ${{ env.deploy_path }}/download/${{ env.target_branch }}/${{ env.version }}/$soc/debug"
+            ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "mkdir -p ${{ env.deploy_path }}/download/${{ env.target_branch }}/${{ env.version }}/$soc/release"
+            ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "mkdir -p ${{ env.deploy_path }}/download/${{ env.target_branch }}/${{ env.version }}/$soc/debug/single_image"
+            ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "mkdir -p ${{ env.deploy_path }}/download/${{ env.target_branch }}/${{ env.version }}/$soc/release/single_image"
             
             # Copy files with version in path
-            scp -r download/$target_branch/$version/$soc/debug/* ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/$target_branch/$version/$soc/debug/ || true
-            scp -r download/$target_branch/$version/$soc/release/* ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/$target_branch/$version/$soc/release/ || true
+            scp -r download/${{ env.target_branch }}/${{ env.version }}/$soc/debug/* ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/${{ env.target_branch }}/${{ env.version }}/$soc/debug/ || true
+            scp -r download/${{ env.target_branch }}/${{ env.version }}/$soc/release/* ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/${{ env.target_branch }}/${{ env.version }}/$soc/release/ || true
             
             # Copy single image files if they exist
-            if [ -d "download/$target_branch/$version/$soc/debug/single_image" ] && [ "$(ls -A download/$target_branch/$version/$soc/debug/single_image)" ]; then
-              scp -r download/$target_branch/$version/$soc/debug/single_image/* ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/$target_branch/$version/$soc/debug/single_image/ || true
+            if [ -d "download/${{ env.target_branch }}/${{ env.version }}/$soc/debug/single_image" ] && [ "$(ls -A download/${{ env.target_branch }}/${{ env.version }}/$soc/debug/single_image)" ]; then
+              scp -r download/${{ env.target_branch }}/${{ env.version }}/$soc/debug/single_image/* ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/${{ env.target_branch }}/${{ env.version }}/$soc/debug/single_image/ || true
             fi
             
-            if [ -d "download/$target_branch/$version/$soc/release/single_image" ] && [ "$(ls -A download/$target_branch/$version/$soc/release/single_image)" ]; then
-              scp -r download/$target_branch/$version/$soc/release/single_image/* ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/$target_branch/$version/$soc/release/single_image/ || true
+            if [ -d "download/${{ env.target_branch }}/${{ env.version }}/$soc/release/single_image" ] && [ "$(ls -A download/${{ env.target_branch }}/${{ env.version }}/$soc/release/single_image)" ]; then
+              scp -r download/${{ env.target_branch }}/${{ env.version }}/$soc/release/single_image/* ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/download/${{ env.target_branch }}/${{ env.version }}/$soc/release/single_image/ || true
             fi
           done
           
           # Create version file and redirect instead of symlink
-          ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "mkdir -p ${{ env.deploy_path }}/download/$target_branch/latest && \
-            echo \"$version\" > ${{ env.deploy_path }}/download/$target_branch/latest/version.txt && \
-            echo '<html><head><meta http-equiv=\"refresh\" content=\"0; URL=../'$version'/\"></head></html>' > ${{ env.deploy_path }}/download/$target_branch/latest/index.html"
+          ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "mkdir -p ${{ env.deploy_path }}/download/${{ env.target_branch }}/latest && \
+            echo \"${{ env.version }}\" > ${{ env.deploy_path }}/download/${{ env.target_branch }}/latest/version.txt && \
+            echo '<html><head><meta http-equiv=\"refresh\" content=\"0; URL=../${{ env.version }}/\"></head></html>' > ${{ env.deploy_path }}/download/${{ env.target_branch }}/latest/index.html"
           
           # Replace placeholders and upload version.json
           sed <version.json -e "s/%host%/http:\/\/${{ env.deploy_server }}/" | ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "cat >${{ env.deploy_path }}/version.json"
