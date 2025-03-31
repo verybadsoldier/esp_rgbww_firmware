@@ -74,6 +74,9 @@ jobs:
         with:
           name: version-info-${{ env.source_branch }}
           path: ./version-info
+          github-token: ${{ secrets.artifact_download_token }}
+          repository: pljakobs/esp_rgbww_firmware
+          run-id: ${{ env.latest_run_id }}
           
       - name: Load version info
         id: version
