@@ -33,7 +33,7 @@ jobs:
         id: get_branch
         run: |
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            echo "branch=${{ github.event.inputs.branch }}" >> $GITHUB_OUTPUT
+            triggering_branch="${{ github.event.inputs.branch }}"
           else
             # For workflow_run events, print detailed information
             echo "Workflow run ID: ${{ github.event.workflow_run.id }}"
@@ -54,10 +54,11 @@ jobs:
               # Fallback to API
               triggering_branch=$(echo "$api_response" | jq -r '.head_branch')
             fi
-            
-            echo "Determined branch: $triggering_branch"
-            echo "branch=$triggering_branch" >> $GITHUB_OUTPUT
           fi
+          
+          echo "Determined branch: $triggering_branch"
+          echo "branch=$triggering_branch" >> $GITHUB_OUTPUT
+          echo "source_branch=$triggering_branch" >> $GITHUB_ENV
 
       - name: Get Latest Successful Workflow Run
         id: get_run
@@ -71,13 +72,8 @@ jobs:
       - name: Download version info
         uses: actions/download-artifact@v4
         with:
-          github_token: ${{ secrets.artifact_download_token }}
-          branch: ${{ env.source_branch }}
           name: version-info-${{ env.source_branch }}
           path: ./version-info
-          check_artifacts: true
-          search_artifacts: true
-          if_no_artifact_found: warn
           
       - name: Load version info
         id: version
