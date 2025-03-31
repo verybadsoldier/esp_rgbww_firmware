@@ -29,36 +29,48 @@ jobs:
       - name: Disable Jekyll processing
         run: touch .nojekyll
 
-      - name: Get Branch
+      - name: Get Branch and Artifact Branch
         id: get_branch
         run: |
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             triggering_branch="${{ github.event.inputs.branch }}"
+            artifact_branch="${{ github.event.inputs.branch }}"
           else
-            # For workflow_run events, print detailed information
+            # For workflow_run events
             echo "Workflow run ID: ${{ github.event.workflow_run.id }}"
             echo "Workflow run head branch: ${{ github.event.workflow_run.head_branch }}"
             echo "Current GitHub ref: ${{ github.ref }}"
             
-            # Get details from the API for comparison
+            # Get complete details from the API
             api_response=$(curl -s -H "Authorization: token ${{ secrets.artifact_download_token }}" \
               "https://api.github.com/repos/pljakobs/esp_rgbww_firmware/actions/runs/${{ github.event.workflow_run.id }}")
             
             echo "API Response details:"
             echo "$api_response" | jq '{id, head_branch, head_sha, event, pull_requests}'
             
-            # Set branch from workflow_run event directly if available
+            # Determine the branch where the workflow ran (for artifacts)
             if [ -n "${{ github.event.workflow_run.head_branch }}" ]; then
-              triggering_branch="${{ github.event.workflow_run.head_branch }}"
+              artifact_branch="${{ github.event.workflow_run.head_branch }}"
             else  
-              # Fallback to API
-              triggering_branch=$(echo "$api_response" | jq -r '.head_branch')
+              artifact_branch=$(echo "$api_response" | jq -r '.head_branch')
             fi
+            
+            # Check if this was triggered from a PR
+            pr_info=$(echo "$api_response" | jq -r '.pull_requests[0].head.ref // empty')
+            if [ -n "$pr_info" ]; then
+              echo "This appears to be from a PR. Original branch: $pr_info"
+              # Use the PR source branch for artifacts
+              artifact_branch="$pr_info"
+            fi
+            
+            # For target branch (deployment), use current branch
+            triggering_branch="${{ github.ref_name }}"
           fi
           
-          echo "Determined branch: $triggering_branch"
+          echo "Determined branch for deployment: $triggering_branch"
+          echo "Determined branch for artifacts: $artifact_branch"
           echo "branch=$triggering_branch" >> $GITHUB_OUTPUT
-          echo "source_branch=$triggering_branch" >> $GITHUB_ENV
+          echo "source_branch=$artifact_branch" >> $GITHUB_ENV
 
       - name: Get Latest Successful Workflow Run
         id: get_run

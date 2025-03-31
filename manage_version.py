@@ -341,6 +341,12 @@ def cull_history(data, dry_run=False):
             grouped_entries[key] = []
         grouped_entries[key].append(entry)
     
+    # Print summary of entries by type before culling
+    print("\nHistory entries before culling:")
+    for (soc, type_, branch), entries in sorted(grouped_entries.items()):
+        print(f"  {soc}/{type_}/{branch}: {len(entries)} entries")
+    print(f"  Total: {len(data['history'])} entries")
+    
     entries_to_remove = []
     
     # Process each group
@@ -394,6 +400,21 @@ def cull_history(data, dry_run=False):
         # Update history array to exclude removed entries
         data["history"] = [entry for entry in data["history"] 
                          if entry not in entries_to_remove]
+    
+    # Print summary of entries by type after culling
+    if not dry_run or entries_to_remove:
+        # Re-group entries after culling
+        new_grouped_entries = {}
+        for entry in data["history"]:
+            key = (entry["soc"], entry["type"], entry["branch"])
+            if key not in new_grouped_entries:
+                new_grouped_entries[key] = []
+            new_grouped_entries[key].append(entry)
+        
+        print("\nHistory entries after culling:")
+        for (soc, type_, branch), entries in sorted(new_grouped_entries.items()):
+            print(f"  {soc}/{type_}/{branch}: {len(entries)} entries")
+        print(f"  Total: {len(data['history'])} entries")
     
     return data
 
