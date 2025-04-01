@@ -180,9 +180,11 @@ void AppMqttClient::publish(const String& topic, const String& data, bool retain
 		debug_w("ApplicationMQTTClient::publish: not connected.\n");
 	}
 
+	/*
 	if (_haEnabled) {
         publishHAState(app.rgbwwctrl.getCurrentOutput(), &color);
-    }	
+    }
+	*/	
 }
 
 void AppMqttClient::publishCurrentRaw(const ChannelOutput& raw)
@@ -360,7 +362,7 @@ void AppMqttClient::publishHomeAssistantConfig() {
     device["name"] = deviceName;
     device["model"] = "RGBWW Controller";
     device["manufacturer"] = "ESP RGBWW Firmware";
-    device["sw_version"] = APP_VERSION;
+    device["sw_version"] = GIT_VERSION;
     
     // Publish discovery message
     String configTopic = _haDiscoveryPrefix + "/light/" + _haNodeId + "/config";
