@@ -288,3 +288,8 @@ jobs:
       - name: Change ownership of uploaded files
         run: |
           ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "chown -R github-deploy:nginx ${{ env.deploy_path }}/*"
+
+      - name: Cull old versions
+        run: |
+          # Remove old versions from the server
+          ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "${{ env.deploy.path }}/manage_version.py ${{ env.deploy_path }}/version.json cull"
