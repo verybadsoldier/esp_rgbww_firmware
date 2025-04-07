@@ -52,6 +52,11 @@ void AppMqttClient::connectDelayed(int delay)
         initHomeAssistant();
         publishHomeAssistantConfig();
     }
+
+	if (mqtt->getConnectionState() == TcpClientState::eTCS_Connected) {
+        initHomeAssistant();
+        publishHomeAssistantConfig();
+    }
 }
 
 void AppMqttClient::connect()
@@ -139,6 +144,7 @@ bool AppMqttClient::isRunning() const
 int AppMqttClient::onMessageReceived(MqttClient& client, mqtt_message_t* msg)
 {
 	String topic = MqttBuffer(msg->publish.topic_name);
+
     String message = MqttBuffer(msg->publish.content);
     
     // Check if this is a Home Assistant command

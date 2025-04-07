@@ -264,7 +264,7 @@
               "properties":{
                 "enable": {
                   "type": "boolean",
-                  "default": false
+                  "default": true
                 },
                 "discovery_prefix": {
                   "type": "string",
