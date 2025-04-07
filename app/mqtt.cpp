@@ -47,16 +47,12 @@ void AppMqttClient::connectDelayed(int delay)
 {
 	debug_d("MQTT::connectDelayed");
 	_procTimer.initializeMs(delay, TimerDelegate(&AppMqttClient::connect, this)).startOnce();
-
+/*
 	if (mqtt->getConnectionState() == TcpClientState::eTCS_Connected) {
         initHomeAssistant();
         publishHomeAssistantConfig();
     }
-
-	if (mqtt->getConnectionState() == TcpClientState::eTCS_Connected) {
-        initHomeAssistant();
-        publishHomeAssistantConfig();
-    }
+*/
 }
 
 void AppMqttClient::connect()
@@ -107,17 +103,11 @@ void AppMqttClient::connect()
 }
 
 // ToDo: rework this so the class is less depending on the app itself but rather the app initializes the calls
-void AppMqttClient::init()
+void AppMqttClient::init(String mqttDeviceId)
 {
-	AppConfig::General general(*app.cfg);
-	if(general.getDeviceName().length() > 0) {
-		debug_w("AppMqttClient::init: building MQTT ID from device name: '%s'\n", general.getDeviceName().c_str());
-		_id = general.getDeviceName();
-	} else {
-		debug_w("AppMqttClient::init: building MQTT ID from MAC (device name is: '%s')\n",
-				general.getDeviceName().c_str());
-		_id = String("rgbww_") + WifiStation.getMAC();
-	}
+	_id =mqttDeviceId;
+	debug_i("MQTT::init ID: %s\n", _id.c_str());
+	debug_i("connecting to mqtt in 1000ms");
 	connectDelayed(1000);
 }
 
@@ -368,7 +358,7 @@ void AppMqttClient::publishHomeAssistantConfig() {
     device["name"] = deviceName;
     device["model"] = "RGBWW Controller";
     device["manufacturer"] = "ESP RGBWW Firmware";
-    device["sw_version"] = GIT_VERSION;
+    device["sw_version"] = GITVERSION;
     
     // Publish discovery message
     String configTopic = _haDiscoveryPrefix + "/light/" + _haNodeId + "/config";
