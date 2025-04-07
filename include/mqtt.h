@@ -11,7 +11,7 @@ public:
     AppMqttClient();
     virtual ~AppMqttClient();
 
-    void init();
+    void init(String mqttDeviceId);
     void start();
     void stop();
     bool isRunning() const;

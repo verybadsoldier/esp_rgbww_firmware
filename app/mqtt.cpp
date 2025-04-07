@@ -47,16 +47,12 @@ void AppMqttClient::connectDelayed(int delay)
 {
 	debug_d("MQTT::connectDelayed");
 	_procTimer.initializeMs(delay, TimerDelegate(&AppMqttClient::connect, this)).startOnce();
-
+/*
 	if (mqtt->getConnectionState() == TcpClientState::eTCS_Connected) {
         initHomeAssistant();
         publishHomeAssistantConfig();
     }
-
-	if (mqtt->getConnectionState() == TcpClientState::eTCS_Connected) {
-        initHomeAssistant();
-        publishHomeAssistantConfig();
-    }
+*/
 }
 
 void AppMqttClient::connect()
