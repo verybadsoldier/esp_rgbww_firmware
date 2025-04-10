@@ -299,4 +299,4 @@ jobs:
       - name: Cull old versions
         run: |
           # Remove old versions from the server
-          ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "${{ env.deploy.path }}/manage_version.py ${{ env.deploy_path }}/version.json cull"
+          ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "${{ env.deploy_path }}/manage_version.py ${{ env.deploy_path }}/version.json cull"
