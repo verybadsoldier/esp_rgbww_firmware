@@ -6,12 +6,13 @@
 
 // ...
 
+static LEDControllerAPIService* g_ledControllerAPIService = nullptr;
+
 mdnsHandler::mdnsHandler(){};
 
 void mdnsHandler::start()
 {
 	using namespace mDNS;
-	static mDNS::Responder responder;
 
 	//start the mDNS responder with the configured services, using the configured hostname
     
@@ -22,15 +23,20 @@ void mdnsHandler::start()
         responder.begin(hostName.c_str());
     } // end of ConfigDB network context
 
+	
+	lightinatorService = std::make_unique<LightinatorService>(hostName);
+    g_ledControllerAPIService = &ledControllerAPIService;
 
-	static LEDControllerAPIService ledControllerAPIService;
-	static LEDControllerWebService ledControllerWebService;
-	static LightinatorService lightinatorService(hostName);
-
+	// Set up leadership election with delay
+	_leaderElectionTimer.setCallback(mdnsHandler::checkForLeadershipCb, this);
+	_leaderElectionTimer.setIntervalMs(_mdnsTimerInterval * LEADER_ELECTION_DELAY);
+	_leaderElectionTimer.startOnce();
+	
 	responder.addService(ledControllerAPIService);
-	//responder.addService(ledControllerWebService);
-	responder.addService(lightinatorService);  
-
+	if(_isLeader)
+	{
+		responder.addService(*lightinatorService);  
+	}
 	
 	//serch for the esprgbwwAIP service. This is used in the onMessage handler to filter out unwanted messages.
 	//to fulter for a number of services, this would have to be adapted a bit.
@@ -115,14 +121,20 @@ bool mdnsHandler::onMessage(mDNS::Message& message)
 		info.ID=txt["id"].toInt();
 		msgHasTXT=true;
 	}
-	if(msgHasA && msgHasTXT){
-		#ifdef DEBUG_MDNS
-		debug_i("found Host %s with ID %i, IP %s and TTL %i", info.hostName.c_str(),info.ID, info.ipAddr.toString().c_str(), info.ttl);
-		#endif
-
-		addHost(info.hostName, info.ipAddr.toString(), info.ttl, info.ID); //add host to list
-		return true;
-	}else{
+	if (msgHasA && msgHasTXT) {
+        answer = message[mDNS::ResourceType::TXT];
+        if (answer != nullptr) {
+            mDNS::Resource::TXT txt(*answer);
+            String isLeaderTxt = txt["isLeader"];
+            if (isLeaderTxt == "1") {
+                _leaderDetected = true;
+                debug_i("Detected leader: %s", info.hostName.c_str());
+            }
+        }
+        
+        addHost(info.hostName, info.ipAddr.toString(), info.ttl, info.ID);
+        return true;
+    }else{
 		return false;
 	
 	}
@@ -136,12 +148,27 @@ bool mdnsHandler::onMessage(mDNS::Message& message)
 **/
 void mdnsHandler::sendSearch()
 {
+    static unsigned long lastLeaderCheck = 0;
+    unsigned long now = millis();
+
 	// Search for the service
 	bool ok = mDNS::server.search(service);
 #ifdef DEBUG_MDNS
 	debug_i("search('%s'): %s", service.c_str(), ok ? "OK" : "FAIL");
 #endif
 
+	// periodically check if there is still a leader in the network
+	if (now - lastLeaderCheck > (_mdnsTimerInterval * LEADER_ELECTION_DELAY)) {
+		lastLeaderCheck = now;
+		
+		// Reset leader detection status
+		_leaderDetected = false;
+		
+		// If we're currently not a leader, schedule a check after the next search cycle
+		if (!_isLeader) {
+			_leaderElectionTimer.startOnce();
+		}
+	}
 	//restart the timer
 	_mdnsSearchTimer.startOnce();
 	app.removeExpiredControllers(_mdnsTimerInterval / 1000);
@@ -208,16 +235,17 @@ void mdnsHandler::addHost(const String& hostname, const String& ip_address, int 
 
 	if (!app.isVisibleController(id)) {
 		app.addOrUpdateVisibleController(id, ttl);
-	}
 
-	// Create a JSON object for the new host
-	StaticJsonDocument<256> doc;
-	JsonObject newHost = doc.to<JsonObject>();
-	newHost[F("id")] = id;
-	newHost[F("ttl")] = ttl;
-	newHost[F("ip_address")] = ip_address;
-	newHost[F("hostname")] = hostname;
-	app.wsBroadcast(F("new_host"), newHost);
+		debug_i("Controller %s with ID %i is now visible", hostname.c_str(), id);
+		// controller has just become visible, we'll update the clients
+		StaticJsonDocument<256> doc;
+		JsonObject newHost = doc.to<JsonObject>();
+		newHost[F("id")] = id;
+		newHost[F("ttl")] = ttl;
+		newHost[F("ip_address")] = ip_address;
+		newHost[F("hostname")] = hostname;
+		app.wsBroadcast(F("new_host"), newHost);
+	}
 
 }
 
@@ -229,3 +257,78 @@ void mdnsHandler::sendWsUpdate(const String& type, JsonObject host){
 	}
 }
 
+void mdnsHandler::checkForLeadership() {
+    if (_leaderDetected) {
+        debug_i("Leader already exists in network, not becoming leader");
+        _leaderCheckCounter = 0;  // Reset counter when a leader is detected
+        return;
+    }
+    
+    debug_i("No leader detected (check round %d)", _leaderCheckCounter + 1);
+    
+    // Increment leader check counter
+    _leaderCheckCounter++;
+    
+    // Check if this controller has highest ID
+    unsigned int myId = system_get_chip_id();
+    bool hasHighestId = true;
+    
+    // Check all visible controllers
+    for (const auto& controller : app.visibleControllers) {
+        if (controller.id > myId) {
+            hasHighestId = false;
+            break;
+        }
+    }
+    
+    // Become leader if we have highest ID OR we've checked 5 times with no leader
+    if (hasHighestId || _leaderCheckCounter >= 5) {
+        if (hasHighestId) {
+            debug_i("No leader detected and we have highest ID, becoming leader");
+        } else {
+            debug_i("No leader detected after %d checks, becoming leader as a failsafe", LEADERSHIP_MAX_FAIL_COUNT);
+		}
+        
+        becomeLeader();
+        _leaderCheckCounter = 0;  // Reset counter
+    }
+    else {
+        debug_i("Not becoming leader, another controller has higher ID (check %d/%d)", _leaderCheckCounter,LEADERSHIP_MAX_FAIL_COUNT);
+        
+        // Start another check after a delay if we haven't reached the limit
+        if (_leaderCheckCounter < LEADERSHIP_MAX_FAIL_COUNT) {
+            _leaderElectionTimer.startOnce();
+        }
+    }
+}
+// Dereference the unique_ptr
+void mdnsHandler::checkForLeadershipCb(void* pTimerArg) {
+    mdnsHandler* pThis = static_cast<mdnsHandler*>(pTimerArg);
+    pThis->checkForLeadership();
+}
+
+void mdnsHandler::becomeLeader() {
+    if (_isLeader) return;
+    
+    _isLeader = true;
+    if (g_ledControllerAPIService != nullptr) {
+        g_ledControllerAPIService->setLeader(true);
+		if (lightinatorService) {
+            responder.addService(*lightinatorService);  
+        } 
+        debug_i("This controller is now the leader");
+    }
+}
+
+void mdnsHandler::relinquishLeadership() {
+    if (!_isLeader) return;
+    
+    _isLeader = false;
+    if (g_ledControllerAPIService != nullptr) {
+        g_ledControllerAPIService->setLeader(false);
+		if (lightinatorService) {
+            responder.removeService(*lightinatorService);  
+        }
+        debug_i("This controller is no longer the leader");
+    }
+}
