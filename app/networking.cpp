@@ -419,11 +419,6 @@ void AppWIFI::startAp()
 	broadcastWifiStatus(F("AP started"));
 }
 
-String AppWIFI::getMdnsHosts()
-{
-	return mdnsHandler.getHosts();
-}
-
 /**
  * @brief Broadcasts the WiFi status to all connected clients.
  * 

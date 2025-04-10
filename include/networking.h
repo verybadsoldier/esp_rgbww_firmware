@@ -51,8 +51,6 @@ public:
     void scan(bool connectAfterScan);
     bool isScanning() { return _scanning; };
     BssList getAvailableNetworks();
-
-    String getMdnsHosts();
     
     void forgetWifi();
 

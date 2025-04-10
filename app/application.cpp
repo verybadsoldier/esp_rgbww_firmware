@@ -367,6 +367,24 @@ debug_i("Application::init - running partition %s", part.name());
 			}
 		}
 	}
+
+	// prepare active hosts list
+	{
+		// pre-allocate heap for the visible hosts vector. 
+		// this should adapt to the number of hosts detected in earlier boots
+		AppData::Root::Controllers controllers(*app.data);
+		size_t hostCount = 0;
+		for (auto it = controllers.begin(); it != controllers.end(); ++it) {
+			hostCount++;
+		}
+		if(hostCount > 0){
+			debug_i("found %i hosts in the list", hostCount);
+			visibleControllers.reserve(hostCount);
+		}else{
+			visibleControllers.reserve(10);
+		}
+	}
+
 	/*
 	Serial << endl << _F("** Stream **") << endl;
 	Serial << "#########################################################################################"<<endl;
@@ -777,4 +795,27 @@ void Application::onButtonTogglePressed(int pin)
 uint32_t Application::getUptime()
 {
 	return _uptimeMinutes * 60u;
+}
+
+void Application::addOrUpdateVisibleController(unsigned int id, int ttl) {
+    for (auto& controller : visibleControllers) {
+        if (controller.id == id) {
+            controller.ttl = ttl;
+            return;
+        }
+    }
+    // Not found, add new
+    visibleControllers.push_back({id, ttl});
+}
+
+void Application::removeExpiredControllers(int elapsedSeconds) {
+    for (size_t i = 0; i < visibleControllers.size(); i++) {
+        visibleControllers[i].ttl -= elapsedSeconds;
+        if (visibleControllers[i].ttl <= 0) {
+            // Remove using swap and pop
+            visibleControllers[i] = visibleControllers.back();
+            visibleControllers.pop_back();
+            i--; // Adjust index
+        }
+    }
 }
