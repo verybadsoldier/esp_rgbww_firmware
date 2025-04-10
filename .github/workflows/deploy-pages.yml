@@ -288,6 +288,13 @@ jobs:
       - name: Change ownership of uploaded files
         run: |
           ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "chown -R github-deploy:nginx ${{ env.deploy_path }}/*"
+ # Upload the manage_version.py script to the server
+      - name: Upload manage_version.py to server
+        run: |
+          # Copy the script to the server
+          scp esp_firmware_repo/manage_version.py ${{ env.deploy_user }}@${{ env.deploy_server }}:${{ env.deploy_path }}/manage_version.py
+          # Make it executable
+          ssh ${{ env.deploy_user }}@${{ env.deploy_server }} "chmod +x ${{ env.deploy_path }}/manage_version.py"
 
       - name: Cull old versions
         run: |
