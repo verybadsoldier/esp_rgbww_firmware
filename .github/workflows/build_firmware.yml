@@ -196,7 +196,7 @@ jobs:
       - name: Create version info file
         run: |
           echo "fw_version=${{ steps.get_fw_info.outputs.fw_version }}" > version-info.txt
-          echo "fw_branch=${{ steps.get_branch.outputs.branch }}" >> version-info.txt
+          echo "fw_branch=${{ steps.get_branch.outputs.sanitized_branch }}" >> version-info.txt
         
       - name: Save version info
         # Only upload version info from one specific matrix combination to avoid conflicts
