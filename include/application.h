@@ -24,6 +24,10 @@
 static const char* fw_git_version = GITVERSION;
 static const char* fw_git_date = GITDATE;
 static const char* sming_git_version = SMING_VERSION;
+struct VisibleController {
+    unsigned int id;
+    int ttl;
+};
 
 // main forward declarations
 class Application {
@@ -78,12 +82,24 @@ public:
     APPLedCtrl rgbwwctrl;
     ApplicationOTA ota;
     std::unique_ptr<AppConfig> cfg;
-    //std::unique_ptr<AppConfig> cfg;
     std::unique_ptr<AppData> data;
     EventServer eventserver;
     AppMqttClient mqttclient;
     JsonProcessor jsonproc;
     NtpClient* pNtpclient = nullptr;
+
+    std::vector<VisibleController> visibleControllers; // vector of currently visible controllers to be used for mdns
+    void addOrUpdateVisibleController(unsigned int id, int ttl);
+    void removeExpiredControllers(int elapsedSeconds);
+    bool isVisibleController(unsigned int id) {
+        for (const auto& controller : visibleControllers) {
+            if (controller.id == id) {
+                return true;
+            }
+        }
+        return false;
+    }
+    std::vector<VisibleController>& getVisibleControllers() { return visibleControllers; }
 
     String sanitizeName(const String& input){
         String result = input;
@@ -112,6 +128,7 @@ private:
     std::array<int, 17> _lastToggles;
 
     uint32_t jsonrpc_id = 0;
+
 };
 // forward declaration for global vars
 extern Application app;

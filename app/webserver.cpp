@@ -1264,11 +1264,23 @@ void ApplicationWebserver::onHosts(HttpRequest& request, HttpResponse& response)
 		return;
 	}
 
-	String myHosts;
-	// Set the response body with the JSON
+    JsonObjectStream* stream = new JsonObjectStream();
+    JsonObject json = stream->getRoot();
+    JsonArray hostsArray = json.createNestedArray("hosts");
+	
+	AppData::Root::Controllers controllers(*app.data);
+
+	for (auto controller : controllers){
+		if (app.isVisibleController(controller.getId().toInt())){
+            JsonObject hostObj = hostsArray.createNestedObject();
+            hostObj[F("id")] = controller.getId();
+            hostObj[F("hostname")] = controller.getName();
+            hostObj[F("ip_address")] = controller.getIpAddress();
+		}
+	}
+	sendApiResponse(response, stream);
 	setCorsHeaders(response);
 	response.setContentType(F("application/json"));
-	response.sendString(app.network.getMdnsHosts());
 
 	return;
 }
