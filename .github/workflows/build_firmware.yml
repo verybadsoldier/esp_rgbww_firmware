@@ -43,6 +43,27 @@ jobs:
             echo "branch=develop" >> $GITHUB_OUTPUT
           fi
 
+      - name: Sanitize branch name for artifact
+        id: sanitize_branch
+        run: |
+          # Get the original branch name
+          BRANCH="${{ steps.get_branch.outputs.branch }}"
+          
+          # Replace forward slashes with hyphens
+          SANITIZED_BRANCH=${BRANCH//\//-}
+          
+          # Replace other problematic characters
+          SANITIZED_BRANCH=${SANITIZED_BRANCH//\\/-}
+          SANITIZED_BRANCH=${SANITIZED_BRANCH//\?/-}
+          SANITIZED_BRANCH=${SANITIZED_BRANCH//\:/-}
+          SANITIZED_BRANCH=${SANITIZED_BRANCH//\*/-}
+          SANITIZED_BRANCH=${SANITIZED_BRANCH//\"/-}
+          SANITIZED_BRANCH=${SANITIZED_BRANCH//\</-}
+          SANITIZED_BRANCH=${SANITIZED_BRANCH//\>/-}
+          SANITIZED_BRANCH=${SANITIZED_BRANCH//\|/-}
+          
+          echo "sanitized_branch=$SANITIZED_BRANCH" >> $GITHUB_OUTPUT
+
       - name: Checkout Repository
         uses: actions/checkout@v3
         with:
@@ -160,9 +181,9 @@ jobs:
             tag=""
           fi
           if [ "${{ matrix.release }}" = "1" ]; then
-            echo "artifact_name=lightinator-${{ matrix.soc }}-release${tag}-${{ steps.get_branch.outputs.branch }}" >> $GITHUB_OUTPUT
+            echo "artifact_name=lightinator-${{ matrix.soc }}-release${tag}-${{ steps.sanitize_branch.outputs.sanitized_branch }}" >> $GITHUB_OUTPUT
           else
-            echo "artifact_name=lightinator-${{ matrix.soc }}-debug${tag}-${{ steps.get_branch.outputs.branch }}" >> $GITHUB_OUTPUT
+            echo "artifact_name=lightinator-${{ matrix.soc }}-debug${tag}-${{ steps.sanitize_branch.outputs.sanitized_branch }}" >> $GITHUB_OUTPUT
           fi
 
       - name: Upload firmware artifact
