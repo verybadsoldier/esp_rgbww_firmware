@@ -313,10 +313,18 @@ void mdnsHandler::becomeLeader() {
     _isLeader = true;
     if (g_ledControllerAPIService != nullptr) {
         g_ledControllerAPIService->setLeader(true);
-		if (lightinatorService) {
-            responder.addService(*lightinatorService);  
+        if (lightinatorService) {
+            // First, remove all services
+            responder.removeService(ledControllerAPIService);
+            
+            // Restart responder with lightinator hostname
+            responder.begin("lightinator");
+            
+            // Re-add services
+            responder.addService(ledControllerAPIService);
+            responder.addService(*lightinatorService); 
         } 
-        debug_i("This controller is now the leader");
+        debug_i("This controller is now the leader with hostname: lightinator.local");
     }
 }
 
@@ -326,8 +334,23 @@ void mdnsHandler::relinquishLeadership() {
     _isLeader = false;
     if (g_ledControllerAPIService != nullptr) {
         g_ledControllerAPIService->setLeader(false);
-		if (lightinatorService) {
-            responder.removeService(*lightinatorService);  
+        if (lightinatorService) {
+            // First, remove services
+            responder.removeService(ledControllerAPIService);
+            responder.removeService(*lightinatorService);
+            
+            // Get original hostname
+            String originalName;
+            {
+                AppConfig::Network network(*app.cfg);
+                originalName = network.mdns.getName();
+            }
+            
+            // Restart responder with original hostname
+            responder.begin(originalName.c_str());
+            
+            // Re-add API service only
+            responder.addService(ledControllerAPIService);
         }
         debug_i("This controller is no longer the leader");
     }
