@@ -196,12 +196,12 @@ jobs:
       - name: Create version info file
         run: |
           echo "fw_version=${{ steps.get_fw_info.outputs.fw_version }}" > version-info.txt
-          echo "fw_branch=${{ steps.get_branch.outputs.sanitized_branch }}" >> version-info.txt
+          echo "fw_branch=${{ steps.sanitize_branch.outputs.sanitized_branch }}" >> version-info.txt
         
       - name: Save version info
         # Only upload version info from one specific matrix combination to avoid conflicts
         if: ${{ matrix.soc == 'esp8266' && matrix.release == 0 && matrix.single == 0 }}
         uses: actions/upload-artifact@v4
         with:
-          name: version-info-${{ steps.get_branch.outputs.sanitized_branch }}
+          name: version-info-${{ steps.sanitize_branch.outputs.sanitized_branch }}
           path: version-info.txt
