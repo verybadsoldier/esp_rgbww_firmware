@@ -14,6 +14,10 @@ void mdnsHandler::start()
 {
 	using namespace mDNS;
 
+	debug_i("########################################################");
+	debug_i("# mdns Port:",MDNS_SOURCE_PORT);
+	debug_i("########################################################");
+	
 	//start the mDNS responder with the configured services, using the configured hostname
     
 	String hostName;
