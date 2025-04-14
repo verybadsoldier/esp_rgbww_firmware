@@ -360,7 +360,7 @@ void ApplicationOTA::checkAtBoot()
 #ifdef ESP8266
 		rboot_set_current_rom(app.getRomSlot());
 #endif
-		(OTASTATUS::OTA_NOT_UPDATING);
+		saveStatus(OTASTATUS::OTA_NOT_UPDATING);
 	}
 	saveStatus(OTASTATUS::OTA_SUCCESS);
 }
@@ -470,6 +470,7 @@ bool ApplicationOTA::switchPartitions()
 		app.restart();
 		return true;
 	}
+	return true;
 }
 //#endif
 
