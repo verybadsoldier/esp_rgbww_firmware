@@ -5,26 +5,58 @@
 	XX(i18n_js, "assets/i18n.js.gz") \
 	XX(index_css, "assets/index.css.gz") \
 	XX(index_js, "assets/index.js.gz") \
-	XX(registerSvgIcon_css, "assets/registerSvgIcon.css.gz") \
 	XX(registerSvgIcon_js, "assets/registerSvgIcon.js.gz") \
 	XX(pinconfig, "config/pinconfig.json") \
+	XX(add_svg, "icons/add.svg.gz") \
+	XX(add_circle_svg, "icons/add_circle.svg.gz") \
+	XX(alarm_light_outline_svg, "icons/alarm-light-outline.svg.gz") \
 	XX(api_svg, "icons/api.svg.gz") \
 	XX(arrow_drop_down_svg, "icons/arrow_drop_down.svg.gz") \
 	XX(arrow_forward_svg, "icons/arrow_forward.svg.gz") \
 	XX(article_svg, "icons/article.svg.gz") \
 	XX(badge_outlined_svg, "icons/badge_outlined.svg.gz") \
+	XX(bulkhead_light_svg, "icons/bulkhead-light.svg.gz") \
+	XX(ceiling_fan_light_svg, "icons/ceiling-fan-light.svg.gz") \
+	XX(ceiling_light_multiple_outline_svg, "icons/ceiling-light-multiple-outline.svg.gz") \
+	XX(ceiling_light_multiple_svg, "icons/ceiling-light-multiple.svg.gz") \
+	XX(ceiling_light_outline_svg, "icons/ceiling-light-outline.svg.gz") \
+	XX(ceiling_light_svg, "icons/ceiling-light.svg.gz") \
+	XX(chandelier_svg, "icons/chandelier.svg.gz") \
+	XX(check_circle_svg, "icons/check_circle.svg.gz") \
 	XX(check_outlined_svg, "icons/check_outlined.svg.gz") \
 	XX(close_outlined_svg, "icons/close_outlined.svg.gz") \
 	XX(cloud_download_svg, "icons/cloud_download.svg.gz") \
 	XX(cloud_upload_svg, "icons/cloud_upload.svg.gz") \
+	XX(coach_lamp_variant_svg, "icons/coach-lamp-variant.svg.gz") \
+	XX(coach_lamp_svg, "icons/coach-lamp.svg.gz") \
 	XX(delete_svg, "icons/delete.svg.gz") \
+	XX(delete_forever_svg, "icons/delete_forever.svg.gz") \
 	XX(description_svg, "icons/description.svg.gz") \
+	XX(dome_light_svg, "icons/dome-light.svg.gz") \
+	XX(drag_indicator_svg, "icons/drag_indicator.svg.gz") \
+	XX(edit_svg, "icons/edit.svg.gz") \
+	XX(error_svg, "icons/error.svg.gz") \
 	XX(exposure_outlined_svg, "icons/exposure_outlined.svg.gz") \
 	XX(favicon, "icons/favicon.ico") \
+	XX(floor_lamp_dual_outline_svg, "icons/floor-lamp-dual-outline.svg.gz") \
+	XX(floor_lamp_dual_svg, "icons/floor-lamp-dual.svg.gz") \
+	XX(floor_lamp_outline_svg, "icons/floor-lamp-outline.svg.gz") \
+	XX(floor_lamp_torchiere_variant_outline_svg, "icons/floor-lamp-torchiere-variant-outline.svg.gz") \
+	XX(floor_lamp_torchiere_variant_svg, "icons/floor-lamp-torchiere-variant.svg.gz") \
+	XX(floor_lamp_torchiere_svg, "icons/floor-lamp-torchiere.svg.gz") \
+	XX(floor_lamp_svg, "icons/floor-lamp.svg.gz") \
+	XX(globe_light_outline_svg, "icons/globe-light-outline.svg.gz") \
 	XX(help_outlined_svg, "icons/help_outlined.svg.gz") \
 	XX(home_svg, "icons/home.svg.gz") \
 	XX(hub_outlined_svg, "icons/hub_outlined.svg.gz") \
+	XX(info_svg, "icons/info.svg.gz") \
 	XX(info_outlined_svg, "icons/info_outlined.svg.gz") \
+	XX(led_strip_variant_svg, "icons/led-strip-variant.svg.gz") \
+	XX(led_strip_svg, "icons/led-strip.svg.gz") \
+	XX(light_flood_down_svg, "icons/light-flood-down.svg.gz") \
+	XX(light_flood_up_svg, "icons/light-flood-up.svg.gz") \
+	XX(light_recessed_svg, "icons/light-recessed.svg.gz") \
+	XX(light_group_svg, "icons/light_group.svg.gz") \
 	XX(lightbulb_outlined_svg, "icons/lightbulb_outlined.svg.gz") \
 	XX(linked_services_svg, "icons/linked_services.svg.gz") \
 	XX(memory_outlined_svg, "icons/memory_outlined.svg.gz") \
@@ -37,7 +69,11 @@
 	XX(network_wifi_3_bar_locked_FILL0_wght400_GRAD0_opsz24_svg, "icons/network_wifi_3_bar_locked_FILL0_wght400_GRAD0_opsz24.svg.gz") \
 	XX(network_wifi_FILL0_wght400_GRAD0_opsz24_svg, "icons/network_wifi_FILL0_wght400_GRAD0_opsz24.svg.gz") \
 	XX(network_wifi_locked_FILL0_wght400_GRAD0_opsz24_svg, "icons/network_wifi_locked_FILL0_wght400_GRAD0_opsz24.svg.gz") \
+	XX(outdoor_lamp_svg, "icons/outdoor-lamp.svg.gz") \
 	XX(palette_outlined_svg, "icons/palette_outlined.svg.gz") \
+	XX(photo_svg, "icons/photo.svg.gz") \
+	XX(play_arrow_svg, "icons/play_arrow.svg.gz") \
+	XX(post_lamp_svg, "icons/post-lamp.svg.gz") \
 	XX(report_problem_outlined_svg, "icons/report_problem_outlined.svg.gz") \
 	XX(save_outlined_svg, "icons/save_outlined.svg.gz") \
 	XX(scene_svg, "icons/scene.svg.gz") \
@@ -46,9 +82,18 @@
 	XX(signal_wifi_statusbar_null_FILL0_wght400_GRAD0_opsz24_svg, "icons/signal_wifi_statusbar_null_FILL0_wght400_GRAD0_opsz24.svg.gz") \
 	XX(star_outlined_svg, "icons/star_outlined.svg.gz") \
 	XX(systemsecurityupdate_outlined_svg, "icons/systemsecurityupdate_outlined.svg.gz") \
+	XX(television_ambient_light_svg, "icons/television-ambient-light.svg.gz") \
+	XX(timer_svg, "icons/timer.svg.gz") \
+	XX(track_light_svg, "icons/track-light.svg.gz") \
 	XX(tune_outlined_svg, "icons/tune_outlined.svg.gz") \
+	XX(vanity_light_svg, "icons/vanity-light.svg.gz") \
 	XX(visibility_outlined_24_svg, "icons/visibility-outlined-24.svg.gz") \
 	XX(visibility_off_outlined_svg, "icons/visibility_off_outlined.svg.gz") \
+	XX(wall_sconce_flat_variant_svg, "icons/wall-sconce-flat-variant.svg.gz") \
+	XX(wall_sconce_flat_svg, "icons/wall-sconce-flat.svg.gz") \
+	XX(wall_sconce_round_variant_svg, "icons/wall-sconce-round-variant.svg.gz") \
+	XX(wall_sconce_round_svg, "icons/wall-sconce-round.svg.gz") \
+	XX(warning_svg, "icons/warning.svg.gz") \
 	XX(wb_incandescent_outline_24_svg, "icons/wb_incandescent_outline_24.svg.gz") \
 	XX(wifi_lock_FILL0_wght400_GRAD0_opsz24_svg, "icons/wifi_lock_FILL0_wght400_GRAD0_opsz24.svg.gz") \
 	XX(wifi_outlined_svg, "icons/wifi_outlined.svg.gz") \

@@ -129,6 +129,8 @@ private:
 
     uint32_t jsonrpc_id = 0;
 
+    uint8_t CLEAR_PIN = 16; //  GPIO16 is the default for the old mrpj boards, newer boards will load from pinconfig 
+
 };
 // forward declaration for global vars
 extern Application app;

@@ -47,7 +47,6 @@
 //default defines
 
 #if defined ARCH_ESP8266
-    #define CLEAR_PIN 16
 #endif
 
 #if defined ARCH_ESP32

@@ -138,9 +138,6 @@ void init()
 	debug_i("starting os message interceptor");
 #endif
 
-	// set CLR pin to input
-	// pinMode(CLEAR_PIN, INPUT)
-
 	// seperated application init
 	app.init();
 
@@ -192,8 +189,7 @@ void Application::init()
 		delay(200);
 	}
 	Serial.print("\r\n");
-	// ConfigDB obsoleted debug_i("going to initialize config");
-	// ConfigDB obsoleted config::initializeConfig(cfg); // initialize the config structure if necessary
+	
 	debug_i("ESP RGBWW Controller Version %s\r\n", fw_git_version);
 	debug_i("Sming Version: %s\r\n", sming_git_version);
 
@@ -215,22 +211,7 @@ debug_i("Platform: %s\r\n", SOC);
 	if(!Storage::findPartition(PART0) && !Storage::findPartition(F("lfs1"))) {
 		// mount existing data partition
 		debug_i("application init (with spiffs) => Mounting file system");
-		/* ConfigDB - may need rework
-        if(mountfs(app.getRomSlot())){
-            if (cfg.exist()) {
-                debug_i("application init (with spiffs) => reading config");
-                cfg.load();
-                debug_i("application init (with spiffs) => config loaded, pin config %s",cfg.general.pin_config_name.c_str());
-            }
-        }else{
-            debug_i("application init (with spiffs) => failed to find config file");
-        }
-        */
-
-		/*
-        * now, app.cfg is the valid full configuration
-        * next step is to change the partition layout
-        */
+	
 		debug_i("application init => switching file systems - partition 1");
 		ota.switchPartitions();
 		debug_i("application init => saving config");
@@ -293,11 +274,11 @@ debug_i("Application::init - running partition %s", part.name());
 	// verify if there is a new version of the hardware config
 
 
-	AppConfig::Hardware hardware(*cfg);
-	debug_i("Application::init - hardware config loaded");
 	
-	uint32_t currentVersion=hardware.getVersion();
 	{
+		AppConfig::Hardware hardware(*cfg);
+		uint32_t currentVersion=hardware.getVersion();
+
 		debug_i("make pinconfig stream");
 		FSTR::Stream fs(fileMap["config/pinconfig.json"]);	
 		//Serial.println(fileMap["config/pinconfig.json"]);
@@ -314,18 +295,26 @@ debug_i("Application::init - running partition %s", part.name());
 			}
 		}
 	}
+	{
+		AppConfig::General general(*cfg);
+		CLEAR_PIN=general.getClearPin();
+		if(CLEAR_PIN)
+			pinMode(CLEAR_PIN, INPUT);	
+	}
+	debug_i("Application::init - hardware config loaded");
+	
 
 // check if we need to reset settings
 #if !defined(ARCH_HOST)
 
-/*	if(digitalRead(CLEAR_PIN) < 1) {
+	if(CLEAR_PIN && digitalRead(CLEAR_PIN) < 1) {
 		debug_i("CLR button low - resetting settings");
 		// ConfigDB - decide if to reload defaults or load a specific saved version
 		// perhaps by holding the clear pin low for a certain time along with blink codes?
 		// cfg.reset();
 		network.forgetWifi();
 	}
-*/
+
 #endif
 
 	// check ota
@@ -410,61 +399,7 @@ debug_i("Application::init - running partition %s", part.name());
 
 	debug_i("pin config string %s", fileMap["pin_config"]);
 
-	// ConfigDB: temp only: create an example preset
-	/*
-	{
-		AppData::Root::OuterUpdater appData(*data);
 
-		appData.presets.clear();
-
-		auto preset = appData.presets.addItem();
-		preset.setName("example-hsv");
-		preset.setFavorite(true);
-		auto hsvUpdater = preset.color.toHsv();
-		hsvUpdater.setH(0);
-		hsvUpdater.setS(100);
-		hsvUpdater.setV(100);
-	}
-	{
-		AppData::Root::OuterUpdater appData(*data);
-
-		appData.presets.clear();
-
-		auto preset = appData.presets.addItem();
-		preset.setName("example-raw");
-		auto rawUpdater = preset.color.toRaw();
-		rawUpdater.setR(255);
-		rawUpdater.setG(255);
-		rawUpdater.setB(255);
-		rawUpdater.setWw(255);
-		rawUpdater.setCw(255);
-	}
-	
-	{
-		debug_i("creating example scene");
-		AppData::Scenes::OuterUpdater scenes(*data);
-		auto scene = scenes.addItem();
-		scene.setName("example-scene");
-
-		{
-			auto item=scene.settings.addItem();
-			item.setControllerId(1234567);
-			auto hsvUpdater=item.color.toHsv();
-			hsvUpdater.setH(0);
-			hsvUpdater.setS(100);
-			hsvUpdater.setV(100);
-		}
-
-		{
-			auto item=scene.settings.addItem();
-			item.setControllerId(7654321);
-			auto hsvUpdater=item.color.toHsv();
-			hsvUpdater.setH(60);
-			hsvUpdater.setS(50);
-			hsvUpdater.setV(100);
-		}
-	}
-	*/
 	
 }
 void Application::initButtons()
