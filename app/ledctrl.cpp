@@ -114,6 +114,8 @@ void APPLedCtrl::init()
 
 	PinConfig pins;
 	pins.isValid=true;
+	String SoC=SOC;
+		
 	{
 		debug_i("APPLedCtrl::init - reading pin config");
 		AppConfig::General general(*app.cfg);
@@ -142,50 +144,58 @@ void APPLedCtrl::init()
 					} // end AppConfig::General::update context
 				}
 			}
-		} else {
-			//fall back on the old pin config string if necessary
-			debug_i("no channels array configured");
-			pins = APPLedCtrl::parsePinConfigString(general.getPinConfig());
-			//populate the pin array for next time
-			if(auto generalUpdate = general.update()) {
-				{
-					auto pin = generalUpdate.channels.addItem();
-					pin.setName("red");
-					pin.setPin(pins.red);
+		}  
+		
+		else {
+			if(SoC=="esp8266") { // compatibility with old config, won't apply to esp32 systems
+				//fall back on the old pin config string if necessary
+				debug_i("no channels array configured");
+				pins = APPLedCtrl::parsePinConfigString(general.getPinConfig());
+				//populate the pin array for next time
+				if(auto generalUpdate = general.update()) {
+					{
+						auto pin = generalUpdate.channels.addItem();
+						pin.setName("red");
+						pin.setPin(pins.red);
+					}
+					{
+						auto pin = generalUpdate.channels.addItem();
+						pin.setName("green");
+						pin.setPin(pins.green);
+					}
+					{
+						auto pin = generalUpdate.channels.addItem();
+						pin.setName("blue");
+						pin.setPin(pins.blue);
+					}
+					{
+						auto pin = generalUpdate.channels.addItem();
+						pin.setName("warmwhite");
+						pin.setPin(pins.warmwhite);
+					}
+					{
+						auto pin = generalUpdate.channels.addItem();
+						pin.setName("coldwhite");
+						pin.setPin(pins.coldwhite);
+					}
+				} // end AppConfig::General::update context
+				else {
+					debug_e("APPLedCtrl::init - failed to update pin config");
 				}
-				{
-					auto pin = generalUpdate.channels.addItem();
-					pin.setName("green");
-					pin.setPin(pins.green);
-				}
-				{
-					auto pin = generalUpdate.channels.addItem();
-					pin.setName("blue");
-					pin.setPin(pins.blue);
-				}
-				{
-					auto pin = generalUpdate.channels.addItem();
-					pin.setName("warmwhite");
-					pin.setPin(pins.warmwhite);
-				}
-				{
-					auto pin = generalUpdate.channels.addItem();
-					pin.setName("coldwhite");
-					pin.setPin(pins.coldwhite);
-				}
-			} // end AppConfig::General::update context
-			else {
-				debug_e("APPLedCtrl::init - failed to update pin config");
+			} else {
+				debug_e("APPLedCtrl::init - no channels array configured and no pin config string available");
+				pins.isValid=false;
 			}
 		}
+		
+	debug_i(
+		"APPLedCtrl::init - initializing RGBWWLed\n   red: %i | green: %i | blue: %i | warmwhite: %i | coldwhite: %i| clear: %i, valid: [%s]",
+		pins.red, pins.green, pins.blue, pins.warmwhite, pins.coldwhite, general.getClearPin(), pins.isValid?"true":"false");
 	} //end ConfigDB::General context
 
-	debug_i(
-		"APPLedCtrl::init - initializing RGBWWLed\n   red: %i | green: %i | blue: %i | warmwhite: %i | coldwhite: %i, valid: [%s]",
-		pins.red, pins.green, pins.blue, pins.warmwhite, pins.coldwhite, pins.isValid?"true":"false");
 	if(pins.isValid)
 		{
-			RGBWWLed::init(pins.red, pins.green, pins.blue, pins.warmwhite, pins.coldwhite, PWM_FREQUENCY);
+		RGBWWLed::init(pins.red, pins.green, pins.blue, pins.warmwhite, pins.coldwhite, PWM_FREQUENCY);
 		debug_i("APPLedCtrl::init - finished setting up RGBWWLed");
 		setup();
 		}

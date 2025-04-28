@@ -38,7 +38,7 @@
         },
         "clear_pin":{
           "type":"integer",
-          "default":16
+          "default":-1
         },
         "supported_color_models":{
             "type": "array",

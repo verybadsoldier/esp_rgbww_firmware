@@ -298,8 +298,11 @@ debug_i("Application::init - running partition %s", part.name());
 	{
 		AppConfig::General general(*cfg);
 		CLEAR_PIN=general.getClearPin();
-		if(CLEAR_PIN)
-			pinMode(CLEAR_PIN, INPUT);	
+		debug_i("Application::init - clear pin %d", CLEAR_PIN);
+		if(CLEAR_PIN >= 0) {
+			pinMode(CLEAR_PIN, INPUT);
+			debug_i("Application::init - clear pin set to input");
+		}
 	}
 	debug_i("Application::init - hardware config loaded");
 	
@@ -307,7 +310,7 @@ debug_i("Application::init - running partition %s", part.name());
 // check if we need to reset settings
 #if !defined(ARCH_HOST)
 
-	if(CLEAR_PIN && digitalRead(CLEAR_PIN) < 1) {
+	if(CLEAR_PIN >=0 && digitalRead(CLEAR_PIN) < 1) {
 		debug_i("CLR button low - resetting settings");
 		// ConfigDB - decide if to reload defaults or load a specific saved version
 		// perhaps by holding the clear pin low for a certain time along with blink codes?

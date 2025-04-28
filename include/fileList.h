@@ -69,6 +69,7 @@
 	XX(network_wifi_3_bar_locked_FILL0_wght400_GRAD0_opsz24_svg, "icons/network_wifi_3_bar_locked_FILL0_wght400_GRAD0_opsz24.svg.gz") \
 	XX(network_wifi_FILL0_wght400_GRAD0_opsz24_svg, "icons/network_wifi_FILL0_wght400_GRAD0_opsz24.svg.gz") \
 	XX(network_wifi_locked_FILL0_wght400_GRAD0_opsz24_svg, "icons/network_wifi_locked_FILL0_wght400_GRAD0_opsz24.svg.gz") \
+	XX(open_in_new_svg, "icons/open_in_new.svg.gz") \
 	XX(outdoor_lamp_svg, "icons/outdoor-lamp.svg.gz") \
 	XX(palette_outlined_svg, "icons/palette_outlined.svg.gz") \
 	XX(photo_svg, "icons/photo.svg.gz") \
