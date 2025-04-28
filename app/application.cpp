@@ -184,16 +184,10 @@ void Application::checkRam()
 
 void Application::init()
 {
-	for(int i = 0; i < 10; i++) {
-		Serial.print(_F("="));
-		delay(200);
-	}
-	Serial.print("\r\n");
-	
 	debug_i("ESP RGBWW Controller Version %s\r\n", fw_git_version);
 	debug_i("Sming Version: %s\r\n", sming_git_version);
 
-debug_i("Platform: %s\r\n", SOC);
+	debug_i("Platform: %s\r\n", SOC);
 
 #if defined(ARCH_ESP8266) || defined(ESP32)
 	app.ota.checkAtBoot();
@@ -272,9 +266,8 @@ debug_i("Application::init - running partition %s", part.name());
 	data = std::make_unique<AppData>(dataDB_PATH);
 
 	// verify if there is a new version of the hardware config
-
-
 	
+
 	{
 		AppConfig::Hardware hardware(*cfg);
 		uint32_t currentVersion=hardware.getVersion();
@@ -297,10 +290,10 @@ debug_i("Application::init - running partition %s", part.name());
 	}
 	{
 		AppConfig::General general(*cfg);
-		CLEAR_PIN=general.getClearPin();
-		debug_i("Application::init - clear pin %d", CLEAR_PIN);
-		if(CLEAR_PIN >= 0) {
-			pinMode(CLEAR_PIN, INPUT);
+		clearPin=general.getClearPin();
+		debug_i("Application::init - clear pin %d", clearPin);
+		if(clearPin >= 0) {
+			pinMode(clearPin, INPUT);
 			debug_i("Application::init - clear pin set to input");
 		}
 	}
@@ -310,7 +303,7 @@ debug_i("Application::init - running partition %s", part.name());
 // check if we need to reset settings
 #if !defined(ARCH_HOST)
 
-	if(CLEAR_PIN >=0 && digitalRead(CLEAR_PIN) < 1) {
+	if(clearPin >=0 && digitalRead(clearPin) < 1) {
 		debug_i("CLR button low - resetting settings");
 		// ConfigDB - decide if to reload defaults or load a specific saved version
 		// perhaps by holding the clear pin low for a certain time along with blink codes?
@@ -324,12 +317,7 @@ debug_i("Application::init - running partition %s", part.name());
 #ifdef ARCH_ESP8266
 	ota.checkAtBoot();
 #endif
-	/* Serial << endl << _F("** Stream **") << endl;
-	Serial << "#########################################################################################"<<endl;
-	cfg->exportToStream(ConfigDB::Json::format, Serial);
-	Serial <<endl;
-	Serial << "#########################################################################################"<<endl;
-	*/
+	
 	{
 		debug_i("application init => checking ConfigDB");
 		AppConfig::General general(*cfg);
