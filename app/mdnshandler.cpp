@@ -208,6 +208,30 @@ void mdnsHandler::addHost(const String& hostname, const String& ip_address, int 
 {
     if(id == 1) return; // Invalid ID
 
+    // Check if this is a group hostname or the global leader hostname
+    bool isGroupOrLeaderHostname = (hostname == "lightinator");
+    
+    // Also check if hostname matches any of our currently led groups
+    for (const auto& groupId : _leadingGroups) {
+        AppData::Root::Groups groups(*app.data);
+        for (auto it = groups.begin(); it != groups.end(); ++it) {
+            if ((*it).getId() == groupId) {
+                String sanitizedGroupName = Util::sanitizeHostname((*it).getName());
+                if (hostname == sanitizedGroupName) {
+                    isGroupOrLeaderHostname = true;
+                    break;
+                }
+            }
+        }
+        if (isGroupOrLeaderHostname) break;
+    }
+    
+    // If this is a group or leader hostname update, only update IP address, not the hostname
+    if (isGroupOrLeaderHostname) {
+        debug_i("Group/leader hostname detected: %s (ID: %u) - only updating IP address", 
+                hostname.c_str(), id);
+    }
+
 #ifdef DEBUG_MDNS
     debug_i("Adding host %s with IP %s and ttl %i", hostname.c_str(), ip_address.c_str(), ttl);
 #endif
@@ -220,12 +244,18 @@ void mdnsHandler::addHost(const String& hostname, const String& ip_address, int 
             if (controllerItem.getId() == String(id)) {
                 found = true;
                 debug_i("Hostname %s already in list", hostname.c_str());
+                
+                // Always update IP address
                 if (controllerItem.getIpAddress() != ip_address) {
-                    debug_i("IP address changed from %s to %s", controllerItem.getIpAddress().c_str(), ip_address.c_str());
+                    debug_i("IP address changed from %s to %s", 
+                           controllerItem.getIpAddress().c_str(), ip_address.c_str());
                     controllerItem.setIpAddress(ip_address);
                 }
-                if (controllerItem.getName() != hostname) {
-                    debug_i("Hostname changed from %s to %s", controllerItem.getName().c_str(), hostname.c_str());
+                
+                // Only update hostname if this is NOT a group or leader hostname
+                if (!isGroupOrLeaderHostname && controllerItem.getName() != hostname) {
+                    debug_i("Hostname changed from %s to %s", 
+                           controllerItem.getName().c_str(), hostname.c_str());
                     controllerItem.setName(hostname);
                 }
                 break;
