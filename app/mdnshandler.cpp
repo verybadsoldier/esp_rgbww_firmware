@@ -155,7 +155,7 @@ bool mdnsHandler::onMessage(mDNS::Message& message)
             
             // Get hostname type
             String hostnameType = txt["type"];
-            
+            debug_i("Hostname %s, type: %s",info.hostName.c_str(), hostnameType.c_str());
             // Only add to host table if this is a device hostname
             if (hostnameType == "host" || hostnameType.length() == 0) { // fallback for older devices
                 addHost(info.hostName, info.ipAddr.toString(), info.ttl, info.ID);
@@ -219,7 +219,11 @@ void mdnsHandler::addHost(const String& hostname, const String& ip_address, int 
 {
     if(id == 1) return; // Invalid ID
 
+    // Define isGroupOrLeaderHostname before using it (new code)
     bool isGroupOrLeaderHostname = false;
+    
+    // For group hostnames, we already filter by type in onMessage()
+    // This is just a fallback safety check 
 
 #ifdef DEBUG_MDNS
     debug_i("Adding host %s with IP %s and ttl %i", hostname.c_str(), ip_address.c_str(), ttl);
@@ -355,7 +359,6 @@ void mdnsHandler::becomeLeader() {
         leaderResponder->begin("lightinator");
         
         // Add services to the leader responder
-        leaderResponder->addService(ledControllerAPIService);
         leaderResponder->addService(*leaderWebService);  // Note the * to dereference
         
         // Register the leader responder with mDNS server
@@ -522,10 +525,8 @@ void mdnsHandler::becomeGroupLeader(const String& groupId, const String& groupNa
     responder->begin(sanitizedName.c_str());
     
     // Create and set up web service for this group
-    auto webService = std::make_unique<LEDControllerWebService>(sanitizedName, 
-        LEDControllerWebService::HostType::Group);    
+    auto webService = std::make_unique<LEDControllerWebService>(sanitizedName, LEDControllerWebService::HostType::Group);    
     // Add services to the responder
-    responder->addService(ledControllerAPIService);
     responder->addService(*webService);
     
     // Register with mDNS server
