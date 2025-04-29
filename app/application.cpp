@@ -443,7 +443,7 @@ void Application::startServices()
 			eventserver.start(app.webserver);
 		}
 	} // end of ConfigDB root context
-
+	if(WifiStation.isConnected())
 	{
 		debug_i("Application::startServices - starting mqtt");
 		AppConfig::Network network(*cfg);
