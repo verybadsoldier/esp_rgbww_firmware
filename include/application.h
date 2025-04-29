@@ -129,7 +129,7 @@ private:
 
     uint32_t jsonrpc_id = 0;
 
-    int8_t CLEAR_PIN = 16; //  GPIO16 is the default for the old mrpj boards, newer boards will load from pinconfig 
+    int8_t clearPin = 16; //  GPIO16 is the default for the old mrpj boards, newer boards will load from pinconfig 
 
 };
 // forward declaration for global vars

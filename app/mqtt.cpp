@@ -47,6 +47,11 @@ void AppMqttClient::connectDelayed(int delay)
 {
 	debug_d("MQTT::connectDelayed");
 	_procTimer.initializeMs(delay, TimerDelegate(&AppMqttClient::connect, this)).startOnce();
+
+	if (mqtt->getConnectionState() == TcpClientState::eTCS_Connected) {
+        initHomeAssistant();
+        publishHomeAssistantConfig();
+    }
 }
 
 void AppMqttClient::connect()
@@ -104,11 +109,13 @@ void AppMqttClient::init()
 		debug_w("AppMqttClient::init: building MQTT ID from device name: '%s'\n", general.getDeviceName().c_str());
 		_id = general.getDeviceName();
 	} else {
-		debug_w("AppMqttClient::init: building MQTT ID from MAC (device name is: '%s')\n",
+		debug_w("AppMqttClient::init: building MQTT ID from chip id (device name is: '%s')\n",
 				general.getDeviceName().c_str());
-		_id = String("rgbww_") + WifiStation.getMAC();
+		_id = String("rgbww_") + system_get_chip_id();
+		debug_i("AppMqttClient::init: ID: %s\n", _id.c_str());
 	}
 	connectDelayed(1000);
+	debug_i("finished init\n");
 }
 
 void AppMqttClient::start()
@@ -134,7 +141,13 @@ bool AppMqttClient::isRunning() const
 int AppMqttClient::onMessageReceived(MqttClient& client, mqtt_message_t* msg)
 {
 	String topic = MqttBuffer(msg->publish.topic_name);
-	String message = MqttBuffer(msg->publish.content);
+    String message = MqttBuffer(msg->publish.content);
+    
+    // Check if this is a Home Assistant command
+    if (_haEnabled && topic == buildHATopic("light", _haNodeId, "set")) {
+        handleHomeAssistantCommand(message);
+        return 0;
+    }
 
 	AppConfig::Sync sync(*app.cfg);
 	if(sync.getClockSlaveEnabled() && (topic == sync.getClockSlaveTopic())) {
@@ -168,6 +181,12 @@ void AppMqttClient::publish(const String& topic, const String& data, bool retain
 	} else {
 		debug_w("ApplicationMQTTClient::publish: not connected.\n");
 	}
+
+	/*
+	if (_haEnabled) {
+        publishHAState(app.rgbwwctrl.getCurrentOutput(), &color);
+    }
+	*/	
 }
 
 void AppMqttClient::publishCurrentRaw(const ChannelOutput& raw)
@@ -287,4 +306,147 @@ void AppMqttClient::publishTransitionFinished(const String& name, bool requeued)
 
 	String jsonMsg = Json::serialize(root);
 	publish(buildTopic(F("transition_finished")), jsonMsg, true);
+}
+
+void AppMqttClient::initHomeAssistant() {
+    AppConfig::Network network(*app.cfg);
+    _haEnabled = network.mqtt.homeassistant.getEnable();
+    
+    if (!_haEnabled) {
+        return;
+    }
+    
+    _haDiscoveryPrefix = network.mqtt.homeassistant.getDiscoveryPrefix();
+    _haNodeId = network.mqtt.homeassistant.getNodeId();
+    
+    // If node_id is empty, use the device ID
+    if (_haNodeId.length() == 0) {
+        _haNodeId = _id;
+    }
+    
+    // Subscribe to the HA command topic
+    if (mqtt && mqtt->getConnectionState() == TcpClientState::eTCS_Connected) {
+        mqtt->subscribe(buildHATopic("light", _haNodeId, "set"));
+    }
+}
+
+void AppMqttClient::publishHomeAssistantConfig() {
+    if (!_haEnabled || _haConfigPublished) {
+        return;
+    }
+    
+    AppConfig::General general(*app.cfg);
+    String deviceName = general.getDeviceName();
+    
+    // Create config document
+    StaticJsonDocument<512> doc;
+    
+    // Basic configuration
+    doc["name"] = deviceName;
+    doc["unique_id"] = _haNodeId;
+    doc["state_topic"] = buildHATopic("light", _haNodeId, "state");
+    doc["command_topic"] = buildHATopic("light", _haNodeId, "set");
+    doc["schema"] = "json";
+    
+    // Light features
+    doc["brightness"] = true;
+    doc["brightness_scale"] = 255;  // Standard HA scale
+    doc["color_mode"] = true;
+    doc["supported_color_modes"] = JsonArray().add("hs");
+    
+    // Optimization
+    doc["optimistic"] = false;
+    doc["retain"] = true;
+    
+    // Device info
+    JsonObject device = doc.createNestedObject("device");
+    device["identifiers"] = JsonArray().add(_id);
+    device["name"] = deviceName;
+    device["model"] = "RGBWW Controller";
+    device["manufacturer"] = "ESP RGBWW Firmware";
+    device["sw_version"] = GITVERSION;
+    
+    // Publish discovery message
+    String configTopic = _haDiscoveryPrefix + "/light/" + _haNodeId + "/config";
+    publish(configTopic, Json::serialize(doc), true);
+    
+    _haConfigPublished = true;
+    
+    // Publish initial state
+    publishCurrentHsv(app.rgbwwctrl.getCurrentColor());
+}
+
+String AppMqttClient::buildHATopic(const String& component, const String& entityId, const String& suffix) {
+    return component + "/" + entityId + "/" + suffix;
+}
+
+void AppMqttClient::publishHAState(const ChannelOutput& raw, const HSVCT* pHsv) {
+    if (!_haEnabled) {
+        return;
+    }
+    
+    StaticJsonDocument<256> doc;
+    
+    // Get HSV values
+    HSVCT color = pHsv ? *pHsv : app.rgbwwctrl.getCurrentColor();
+    float h, s, v;
+    int ct;
+    color.asRadian(h, s, v, ct);
+    
+    // Convert to HA format
+    doc["state"] = v > 0 ? "ON" : "OFF";
+    doc["brightness"] = (uint8_t)(v * 2.55f);  // Scale 0-100 to 0-255
+    
+    // Only include color if light is on
+    if (v > 0) {
+        JsonObject color_obj = doc.createNestedObject("color");
+        color_obj["h"] = h;
+        color_obj["s"] = s * 100;  // HA expects 0-100%
+    }
+    
+    publish(buildHATopic("light", _haNodeId, "state"), Json::serialize(doc), true);
+}
+
+void AppMqttClient::handleHomeAssistantCommand(const String& message) {
+    if (!_haEnabled) {
+        return;
+    }
+    
+    StaticJsonDocument<256> doc;
+    deserializeJson(doc, message);
+    
+    String state = doc["state"];
+    
+    // Create a JSON command that works with your existing system
+    StaticJsonDocument<256> cmdDoc;
+    JsonObject root = cmdDoc.to<JsonObject>();
+    JsonObject hsv = root.createNestedObject("hsv");
+    
+    if (state == "ON") {
+        // Handle brightness
+        float brightness = 100.0f;  // Default to 100%
+        if (doc.containsKey("brightness")) {
+            brightness = (doc["brightness"].as<float>() / 255.0f) * 100.0f;  // Convert 0-255 to 0-100
+        }
+        
+        // Handle color
+        if (doc.containsKey("color")) {
+            hsv["h"] = doc["color"]["h"];
+            hsv["s"] = doc["color"]["s"];
+            hsv["v"] = brightness;
+        } else {
+            // Just brightness change
+            hsv["v"] = brightness;
+        }
+    } else {
+        // Turn off
+        hsv["v"] = 0;
+    }
+    
+    root["cmd"] = "fade";
+    root["t"] = 500;  // 500ms transition
+    
+    // Process the command through your existing system
+    String error;
+    app.jsonproc.onColor(Json::serialize(root), error, false);
 }
