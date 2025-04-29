@@ -165,29 +165,48 @@ class LEDControllerAPIService : public mDNS::Service {
         Vector<String> _leadingGroups;
     };
 
-class LEDControllerWebService : public mDNS::Service {
-public:
-    LEDControllerWebService(const String& instance = "lightinator") 
-        : _instance(instance) {}
-    
-    void setInstance(const String& instance) {
-        _instance = instance;
-    }
-    
-    String getInstance() override { return _instance; }
-    String getName() override { return F("http"); }
-    Protocol getProtocol() override { return Protocol::Tcp; }
-    uint16_t getPort() override { return 80; }
-    
-    void addText(mDNS::Resource::TXT& txt) override {
-        txt.add(F("fn=LED Controller"));
-        txt.add(F("instance=") + _instance);
-    }
-    
-private:
-    String _instance;
-};
-
+    class LEDControllerWebService : public mDNS::Service {
+        public:
+            enum class HostType {
+                Device,  // Regular device hostname
+                Leader,  // Global leader (lightinator)
+                Group    // Group hostname
+            };
+        
+            LEDControllerWebService(const String& instance = "lightinator", HostType type = HostType::Device) 
+                : _instance(instance), _hostType(type) {}
+            
+            void setInstance(const String& instance) {
+                _instance = instance;
+            }
+            
+            String getInstance() override { return _instance; }
+            String getName() override { return F("http"); }
+            Protocol getProtocol() override { return Protocol::Tcp; }
+            uint16_t getPort() override { return 80; }
+            
+            void addText(mDNS::Resource::TXT& txt) override {
+                txt.add(F("fn=LED Controller"));
+                txt.add(F("instance=") + _instance);
+                
+                // Add type indicator
+                switch (_hostType) {
+                    case HostType::Device:
+                        txt.add(F("type=host"));
+                        break;
+                    case HostType::Leader:
+                        txt.add(F("type=leader"));
+                        break;
+                    case HostType::Group:
+                        txt.add(F("type=group"));
+                        break;
+                }
+            }
+            
+        private:
+            String _instance;
+            HostType _hostType;
+        };
 /**
  * @class mdnsHandler
  * @brief A class that handles mDNS (Multicast DNS) functionality.
@@ -284,6 +303,6 @@ private:
 
     // Service instances
     LEDControllerAPIService ledControllerAPIService;     // For API discovery
-    LEDControllerWebService deviceWebService;            // For hostname.local
+    std::unique_ptr<LEDControllerWebService> deviceWebService;            // For hostname.local
     std::unique_ptr<LEDControllerWebService> leaderWebService;   // For lightinator.local
 };

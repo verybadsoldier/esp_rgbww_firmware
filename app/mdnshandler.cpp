@@ -33,10 +33,7 @@ void mdnsHandler::start()
     debug_i("# mdns Handler initialized, Port: %d", MDNS_SOURCE_PORT);
     debug_i("########################################################");
     
-
-    checkGroupLeadership();
-
-    // Get device hostname from configuration
+    // Get device hostname from configuration first (moved up)
     String hostName;
     {
         AppConfig::Network network(*app.cfg);
@@ -46,19 +43,21 @@ void mdnsHandler::start()
             hostName = "lightinator-" + String(system_get_chip_id());
         }
         hostName = Util::sanitizeHostname(hostName);
-        
-        // Set up device web service with this hostname
-        deviceWebService.setInstance(hostName);
-        
-        // Initialize primary responder with device hostname
-        primaryResponder.begin(hostName.c_str());
-        debug_i("Registered hostname: %s", hostName.c_str());
-        
-        
-        // Add services to the primary responder
-        primaryResponder.addService(ledControllerAPIService);
-        primaryResponder.addService(deviceWebService);
     }
+    
+    // Create device web service with proper hostname
+    deviceWebService = std::make_unique<LEDControllerWebService>(hostName, 
+        LEDControllerWebService::HostType::Device);
+
+    checkGroupLeadership();
+    
+    // Initialize primary responder with device hostname
+    primaryResponder.begin(hostName.c_str());
+    debug_i("Registered hostname: %s", hostName.c_str());
+    
+    // Add services to the primary responder
+    primaryResponder.addService(ledControllerAPIService);
+    primaryResponder.addService(*deviceWebService);  // Note the * to dereference
     
     // Store global reference for API service
     g_ledControllerAPIService = &ledControllerAPIService;
@@ -146,14 +145,26 @@ bool mdnsHandler::onMessage(mDNS::Message& message)
         answer = message[mDNS::ResourceType::TXT];
         if (answer != nullptr) {
             mDNS::Resource::TXT txt(*answer);
+            
+            // Check for leader
             String isLeaderTxt = txt["isLeader"];
             if (isLeaderTxt == "1") {
                 _leaderDetected = true;
                 debug_i("Detected leader: %s", info.hostName.c_str());
             }
+            
+            // Get hostname type
+            String hostnameType = txt["type"];
+            
+            // Only add to host table if this is a device hostname
+            if (hostnameType == "host" || hostnameType.length() == 0) { // fallback for older devices
+                addHost(info.hostName, info.ipAddr.toString(), info.ttl, info.ID);
+            } else {
+                // For leader/group hostnames, just log them
+                debug_i("Detected %s hostname: %s (ID: %u)", 
+                     hostnameType.c_str(), info.hostName.c_str(), info.ID);
+            }
         }
-        
-        addHost(info.hostName, info.ipAddr.toString(), info.ttl, info.ID);
         return true;
     } else {
         return false;
@@ -208,29 +219,7 @@ void mdnsHandler::addHost(const String& hostname, const String& ip_address, int 
 {
     if(id == 1) return; // Invalid ID
 
-    // Check if this is a group hostname or the global leader hostname
-    bool isGroupOrLeaderHostname = (hostname == "lightinator");
-    
-    // Also check if hostname matches any of our currently led groups
-    for (const auto& groupId : _leadingGroups) {
-        AppData::Root::Groups groups(*app.data);
-        for (auto it = groups.begin(); it != groups.end(); ++it) {
-            if ((*it).getId() == groupId) {
-                String sanitizedGroupName = Util::sanitizeHostname((*it).getName());
-                if (hostname == sanitizedGroupName) {
-                    isGroupOrLeaderHostname = true;
-                    break;
-                }
-            }
-        }
-        if (isGroupOrLeaderHostname) break;
-    }
-    
-    // If this is a group or leader hostname update, only update IP address, not the hostname
-    if (isGroupOrLeaderHostname) {
-        debug_i("Group/leader hostname detected: %s (ID: %u) - only updating IP address", 
-                hostname.c_str(), id);
-    }
+    bool isGroupOrLeaderHostname = false;
 
 #ifdef DEBUG_MDNS
     debug_i("Adding host %s with IP %s and ttl %i", hostname.c_str(), ip_address.c_str(), ttl);
@@ -359,15 +348,15 @@ void mdnsHandler::becomeLeader() {
         g_ledControllerAPIService->setLeader(true);
         
         // Create new web service for the leader
-        leaderWebService = std::make_unique<LEDControllerWebService>("lightinator");
-        
+        leaderWebService = std::make_unique<LEDControllerWebService>("lightinator", 
+            LEDControllerWebService::HostType::Leader);        
         // Create new responder for "lightinator.local"
         leaderResponder = std::make_unique<mDNS::Responder>();
         leaderResponder->begin("lightinator");
         
         // Add services to the leader responder
         leaderResponder->addService(ledControllerAPIService);
-        leaderResponder->addService(*leaderWebService);
+        leaderResponder->addService(*leaderWebService);  // Note the * to dereference
         
         // Register the leader responder with mDNS server
         mDNS::server.addHandler(*leaderResponder);
@@ -533,8 +522,8 @@ void mdnsHandler::becomeGroupLeader(const String& groupId, const String& groupNa
     responder->begin(sanitizedName.c_str());
     
     // Create and set up web service for this group
-    auto webService = std::make_unique<LEDControllerWebService>(sanitizedName);
-    
+    auto webService = std::make_unique<LEDControllerWebService>(sanitizedName, 
+        LEDControllerWebService::HostType::Group);    
     // Add services to the responder
     responder->addService(ledControllerAPIService);
     responder->addService(*webService);
