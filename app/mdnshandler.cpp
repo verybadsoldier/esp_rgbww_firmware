@@ -109,10 +109,12 @@ bool mdnsHandler::onMessage(mDNS::Message& message)
 #ifdef DEBUG_MDNS
     debug_i("\nanswerName: %s\nsearchName: %s", answerName.c_str(), searchName.c_str());
 #endif
+    /*
     if(answerName != searchName) {
         //debug_i("Ignoring message: Name doesn't match");
         return false;
     }
+    */
 #ifdef DEBUG_MDNS
     debug_i("Found matching SRV record");
 #endif
@@ -155,6 +157,7 @@ bool mdnsHandler::onMessage(mDNS::Message& message)
             
             // Get hostname type
             String hostnameType = txt["type"];
+            if (hostnameType=="") hostnameType="undefined";
             debug_i("Hostname %s, type: %s",info.hostName.c_str(), hostnameType.c_str());
             // Only add to host table if this is a device hostname
             if (hostnameType == "host" || hostnameType.length() == 0) { // fallback for older devices
@@ -174,6 +177,7 @@ bool mdnsHandler::onMessage(mDNS::Message& message)
 void mdnsHandler::sendSearch()
 {
     static unsigned long lastLeaderCheck = 0;
+    static uint8_t queryIndex = 0;
     unsigned long now = millis();
 
     // Search for the service
@@ -181,6 +185,14 @@ void mdnsHandler::sendSearch()
 #ifdef DEBUG_MDNS
     debug_i("search('%s'): %s", service.c_str(), ok ? "OK" : "FAIL");
 #endif
+
+    // Query for known controllers directly to improve discovery
+    queryKnownControllers(queryIndex);
+    
+    // Increment index for next batch of controllers
+    queryIndex++;
+    if (queryIndex >= 5) queryIndex = 0;  // reset after covering all controllers in batches
+
 
     // Periodically check if there is still a leader in the network
     if (now - lastLeaderCheck > (_mdnsTimerInterval * LEADER_ELECTION_DELAY)) {
@@ -213,6 +225,70 @@ void mdnsHandler::sendSearchCb(void* pTimerArg) {
 #endif
     mdnsHandler* pThis = static_cast<mdnsHandler*>(pTimerArg);
     pThis->sendSearch();
+}
+
+/**
+ * @brief Query known controllers directly to improve discovery reliability
+ * 
+ * This method reads the persistent storage to find controllers that have been
+ * discovered before and sends direct mDNS queries for them, rather than just
+ * waiting to discover them through service announcements.
+ * 
+ * @param batchIndex Which subset of controllers to query (to avoid congestion)
+ */
+void mdnsHandler::queryKnownControllers(uint8_t batchIndex) 
+{
+    // Access the controllers from persistent storage
+    AppData::Root::Controllers controllers(*app.data);
+    
+    // Get total count of controllers to determine batch size
+    size_t totalControllers = 0;
+    for (auto it = controllers.begin(); it != controllers.end(); ++it) {
+        totalControllers++;
+    }
+    
+    if (totalControllers == 0) {
+        return; // No controllers to query
+    }
+    
+    // Calculate how many controllers to query per batch (5 batches total)
+    // Always at least 1, at most 20% of total controllers per batch
+    size_t batchSize = max((size_t)1, totalControllers / 5);
+    
+    // Calculate which range of controllers to query in this batch
+    size_t startIndex = batchIndex * batchSize;
+    size_t endIndex = min(startIndex + batchSize, totalControllers);
+    
+    // Don't go beyond the end of the list
+    if (startIndex >= totalControllers) {
+        return;
+    }
+    
+    debug_i("Querying known controllers (batch %d/%d, range %d-%d of %d)", 
+           batchIndex+1, 5, startIndex+1, endIndex, totalControllers);
+    
+    // Iterate through controllers and send queries for those in this batch
+    size_t currentIndex = 0;
+    for (auto it = controllers.begin(); it != controllers.end(); ++it, ++currentIndex) {
+        // Skip controllers not in this batch
+        if (currentIndex < startIndex || currentIndex >= endIndex) {
+            continue;
+        }
+        
+        String hostname = (*it).getName();
+        String hostname_local = hostname + ".local";
+        
+        // Query for this host using standard search with PTR type
+        // Note: Directly querying A records isn't supported in this version
+        mDNS::server.search(hostname_local.c_str(), mDNS::ResourceType::PTR);
+        
+        // Also search for the API service
+        String api_service = "esprgbwwAPI._http._tcp.local";
+        // Need to use proper search method - can't pass hostname as second param
+        mDNS::server.search(api_service, mDNS::ResourceType::PTR);
+        
+        debug_i("Querying for controller: %s", hostname.c_str());
+    }
 }
 
 void mdnsHandler::addHost(const String& hostname, const String& ip_address, int ttl, unsigned int id)
