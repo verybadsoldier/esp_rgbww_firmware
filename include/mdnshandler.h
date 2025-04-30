@@ -198,6 +198,7 @@ class LEDControllerAPIService : public mDNS::Service {
             void addText(mDNS::Resource::TXT& txt) override {
                 txt.add(F("fn=LED Controller"));
                 txt.add(F("instance=") + _instance);
+                txt.add("id=" + String(system_get_chip_id()));
                 
                 // Add type indicator
                 switch (_hostType) {
@@ -316,4 +317,11 @@ private:
     LEDControllerAPIService ledControllerAPIService;     // For API discovery
     std::unique_ptr<LEDControllerWebService> deviceWebService;            // For hostname.local
     std::unique_ptr<LEDControllerWebService> leaderWebService;   // For lightinator.local
+    // Hostname resolution handling
+    std::map<String, String> _pendingHostnameResolutions;
+
+    // Process different types of mDNS responses
+    bool processApiServiceResponse(mDNS::Message& message);
+    bool processHostnameARecord(mDNS::Message& message, mDNS::Answer* a_answer);
+    bool processHostnameResponse(mDNS::Message& message, const String& hostname);
 };
