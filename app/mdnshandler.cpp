@@ -4,7 +4,7 @@
 #include "application.h"
 #include "app-data.h"
 
-//#define DEBUG_MDNS 1
+#define DEBUG_MDNS 1
 
 // Global pointer for leader service updates from other components
 static LEDControllerAPIService* g_ledControllerAPIService = nullptr;
@@ -97,24 +97,48 @@ bool mdnsHandler::onMessage(mDNS::Message& message)
         return false;
     }
 
-    auto answer = message[mDNS::ResourceType::SRV];
-    if(answer == nullptr) {
+    auto srv_answer = message[mDNS::ResourceType::SRV];
+    if(srv_answer == nullptr) {
 #ifdef DEBUG_MDNS
-        debug_i("Ignoring message: no SRV record");
+        debug_i("No SRV record in this message");
 #endif
+        // Let's check if this is a direct A record response without SRV
+        auto a_answer = message[mDNS::ResourceType::A]; 
+        if(a_answer != nullptr) {
+            // Process hostname A record response
+            return processHostnameARecord(message, a_answer);
+        }
         return false;
     }
     
-    String answerName = String(answer->getName());
+    String answerName = String(srv_answer->getName());
 #ifdef DEBUG_MDNS
     debug_i("\nanswerName: %s\nsearchName: %s", answerName.c_str(), searchName.c_str());
 #endif
-    /*
-    if(answerName != searchName) {
-        //debug_i("Ignoring message: Name doesn't match");
-        return false;
+    
+    // Check if this is an API service response or a hostname response
+    if(answerName == searchName) {
+        // This is an API service response - process as before
+        return processApiServiceResponse(message);
+    } else if(answerName.endsWith("._http._tcp.local")) {
+        // This is likely a hostname response
+        String hostname = answerName.substring(0, answerName.indexOf("._http._tcp.local"));
+        debug_i("Processing hostname response for: %s", hostname.c_str());
+        
+        // Extract hostname data from the message
+        return processHostnameResponse(message, hostname);
     }
-    */
+    
+    // Not a response we're interested in
+    return false;
+}
+
+// Process API service responses (existing logic)
+bool mdnsHandler::processApiServiceResponse(mDNS::Message& message) 
+{
+    using namespace mDNS;
+    bool msgHasA = false, msgHasTXT = false;
+    
 #ifdef DEBUG_MDNS
     debug_i("Found matching SRV record");
 #endif
@@ -127,7 +151,7 @@ bool mdnsHandler::onMessage(mDNS::Message& message)
         unsigned int ID;
     } info;
 
-    answer = message[mDNS::ResourceType::A];
+    auto answer = message[mDNS::ResourceType::A];
     if(answer != nullptr) {
         info.hostName = String(answer->getName());
         info.hostName = info.hostName.substring(0, info.hostName.lastIndexOf(".local"));
@@ -158,7 +182,8 @@ bool mdnsHandler::onMessage(mDNS::Message& message)
             // Get hostname type
             String hostnameType = txt["type"];
             if (hostnameType=="") hostnameType="undefined";
-            debug_i("Hostname %s, type: %s",info.hostName.c_str(), hostnameType.c_str());
+            debug_i("Hostname %s, type: %s", info.hostName.c_str(), hostnameType.c_str());
+            
             // Only add to host table if this is a device hostname
             if (hostnameType == "host" || hostnameType.length() == 0) { // fallback for older devices
                 addHost(info.hostName, info.ipAddr.toString(), info.ttl, info.ID);
@@ -174,6 +199,109 @@ bool mdnsHandler::onMessage(mDNS::Message& message)
     }
 }
 
+// Process hostname A record responses
+bool mdnsHandler::processHostnameARecord(mDNS::Message& message, mDNS::Answer* a_answer) {    using namespace mDNS;
+    
+    // Extract hostname from A record
+    String hostname = String(a_answer->getName());
+    
+    // Remove .local suffix if present
+    if (hostname.endsWith(".local")) {
+        hostname = hostname.substring(0, hostname.lastIndexOf(".local"));
+    }
+    
+    // Get IP address from A record
+    String ipAddress = String(a_answer->getRecordString());
+    unsigned int ttl = a_answer->getTtl();
+    
+    debug_i("Got A record for hostname: %s, IP: %s", hostname.c_str(), ipAddress.c_str());
+    
+    // Look up ID by hostname in our persistent controller database
+    unsigned int controllerId = 0;
+    AppData::Root::Controllers controllers(*app.data);
+    
+    for (auto it = controllers.begin(); it != controllers.end(); ++it) {
+        String storedName = (*it).getName();
+        
+        // Case-insensitive comparison
+        if (hostname.equalsIgnoreCase(storedName)) {
+            controllerId = (*it).getId().toInt();
+            debug_i("Found matching controller ID: %u", controllerId);
+            break;
+        }
+    }
+    
+    // Only process if we found the controller ID
+    if (controllerId > 0) {
+        addHost(hostname, ipAddress, ttl, controllerId);
+        return true;
+    }
+    
+    // Save this information for later matching with TXT records
+    _pendingHostnameResolutions[hostname] = ipAddress;
+    debug_i("Hostname stored for later ID resolution: %s", hostname.c_str());
+    
+    return false; // Not fully processed yet
+}
+
+// Process hostname responses with potential SRV records
+bool mdnsHandler::processHostnameResponse(mDNS::Message& message, const String& hostname) 
+{
+    using namespace mDNS;
+    
+    // Get A record if available
+    auto a_answer = message[mDNS::ResourceType::A];
+    String ipAddress;
+    unsigned int ttl = 60; // Default TTL
+    
+    if (a_answer != nullptr) {
+        ipAddress = String(a_answer->getRecordString());
+        ttl = a_answer->getTtl();
+        debug_i("Hostname IP address: %s (TTL: %u)", ipAddress.c_str(), ttl);
+    } else {
+        // No A record, can't proceed
+        return false;
+    }
+    
+    // Try to get TXT record for ID
+    auto txt_answer = message[mDNS::ResourceType::TXT];
+    unsigned int controllerId = 0;
+    
+    if (txt_answer != nullptr) {
+        mDNS::Resource::TXT txt(*txt_answer);
+        controllerId = txt["id"].toInt();
+        debug_i("Found controller ID in TXT record: %u", controllerId);
+    }
+    
+    // If we have an ID, add the host
+    if (controllerId > 0) {
+        addHost(hostname, ipAddress, ttl, controllerId);
+        return true;
+    }
+    
+    // If no ID in TXT, look it up by hostname
+    AppData::Root::Controllers controllers(*app.data);
+    for (auto it = controllers.begin(); it != controllers.end(); ++it) {
+        String storedName = (*it).getName();
+        
+        // Case-insensitive comparison
+        if (hostname.equalsIgnoreCase(storedName)) {
+            controllerId = (*it).getId().toInt();
+            debug_i("Found matching controller by name: %u", controllerId);
+            break;
+        }
+    }
+    
+    // If found by name lookup, add host
+    if (controllerId > 0) {
+        addHost(hostname, ipAddress, ttl, controllerId);
+        return true;
+    }
+    
+    // Save for later resolution
+    _pendingHostnameResolutions[hostname] = ipAddress;
+    return false;
+}
 void mdnsHandler::sendSearch()
 {
     static unsigned long lastLeaderCheck = 0;
