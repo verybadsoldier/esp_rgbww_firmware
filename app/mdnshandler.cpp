@@ -271,39 +271,25 @@ bool mdnsHandler::processHostnameResponse(mDNS::Message& message, const String& 
     if (txt_answer != nullptr) {
         mDNS::Resource::TXT txt(*txt_answer);
         controllerId = txt["id"].toInt();
-        debug_i("Found controller ID in TXT record: %u", controllerId);
-        controllerType=txt["type"];
-    }
-    
-    // If we have an ID, add the host
-    if (controllerId > 0 && controllerType == "host") {
-        addHost(hostname, ipAddress, ttl, controllerId);
-        return true;
-    }
-    
-    // If no ID in TXT, look it up by hostname
-    AppData::Root::Controllers controllers(*app.data);
-    for (auto it = controllers.begin(); it != controllers.end(); ++it) {
-        String storedName = (*it).getName();
+        controllerType = txt["type"];
+        debug_i("Found controller ID: %u, type: %s", controllerId, controllerType.c_str());
         
-        // Case-insensitive comparison
-        if (hostname.equalsIgnoreCase(storedName)) {
-            controllerId = (*it).getId().toInt();
-            debug_i("Found matching controller by name: %u", controllerId);
-            break;
+        // If we have an ID and it's a host type, add the host
+        if (controllerId > 0 && controllerType == "host") {
+            addHost(hostname, ipAddress, ttl, controllerId);
+            return true;
+        } else if (controllerId > 0) {
+            // Log but don't add non-host entries
+            debug_i("Ignoring non-host entry: %s (ID: %u, type: %s)",
+                   hostname.c_str(), controllerId, controllerType.c_str());
         }
     }
     
-    // If found by name lookup, add host
-    if (controllerId > 0) {
-        addHost(hostname, ipAddress, ttl, controllerId);
-        return true;
-    }
-    
-    // Save for later resolution
-    _pendingHostnameResolutions[hostname] = ipAddress;
+    // No valid TXT record or not a host type - don't fall back to hostname lookup
+    debug_i("No valid host TXT record found for %s - ignoring", hostname.c_str());
     return false;
 }
+
 void mdnsHandler::sendSearch()
 {
     static unsigned long lastLeaderCheck = 0;
