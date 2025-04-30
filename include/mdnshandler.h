@@ -310,6 +310,7 @@ private:
     // Discovery methods
     static void sendSearchCb(void* pTimerArg);
     void sendSearch();
+    void queryKnownControllers(uint8_t batchIndex);
 
     // Service instances
     LEDControllerAPIService ledControllerAPIService;     // For API discovery
