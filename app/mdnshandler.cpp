@@ -248,6 +248,7 @@ bool mdnsHandler::processHostnameARecord(mDNS::Message& message, mDNS::Answer* a
 bool mdnsHandler::processHostnameResponse(mDNS::Message& message, const String& hostname) 
 {
     using namespace mDNS;
+    String controllerType;
     
     // Get A record if available
     auto a_answer = message[mDNS::ResourceType::A];
@@ -271,10 +272,11 @@ bool mdnsHandler::processHostnameResponse(mDNS::Message& message, const String& 
         mDNS::Resource::TXT txt(*txt_answer);
         controllerId = txt["id"].toInt();
         debug_i("Found controller ID in TXT record: %u", controllerId);
+        controllerType=txt["type"];
     }
     
     // If we have an ID, add the host
-    if (controllerId > 0) {
+    if (controllerId > 0 && controllerType == "host") {
         addHost(hostname, ipAddress, ttl, controllerId);
         return true;
     }
