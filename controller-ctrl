@@ -1,0 +1,547 @@
+#!/usr/bin/env python3
+
+import sys
+import requests
+import json
+import subprocess
+import platform
+import argparse
+from tabulate import tabulate
+from urllib.parse import urlparse
+import collections
+import time
+import socket
+
+try:
+    from zeroconf import ServiceBrowser, Zeroconf
+except ImportError:
+    print("zeroconf package not found. Run 'pip install zeroconf' to enable automatic controller discovery.")
+    HAS_ZEROCONF = False
+else:
+    HAS_ZEROCONF = True
+
+# mDNS service type to look for
+SERVICE_TYPE = "_http._tcp.local."
+CONTROLLER_SERVICE_TYPE = "esprgbwwAPI._http._tcp.local."
+
+class ControllerListener:
+    def __init__(self):
+        self.controllers = []
+    
+    def add_service(self, zeroconf, type, name):
+        info = zeroconf.get_service_info(type, name)
+        if info:
+            hostname = info.server.rstrip('.')
+            ip = socket.inet_ntoa(info.addresses[0]) if info.addresses else None
+            port = info.port
+            
+            # Check if this is an LED controller
+            if b'id' in info.properties:
+                controller_id = info.properties[b'id'].decode('utf-8')
+                print(f"Found controller: {hostname} ({ip}:{port}), ID: {controller_id}")
+                self.controllers.append({
+                    'id': controller_id,
+                    'hostname': hostname,
+                    'ip': ip,
+                    'port': port
+                })
+
+def find_controllers_via_mdns(timeout=5):
+    """Find controllers using mDNS/Zeroconf."""
+    if not HAS_ZEROCONF:
+        print("mDNS discovery requires the zeroconf package. Install with 'pip install zeroconf'")
+        return []
+    
+    print(f"Discovering controllers via mDNS ({timeout} seconds)...")
+    zeroconf = Zeroconf()
+    listener = ControllerListener()
+    browser = ServiceBrowser(zeroconf, CONTROLLER_SERVICE_TYPE, listener)
+    
+    # Wait for discovery
+    time.sleep(timeout)
+    
+    zeroconf.close()
+    return listener.controllers
+
+def ping_host(host):
+    """Check if host is pingable."""
+    param = '-n' if platform.system().lower() == 'windows' else '-c'
+    command = ['ping', param, '1', '-W', '1', host]
+    try:
+        return subprocess.call(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL) == 0
+    except:
+        return False
+
+def ensure_url(address):
+    """Convert an address to a full URL if needed."""
+    if not address.startswith("http://") and not address.startswith("https://"):
+        return f"http://{address}"
+    return address
+
+def normalize_controller_name(name):
+    """Normalize controller names for comparison."""
+    if not name:
+        return ""
+    return name.lower().strip()
+
+def get_controller_data(controller_url):
+    """Fetch /hosts and /data from a controller, properly parse JSON structures."""
+    host_controllers = []
+    data_controllers = []
+    
+    try:
+        # Get /hosts endpoint - array of currently visible hosts
+        hosts_response = requests.get(f"{controller_url}/hosts", timeout=5)
+        if hosts_response.status_code == 200:
+            hosts_data = hosts_response.json()
+            if 'hosts' in hosts_data:
+                host_controllers = hosts_data['hosts']
+                print(f"Found {len(host_controllers)} controllers in /hosts response")
+        
+        # Get /data endpoint - contains controllers ever discovered
+        data_response = requests.get(f"{controller_url}/data", timeout=5)
+        if data_response.status_code == 200:
+            data = data_response.json()
+            if 'controllers' in data:
+                data_controllers = data['controllers']
+                print(f"Found {len(data_controllers)} controllers in /data response")
+                
+        return host_controllers, data_controllers
+        
+    except Exception as e:
+        print(f"Error querying {controller_url}: {e}")
+        return [], []
+
+def get_controller_firmware(controller_url):
+    """Fetch firmware information from a controller using the /info endpoint."""
+    try:
+        response = requests.get(f"{controller_url}/info", timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            return {
+                'firmware_version': data.get('git_version', 'Unknown'),
+                'build_type': data.get('build_type', 'Unknown'),
+                'sming_version': data.get('sming', 'Unknown'),
+                'webapp_version': data.get('webapp_version', 'Unknown'),
+                'git_date': data.get('git_date', 'Unknown'),
+                'ip_address': data.get('connection', {}).get('ip', 'Unknown'),
+                'hostname': data.get('hostname', 'Unknown'),
+                'deviceid': data.get('deviceid', 'Unknown')
+            }
+    except Exception as e:
+        print(f"Error getting firmware info from {controller_url}: {e}")
+    
+    return {
+        'firmware_version': 'Error',
+        'build_type': 'Error',
+        'sming_version': 'Error',
+        'webapp_version': 'Error',
+        'git_date': 'Error',
+        'ip_address': 'Error',
+        'hostname': 'Error',
+        'deviceid': 'Error'
+    }
+
+class ControllerNetwork:
+    def __init__(self, start_controller):
+        self.start_controller = ensure_url(start_controller)
+        self.controllers = {}  # {id: controller_data}
+        self.visibility_matrix = {}  # {controller_id: {visible_controller_id: visibility_type}}
+        self.processed_urls = set()
+        self.to_process = collections.deque([self.start_controller])
+        self.firmware_info = {}  # {controller_id: firmware_data}
+    
+    def discover(self, get_firmware=False):
+        """Discover all controllers and build the visibility matrix."""
+        while self.to_process:
+            current_url = self.to_process.popleft()
+            if current_url in self.processed_urls:
+                continue
+                
+            print(f"\nQuerying {current_url}...")
+            self.processed_urls.add(current_url)
+            
+            # Parse the URL to get the hostname
+            parsed_url = urlparse(current_url)
+            hostname = parsed_url.netloc.split(':')[0]
+            base_hostname = hostname.split('.')[0]
+            
+            # Try different domain suffixes if needed
+            urls_to_try = [current_url]
+            if '.' not in hostname:
+                urls_to_try.extend([
+                    f"http://{base_hostname}.local",
+                    f"http://{base_hostname}.fritz.box"
+                ])
+            
+            # Query controller endpoints
+            host_controllers = []
+            data_controllers = []
+            responding_url = None
+            
+            for url in urls_to_try:
+                try:
+                    h_controllers, d_controllers = get_controller_data(url)
+                    if h_controllers or d_controllers:
+                        host_controllers = h_controllers
+                        data_controllers = d_controllers
+                        responding_url = url
+                        
+                        # Get firmware info if requested
+                        if get_firmware:
+                            firmware_data = get_controller_firmware(url)
+                            if firmware_data:
+                                current_controller_id = self._identify_current_controller(
+                                    base_hostname, host_controllers, data_controllers)
+                                self.firmware_info[current_controller_id] = firmware_data
+                                
+                        break
+                except:
+                    continue
+            
+            if not responding_url:
+                print(f"Could not get data from {current_url} or its variants")
+                continue
+            
+            # Identify the current controller from data
+            current_controller_id = self._identify_current_controller(
+                base_hostname, host_controllers, data_controllers)
+            
+            # Process /hosts response - these are currently visible controllers
+            visible_controllers = set()
+            for host in host_controllers:
+                controller_id = host.get('id')
+                if not controller_id:
+                    continue
+                
+                # Add controller to our list
+                self._add_or_update_controller(
+                    controller_id, 
+                    hostname=host.get('hostname'),
+                    ip_address=host.get('ip_address')
+                )
+                
+                # Mark visibility relationship
+                self._add_visibility(current_controller_id, controller_id, "currently_visible")
+                visible_controllers.add(controller_id)
+                
+                # Add to processing queue
+                if controller_id in self.controllers:
+                    controller = self.controllers[controller_id]
+                    new_urls = [
+                        f"http://{controller['hostname']}.fritz.box",
+                        f"http://{controller['hostname']}.local"
+                    ]
+                    if controller.get('ip_address'):
+                        new_urls.append(f"http://{controller['ip_address']}")
+                    
+                    for new_url in new_urls:
+                        if new_url not in self.processed_urls and new_url not in self.to_process:
+                            self.to_process.append(new_url)
+            
+            # Process /data.controllers - controllers ever discovered
+            for controller in data_controllers:
+                controller_id = controller.get('id')
+                if not controller_id:
+                    continue
+                
+                # Add controller to our list
+                self._add_or_update_controller(
+                    controller_id, 
+                    name=controller.get('name'),
+                    ip_address=controller.get('ip-address')  # Note the hyphen
+                )
+                
+                # Mark visibility relationship
+                if controller_id not in visible_controllers:
+                    self._add_visibility(current_controller_id, controller_id, "historically_visible")
+    
+    def get_all_firmware_versions(self):
+        """Get firmware version for all discovered and accessible controllers."""
+        firmware_data = []
+        
+        # Try to get firmware info for controllers with IP addresses
+        for controller_id, data in self.controllers.items():
+            if not data.get('ip_address'):
+                continue
+                
+            if not data.get('alive', False):
+                firmware_data.append({
+                    'id': controller_id,
+                    'hostname': data.get('hostname', 'Unknown'),
+                    'ip_address': data.get('ip_address', 'Unknown'),
+                    'firmware_version': 'Offline',
+                    'build_type': 'N/A',
+                    'sming_version': 'N/A',
+                    'webapp_version': 'N/A'
+                })
+                continue
+                
+            if controller_id in self.firmware_info:
+                # We already have firmware info
+                info = self.firmware_info[controller_id]
+                firmware_data.append({
+                    'id': controller_id,
+                    'hostname': data.get('hostname', info.get('hostname', 'Unknown')),
+                    'ip_address': data.get('ip_address', info.get('ip_address', 'Unknown')),
+                    'firmware_version': info.get('firmware_version', 'Unknown'),
+                    'build_type': info.get('build_type', 'Unknown'),
+                    'sming_version': info.get('sming_version', 'Unknown'),
+                    'webapp_version': info.get('webapp_version', 'Unknown')
+                })
+                continue
+                
+            # Try to get firmware info
+            controller_url = f"http://{data.get('ip_address')}"
+            try:
+                firmware_info = get_controller_firmware(controller_url)
+                self.firmware_info[controller_id] = firmware_info
+                
+                firmware_data.append({
+                    'id': controller_id,
+                    'hostname': data.get('hostname', firmware_info.get('hostname', 'Unknown')),
+                    'ip_address': data.get('ip_address', firmware_info.get('ip_address', 'Unknown')),
+                    'firmware_version': firmware_info.get('firmware_version', 'Unknown'),
+                    'build_type': firmware_info.get('build_type', 'Unknown'),
+                    'sming_version': firmware_info.get('sming_version', 'Unknown'),
+                    'webapp_version': firmware_info.get('webapp_version', 'Unknown')
+                })
+            except Exception as e:
+                print(f"Error getting firmware info for {controller_url}: {e}")
+                firmware_data.append({
+                    'id': controller_id,
+                    'hostname': data.get('hostname', 'Unknown'),
+                    'ip_address': data.get('ip_address', 'Unknown'),
+                    'firmware_version': 'Error',
+                    'build_type': 'Error',
+                    'sming_version': 'Error',
+                    'webapp_version': 'Error'
+                })
+        
+        return firmware_data
+    
+    def _identify_current_controller(self, hostname, host_controllers, data_controllers):
+        """Identify the current controller ID from available data."""
+        hostname_lower = normalize_controller_name(hostname)
+        
+        # Try to find in data controllers by name
+        for controller in data_controllers:
+            controller_name = normalize_controller_name(controller.get('name'))
+            if controller_name == hostname_lower:
+                return controller.get('id')
+        
+        # Try to find in host controllers by hostname
+        for controller in host_controllers:
+            controller_hostname = normalize_controller_name(controller.get('hostname'))
+            if controller_hostname == hostname_lower:
+                return controller.get('id')
+        
+        # Generate a temporary ID
+        return f"temp-{hostname}"
+    
+    def _add_or_update_controller(self, controller_id, **kwargs):
+        """Add a new controller or update an existing one."""
+        if controller_id not in self.controllers:
+            # New controller
+            controller = {
+                'id': controller_id,
+                'hostname': kwargs.get('hostname') or kwargs.get('name'),
+                'ip_address': kwargs.get('ip_address'),
+                'alive': False
+            }
+            
+            # Check if controller is alive
+            if controller['ip_address']:
+                controller['alive'] = ping_host(controller['ip_address'])
+                status = 'Alive' if controller['alive'] else 'No response'
+                print(f"Pinging {controller['hostname']} ({controller['ip_address']}): {status}")
+            
+            self.controllers[controller_id] = controller
+        else:
+            # Update existing controller
+            controller = self.controllers[controller_id]
+            
+            # Update hostname if we have a new one
+            if kwargs.get('hostname') and not controller.get('hostname'):
+                controller['hostname'] = kwargs.get('hostname')
+            elif kwargs.get('name') and not controller.get('hostname'):
+                controller['hostname'] = kwargs.get('name')
+            
+            # Update IP address if we have a new one
+            if kwargs.get('ip_address') and not controller.get('ip_address'):
+                controller['ip_address'] = kwargs.get('ip_address')
+                # Ping if we just discovered the IP address
+                controller['alive'] = ping_host(controller['ip_address'])
+    
+    def _add_visibility(self, source_id, target_id, visibility_type):
+        """Add a visibility relationship between controllers."""
+        if source_id not in self.visibility_matrix:
+            self.visibility_matrix[source_id] = {}
+        
+        # Only update if new visibility is better than existing
+        if target_id not in self.visibility_matrix[source_id]:
+            self.visibility_matrix[source_id][target_id] = visibility_type
+        elif (visibility_type == "currently_visible" and 
+              self.visibility_matrix[source_id][target_id] == "historically_visible"):
+            self.visibility_matrix[source_id][target_id] = visibility_type
+    
+    def print_controller_list(self):
+        """Print a list of all discovered controllers."""
+        table_data = []
+        for controller_id, data in self.controllers.items():
+            status = "✓ Online" if data.get('alive', False) else "✗ Offline"
+            table_data.append([
+                controller_id, 
+                data.get('hostname', 'Unknown'),
+                data.get('ip_address', 'Unknown'),
+                status
+            ])
+        
+        # Sort by hostname
+        table_data.sort(key=lambda x: x[1])
+        
+        print(tabulate(table_data, 
+                      headers=["ID", "Hostname", "IP Address", "Status"],
+                      tablefmt="grid"))
+    
+    def print_firmware_versions(self):
+        """Print firmware versions of all controllers."""
+        firmware_data = self.get_all_firmware_versions()
+        
+        if not firmware_data:
+            print("No firmware information available.")
+            return
+            
+        table_data = []
+        for item in firmware_data:
+            table_data.append([
+                item['hostname'],
+                item['ip_address'],
+                item['firmware_version'],
+                item['build_type'],
+                item['sming_version'],
+                item['webapp_version']
+            ])
+            
+        # Sort by hostname
+        table_data.sort(key=lambda x: x[0])
+        
+        print(tabulate(table_data,
+                      headers=["Hostname", "IP Address", "Firmware", "Build Type", "Sming", "Webapp"],
+                      tablefmt="grid"))
+
+    def print_visibility_matrix(self):
+        """Print the controller visibility matrix."""
+        if not self.visibility_matrix:
+            print("No visibility data collected.")
+            return
+        
+        # Sort controllers by hostname for readability
+        controller_ids = sorted(self.controllers.keys(), 
+                               key=lambda k: self.controllers[k].get('hostname', ''))
+        
+        # Prepare table data
+        table_data = []
+        for row_id in controller_ids:
+            row_controller = self.controllers[row_id]
+            row_name = row_controller.get('hostname', 'Unknown')
+            
+            if not row_controller.get('alive', False):
+                row_name += " (✗)"
+                
+            row = [row_name]
+            
+            for col_id in controller_ids:
+                if row_id == col_id:
+                    # Can't see itself
+                    cell = "-"
+                elif col_id in self.visibility_matrix.get(row_id, {}):
+                    # This controller sees the column controller
+                    visibility = self.visibility_matrix[row_id][col_id]
+                    cell = "*" if visibility == "currently_visible" else "(*)"
+                else:
+                    # Not visible
+                    cell = ""
+                row.append(cell)
+                
+            table_data.append(row)
+        
+        # Add headers
+        headers = ["Controller"]
+        for col_id in controller_ids:
+            col_name = self.controllers[col_id].get('hostname', 'Unknown')
+            if not self.controllers[col_id].get('alive', False):
+                col_name += " (✗)"
+            headers.append(col_name)
+        
+        # Print table
+        print(tabulate(table_data, headers=headers, tablefmt="grid"))
+
+def get_starting_controller(controller_arg):
+    """Get starting controller URL from argument or mDNS discovery."""
+    if controller_arg:
+        return controller_arg
+    
+    # Try to discover controllers via mDNS
+    controllers = find_controllers_via_mdns()
+    if controllers:
+        # Use the first discovered controller
+        controller = controllers[0]
+        if controller.get('port') == 80:
+            return f"http://{controller['hostname']}"
+        else:
+            return f"http://{controller['hostname']}:{controller['port']}"
+            
+    print("No controllers found via mDNS. Please specify a controller.")
+    sys.exit(1)
+
+def main():
+    parser = argparse.ArgumentParser(description="Controller management tool")
+    parser.add_argument("command", choices=["discover", "firmware"], 
+                        help="Command to execute")
+    parser.add_argument("controller", nargs="?", 
+                        help="Starting controller hostname or IP (optional if mDNS is available)")
+    
+    args = parser.parse_args()
+    
+    start_controller = get_starting_controller(args.controller)
+    print(f"Using controller: {start_controller}")
+    
+    if args.command == "discover":
+        print("Starting full network discovery...")
+        print("This may take a few minutes as we discover and ping all controllers...")
+        
+        start_time = time.time()
+        
+        network = ControllerNetwork(start_controller)
+        network.discover()
+        
+        elapsed_time = time.time() - start_time
+        
+        print(f"\nDiscovery completed in {elapsed_time:.1f} seconds")
+        print(f"Found {len(network.controllers)} unique controllers\n")
+        
+        print("Controller List:")
+        network.print_controller_list()
+        
+        print("\nController Visibility Matrix:")
+        network.print_visibility_matrix()
+        
+        print("\nLegend:")
+        print("  *   - Controller is currently visible (/hosts response)")
+        print("  (*) - Controller is historically visible (/data.controllers response)")
+        print("  -   - Same controller (self)")
+        print("  (✗) - Controller is offline (ping failed)")
+        print("  [empty] - Not visible by this controller")
+        
+    elif args.command == "firmware":
+        print("Collecting firmware versions...")
+        
+        network = ControllerNetwork(start_controller)
+        network.discover(get_firmware=True)
+        
+        print("\nFirmware Versions:")
+        network.print_firmware_versions()
+
+if __name__ == "__main__":
+    main()
