@@ -36,16 +36,16 @@ namespace Util {
             result.remove(result.length() - 1, 1);
         }
         
-        // Ensure we have a valid hostname
-        if (result.length() == 0) {
-            result = "lightinator"; // Default name if everything was filtered out
+        // Same for spaces
+        while (result.length() > 0 && result[0] == ' ') {
+            result.remove(0, 1);
         }
         
-        // Trim to valid DNS hostname length (63 characters max)
-        if (result.length() > 63) {
-            result = result.substring(0, 63);
+        while (result.length() > 0 && result[result.length() - 1] == ' ') {
+            result.remove(result.length() - 1, 1);
         }
-        
+
+
                 // Common character mappings by language group
         
         // German
@@ -101,6 +101,16 @@ namespace Util {
                 c == '-')) {
                 result.remove(i, 1);
             }
+        }
+
+        // Ensure we have a valid hostname
+        if (result.length() == 0) {
+            result = "lightinator"; // Default name if everything was filtered out
+        }
+        
+        // Trim to valid DNS hostname length (63 characters max)
+        if (result.length() > 63) {
+            result = result.substring(0, 63);
         }
         
         return result;
