@@ -3,6 +3,9 @@
 #include <RGBWWCtrl.h>
 #include "application.h"
 #include "app-data.h"
+#include <Network/Http/HttpRequest.h>
+#include <Network/Http/HttpClient.h>
+
 
 #define DEBUG_MDNS 1
 
@@ -74,9 +77,13 @@ void mdnsHandler::start()
     _mdnsSearchTimer.setCallback(mdnsHandler::sendSearchCb, this);
     _mdnsSearchTimer.setIntervalMs(_mdnsTimerInterval);
     _mdnsSearchTimer.startOnce();
+
+    _pingTimer.setCallback(mdnsHandler::pingAllControllersCb, this);
+    _pingTimer.setIntervalMs(60000); // 1 minute interval
+    _pingTimer.startOnce();
     
-    // Register handlers with mDNS server
-    mDNS::server.addHandler(*this);
+    // Register handlers with mDNS server#include <HttpClient.h>
+
     mDNS::server.addHandler(primaryResponder);
     debug_i("mDNS server started");
 }
@@ -185,7 +192,7 @@ bool mdnsHandler::processApiServiceResponse(mDNS::Message& message)
             debug_i("Hostname %s, type: %s", info.hostName.c_str(), hostnameType.c_str());
             
             // Only add to host table if this is a device hostname
-            if (hostnameType == "host" || hostnameType.length() == 0) { // fallback for older devices
+            if (hostnameType == "host") {
                 addHost(info.hostName, info.ipAddr.toString(), info.ttl, info.ID);
             } else {
                 // For leader/group hostnames, just log them
@@ -200,7 +207,8 @@ bool mdnsHandler::processApiServiceResponse(mDNS::Message& message)
 }
 
 // Process hostname A record responses
-bool mdnsHandler::processHostnameARecord(mDNS::Message& message, mDNS::Answer* a_answer) {    using namespace mDNS;
+bool mdnsHandler::processHostnameARecord(mDNS::Message& message, mDNS::Answer* a_answer) {    
+    using namespace mDNS;
     
     // Extract hostname from A record
     String hostname = String(a_answer->getName());
@@ -316,7 +324,6 @@ void mdnsHandler::sendSearch()
         
         // Reset leader detection status
         _leaderDetected = false;
-        
         // If we're currently not a leader, schedule a check after the next search cycle
         if (!_isLeader) {
             _leaderElectionTimer.startOnce();
@@ -370,40 +377,40 @@ void mdnsHandler::queryKnownControllers(uint8_t batchIndex)
     // Calculate how many controllers to query per batch (5 batches total)
     // Always at least 1, at most 20% of total controllers per batch
     size_t batchSize = max((size_t)1, totalControllers / 5);
+    size_t startIdx = batchIndex * batchSize;
+    size_t endIdx = min(startIdx + batchSize, totalControllers);
     
-    // Calculate which range of controllers to query in this batch
-    size_t startIndex = batchIndex * batchSize;
-    size_t endIndex = min(startIndex + batchSize, totalControllers);
-    
-    // Don't go beyond the end of the list
-    if (startIndex >= totalControllers) {
+    // Skip this batch if it's out of range
+    if (startIdx >= totalControllers) {
         return;
     }
     
-    debug_i("Querying known controllers (batch %d/%d, range %d-%d of %d)", 
-           batchIndex+1, 5, startIndex+1, endIndex, totalControllers);
-    
-    // Iterate through controllers and send queries for those in this batch
-    size_t currentIndex = 0;
-    for (auto it = controllers.begin(); it != controllers.end(); ++it, ++currentIndex) {
-        // Skip controllers not in this batch
-        if (currentIndex < startIndex || currentIndex >= endIndex) {
+    // Process controllers in the current batch
+    size_t currentIdx = 0;
+    for (auto it = controllers.begin(); it != controllers.end(); ++it) {
+        // Skip controllers not in the current batch
+        if (currentIdx < startIdx) {
+            currentIdx++;
             continue;
+        }
+        
+        if (currentIdx >= endIdx) {
+            break;
         }
         
         String hostname = (*it).getName();
         String hostname_local = hostname + ".local";
         
-        // Query for this host using standard search with PTR type
-        // Note: Directly querying A records isn't supported in this version
+        // Query for this host using standard search
         mDNS::server.search(hostname_local.c_str(), mDNS::ResourceType::PTR);
         
         // Also search for the API service
         String api_service = "esprgbwwAPI._http._tcp.local";
-        // Need to use proper search method - can't pass hostname as second param
         mDNS::server.search(api_service, mDNS::ResourceType::PTR);
         
         debug_i("Querying for controller: %s", hostname.c_str());
+        
+        currentIdx++;
     }
 }
 
@@ -464,14 +471,15 @@ void mdnsHandler::addHost(const String& hostname, const String& ip_address, int 
     }
 
     if (!app.isVisibleController(id)) {
-        app.addOrUpdateVisibleController(id, ttl);
+        // For mDNS discoveries, use the standard mDNS TTL
+        app.addOrUpdateVisibleController(id, TTL_MDNS);
 
         debug_i("Controller %s with ID %i is now visible", hostname.c_str(), id);
         // Controller has just become visible, update the clients
         StaticJsonDocument<256> doc;
         JsonObject newHost = doc.to<JsonObject>();
         newHost[F("id")] = id;
-        newHost[F("ttl")] = ttl;
+        newHost[F("ttl")] = TTL_MDNS;
         newHost[F("ip_address")] = ip_address;
         newHost[F("hostname")] = hostname;
         app.wsBroadcast(F("new_host"), newHost);
@@ -768,4 +776,116 @@ void mdnsHandler::relinquishGroupLeadership(const String& groupId) {
     }
     
     debug_i("This controller is no longer leader for group: %s", groupName.c_str());
+}
+
+bool mdnsHandler::pingController(const String& ipAddress, unsigned int id) {
+    debug_i("Pinging controller ID %u at %s", id, ipAddress.c_str());
+    
+    // Skip invalid IPs
+    if (ipAddress.length() == 0 || ipAddress == "0.0.0.0") {
+        debug_w("Invalid IP for controller %u, skipping ping", id);
+        return false;
+    }
+
+    // Create URL with http:// prefix
+    String url = "http://" + ipAddress + "/ping";
+    
+    // Create a valid RequestCompletedDelegate
+    HttpClient client;
+    
+    // RequestCompletedDelegate expects a callback that returns int
+    bool success = client.downloadString(url, 
+        RequestCompletedDelegate([this, id, ipAddress](HttpConnection& connection, bool successful) -> int {
+            if (!successful) {
+                debug_w("Controller %u ping failed: connection error", id);
+                return 0;
+            }
+            
+            // Get the response body
+            String body = connection.getResponse()->getBody();
+            HttpStatus responseCode = connection.getResponse()->code;
+            
+            if (responseCode == HTTP_STATUS_OK) {
+                // Parse response JSON
+                StaticJsonDocument<64> doc;
+                DeserializationError error = deserializeJson(doc, body);
+                
+                if (!error && doc.containsKey("ping") && doc["ping"] == "pong") {
+                    // Successfully verified - update with long TTL
+                    app.addOrUpdateVisibleController(id, TTL_HTTP_VERIFIED);
+                    debug_i("Controller %u HTTP ping successful - extended TTL to %d", id, TTL_HTTP_VERIFIED);
+                    
+                    // Notify if not already visible
+                    if (!app.isVisibleController(id)) {
+                        // Notify WebSocket clients about newly verified controller
+                        StaticJsonDocument<256> wsDoc;
+                        JsonObject hostObj = wsDoc.to<JsonObject>();
+                        hostObj[F("id")] = id;
+                        hostObj[F("ttl")] = TTL_HTTP_VERIFIED;
+                        hostObj[F("ip_address")] = ipAddress;
+                        
+                        // Get hostname from controller database
+                        AppData::Root::Controllers controllers(*app.data);
+                        for (auto it = controllers.begin(); it != controllers.end(); ++it) {
+                            if ((*it).getId().toInt() == id) {
+                                hostObj[F("hostname")] = (*it).getName();
+                                break;
+                            }
+                        }
+                        
+                        app.wsBroadcast(F("new_host"), hostObj);
+                    }
+                } else {
+                    debug_w("Controller %u ping response invalid: %s", id, body.c_str());
+                }
+            } else {
+                debug_w("Controller %u ping failed: HTTP %d", id, (int)responseCode);
+            }
+            
+            return 0; // Required return value for callback
+        }));
+    
+    return success;
+}
+
+void mdnsHandler::pingAllControllers() {
+    debug_i("Starting HTTP ping verification of all known controllers");
+    
+    // Access the controllers from persistent storage
+    AppData::Root::Controllers controllers(*app.data);
+    int pingCount = 0;
+    
+    // Iterate through controllers and ping each one
+    for (auto it = controllers.begin(); it != controllers.end(); ++it) {
+        String hostname = (*it).getName();
+        String ipAddress = (*it).getIpAddress();
+        unsigned int id = (*it).getId().toInt();
+        
+        // Skip controllers with no IP address
+        if (ipAddress.length() == 0 || ipAddress == "0.0.0.0") {
+            debug_d("Controller %s (ID: %u) has no valid IP address, skipping ping", hostname.c_str(), id);
+            continue;
+        }
+        
+        // Skip our own controller ID (no need to ping ourselves)
+        if (id == system_get_chip_id()) {
+            continue;
+        }
+        
+        // Ping the controller
+        if (pingController(ipAddress, id)) {
+            pingCount++;
+        }
+    }
+    
+    debug_i("HTTP ping verification initiated for %d controllers", pingCount);
+}
+
+// Keep only ONE pingAllControllersCb method
+void mdnsHandler::pingAllControllersCb(void* pTimerArg) {
+    mdnsHandler* pThis = static_cast<mdnsHandler*>(pTimerArg);
+    pThis->pingAllControllers();
+    
+    // Restart the timer
+    pThis->_pingTimer.startOnce();
 }

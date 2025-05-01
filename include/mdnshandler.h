@@ -13,6 +13,8 @@
 #define LEADERSHIP_MAX_FAIL_COUNT 4
 #define LEADER_ELECTION_DELAY 2
 
+#define TTL_MDNS 60
+#define TTL_HTTP_VERIFIED 300
 
 namespace Util {
     String sanitizeHostname(const String& input) {
@@ -324,4 +326,8 @@ private:
     bool processApiServiceResponse(mDNS::Message& message);
     bool processHostnameARecord(mDNS::Message& message, mDNS::Answer* a_answer);
     bool processHostnameResponse(mDNS::Message& message, const String& hostname);
+    bool pingController(const String& ipAddress, unsigned int id);
+    void pingAllControllers();
+    static void pingAllControllersCb(void* pTimerArg);
+    Timer _pingTimer;
 };

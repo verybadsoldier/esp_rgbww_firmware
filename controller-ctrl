@@ -11,7 +11,8 @@ from urllib.parse import urlparse
 import collections
 import time
 import socket
-
+import os
+import re
 try:
     from zeroconf import ServiceBrowser, Zeroconf
 except ImportError:
@@ -23,6 +24,42 @@ else:
 # mDNS service type to look for
 SERVICE_TYPE = "_http._tcp.local."
 CONTROLLER_SERVICE_TYPE = "esprgbwwAPI._http._tcp.local."
+
+# Color support functions
+def supports_color():
+    """Check if the terminal supports color."""
+    if os.environ.get('NO_COLOR'):
+        return False
+    
+    # Check if stdout is a terminal
+    if not hasattr(sys.stdout, 'isatty') or not sys.stdout.isatty():
+        return False
+    
+    # Check platform
+    platform_name = sys.platform
+    if platform_name == 'win32':
+        return 'ANSICON' in os.environ or os.environ.get('TERM') == 'xterm'
+    
+    return True
+
+# ANSI color codes
+class Colors:
+    GREEN = '\033[32m' if supports_color() else ''
+    YELLOW = '\033[33m' if supports_color() else ''
+    RED = '\033[31m' if supports_color() else ''
+    RESET = '\033[0m' if supports_color() else ''
+    
+    @staticmethod
+    def green(text):
+        return f"{Colors.GREEN}{text}{Colors.RESET}"
+    
+    @staticmethod
+    def yellow(text):
+        return f"{Colors.YELLOW}{text}{Colors.RESET}"
+    
+    @staticmethod
+    def red(text):
+        return f"{Colors.RED}{text}{Colors.RESET}"
 
 class ControllerListener:
     def __init__(self):
@@ -45,6 +82,51 @@ class ControllerListener:
                     'ip': ip,
                     'port': port
                 })
+
+def verbose_request(method, url, **kwargs):
+    """Make an HTTP request with verbose output if enabled."""
+    verbose = kwargs.pop('verbose', False)
+    json_data = kwargs.get('json')
+    
+    if verbose:
+        print(f"\n>>> {method.upper()} {url}")
+        print(">>> Headers:")
+        for header, value in kwargs.get('headers', {}).items():
+            print(f">>>   {header}: {value}")
+        
+        if json_data:
+            print(">>> Body:")
+            print(f">>>   {json.dumps(json_data, indent=2)}")
+    
+    response = requests.request(method, url, **kwargs)
+    
+    # Extract error message if present
+    error_message = None
+    if response.status_code >= 400:
+        try:
+            response_json = response.json()
+            if 'error' in response_json:
+                error_message = response_json['error']
+        except:
+            error_message = response.text[:100] if response.text else "Unknown error"
+    
+    if verbose:
+        print(f"\n<<< Status: {response.status_code}")
+        print("<<< Headers:")
+        for header, value in response.headers.items():
+            print(f"<<<   {header}: {value}")
+        
+        print("<<< Body:")
+        try:
+            body = response.json()
+            print(f"<<<   {json.dumps(body, indent=2)}")
+        except:
+            print(f"<<<   {response.text[:1000]}")  # Limit to 1000 chars
+        print()
+    
+    # Add error message to response object
+    response.error_message = error_message
+    return response
 
 def find_controllers_via_mdns(timeout=5):
     """Find controllers using mDNS/Zeroconf."""
@@ -79,19 +161,41 @@ def ensure_url(address):
     return address
 
 def normalize_controller_name(name):
-    """Normalize controller names for comparison."""
+    """Normalize controller names for comparison, removing domain suffixes."""
     if not name:
         return ""
-    return name.lower().strip()
+    
+    # Convert to lowercase and strip whitespace
+    name = name.lower().strip()
+    
+    # Remove common domain suffixes
+    for suffix in ['.local', '.fritz.box', '.lan']:
+        if name.endswith(suffix):
+            name = name[:-len(suffix)]
+            break
+    
+    return name
 
-def get_controller_data(controller_url):
+def get_base_hostname(hostname):
+    """Extract the base hostname without domain suffix."""
+    if not hostname:
+        return "Unknown"
+        
+    # Remove common domain suffixes for display
+    for suffix in ['.local', '.fritz.box', '.lan']:
+        if hostname.lower().endswith(suffix):
+            return hostname[:-len(suffix)]
+    
+    return hostname
+
+def get_controller_data(controller_url, verbose=False):
     """Fetch /hosts and /data from a controller, properly parse JSON structures."""
     host_controllers = []
     data_controllers = []
     
     try:
         # Get /hosts endpoint - array of currently visible hosts
-        hosts_response = requests.get(f"{controller_url}/hosts", timeout=5)
+        hosts_response = verbose_request("get", f"{controller_url}/hosts", timeout=5, verbose=verbose)
         if hosts_response.status_code == 200:
             hosts_data = hosts_response.json()
             if 'hosts' in hosts_data:
@@ -99,7 +203,7 @@ def get_controller_data(controller_url):
                 print(f"Found {len(host_controllers)} controllers in /hosts response")
         
         # Get /data endpoint - contains controllers ever discovered
-        data_response = requests.get(f"{controller_url}/data", timeout=5)
+        data_response = verbose_request("get", f"{controller_url}/data", timeout=5, verbose=verbose)
         if data_response.status_code == 200:
             data = data_response.json()
             if 'controllers' in data:
@@ -112,10 +216,10 @@ def get_controller_data(controller_url):
         print(f"Error querying {controller_url}: {e}")
         return [], []
 
-def get_controller_firmware(controller_url):
+def get_controller_firmware(controller_url, verbose=False):
     """Fetch firmware information from a controller using the /info endpoint."""
     try:
-        response = requests.get(f"{controller_url}/info", timeout=5)
+        response = verbose_request("get", f"{controller_url}/info", timeout=5, verbose=verbose)
         if response.status_code == 200:
             data = response.json()
             return {
@@ -143,45 +247,50 @@ def get_controller_firmware(controller_url):
     }
 
 class ControllerNetwork:
-    def __init__(self, start_controller):
+    def __init__(self, start_controller, verbose=False):
         self.start_controller = ensure_url(start_controller)
         self.controllers = {}  # {id: controller_data}
         self.visibility_matrix = {}  # {controller_id: {visible_controller_id: visibility_type}}
         self.processed_urls = set()
         self.to_process = collections.deque([self.start_controller])
         self.firmware_info = {}  # {controller_id: firmware_data}
+        self.verbose = verbose
     
     def discover(self, get_firmware=False):
-        """Discover all controllers and build the visibility matrix."""
+        """Discover all controllers in the network by crawling controller responses."""
         while self.to_process:
             current_url = self.to_process.popleft()
-            if current_url in self.processed_urls:
-                continue
-                
-            print(f"\nQuerying {current_url}...")
             self.processed_urls.add(current_url)
             
-            # Parse the URL to get the hostname
-            parsed_url = urlparse(current_url)
-            hostname = parsed_url.netloc.split(':')[0]
-            base_hostname = hostname.split('.')[0]
+            print(f"Processing {current_url}")
             
-            # Try different domain suffixes if needed
+            # Parse the URL and check if it's valid
+            try:
+                parsed_url = urlparse(current_url)
+                base_hostname = parsed_url.netloc
+                if ":" in base_hostname:
+                    base_hostname = base_hostname.split(":")[0]  # Remove port if present
+            except:
+                print(f"Invalid URL: {current_url}")
+                continue
+            
+            # Generate alternative URLs to try (different domains, ports)
             urls_to_try = [current_url]
-            if '.' not in hostname:
-                urls_to_try.extend([
-                    f"http://{base_hostname}.local",
-                    f"http://{base_hostname}.fritz.box"
-                ])
+            if "fritz.box" in current_url:
+                local_url = current_url.replace("fritz.box", "local")
+                urls_to_try.append(local_url)
+            elif "local" in current_url:
+                fritz_url = current_url.replace("local", "fritz.box")
+                urls_to_try.append(fritz_url)
             
-            # Query controller endpoints
+            # Try to get controller data from one of the URLs
             host_controllers = []
             data_controllers = []
             responding_url = None
             
             for url in urls_to_try:
                 try:
-                    h_controllers, d_controllers = get_controller_data(url)
+                    h_controllers, d_controllers = get_controller_data(url, verbose=self.verbose)
                     if h_controllers or d_controllers:
                         host_controllers = h_controllers
                         data_controllers = d_controllers
@@ -189,29 +298,37 @@ class ControllerNetwork:
                         
                         # Get firmware info if requested
                         if get_firmware:
-                            firmware_data = get_controller_firmware(url)
+                            firmware_data = get_controller_firmware(url, verbose=self.verbose)
                             if firmware_data:
                                 current_controller_id = self._identify_current_controller(
                                     base_hostname, host_controllers, data_controllers)
                                 self.firmware_info[current_controller_id] = firmware_data
                                 
                         break
-                except:
+                except Exception as e:
+                    print(f"Error accessing {url}: {e}")
                     continue
-            
+                
             if not responding_url:
                 print(f"Could not get data from {current_url} or its variants")
                 continue
-            
+                
             # Identify the current controller from data
             current_controller_id = self._identify_current_controller(
                 base_hostname, host_controllers, data_controllers)
+            
+            # Add the current controller to our list
+            self._add_or_update_controller(
+                current_controller_id,
+                hostname=base_hostname,
+                ip_address=parsed_url.netloc  # Use netloc as fallback IP
+            )
             
             # Process /hosts response - these are currently visible controllers
             visible_controllers = set()
             for host in host_controllers:
                 controller_id = host.get('id')
-                if not controller_id:
+                if not controller_id or controller_id == current_controller_id:
                     continue
                 
                 # Add controller to our list
@@ -221,28 +338,29 @@ class ControllerNetwork:
                     ip_address=host.get('ip_address')
                 )
                 
-                # Mark visibility relationship
+                # Mark visibility relationship - current controller sees this host
                 self._add_visibility(current_controller_id, controller_id, "currently_visible")
                 visible_controllers.add(controller_id)
                 
                 # Add to processing queue
                 if controller_id in self.controllers:
                     controller = self.controllers[controller_id]
-                    new_urls = [
-                        f"http://{controller['hostname']}.fritz.box",
-                        f"http://{controller['hostname']}.local"
-                    ]
-                    if controller.get('ip_address'):
-                        new_urls.append(f"http://{controller['ip_address']}")
-                    
-                    for new_url in new_urls:
-                        if new_url not in self.processed_urls and new_url not in self.to_process:
-                            self.to_process.append(new_url)
+                    if controller.get('hostname'):
+                        new_urls = [
+                            f"http://{controller['hostname']}.fritz.box",
+                            f"http://{controller['hostname']}.local"
+                        ]
+                        if controller.get('ip_address'):
+                            new_urls.append(f"http://{controller['ip_address']}")
+                        
+                        for new_url in new_urls:
+                            if new_url not in self.processed_urls and new_url not in self.to_process:
+                                self.to_process.append(new_url)
             
             # Process /data.controllers - controllers ever discovered
             for controller in data_controllers:
                 controller_id = controller.get('id')
-                if not controller_id:
+                if not controller_id or controller_id == current_controller_id:
                     continue
                 
                 # Add controller to our list
@@ -252,10 +370,10 @@ class ControllerNetwork:
                     ip_address=controller.get('ip-address')  # Note the hyphen
                 )
                 
-                # Mark visibility relationship
+                # Mark visibility relationship if not already marked as currently visible
                 if controller_id not in visible_controllers:
                     self._add_visibility(current_controller_id, controller_id, "historically_visible")
-    
+        
     def get_all_firmware_versions(self):
         """Get firmware version for all discovered and accessible controllers."""
         firmware_data = []
@@ -294,7 +412,7 @@ class ControllerNetwork:
             # Try to get firmware info
             controller_url = f"http://{data.get('ip_address')}"
             try:
-                firmware_info = get_controller_firmware(controller_url)
+                firmware_info = get_controller_firmware(controller_url, verbose=self.verbose)
                 self.firmware_info[controller_id] = firmware_info
                 
                 firmware_data.append({
@@ -324,21 +442,45 @@ class ControllerNetwork:
         """Identify the current controller ID from available data."""
         hostname_lower = normalize_controller_name(hostname)
         
-        # Try to find in data controllers by name
+        # First try exact match in /data
         for controller in data_controllers:
             controller_name = normalize_controller_name(controller.get('name'))
             if controller_name == hostname_lower:
                 return controller.get('id')
         
-        # Try to find in host controllers by hostname
-        for controller in host_controllers:
-            controller_hostname = normalize_controller_name(controller.get('hostname'))
+        # Then try exact match in /hosts
+        for host in host_controllers:
+            controller_hostname = normalize_controller_name(host.get('hostname'))
             if controller_hostname == hostname_lower:
+                return host.get('id')
+        
+        # Then try partial matches (for .local or .fritz.box variants)
+        for controller in data_controllers:
+            controller_name = normalize_controller_name(controller.get('name'))
+            if hostname_lower in controller_name or controller_name in hostname_lower:
                 return controller.get('id')
         
-        # Generate a temporary ID
+        for host in host_controllers:
+            controller_hostname = normalize_controller_name(host.get('hostname'))
+            if hostname_lower in controller_hostname or controller_hostname in hostname_lower:
+                return host.get('id')
+        
+        # Check if there's an IP address match
+        ip_parts = hostname_lower.split('.')
+        if len(ip_parts) == 4 and all(part.isdigit() for part in ip_parts):
+            # This is an IP address
+            for host in host_controllers:
+                if host.get('ip_address') == hostname_lower:
+                    return host.get('id')
+            
+            for controller in data_controllers:
+                if controller.get('ip-address') == hostname_lower:
+                    return controller.get('id')
+        
+        # Generate a temporary ID as last resort
+        print(f"Warning: Could not determine controller ID for {hostname}, using temporary ID")
         return f"temp-{hostname}"
-    
+        
     def _add_or_update_controller(self, controller_id, **kwargs):
         """Add a new controller or update an existing one."""
         if controller_id not in self.controllers:
@@ -353,7 +495,7 @@ class ControllerNetwork:
             # Check if controller is alive
             if controller['ip_address']:
                 controller['alive'] = ping_host(controller['ip_address'])
-                status = 'Alive' if controller['alive'] else 'No response'
+                status = Colors.green('Alive') if controller['alive'] else Colors.red('No response')
                 print(f"Pinging {controller['hostname']} ({controller['ip_address']}): {status}")
             
             self.controllers[controller_id] = controller
@@ -386,23 +528,57 @@ class ControllerNetwork:
             self.visibility_matrix[source_id][target_id] = visibility_type
     
     def print_controller_list(self):
-        """Print a list of all discovered controllers."""
+        """Print a list of all discovered controllers with color coding."""
         table_data = []
-        for controller_id, data in self.controllers.items():
-            status = "✓ Online" if data.get('alive', False) else "✗ Offline"
-            table_data.append([
-                controller_id, 
-                data.get('hostname', 'Unknown'),
-                data.get('ip_address', 'Unknown'),
-                status
-            ])
         
-        # Sort by hostname
-        table_data.sort(key=lambda x: x[1])
+        # Group controllers by normalized hostname to detect duplicates
+        hostname_groups = {}
+        for controller_id, data in self.controllers.items():
+            hostname = data.get('hostname', 'Unknown')
+            base_hostname = get_base_hostname(hostname)
+            
+            if base_hostname not in hostname_groups:
+                hostname_groups[base_hostname] = []
+            hostname_groups[base_hostname].append((controller_id, data))
+        
+        # Process each group of controllers (potentially duplicates)
+        for base_hostname, controllers in hostname_groups.items():
+            # If multiple controllers have the same base hostname, use ID to disambiguate
+            for controller_id, data in controllers:
+                hostname = base_hostname  # Use simplified hostname
+                ip_address = data.get('ip_address', 'Unknown')
+                
+                if data.get('alive', False):
+                    status = Colors.green("✓ Online")
+                else:
+                    status = Colors.red("✗ Offline")
+                    
+                # Check visibility status for color coding
+                visibility = "unknown"
+                for source_id, targets in self.visibility_matrix.items():
+                    if controller_id in targets:
+                        visibility = targets[controller_id]
+                        break
+                
+                # Color code based on visibility
+                if visibility == "currently_visible":
+                    hostname = Colors.green(hostname)
+                elif visibility == "historically_visible":
+                    hostname = Colors.yellow(hostname)
+                
+                table_data.append([
+                    controller_id, 
+                    hostname,
+                    ip_address,
+                    status
+                ])
+    
+        # Sort by hostname and then by ID
+        table_data.sort(key=lambda x: (str(x[1]).lower() if hasattr(x[1], 'lower') else str(x[1]).lower(), x[0]))
         
         print(tabulate(table_data, 
-                      headers=["ID", "Hostname", "IP Address", "Status"],
-                      tablefmt="grid"))
+                    headers=["ID", "Hostname", "IP Address", "Status"],
+                    tablefmt="grid"))
     
     def print_firmware_versions(self):
         """Print firmware versions of all controllers."""
@@ -414,8 +590,18 @@ class ControllerNetwork:
             
         table_data = []
         for item in firmware_data:
+            hostname = item['hostname']
+            
+            # Color hostname based on firmware availability
+            if item['firmware_version'] == 'Offline':
+                hostname = Colors.red(hostname)
+            elif item['firmware_version'] == 'Error':
+                hostname = Colors.yellow(hostname)
+            else:
+                hostname = Colors.green(hostname)
+                
             table_data.append([
-                item['hostname'],
+                hostname,
                 item['ip_address'],
                 item['firmware_version'],
                 item['build_type'],
@@ -424,32 +610,32 @@ class ControllerNetwork:
             ])
             
         # Sort by hostname
-        table_data.sort(key=lambda x: x[0])
+        table_data.sort(key=lambda x: str(x[0]).lower() if hasattr(x[0], 'lower') else str(x[0]).lower())
         
         print(tabulate(table_data,
                       headers=["Hostname", "IP Address", "Firmware", "Build Type", "Sming", "Webapp"],
                       tablefmt="grid"))
 
     def print_visibility_matrix(self):
-        """Print the controller visibility matrix."""
+        """Print the controller visibility matrix with color coding."""
         if not self.visibility_matrix:
             print("No visibility data collected.")
             return
         
         # Sort controllers by hostname for readability
         controller_ids = sorted(self.controllers.keys(), 
-                               key=lambda k: self.controllers[k].get('hostname', ''))
+                            key=lambda k: get_base_hostname(self.controllers[k].get('hostname', '')).lower())
         
         # Prepare table data
         table_data = []
         for row_id in controller_ids:
             row_controller = self.controllers[row_id]
-            row_name = row_controller.get('hostname', 'Unknown')
+            row_name = get_base_hostname(row_controller.get('hostname', 'Unknown'))
             
             if not row_controller.get('alive', False):
-                row_name += " (✗)"
-                
-            row = [row_name]
+                row_name += " " + Colors.red("(✗)")
+                    
+            row = [f"{row_name} ({row_id})"]  # Include ID for clarity
             
             for col_id in controller_ids:
                 if row_id == col_id:
@@ -458,21 +644,26 @@ class ControllerNetwork:
                 elif col_id in self.visibility_matrix.get(row_id, {}):
                     # This controller sees the column controller
                     visibility = self.visibility_matrix[row_id][col_id]
-                    cell = "*" if visibility == "currently_visible" else "(*)"
+                    if visibility == "currently_visible":
+                        cell = Colors.green("*")
+                    else:
+                        cell = Colors.yellow("(*)")
                 else:
                     # Not visible
                     cell = ""
                 row.append(cell)
-                
+                    
             table_data.append(row)
         
         # Add headers
         headers = ["Controller"]
         for col_id in controller_ids:
-            col_name = self.controllers[col_id].get('hostname', 'Unknown')
-            if not self.controllers[col_id].get('alive', False):
-                col_name += " (✗)"
-            headers.append(col_name)
+            col_controller = self.controllers[col_id]
+            col_name = get_base_hostname(col_controller.get('hostname', 'Unknown'))
+            if not col_controller.get('alive', False):
+                col_name += " " + Colors.red("(✗)")
+            # Include ID in header for clarity
+            headers.append(f"{col_name} ({col_id})")
         
         # Print table
         print(tabulate(table_data, headers=headers, tablefmt="grid"))
@@ -495,25 +686,723 @@ def get_starting_controller(controller_arg):
     print("No controllers found via mDNS. Please specify a controller.")
     sys.exit(1)
 
+def delete_host_from_controller(controller_url, hostname, verbose=False):
+    """Delete a specific host from a controller's database."""
+    controller_url = ensure_url(controller_url)
+    
+    if hostname == "all":
+        # Delete all hosts - this is a one-time operation
+        payload = {"controllers[]": []}
+        print(f"Deleting ALL hosts from {controller_url}...")
+        
+        result = {
+            'url': controller_url,
+            'hostname_to_delete': hostname,
+            'success': False,
+            'status_code': None,
+            'error': None,
+            'deleted_count': 0
+        }
+        
+        try:
+            response = verbose_request("post", f"{controller_url}/data", 
+                               json=payload, timeout=5, verbose=verbose)
+            
+            result['status_code'] = response.status_code
+            result['error'] = getattr(response, 'error_message', None)
+            
+            if response.status_code == 200:
+                print(f"{Colors.green('✓')} Successfully deleted all hosts from {controller_url}")
+                result['success'] = True
+                result['deleted_count'] = 1  # We consider this as one successful operation
+            else:
+                error_msg = result['error'] or f"HTTP {response.status_code}"
+                print(f"{Colors.red('✗')} Failed to delete from {controller_url}: {error_msg}")
+        except Exception as e:
+            print(f"{Colors.red('✗')} Error deleting from {controller_url}: {e}")
+            result['error'] = str(e)
+        
+        return result
+    else:
+        # Delete a specific host - repeat until we get "bad selector" error
+        print(f"Deleting ALL occurrences of host '{hostname}' from {controller_url}...")
+        
+        deleted_count = 0
+        last_status_code = None
+        last_error = None
+        
+        while True:
+            payload = {f"controllers[name={hostname}]": []}
+            
+            try:
+                response = verbose_request("post", f"{controller_url}/data", 
+                                  json=payload, timeout=5, verbose=verbose)
+                
+                last_status_code = response.status_code
+                last_error = getattr(response, 'error_message', None)
+                
+                # Check if we got a "bad selector" error, which means no more hosts to delete
+                if last_error and ("bad selector" in last_error.lower() or "not found" in last_error.lower()):
+                    if deleted_count == 0:
+                        print(f"No controller named '{hostname}' found.")
+                    else:
+                        print(f"No more occurrences of '{hostname}' found.")
+                    break
+                
+                if response.status_code == 200:
+                    deleted_count += 1
+                    print(f"{Colors.green('✓')} Successfully deleted occurrence {deleted_count} of '{hostname}' from {controller_url}")
+                else:
+                    error_msg = last_error or f"HTTP {response.status_code}"
+                    print(f"{Colors.red('✗')} Failed to delete from {controller_url}: {error_msg}")
+                    break
+            except Exception as e:
+                print(f"{Colors.red('✗')} Error deleting from {controller_url}: {e}")
+                last_error = str(e)
+                break
+        
+        result = {
+            'url': controller_url,
+            'hostname_to_delete': hostname,
+            'success': deleted_count > 0,
+            'status_code': last_status_code,
+            'error': last_error,
+            'deleted_count': deleted_count
+        }
+        
+        if deleted_count > 0:
+            print(f"Total of {Colors.green(str(deleted_count))} occurrences of '{hostname}' deleted from {controller_url}")
+        
+        return result
+
+def delete_host_from_all_controllers(start_controller, hostname, verbose=False):
+    """Delete a host from all discovered controllers."""
+    # First discover all controllers
+    print(f"Discovering controllers via {start_controller}...")
+    network = ControllerNetwork(start_controller, verbose=verbose)
+    network.discover()
+    
+    # Track results for each controller
+    results = []
+    
+    # Apply deletion to all online controllers
+    print(f"\nDeleting host '{hostname}' from all discovered controllers:")
+    for controller_id, data in network.controllers.items():
+        controller_hostname = data.get('hostname', 'Unknown')
+        
+        if not data.get('alive', False):
+            print(f"Skipping offline controller: {Colors.red(controller_hostname)}")
+            results.append({
+                'controller_id': controller_id,
+                'hostname': controller_hostname,
+                'ip_address': data.get('ip_address', 'Unknown'),
+                'status': 'Skipped - Offline',
+                'error': None,
+                'deleted_count': 0
+            })
+            continue
+            
+        ip = data.get('ip_address')
+        if not ip:
+            print(f"Skipping controller with no IP: {Colors.yellow(controller_hostname)}")
+            results.append({
+                'controller_id': controller_id,
+                'hostname': controller_hostname,
+                'ip_address': 'Unknown',
+                'status': 'Skipped - No IP',
+                'error': None,
+                'deleted_count': 0
+            })
+            continue
+            
+        controller_url = f"http://{ip}"
+        result = delete_host_from_controller(controller_url, hostname, verbose=verbose)
+        
+        deleted_count = result.get('deleted_count', 0)
+        status = f"Success ({deleted_count} deleted)" if result['success'] else f"Failed ({result['status_code'] or 'Error'})"
+        
+        results.append({
+            'controller_id': controller_id,
+            'hostname': controller_hostname,
+            'ip_address': ip,
+            'status': status,
+            'error': result['error'],
+            'deleted_count': deleted_count
+        })
+    
+    # Count successes and failures
+    success_count = sum(1 for r in results if 'Success' in r['status'])
+    failure_count = sum(1 for r in results if 'Failed' in r['status'])
+    skipped_count = sum(1 for r in results if 'Skipped' in r['status'])
+    total_deleted = sum(r['deleted_count'] for r in results)
+    
+    # Print summary table
+    print(f"\nDeletion summary: {Colors.green(str(success_count))} successful controllers, {Colors.red(str(failure_count))} failed, {Colors.yellow(str(skipped_count))} skipped")
+    print(f"Total instances deleted: {Colors.green(str(total_deleted))}")
+    
+    # Format table data
+    table_data = []
+    for r in results:
+        hostname = r['hostname']
+        status = r['status']
+        
+        # Color code based on status
+        if 'Success' in status:
+            status = Colors.green(status)
+            hostname = Colors.green(hostname)
+        elif 'Failed' in status:
+            status = Colors.red(status)
+            hostname = Colors.red(hostname)
+        else:
+            status = Colors.yellow(status)
+            hostname = Colors.yellow(hostname)
+            
+        error_display = r['error'] if r['error'] else '-'
+        # Truncate long error messages
+        if error_display and len(error_display) > 40:
+            error_display = error_display[:37] + "..."
+            
+        table_data.append([
+            hostname,
+            r['ip_address'],
+            status,
+            error_display
+        ])
+    
+    # Sort by hostname
+    table_data.sort(key=lambda x: str(x[0]).lower() if hasattr(x[0], 'lower') else str(x[0]).lower())
+    
+    print("\nDetailed results:")
+    print(tabulate(table_data, 
+                 headers=["Hostname", "IP Address", "Status", "Error"],
+                 tablefmt="grid"))
+
+def get_hosts_and_data_from_controller(controller_url, verbose=False):
+    """Fetch both /hosts and /data from a controller."""
+    controller_url = ensure_url(controller_url)
+    hosts_data = []
+    controllers_data = []
+    
+    try:
+        # Get hosts that are currently visible
+        hosts_response = verbose_request("get", f"{controller_url}/hosts", timeout=5, verbose=verbose)
+        if hosts_response.status_code == 200:
+            data = hosts_response.json()
+            if 'hosts' in data:
+                hosts_data = data['hosts']
+                print(f"Found {len(hosts_data)} controllers in /hosts response")
+        
+        # Get all controllers ever discovered
+        data_response = verbose_request("get", f"{controller_url}/data", timeout=5, verbose=verbose)
+        if data_response.status_code == 200:
+            data = data_response.json()
+            if 'controllers' in data:
+                controllers_data = data['controllers']
+                print(f"Found {len(controllers_data)} controllers in /data response")
+                
+        return hosts_data, controllers_data
+    except Exception as e:
+        print(f"Error querying {controller_url}: {e}")
+        return [], []
+
+def list_hosts_from_controller(controller_url, verbose=False):
+    """List hosts from a controller with color coding for visibility status."""
+    hosts_data, controllers_data = get_hosts_and_data_from_controller(controller_url, verbose=verbose)
+    
+    if not hosts_data and not controllers_data:
+        print("No hosts found.")
+        return
+    
+    # Create a set of IDs for controllers in /hosts for quick lookup
+    visible_ids = {host.get('id') for host in hosts_data if host.get('id')}
+    
+    # Combine data from both sources, with priority to /hosts data
+    combined_data = {}
+    
+    # First add all controllers from /data
+    for controller in controllers_data:
+        controller_id = controller.get('id')
+        if not controller_id:
+            continue
+            
+        combined_data[controller_id] = {
+            'id': controller_id,
+            'hostname': controller.get('name', 'Unknown'),
+            'ip_address': controller.get('ip-address', 'Unknown'),  # Note the hyphen
+            'last_seen': 'Unknown',
+            'currently_visible': False
+        }
+    
+    # Then add or update with /hosts data
+    for host in hosts_data:
+        controller_id = host.get('id')
+        if not controller_id:
+            continue
+            
+        if controller_id in combined_data:
+            # Update existing entry
+            combined_data[controller_id].update({
+                'hostname': host.get('hostname', combined_data[controller_id]['hostname']),
+                'ip_address': host.get('ip_address', combined_data[controller_id]['ip_address']),
+                'last_seen': host.get('last_seen', 'Now'),
+                'currently_visible': True
+            })
+        else:
+            # Add new entry
+            combined_data[controller_id] = {
+                'id': controller_id,
+                'hostname': host.get('hostname', 'Unknown'),
+                'ip_address': host.get('ip_address', 'Unknown'),
+                'last_seen': host.get('last_seen', 'Now'),
+                'currently_visible': True
+            }
+    
+    # Format the table data with color
+    table_data = []
+    for controller_id, data in combined_data.items():
+        hostname = get_base_hostname(data['hostname'])
+        status = "Currently visible" if data['currently_visible'] else "Historically visible"
+        
+        # Apply color based on visibility
+        if data['currently_visible']:
+            hostname = Colors.green(hostname)
+            status = Colors.green(status)
+        else:
+            hostname = Colors.yellow(hostname)
+            status = Colors.yellow(status)
+            
+        table_data.append([
+            controller_id,  # Always show ID first
+            hostname,
+            data['ip_address'],
+            data['last_seen'],
+            status
+        ])
+    
+    # Sort by hostname (index 1)
+    table_data.sort(key=lambda x: str(x[1]).lower() if hasattr(x[1], 'lower') else str(x[1]).lower())
+    
+    print(f"\nControllers known to {controller_url}:")
+    print(tabulate(table_data, 
+                  headers=["ID", "Hostname", "IP Address", "Last Seen", "Status"],
+                  tablefmt="grid"))
+    
+    print("\nLegend:")
+    print(f"  {Colors.green('Green')} - Controller is currently visible (/hosts response)")
+    print(f"  {Colors.yellow('Yellow')} - Controller is historically visible (/data.controllers response)")
+
+def prune_invalid_hosts_from_controller(controller_url, verbose=False):
+    """Remove invalid entries from a controller's database.
+    
+    Invalid entries are defined as:
+    - Host ID is 0, null, "", or negative
+    - Host name contains a dot "." (FQDN)
+    - Host name is an IP address
+    """
+    controller_url = ensure_url(controller_url)
+    print(f"Pruning invalid hosts from {controller_url}...")
+    
+    # First, get current data
+    try:
+        data_response = verbose_request("get", f"{controller_url}/data", timeout=5, verbose=verbose)
+        if data_response.status_code != 200:
+            print(f"{Colors.red('✗')} Failed to get data from {controller_url}: HTTP {data_response.status_code}")
+            return {
+                'url': controller_url,
+                'success': False,
+                'error': f"HTTP {data_response.status_code}",
+                'pruned_count': 0,
+                'details': []
+            }
+            
+        data = data_response.json()
+        if 'controllers' not in data:
+            print(f"{Colors.red('✗')} No controllers found in data")
+            return {
+                'url': controller_url,
+                'success': False,
+                'error': "No controllers found in data",
+                'pruned_count': 0,
+                'details': []
+            }
+            
+        original_controllers = data['controllers']
+        print(f"Found {len(original_controllers)} controllers in database")
+        
+        # Identify invalid entries
+        valid_controllers = []
+        pruned_details = []
+        
+        for controller in original_controllers:
+            controller_id = controller.get('id')
+            controller_name = controller.get('name', '')
+            controller_ip = controller.get('ip-address', '')
+            
+            is_valid = True
+            reasons = []
+            
+            # Check for invalid ID - handle both integer and string representations
+            if controller_id is None:
+                is_valid = False
+                reasons.append(f"Invalid ID: None")
+            elif controller_id == "":
+                is_valid = False
+                reasons.append(f"Invalid ID: empty string")
+            elif controller_id == 0 or controller_id == "0":
+                is_valid = False
+                reasons.append(f"Invalid ID: 0")
+            elif isinstance(controller_id, int) and controller_id < 0:
+                is_valid = False
+                reasons.append(f"Invalid ID: negative ({controller_id})")
+            elif isinstance(controller_id, str) and controller_id.strip("-").isdigit() and int(controller_id) <= 0:
+                is_valid = False
+                reasons.append(f"Invalid ID: zero or negative string ({controller_id})")
+            
+            # Check if name is an FQDN (contains a dot)
+            if controller_name and '.' in controller_name:
+                is_valid = False
+                reasons.append(f"Name is FQDN: {controller_name}")
+            
+            # Check if name is an IP address
+            ip_pattern = r'^(\d{1,3}\.){3}\d{1,3}$'
+            if controller_name and re.match(ip_pattern, controller_name):
+                is_valid = False
+                reasons.append(f"Name is IP address: {controller_name}")
+            
+            if is_valid:
+                valid_controllers.append(controller)
+            else:
+                pruned_details.append({
+                    'id': controller_id,
+                    'name': controller_name,
+                    'ip_address': controller_ip,
+                    'reasons': reasons
+                })
+        
+        pruned_count = len(original_controllers) - len(valid_controllers)
+        if pruned_count == 0:
+            print(f"{Colors.green('✓')} No invalid entries found")
+            return {
+                'url': controller_url,
+                'success': True,
+                'error': None,
+                'pruned_count': 0,
+                'details': []
+            }
+            
+        # Update controller data
+        payload = {"controllers": valid_controllers}
+        update_response = verbose_request("post", f"{controller_url}/data", 
+                                        json=payload, timeout=5, verbose=verbose)
+        
+        if update_response.status_code != 200:
+            print(f"{Colors.red('✗')} Failed to update data: HTTP {update_response.status_code}")
+            return {
+                'url': controller_url,
+                'success': False,
+                'error': f"HTTP {update_response.status_code}",
+                'pruned_count': 0,
+                'details': pruned_details
+            }
+        
+        print(f"{Colors.green('✓')} Successfully pruned {pruned_count} invalid entries")
+        
+        # Print details of pruned entries
+        for entry in pruned_details:
+            reason_str = ", ".join(entry['reasons'])
+            print(f"  - Pruned ID: {entry['id']}, Name: {entry['name']}, IP: {entry['ip_address']}")
+            print(f"    Reason: {reason_str}")
+        
+        return {
+            'url': controller_url,
+            'success': True,
+            'error': None,
+            'pruned_count': pruned_count,
+            'details': pruned_details
+        }
+        
+    except Exception as e:
+        print(f"{Colors.red('✗')} Error pruning hosts from {controller_url}: {e}")
+        return {
+            'url': controller_url,
+            'success': False,
+            'error': str(e),
+            'pruned_count': 0,
+            'details': []
+        }
+
+def prune_invalid_hosts_from_all_controllers(start_controller, verbose=False):
+    """Prune invalid hosts from all discovered controllers."""
+    # First discover all controllers
+    print(f"Discovering controllers via {start_controller}...")
+    network = ControllerNetwork(start_controller, verbose=verbose)
+    network.discover()
+    
+    # Track results for each controller
+    results = []
+    
+    # Apply pruning to all online controllers
+    print(f"\nPruning invalid hosts from all discovered controllers:")
+    for controller_id, data in network.controllers.items():
+        controller_hostname = data.get('hostname', 'Unknown')
+        
+        if not data.get('alive', False):
+            print(f"Skipping offline controller: {Colors.red(controller_hostname)}")
+            results.append({
+                'controller_id': controller_id,
+                'hostname': controller_hostname,
+                'ip_address': data.get('ip_address', 'Unknown'),
+                'status': 'Skipped - Offline',
+                'error': None,
+                'pruned_count': 0
+            })
+            continue
+            
+        ip = data.get('ip_address')
+        if not ip:
+            print(f"Skipping controller with no IP: {Colors.yellow(controller_hostname)}")
+            results.append({
+                'controller_id': controller_id,
+                'hostname': controller_hostname,
+                'ip_address': 'Unknown',
+                'status': 'Skipped - No IP',
+                'error': None,
+                'pruned_count': 0
+            })
+            continue
+            
+        controller_url = f"http://{ip}"
+        result = prune_invalid_hosts_from_controller(controller_url, verbose=verbose)
+        
+        pruned_count = result.get('pruned_count', 0)
+        status = f"Success ({pruned_count} pruned)" if result['success'] else f"Failed ({result.get('error') or 'Error'})"
+        
+        results.append({
+            'controller_id': controller_id,
+            'hostname': controller_hostname,
+            'ip_address': ip,
+            'status': status,
+            'error': result.get('error'),
+            'pruned_count': pruned_count
+        })
+    
+    # Count successes and failures
+    success_count = sum(1 for r in results if 'Success' in r['status'])
+    failure_count = sum(1 for r in results if 'Failed' in r['status'])
+    skipped_count = sum(1 for r in results if 'Skipped' in r['status'])
+    total_pruned = sum(r['pruned_count'] for r in results)
+    
+    # Print summary table
+    print(f"\nPruning summary: {Colors.green(str(success_count))} successful controllers, {Colors.red(str(failure_count))} failed, {Colors.yellow(str(skipped_count))} skipped")
+    print(f"Total entries pruned: {Colors.green(str(total_pruned))}")
+    
+    # Format table data
+    table_data = []
+    for r in results:
+        hostname = r['hostname']
+        status = r['status']
+        
+        # Color code based on status
+        if 'Success' in status:
+            status = Colors.green(status)
+            hostname = Colors.green(hostname)
+        elif 'Failed' in status:
+            status = Colors.red(status)
+            hostname = Colors.red(hostname)
+        else:
+            status = Colors.yellow(status)
+            hostname = Colors.yellow(hostname)
+            
+        error_display = r['error'] if r['error'] else '-'
+        # Truncate long error messages
+        if error_display and len(error_display) > 40:
+            error_display = error_display[:37] + "..."
+            
+        table_data.append([
+            hostname,
+            r['ip_address'],
+            status,
+            error_display
+        ])
+    
+    # Sort by hostname
+    table_data.sort(key=lambda x: str(x[0]).lower() if hasattr(x[0], 'lower') else str(x[0]).lower())
+    
+    print("\nDetailed results:")
+    print(tabulate(table_data, 
+                 headers=["Hostname", "IP Address", "Status", "Error"],
+                 tablefmt="grid"))
+
+def who_has_controller(start_controller, target, verbose=False):
+    """Find all controllers that have information about the target hostname or ID."""
+    print(f"Searching for controllers that know about '{target}'...")
+    
+    # First discover all controllers
+    print(f"Discovering controllers via {start_controller}...")
+    network = ControllerNetwork(start_controller, verbose=verbose)
+    network.discover()
+    
+    # Track results
+    results = []
+    
+    # Check each accessible controller
+    print(f"\nQuerying controllers for information about '{target}':")
+    for controller_id, data in network.controllers.items():
+        controller_hostname = data.get('hostname', 'Unknown')
+        
+        if not data.get('alive', False):
+            print(f"Skipping offline controller: {Colors.red(controller_hostname)}")
+            continue
+            
+        ip = data.get('ip_address')
+        if not ip:
+            print(f"Skipping controller with no IP: {Colors.yellow(controller_hostname)}")
+            continue
+            
+        controller_url = f"http://{ip}"
+        print(f"Querying {controller_hostname} ({ip})...")
+        
+        # Get data from controller
+        hosts_data, controllers_data = get_hosts_and_data_from_controller(controller_url, verbose=verbose)
+        
+        # Check if target is in hosts (currently visible)
+        current_match = None
+        for host in hosts_data:
+            if (target.isdigit() and str(host.get('id')) == target) or \
+               (not target.isdigit() and target.lower() in str(host.get('hostname', '')).lower()):
+                current_match = host
+                break
+                
+        # Check if target is in data.controllers (historically visible)
+        historical_match = None
+        if not current_match:  # Only check historical if not currently visible
+            for controller in controllers_data:
+                if (target.isdigit() and str(controller.get('id')) == target) or \
+                   (not target.isdigit() and target.lower() in str(controller.get('name', '')).lower()):
+                    historical_match = controller
+                    break
+        
+        # Store results if found
+        if current_match or historical_match:
+            match = current_match or historical_match
+            results.append({
+                'controller_id': controller_id,
+                'controller_hostname': controller_hostname,
+                'controller_ip': ip,
+                'target_id': match.get('id'),
+                'target_hostname': match.get('hostname') if current_match else match.get('name'),
+                'target_ip': match.get('ip_address') if current_match else match.get('ip-address'),
+                'visibility': 'Currently visible' if current_match else 'Historically visible'
+            })
+    
+    # Display results
+    if not results:
+        print(f"No controllers found that know about '{target}'")
+        return
+        
+    # Format the table data
+    table_data = []
+    for r in results:
+        hostname = r['controller_hostname']
+        status = r['visibility']
+        
+        # Apply color based on visibility
+        if status == 'Currently visible':
+            status = Colors.green(status)
+            hostname = Colors.green(hostname)
+        else:
+            status = Colors.yellow(status)
+            hostname = Colors.yellow(hostname)
+            
+        table_data.append([
+            hostname,
+            r['controller_ip'],
+            r['target_hostname'],
+            r['target_id'],
+            r['target_ip'],
+            status
+        ])
+    
+    # Sort by hostname
+    table_data.sort(key=lambda x: str(x[0]).lower() if hasattr(x[0], 'lower') else str(x[0]).lower())
+    
+    print(f"\nControllers that know about '{target}':")
+    print(tabulate(table_data, 
+                  headers=["Controller", "IP Address", "Target Hostname", "Target ID", "Target IP", "Status"],
+                  tablefmt="grid"))
+    
+    print("\nLegend:")
+    print(f"  {Colors.green('Green')} - Target is currently visible (/hosts response)")
+    print(f"  {Colors.yellow('Yellow')} - Target is historically visible (/data.controllers response)")
+
 def main():
     parser = argparse.ArgumentParser(description="Controller management tool")
-    parser.add_argument("command", choices=["discover", "firmware"], 
-                        help="Command to execute")
+    parser.add_argument("command", choices=["discover", "firmware", "delete", "list-hosts", "prune-hosts", "who-has"], 
+                       help="Command to execute")
     parser.add_argument("controller", nargs="?", 
-                        help="Starting controller hostname or IP (optional if mDNS is available)")
+                       help="Starting controller hostname or IP (optional if mDNS is available)")
+    
+    # Add arguments for commands that operate on hosts
+    parser.add_argument("--host", 
+                       help="Hostname to delete (use 'all' for all hosts)")
+    parser.add_argument("--from-controller", 
+                       help="Target controller for delete/list-hosts/prune-hosts commands (use 'all' for all controllers)")
+    parser.add_argument("--target", 
+                       help="Hostname or ID to search for with who-has command")
+    
+    # Add verbose flag
+    parser.add_argument("-v", "--verbose", action="store_true",
+                       help="Show verbose HTTP request and response information")
     
     args = parser.parse_args()
-    
+
+    # Get starting controller for all commands
     start_controller = get_starting_controller(args.controller)
-    print(f"Using controller: {start_controller}")
     
-    if args.command == "discover":
+    # Handle commands
+    if args.command == "delete":
+        if not args.host:
+            print("Error: --host argument is required for delete command")
+            print("Use --host 'all' to delete all hosts")
+            return
+        
+        if args.from_controller == "all":
+            # Delete from all controllers
+            delete_host_from_all_controllers(start_controller, args.host, verbose=args.verbose)
+        else:
+            # Delete from a specific controller
+            target_controller = ensure_url(args.from_controller or start_controller)
+            delete_host_from_controller(target_controller, args.host, verbose=args.verbose)
+    
+    elif args.command == "list-hosts":
+        # List hosts from a controller
+        target_controller = ensure_url(args.from_controller or start_controller)
+        list_hosts_from_controller(target_controller, verbose=args.verbose)
+    
+    elif args.command == "prune-hosts":
+        # Prune invalid hosts
+        if args.from_controller == "all":
+            # Prune from all controllers
+            prune_invalid_hosts_from_all_controllers(start_controller, verbose=args.verbose)
+        else:
+            # Prune from a specific controller
+            target_controller = ensure_url(args.from_controller or start_controller)
+            prune_invalid_hosts_from_controller(target_controller, verbose=args.verbose)
+    
+    elif args.command == "who-has":
+        if not args.target:
+            print("Error: --target argument is required for who-has command")
+            print("Specify a hostname or controller ID to search for")
+            return
+        who_has_controller(start_controller, args.target, verbose=args.verbose)
+            
+    elif args.command == "discover":
         print("Starting full network discovery...")
         print("This may take a few minutes as we discover and ping all controllers...")
         
         start_time = time.time()
         
-        network = ControllerNetwork(start_controller)
+        network = ControllerNetwork(start_controller, verbose=args.verbose)
         network.discover()
         
         elapsed_time = time.time() - start_time
@@ -528,20 +1417,20 @@ def main():
         network.print_visibility_matrix()
         
         print("\nLegend:")
-        print("  *   - Controller is currently visible (/hosts response)")
-        print("  (*) - Controller is historically visible (/data.controllers response)")
+        print(f"  {Colors.green('*')}   - Controller is currently visible (/hosts response)")
+        print(f"  {Colors.yellow('(*)')} - Controller is historically visible (/data.controllers response)")
         print("  -   - Same controller (self)")
-        print("  (✗) - Controller is offline (ping failed)")
+        print(f"  {Colors.red('(✗)')} - Controller is offline (ping failed)")
         print("  [empty] - Not visible by this controller")
         
     elif args.command == "firmware":
         print("Collecting firmware versions...")
         
-        network = ControllerNetwork(start_controller)
+        network = ControllerNetwork(start_controller, verbose=args.verbose)
         network.discover(get_firmware=True)
         
         print("\nFirmware Versions:")
         network.print_firmware_versions()
-
+        
 if __name__ == "__main__":
     main()
