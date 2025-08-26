@@ -401,7 +401,6 @@ void ApplicationWebserver::onConfig(HttpRequest& request, HttpResponse& response
 			oldDeviceName=general.getDeviceName();
 			oldCurrentPinConfigName=general.getCurrentPinConfigName();
 		}
-		
 
 		auto bodyStream = request.getBodyStream();
 		if(bodyStream) {
@@ -1253,7 +1252,7 @@ void ApplicationWebserver::onStorage(HttpRequest& request, HttpResponse& respons
 void ApplicationWebserver::onHosts(HttpRequest& request, HttpResponse& response)
 {
     if(request.method != HTTP_GET && request.method != HTTP_OPTIONS) {
-        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not GET or OPTIONS request");
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "nost GET or OPTIONS request");
         return;
     }
 

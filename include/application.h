@@ -99,6 +99,12 @@ public:
         }
         return false;
     }
+    void Application::resetVisibleControllersTTL(int newTTL)
+    {
+        for (auto& controller : visibleControllers) {
+            controller.ttl = newTTL;
+        }
+    }
     std::vector<VisibleController>& getVisibleControllers() { return visibleControllers; }
 
     String sanitizeName(const String& input){
