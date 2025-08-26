@@ -175,7 +175,7 @@ void Application::checkRam()
 {
 	
 	debug_i("Free heap: %d", system_get_free_heap_size());
-	
+
 	/* 
 	String _client_status = WifiStation.getConnectionStatusName();
 	debug_i("wifi conection Status: %s", _client_status.c_str());

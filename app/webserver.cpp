@@ -1252,37 +1252,36 @@ void ApplicationWebserver::onStorage(HttpRequest& request, HttpResponse& respons
 
 void ApplicationWebserver::onHosts(HttpRequest& request, HttpResponse& response)
 {
-	if(request.method != HTTP_GET && request.method != HTTP_OPTIONS) {
-		sendApiCode(response, API_CODES::API_BAD_REQUEST, "not GET or OPTIONS request");
-		return;
-	}
+    if(request.method != HTTP_GET && request.method != HTTP_OPTIONS) {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "not GET or OPTIONS request");
+        return;
+    }
 
-	if(request.method == HTTP_OPTIONS) {
-		// probably a CORS request
-		sendApiCode(response, API_CODES::API_SUCCESS, "");
-		debug_i("HTTP_OPTIONS Request, sent API_SUCCSSS");
-		return;
-	}
+    if(request.method == HTTP_OPTIONS) {
+        sendApiCode(response, API_CODES::API_SUCCESS, "");
+        debug_i("HTTP_OPTIONS Request, sent API_SUCCSSS");
+        return;
+    }
+
+    bool showAll = request.getQueryParameter("all") == "1" || request.getQueryParameter("all") == "true";
 
     JsonObjectStream* stream = new JsonObjectStream();
     JsonObject json = stream->getRoot();
     JsonArray hostsArray = json.createNestedArray("hosts");
-	
-	AppData::Root::Controllers controllers(*app.data);
 
-	for (auto controller : controllers){
-		if (app.isVisibleController(controller.getId().toInt())){
+    AppData::Root::Controllers controllers(*app.data);
+
+    for (auto controller : controllers){
+        if (showAll || app.isVisibleController(controller.getId().toInt())){
             JsonObject hostObj = hostsArray.createNestedObject();
             hostObj[F("id")] = controller.getId();
             hostObj[F("hostname")] = controller.getName();
             hostObj[F("ip_address")] = controller.getIpAddress();
-		}
-	}
-	sendApiResponse(response, stream);
-	setCorsHeaders(response);
-	response.setContentType(F("application/json"));
-
-	return;
+        }
+    }
+    sendApiResponse(response, stream);
+    setCorsHeaders(response);
+    response.setContentType(F("application/json"));
 }
 
 void ApplicationWebserver::onData(HttpRequest& request, HttpResponse& response){
