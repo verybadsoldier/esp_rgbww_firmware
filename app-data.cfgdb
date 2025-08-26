@@ -8,7 +8,6 @@
     },
     "presets": {
       "type": "array",
-      "store":true,
       "items": {
         "type": "object",
         "properties": {
@@ -16,50 +15,136 @@
             "type": "string"
           },
           "color": {
+            "d":{
+              "type":"integer"
+            },
+            "t":{
+              "type":"integer"
+            },
+            "s":{
+              "type":"integer"
+            },
+            "cmd":{
+              "type":"string"
+            },
+            "q":{
+              "type":"string"
+            },
             "$ref":"defs/$defs/color"
           },
-          "ts": {
-            "type": "integer"
-          },
           "id":{
-            "type":"integer"
+            "type":"string"
           },
           "favorite":{
             "type":"boolean",
             "default":false
+          },
+          "ts":{
+            "type":"integer"
+          },
+          "icon":{
+            "type":"string",
+            "default":"palette"
           }
         }
       }
     },
-    "controllers": {
-      "type": "array",
-      "store":true,
-      "items": {
-        "type": "object",
-        "properties": {
+    "controllers":{
+      "type":"array",
+      "items":{
+        "type":"object",
+        "properties":{
           "id":{
+            "type":"string"
+          },
+          "name":{
+            "type":"string"
+          },
+          "ip-address":{
+            "type":"string"
+          },
+          "icon":{
+            "type":"string",
+            "default":"led-strip-variant"
+          }
+        }
+      }
+    },
+      "groups":{
+      "type":"array",
+      "items":{
+        "type":"object",
+        "properties":{
+          "name":{
+            "type":"string"
+          },
+          "ts":{
             "type":"integer"
           },
-          "ip": {
-            "type": "string"
+          "id":{
+            "type":"string"
           },
-          "name": {
-            "type": "string"
+          "icon":{
+            "type":"string",
+            "default":"light_groups"
           },
-          "last-seen": {
-            "type": "integer"
+          "controller_ids":{
+            "type":"array",
+            "items": {
+             "type":"string"
+            }
           }
         }
       }
     },
     "scenes":{
       "type":"array",
-      "store":true,
       "items":{
         "type":"object",
         "properties":{
           "name":{
             "type":"string"
+          },
+          "ts":{
+            "type":"integer"
+          },
+          "id":{
+            "type":"string"
+          },
+          "group_id":{
+            "type":"string"
+          },
+          "favorite":{
+            "type":"boolean",
+            "default":false
+          },
+          "icon":{
+            "type":"string",
+            "default":"scene"
+          },
+          "transition":{
+            "type":"object",
+            "properties":{
+              "d":{
+                "type":"integer"
+              },
+      
+              "t":{
+                "type":"integer"
+              },
+              "s":{
+                "type":"integer"
+              },
+              "cmd":{
+                "type":"string"
+              },
+              "q":{
+                "type":"string"
+              },
+              "r":{
+                "type":"boolean"
+              }
+            }
           },
           "settings":{
             "type":"array",
@@ -67,10 +152,43 @@
               "type":"object",
               "properties":{
                 "controller_id":{
+                  "type":"string"
+                },
+                "pos":{
                   "type":"integer"
                 },
+                "transition":{
+                  "type":"object",
+                  "properties":{
+                    "d":{
+                      "type":"integer"
+                    },
+            
+                    "t":{
+                      "type":"integer"
+                    },
+                    "s":{
+                      "type":"integer"
+                      
+                    },
+                    "cmd":{
+                      "type":"string"
+                    },
+                    "q":{
+                      "type":"string"
+                    },
+                    "r":{
+                      "type":"boolean"
+                    }
+                  }
+                },
                 "color": {
-                  "$ref":"defs/$defs/color"
+                  "oneOf": [
+                    { "$ref": "#/$defs/Preset" },
+                    {"$ref":"defs/$defs/hsv"},
+                    {"$ref":"defs/$defs/hsvct"},
+                    {"$ref":"defs/$defs/raw"}
+                  ]
                 }
               }
             }
@@ -78,6 +196,15 @@
         }
       }
     }
+  },
+  "$defs": {
+    "Preset": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    }
   }
 }
-

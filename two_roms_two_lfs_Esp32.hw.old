@@ -1,14 +1,33 @@
 {
     "name": "two roms, two lfs partitions",
     "comment": "Should work with any Esp32 variant",
-    "base_config": "standard",
+	"arch": "Esp32",
+	"bootloader_size": "0x8000",
+	"partition_table_offset": "0x8000",
+	"devices": {
+		"spiFlash": {
+			"type": "flash",
+			"size": "4M",
+			"mode": "dio",
+			"speed": "60 if SMING_SOC=='esp32c2' else 40"
+		}
+	},
     "options": [
         "4m"
     ],
-    "partitions": {
-        "factory":{
-            "size": 0
-        },
+	"partitions": {
+		"phy_init": {
+			"address": "0x00f000",
+			"size": "0x1000",
+			"type": "data",
+			"subtype": "phy"
+		},
+		"nvs": {
+			"address": "0x009000",
+			"size": "0x6000",
+			"type": "data",
+			"subtype": "nvs"
+		},
         "rom0": {
             "device": "spiFlash",
             "address": "0x010000",
@@ -18,6 +37,7 @@
             "readonly": false,
             "encrypted": false,
             "filename": "$(TARGET_BIN)"
+
         },
         "lfs0": {
             "device": "spiFlash",
@@ -32,29 +52,29 @@
         "rom1": {
             "device": "spiFlash",
             "address": "0x00200000",
-            "size": "1408K",
+            "size": "1472K",
             "type": "app",
             "subtype": "ota_1",
             "readonly": false,
             "encrypted": false,
             "filename": ""
         },
-        "lfs1": {
+        "otadata": {
             "device": "spiFlash",
-            "address": "0x00360000",
-            "size": "632K",
+            "address": "0x0037e000",
+            "size": "8K",
             "type": "data",
-            "subtype": "littlefs",
+            "subtype": "ota",
             "readonly": false,
             "encrypted": false,
             "filename": ""
         },
-        "otadata": {
+        "lfs1": {
             "device": "spiFlash",
-            "address": "0x003fe000",
-            "size": "8K",
+            "address": "0x00380000",
+            "size": "512K",
             "type": "data",
-            "subtype": "ota",
+            "subtype": "littlefs",
             "readonly": false,
             "encrypted": false,
             "filename": ""

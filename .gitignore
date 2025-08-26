@@ -50,10 +50,11 @@ tflash
 version.json
 
 #ConfigDB directories used for host emulator tests
-app-config
-app-data
+app-config/*
+app-data/*
 # don't include the webapp files, they need to come from the deployment
 webapp/*
+include/filelist.h
 
 # exclude local script to update db that is under constant development
 pullall
@@ -66,3 +67,6 @@ html/*
 latex
 latex/*
 
+debug_Esp32.hw
+include/fileList.h
+flashloop.sh

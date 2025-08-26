@@ -36,8 +36,8 @@
 
 #include <RGBWWCtrl.h>
 #include <JsonObjectStream.h>
-#include <app-config.h>
-#include <app-data.h>
+#include "app-config.h"
+#include "app-data.h"
 #include <ConfigDB/Json/Format.h>
 #include <ConfigDB/Network/HttpImportResource.h>
 #include <Data/CStringArray.h>

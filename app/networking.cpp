@@ -21,6 +21,7 @@
  */
 #include <RGBWWCtrl.h>
 #include "mdnshandler.cpp"
+
 #define DNS_PORT 53
 
 mdnsHandler mdnsHandler;
@@ -72,14 +73,16 @@ void AppWIFI::scan(bool connectAfterScan)
  */
 void AppWIFI::scanCompleted(bool succeeded, BssList& list)
 {
-	debug_i("AppWIFI::scanCompleted. Success: %d", succeeded);
 	if(succeeded) {
+		debug_i("AppWIFI::scanCompleted");
 		_networks.clear();
 		for(size_t i = 0; i < list.count(); i++) {
 			if(!list[i].hidden && list[i].ssid.length() > 0) {
 				_networks.add(list[i]);
 			}
 		}
+	}else{
+		debug_e("wifi scan failed");
 	}
 	// TODO add wsBroadcast of available networks
 	_networks.sort([](const BssInfo& a, const BssInfo& b) { return b.rssi - a.rssi; });
@@ -121,8 +124,11 @@ void AppWIFI::forgetWifi()
  */
 void AppWIFI::init()
 {
+	debug_i("AppWIFI::init");
 	// ESP SDK function to disable  sleep
 	wifi_set_sleep_type(NONE_SLEEP_T);
+
+	debug_i("AppWIFI::init\n    station %s\n    AP      %s", WifiStation.isEnabled()? "enabled" : "disabled", WifiAccessPoint.isEnabled()? "enabled" : "disabled");
 
 	//don`t enable/disable again to save eeprom cycles
 	if(!WifiStation.isEnabled()) {
@@ -130,18 +136,18 @@ void AppWIFI::init()
 		WifiStation.enable(true, true);
 	}
 
+	WifiStation.enable(true);
 	if(WifiAccessPoint.isEnabled()) {
 		debug_i("AppWIFI::init WifiAccessPoint disabled");
 		WifiAccessPoint.enable(false, true);
 	}
 
 	_con_ctr = 0;
-
 	// ConfigDB adapt
 	if(app.isFirstRun()) {
 		debug_i("AppWIFI::init initial run - setting up AP, ssid: ");
 		String SSID = String(DEFAULT_AP_SSIDPREFIX) + String(system_get_chip_id());
-		printf("%s", SSID);
+		printf("%s", SSID.c_str());
 
 		AppConfig::Network network(*app.cfg);
 		if(auto networkUpdate = network.update()) {
@@ -152,6 +158,7 @@ void AppWIFI::init()
 	}
 
 	// register callbacks
+	debug_i("AppWIFI::init register callbacks");
 	WifiEvents.onStationDisconnect(StationDisconnectDelegate(&AppWIFI::_STADisconnect, this));
 	WifiEvents.onStationConnect(StationConnectDelegate(&AppWIFI::_STAConnected, this));
 	WifiEvents.onStationGotIP(StationGotIPDelegate(&AppWIFI::_STAGotIP, this));
@@ -165,12 +172,14 @@ void AppWIFI::init()
 		scan(false);
 
 	} else {
+
 		//configure WifiClient
 		{
 			AppConfig::Network network(*app.cfg);
 			if(!network.connection.getDhcp() && !network.connection.getIp().length() == 0) {
 				debug_i("AppWIFI::init setting static ip");
 				if(WifiStation.isEnabledDHCP()) {
+					// dhcp is configured off but currently enabled - disable it
 					debug_i("AppWIFI::init disabled dhcp");
 					WifiStation.enableDHCP(false);
 				}
@@ -189,11 +198,11 @@ void AppWIFI::init()
 				}
 			}
 		} // end ConfigDB network context
+		debug_i("AppWifi::init - triggering wifi connect");
+		WifiStation.connect();
 	}
 }
-
-/**
- * @brief Connects to a Wi-Fi network.
+/*
  * 
  * @param ssid The SSID of the Wi-Fi network.
  * @param new_con Flag indicating whether it is a new connection or not.
@@ -217,6 +226,7 @@ void AppWIFI::connect(String ssid, String pass, bool new_con /* = false */)
 	_new_connection = new_con;
 	_client_status = CONNECTION_STATUS::CONNECTING;
 
+	debug_i("connecting to %s using %s", ssid.c_str(), pass.c_str());
 	WifiStation.config(ssid, pass);
 	WifiStation.connect();
 	broadcastWifiStatus(F("Connecting to WiFi"));
@@ -285,7 +295,7 @@ void AppWIFI::_STAConnected(const String& ssid, MacAddress bssid, uint8_t channe
 		WifiStation.setHostname(device_name);
 		{
 			AppConfig::Network::OuterUpdater network(*app.cfg);
-			network.mdns.setName(device_name);
+			network.mdns.setName(app.sanitizeName(device_name));
 		} // end ConfigDB network updater context
 	}	 // end ConfigDB general context
 	broadcastWifiStatus(F("Connected to WiFi"));
@@ -307,21 +317,17 @@ void AppWIFI::_STAConnected(const String& ssid, MacAddress bssid, uint8_t channe
 void AppWIFI::_STAGotIP(IpAddress ip, IpAddress mask, IpAddress gateway)
 {
 	debug_i("AppWIFI::_STAGotIP");
-	_con_ctr = 0;
-	_client_status = CONNECTION_STATUS::CONNECTED;
-
-	// if we have a new connection, wait 90 seconds otherwise
-	// disable the accesspoint mode directly
 	if(_new_connection) {
 		stopAp(90000);
 	} else {
 		stopAp(1000);
 	}
 
+	IP=ip.toString();
 	{
 		AppConfig::General general(*app.cfg);
 		AppConfig::Network network(*app.cfg);
-		debug_i("AppWIFI::_STAGotIP - device_name %s mdnshostname %s", general.getDeviceName().c_str(),
+		debug_i("AppWIFI::_STAGotIP - device_name %s hostname %s", general.getDeviceName().c_str(),
 				network.mdns.getName().c_str());
 		if(network.mdns.getName().length() > 0) {
 			debug_i("AppWIFI::_STAGotIP - setting mdns hostname to %s", network.mdns.getName().c_str());
@@ -333,10 +339,18 @@ void AppWIFI::_STAGotIP(IpAddress ip, IpAddress mask, IpAddress gateway)
 
 	{
 		AppConfig::Network network(*app.cfg);
+		/*
 		if(network.connection.getDhcp()) {
 			ipAddress = "dhcp";
 		}
-		mdnsHandler.addHost(network.mdns.getName(), ipAddress, -1);
+			*/
+		uint32_t id;
+		
+		id = system_get_chip_id();	
+
+		ipAddress=ip.toString();
+		debug_i("adding mdns host %s with ip %s and id %s", network.mdns.getName().c_str(), ipAddress.c_str(), String(id).c_str());
+		mdnsHandler.addHost(network.mdns.getName(), ipAddress, -1, id);
 
 		broadcastWifiStatus();
 
@@ -403,11 +417,6 @@ void AppWIFI::startAp()
 	//start dns server for captive portal
 	dnsServer.start(DNS_PORT, "*", WifiAccessPoint.getIP());
 	broadcastWifiStatus(F("AP started"));
-}
-
-String AppWIFI::getMdnsHosts()
-{
-	return mdnsHandler.getHosts();
 }
 
 /**

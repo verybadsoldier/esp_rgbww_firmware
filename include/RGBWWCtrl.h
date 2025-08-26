@@ -20,12 +20,39 @@
  *
  */
 
-#ifndef RGBWWCTRL_H_
-#define RGBWWCTRL_H_
+#pragma once
+
+#if defined(SOC_ESP8266)
+	#define SOC "esp8266"
+#elif defined(SOC_ESP32S2)
+	#define SOC "esp32s2"
+#elif defined(SOC_ESP32S3)
+	#define SOC "esp32s3"
+#elif defined(SOC_ESP32C2)
+	#define SOC "esp32c2"
+#elif defined(SOC_ESP32C3)
+	#define SOC "esp32c3"
+#elif defined(SOC_ESP32)
+    #define SOC "esp32"
+#else
+    #define SOC "unknown"
+#endif
+
+#if defined(SMING_RELEASE)
+    #define BUILD_TYPE "release"
+#else
+    #define BUILD_TYPE "debug"
+#endif
 
 //default defines
 
-#define CLEAR_PIN 16
+#if defined ARCH_ESP8266
+#endif
+
+#if defined ARCH_ESP32
+    #undef CLEAR_PIN 
+#endif
+
 #define DEFAULT_AP_IP "192.168.4.1"
 #define DEFAULT_AP_SECURED false
 #define DEFAULT_AP_PASSWORD "rgbwwctrl"
@@ -56,6 +83,7 @@
 #if defined(ARCH_ESP8266) || defined(ESP32)
     #include <otaupdate.h>
 #endif
+
 #include <config.h>
 #include <ledctrl.h>
 #include <networking.h>
@@ -67,4 +95,4 @@
 #include <stepsync.h>
 #include <arduinojson.h>
 
-#endif /* RGBWWCTRL_H_ */
+

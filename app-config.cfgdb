@@ -36,12 +36,16 @@
                 "$ref":"defs/$defs/channel"
             }
         },
+        "clear_pin":{
+          "type":"integer",
+          "default":-1
+        },
         "supported_color_models":{
             "type": "array",
             "items":{
                 "type":"string"
             },
-            "default":["RGB", "RGBW", "RGBWW", "RGBWWCW"]
+            "default":["RGB", "RGBWW", "RGBCW", "RGBWWCW"]
         },
         "current_pin_config_name":{
           "type":"string",
@@ -258,6 +262,23 @@
             "username": {
               "type": "string",
               "default":""
+            },
+            "homeassistant": {
+              "type":"object",
+              "properties":{
+                "enable": {
+                  "type": "boolean",
+                  "default": true
+                },
+                "discovery_prefix": {
+                  "type": "string",
+                  "default": "homeassistant"
+                },
+                "node_id": {
+                  "type": "string",
+                  "default": ""  
+                }
+              }
             }
           }
         },
@@ -319,8 +340,8 @@
           "type":"object",
           "properties":{
             "enabled":{
-            "type":"boolean",
-            "default":true
+              "type":"boolean",
+              "default":true
             },
             "name":{
               "type":"string"
@@ -328,7 +349,59 @@
           }
         }
       }
+    },
+    "hardware": {
+      "type":"object",
+      "store":true,
+      "properties":{
+        "version":{
+          "type":"integer",
+          "default":0
+        },
+        "available_pins":{
+          "type":"array",
+          "items":{
+            "type":"object",
+            "properties" :{
+              "soc":{
+                "type":"string"
+              },
+              "pins":{
+                "type":"array",
+                "items":{
+                  "$ref":"defs/$defs/pin"
+                }
+              }
+            }
+          }
+        },
+        "pinconfigs":{
+          "type":"array",
+          "items":{
+            "type":"object",
+            "properties":{
+              "name": {
+                "type": "string"
+              },
+              "soc": {
+                "type": "string"
+              },
+              "model":{
+                "type":"string"
+              },
+              "clear_pin":{
+                "type":"integer"
+              },
+              "channels": {
+                "type":"array",
+                "items":{
+                  "$ref":"defs/$defs/channel"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }
-

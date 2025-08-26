@@ -51,8 +51,6 @@ public:
     void scan(bool connectAfterScan);
     bool isScanning() { return _scanning; };
     BssList getAvailableNetworks();
-
-    String getMdnsHosts();
     
     void forgetWifi();
 
@@ -67,6 +65,7 @@ private:
     Timer _timer;
     BssList _networks;
     IpAddress _ApIP;
+    IpAddress IP;
 
     CONNECTION_STATUS _client_status;
 
@@ -77,6 +76,8 @@ private:
     void broadcastWifiStatus();
     void broadcastWifiStatus(String message);
     void scanCompleted(bool succeeded, BssList& list);
+
+    
 };
 
 

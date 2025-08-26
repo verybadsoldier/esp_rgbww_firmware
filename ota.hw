@@ -1,60 +1,21 @@
 {
-        "name": "Standard config with single ROM",
-        "comment": "Should work with any Esp32 variant",
-        "arch": "Esp32",
-        "bootloader_size": "0x8000",
-        "partition_table_offset": "0x8000",
-        "devices": {
-                "spiFlash": {
-                        "type": "flash",
-                        "size": "4M",
-                        "mode": "dio",
-                        "speed": 40
-                }
-        },
-        "partitions": {
-                "phy_init": {
-                        "address": "0x00f000",
-                        "size": "0x1000",
-                        "type": "data",
-                        "subtype": "phy"
-                },
-                "nvs": {
-                        "address": "0x009000",
-                        "size": "0x6000",
-                        "type": "data",
-                        "subtype": "nvs"
-                },
+	"name": "Basic OTA sample",
+	"base_config": "spiffs-two-roms",
+	"partitions": {
 		"rom0": {
-                        "address": "0x010000",
-                        "size": "960K",
-                        "type": "app",
-                        "subtype": "ota_0",
-                        "filename": "$(TARGET_BIN)"
+			"subtype": "ota_0"
 		},
 		"rom1": {
-			"address": "0x100000",
-                        "size": "960K",
-                        "type": "app",
-                        "subtype": "ota_1"
+			"subtype": "ota_1"
 		},
 		"spiffs0": {
-			"address": "0x280000 if SMING_ARCH == 'Esp32' else 0x280000",
-			"size": "768k",
-			"type": "data",
-			"subtype": "spiffs",
-			"filename": "$(SPIFF_BIN_OUT)",
-			"build": {
-				"target": "spiffsgen",
-				"files": "webapp"
-			}
+			"size": "512K"
 		},
 		"spiffs1": {
-			"address": "0x340000 if SMING_ARCH == 'Esp32' else 0x280000",
-			"size": "768k",
+			"address": "0x380000 if SMING_ARCH == 'Esp32' else 0x280000",
+			"size": "512K",
 			"type": "data",
 			"subtype": "spiffs"
 		}
 	}
 }
-

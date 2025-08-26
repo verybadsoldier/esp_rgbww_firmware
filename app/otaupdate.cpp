@@ -125,14 +125,14 @@
  * Transition:
  * 
  * When an lfs aware firmware is first flashed via OTA, the partition scheme has to be changed and existing data has to be copied.
- * The data to copy is rather limited, primarily, it will have to be the .config and .color files. Both should be in RAM once the 
- * system has initialized and thus a true copy may not even be necessary.
+ * The data to copy is rather limited, primarily, it will have to be the .config and .color files. since the new ConfigDB system will come up with an 
+ * empty database, it might be possible to just import the existing .config file. 
  * 
  * The bigger challenge is that, once the file system has been changed, there will be no way back to the oder firmware other than re-flashing it.
  * This means that the other rom partition, not having been updated, is no longer able to run, it will result in a 404 error because it cannot
  * find the webapp (that used to be in the spiffs partition) and it won't find it's configuration, so it will default to an RGB light.
  * This is the identical behaviour to the old "filesystem not mounted" case.
- * One way around this would be to immedieately start another OTA once the first one has completed.
+ * One way around this would be to immediately start another OTA once the first one has completed.
  * 
  * the first OTA to the new layout thus will have to take care of a few extra
  * things like:
@@ -182,6 +182,26 @@
     Since keeping the config partition is only really required when updating OTA on an ESP8266, the
     hwconfig can be simplified to always provide two roms and two lfs partitions. 
  */
+
+
+/*
+ * OTA for the different platforms
+ * ESP8266:
+ * - technically working albeit with some quirks:
+ *   - it currently still deals with ROM slot numbers which is not a thing in the new OTA anymore, ToDo: remove this
+ *   - it's sort of sprinkled around a bit, ToDo: consolidate 
+ *   - when upgrading from the old firmware:
+ * 	   - generally does work. The partition table is re-written and the new file systems are created
+ *     - currently the new firmware is written to whatever the next partition is (which is fine) but since 
+ *       the filesystem is being changed, booting into the old firmware will fail as there is no spiffs anymore
+ *     - not saving any configuration -> since this is a one-time transitional requirement, the Idea is that 
+ *       the user will save the config manually before OTA and restore it later. 
+ *     - currently, to satisfy the need for a SPIFFS ROM image, I pull the original (old) spiffs image. ToDo: provide empty SPIFFS image
+ *     - on systems with a failing flash where spiffs has already failed, the OTA may fail, it's currently unclear what the failure mode is
+ * 	   - a manual (curl -X POST http://{ip-address}/update -H 'Content-Type: application/json' --data '{"rom":{"url":"http://lightinator.de/download/esp8266/develop/debug/rom0.bin"}}')
+ *       usually fixes hat. Sometimes, though, the controller first does not re-join the network, so it has to be reconfigured.
+ *       this behaviour might have to do with wether rom0 or rom1 was active when triggering the OTA.
+*/
 #include <otaupdate.h>
 #include <RGBWWCtrl.h>
 
@@ -194,11 +214,18 @@ void ApplicationOTA::start(String romurl)
 
 	auto part = ota.getNextBootPartition();
 
-#if ESP8266
-	debug_i("ApplicationOTA::start nextBootPartition: %s %#06x at slot %i", part.name().c_str(), part.address(),
-			rboot_get_current_rom());
-#endif
-	// flash rom to position indicated in the rBoot config rom table
+/*
+	 * Applications should always include a sanity check to ensure partitions being updated are
+	 * not in use. This should always included the application partition but should also consider
+	 * filing system partitions, etc. which may be actively in use.
+	 */
+	if(part == ota.getRunningPartition()) {
+		Serial << F("May be running in temporary mode. Please reboot and try again.") << endl;
+		return;
+	}
+
+	debug_i("ApplicationOTA::start nextBootPartition: %s %#06x", part.name().c_str(), part.address());
+	// flash rom to position indicated in the rBoot config rom table(temporarily) remove the sussess requirement from deploy-pages.yml
 	otaUpdater->addItem(romurl, part);
 
 	ota.begin(part);
@@ -242,8 +269,7 @@ void ApplicationOTA::doSwitch()
 }
 
 /*
-void ApplicationOTA::reset() {
-    debug_i("ApplicationOTA::reset");
+void ApplicationOTA::reset() {reset");
     status = OTASTATUS::OTA_NOT_UPDATING;
     if (otaUpdater)
         delete otaUpdater;
@@ -256,6 +282,10 @@ void ApplicationOTA::beforeOTA()
 	/*
     * this is being executed before otaUpdater->start
     */
+   auto boot_partitions=ota.getBootPartitions();
+   for (auto bootpart: boot_partitions){
+	   debug_i("ApplicationOTA::beforeOTA boot partition: %s", bootpart.name());
+   }
 
 	/*
      * ToDo few differnt situations here:
@@ -279,8 +309,17 @@ void ApplicationOTA::afterOTA()
     * so this is still the old firmware running
     */
 
+    /*
+	 * clear the hardware description parts of ConfigDB 
+	 * an update may chose to change these fields if the
+	 * capabilities have changed. Locally stored data is 
+	 * no longer valid after any update (it probably should not
+	 * even be in the afterOTA method but somewhere in the main
+	 * path)
+	 */
 	if(status == OTASTATUS::OTA_SUCCESS_REBOOT) {
 		debug_i("afterOta, rom Slot=%i", app.getRomSlot());
+
 
 // ToDo: so the ota has been successful, now what?
 #ifdef ARCH_ESP8266
@@ -324,18 +363,20 @@ void ApplicationOTA::upgradeCallback(Ota::Network::HttpUpgrader& client, bool re
 	if(result == true) {
 		ota.end();
 
+		afterOTA();
+
 		auto part = ota.getNextBootPartition();
 		debug_i("ApplicationOTA::rBootCallback next boot partition: %s", part.name().c_str());
 		ota.setBootPartition(part);
+		debug_i("configured next boot partition");
 		status = OTASTATUS::OTA_SUCCESS_REBOOT;
+		debug_i("OTA callback done, rebooting");
+		System.restart();
 	} else {
 		status = OTASTATUS::OTA_FAILED;
 		ota.abort();
 		debug_i("OTA failed");
 	}
-	afterOTA();
-	debug_i("OTA callback done, rebooting");
-	System.restart();
 }
 
 void ApplicationOTA::checkAtBoot()

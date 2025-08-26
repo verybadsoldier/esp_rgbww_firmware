@@ -26,6 +26,7 @@
 #include <Network/Http/Websocket/WebsocketResource.h>
 
 #define FILE_MAX_SIZE 16384 //max filesize for storage api files.
+#define MAX_LOG_LINE_SIZE 512
 
 enum API_CODES {
     API_SUCCESS = 0,
@@ -45,7 +46,7 @@ public:
     void init();
     inline bool isRunning() { return _running; };
 
-    void wsBroadcast(String message);
+    void wsSendBroadcast(const char* buffer, size_t length);
 
     String getApiCodeMsg(API_CODES code);
 
@@ -76,8 +77,6 @@ private:
     void onUpdate(HttpRequest &request, HttpResponse &response);
     void onConnect(HttpRequest &request, HttpResponse &response);
     void onHosts(HttpRequest &request, HttpResponse &response);
-    void onPresets(HttpRequest &request, HttpResponse &response);
-    void onScenes(HttpRequest &request, HttpResponse &response);
     void onPing(HttpRequest &request, HttpResponse &response);
     void onStop(HttpRequest &request, HttpResponse &response);
     void onSkip(HttpRequest &request, HttpResponse &response);
@@ -85,7 +84,8 @@ private:
     void onContinue(HttpRequest &request, HttpResponse &response);
     void onBlink(HttpRequest &request, HttpResponse &response);
     void onToggle(HttpRequest &request, HttpResponse &response);
-
+    void onData(HttpRequest &request, HttpResponse &response);
+    
     void onColorGet(HttpRequest &request, HttpResponse &response);
     void onColorPost(HttpRequest &request, HttpResponse &response);
     bool onColorPostCmd(JsonObject& root, String& errorMsg);
@@ -93,6 +93,7 @@ private:
     void sendApiResponse(HttpResponse &response, JsonObjectStream* stream, HttpStatus code = HTTP_STATUS_OK);
     void sendApiCode(HttpResponse &response, API_CODES code, String msg = "");
 
+    //void onUpload(HttpRequest &request, HttpResponse &response);
     bool checkHeap(HttpResponse &response);
 
     String makeId();
@@ -103,7 +104,6 @@ private:
 
     void wsConnected(WebsocketConnection& socket);
     void wsDisconnected(WebsocketConnection& socket);
-    
 };
 
 #endif // APP_WEBSERVER_H_

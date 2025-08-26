@@ -1,5 +1,4 @@
-/**
- * @file
+ /*
  * @author  Patrick Jahns http://github.com/patrickjahns
  *
  * @section LICENSE
@@ -20,10 +19,15 @@
  *
  */
 #pragma once
+#include <otaupdate.h>
 
 static const char* fw_git_version = GITVERSION;
 static const char* fw_git_date = GITDATE;
 static const char* sming_git_version = SMING_VERSION;
+struct VisibleController {
+    unsigned int id;
+    int ttl;
+};
 
 // main forward declarations
 class Application {
@@ -44,6 +48,7 @@ public:
 
     void wsBroadcast(String message);
     void wsBroadcast(String cmd, String message);
+    void wsBroadcast(const String& cmd, const JsonObject& params);
 
     void listSpiffsPartitions();
     
@@ -75,16 +80,42 @@ public:
     AppWIFI network;
     ApplicationWebserver webserver;
     APPLedCtrl rgbwwctrl;
-#if defined(ARCH_ESP8266) || defined(ESP32)
     ApplicationOTA ota;
-#endif
     std::unique_ptr<AppConfig> cfg;
-    //std::unique_ptr<AppConfig> cfg;
     std::unique_ptr<AppData> data;
     EventServer eventserver;
     AppMqttClient mqttclient;
     JsonProcessor jsonproc;
     NtpClient* pNtpclient = nullptr;
+
+    std::vector<VisibleController> visibleControllers; // vector of currently visible controllers to be used for mdns
+    void addOrUpdateVisibleController(unsigned int id, int ttl);
+    void removeExpiredControllers(int elapsedSeconds);
+    bool isVisibleController(unsigned int id) {
+        for (const auto& controller : visibleControllers) {
+            if (controller.id == id) {
+                return true;
+            }
+        }
+        return false;
+    }
+    void Application::resetVisibleControllersTTL(int newTTL)
+    {
+        for (auto& controller : visibleControllers) {
+            controller.ttl = newTTL;
+        }
+    }
+    std::vector<VisibleController>& getVisibleControllers() { return visibleControllers; }
+
+    String sanitizeName(const String& input){
+        String result = input;
+    for (int i = 0; i < result.length(); i++) {
+        if (result[i] == '_') {
+            result[i] = '-';
+        }
+    }
+    return result;
+    }
 
 private:
     void loadbootinfo();
@@ -101,6 +132,11 @@ private:
     Timer _checkRamTimer;
     uint32_t _uptimeMinutes;
     std::array<int, 17> _lastToggles;
+
+    uint32_t jsonrpc_id = 0;
+
+    int8_t clearPin = 16; //  GPIO16 is the default for the old mrpj boards, newer boards will load from pinconfig 
+
 };
 // forward declaration for global vars
 extern Application app;

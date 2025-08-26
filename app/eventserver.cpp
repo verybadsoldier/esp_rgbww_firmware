@@ -92,7 +92,14 @@ void EventServer::publishCurrentState(const ChannelOutput& raw, const HSVCT* pHs
 	//debug_i("EventServer::publishCurrentState\n");
 	if(raw == _lastRaw)
 		return;
+
+	unsigned long currentTime = millis();
+	if(currentTime - _lastEventTime < _minEventInterval) {
+		debug_i("eventserver, droppinging currentState event");
+		return; // Silently discard this event
+	}
 	_lastRaw = raw;
+	_lastEventTime = currentTime;
 
 	JsonRpcMessage msg(F("color_event"));
 	JsonObject root = msg.getParams();
@@ -202,5 +209,5 @@ void EventServer::sendToClients(JsonRpcMessage& rpcMsg)
 		pClient->sendString(jsonStr);
 	}
 
-	webServer->wsBroadcast(jsonStr);
-}
+	app.wsBroadcast(jsonStr);
+  }

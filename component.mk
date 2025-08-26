@@ -1,11 +1,15 @@
 COMPONENT_SEARCH_DIRS := $(PROJECT_DIR)/Components
 COMPONENT_DEPENDS += MDNS RGBWWLed LittleFS ConfigDB ArduinoJson6 OtaNetwork 
+ifeq ($(SMING_ARCH), Esp32)
+    COMPONENT_DEPENDS += Esp32HardwarePwm
+endif 
 
 # Set default number of jobs to twice the number of available processors
 NUM_JOBS := $(shell echo $(($(nproc) * 2)))
 MAKEFLAGS += -j$(NUM_JOBS)
 
 HWCONFIG :=two_roms_two_lfs_$(SMING_ARCH)
+#HWCONFIG:=debug_Esp32
 
 #### rBoot options ####
 # use rboot build mode
@@ -50,7 +54,12 @@ endif
 CUSTOM_TARGETS += check_versions
 
 #### GIT VERSION Information #####
-GIT_VERSION = $(shell git describe --abbrev=4 --dirty --always --tags)"-["$(shell git rev-parse --abbrev-ref HEAD)"]"
+ifdef GITHUB_RUN_NUMBER
+  GIT_VERSION = V5.0-$(GITHUB_RUN_NUMBER)-$(shell git rev-parse --abbrev-ref HEAD)
+else
+  # For local builds, use the git describe approach
+  GIT_VERSION = $(shell git describe --abbrev=4 --dirty --always --tags)"-["$(shell git rev-parse --abbrev-ref HEAD)"]"
+endif
 GIT_DATE = $(firstword $(shell git --no-pager show --date=short --format="%ad" --name-only))
 SMING_GITVERSION =	$(shell git -C $(SMING_HOME)/.. describe --abbrev=4 --dirty --always --tags)"-["$(shell git -C $(SMING_HOME)/.. rev-parse --abbrev-ref HEAD)"]"
 WEBAPP_VERSION = $(shell cat $(PROJECT_DIR)/webapp/VERSION)

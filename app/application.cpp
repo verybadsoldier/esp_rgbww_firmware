@@ -1,4 +1,4 @@
-/**
+ /**
  * @file
  * @author  Patrick Jahns http://github.com/patrickjahns
  *
@@ -20,23 +20,19 @@
  *
  */
 
-#ifdef __riscv
-//#if SMING_SOC==esp32c3
-//#warning "redefining INT32 to be int, not long int for riscv based esp32c3"
-#undef __INT32_TYPE__
-#define __INT32_TYPE__ int
-
-#undef __UINT32_TYPE__
-#define __UINT32_TYPE__ unsigned int
-
-#endif // __riscv
 
 #include <RGBWWCtrl.h>
 #include <Ota/Upgrader.h>
+#include <RGBWWLed/RGBWWLed.h>
 #include <SmingCore.h>
 #include <Storage/SysMem.h>
 #include <Storage/ProgMem.h>
 #include <Storage/Debug.h>
+#include <JSON/StreamingParser.h>
+#include <VersionListener.h>
+#include <FlashString/Stream.hpp>
+#include <fileMap.h>
+
 
 #if ARCH_ESP8266
 #define PART0 "lfs0"
@@ -44,10 +40,10 @@
 #define PART0 "factory"
 #endif
 
+//IMPORT_FSTR_LOCAL(default_config, PROJECT_DIR "/default_config.json");
+
 #ifdef ARCH_ESP8266
 #include <Platform/OsMessageInterceptor.h>
-
-IMPORT_FSTR_LOCAL(default_config, PROJECT_DIR "/default_config.json");
 
 static OsMessageInterceptor osMessageInterceptor;
 
@@ -100,7 +96,12 @@ static void onOsMessage(OsMessage& msg)
 namespace
 {
 // Note: This file won't exist on initial build!
+#if defined(SMING_RELEASE)
+// release build, pull release partition table
+IMPORT_FSTR(partitionTableData, PROJECT_DIR "/out/Esp8266/release/firmware/partitions.bin")
+#else
 IMPORT_FSTR(partitionTableData, PROJECT_DIR "/out/Esp8266/debug/firmware/partitions.bin")
+#endif
 } // namespace
 
 extern "C" void __wrap_user_pre_init(void)
@@ -137,14 +138,24 @@ void init()
 	debug_i("starting os message interceptor");
 #endif
 
-	// set CLR pin to input
-	pinMode(CLEAR_PIN, INPUT);
-
 	// seperated application init
 	app.init();
 
 	// Run Services on system ready
 	System.onReady(SystemReadyDelegate(&Application::startServices, &app));
+}
+
+int32_t getVersion(IDataSourceStream& input)
+{
+	JSON::VersionListener listener;
+	JSON::StaticStreamingParser<128> parser(&listener);
+	auto status = parser.parse(input);
+	if (listener.hasVersion())
+	{
+		input.seekFrom(0, SeekOrigin::Start); // rewind to leave the stream in the same state
+		return listener.getVersion();
+	}
+	return -1;
 }
 
 Application::~Application()
@@ -162,30 +173,17 @@ void Application::uptimeCounter()
 
 void Application::checkRam()
 {
+	
 	debug_i("Free heap: %d", system_get_free_heap_size());
+
 }
 
 void Application::init()
 {
-	for(int i = 0; i < 10; i++) {
-		Serial.print(_F("="));
-		delay(200);
-	}
-	Serial.print("\r\n");
-	// ConfigDB obsoleted debug_i("going to initialize config");
-	// ConfigDB obsoleted config::initializeConfig(cfg); // initialize the config structure if necessary
 	debug_i("ESP RGBWW Controller Version %s\r\n", fw_git_version);
 	debug_i("Sming Version: %s\r\n", sming_git_version);
-#ifdef ARCH_ESP8266
-	debug_i("Platform: Esp8266\r\n");
-#endif
-#ifdef ARCH_ESP32
-#ifdef __riscv
-	debug_i("Platform: Esp32 RISC-V (Esp32c3)\r\n");
-#else
-	debug_i("Platform: Esp32\r\n");
-#endif
-#endif
+
+	debug_i("Platform: %s\r\n", SOC);
 
 #if defined(ARCH_ESP8266) || defined(ESP32)
 	app.ota.checkAtBoot();
@@ -203,33 +201,17 @@ void Application::init()
 	if(!Storage::findPartition(PART0) && !Storage::findPartition(F("lfs1"))) {
 		// mount existing data partition
 		debug_i("application init (with spiffs) => Mounting file system");
-		/* ConfigDB - may need rework
-        if(mountfs(app.getRomSlot())){
-            if (cfg.exist()) {
-                debug_i("application init (with spiffs) => reading config");
-                cfg.load(); 
-                debug_i("application init (with spiffs) => config loaded, pin config %s",cfg.general.pin_config_name.c_str());
-            }
-        }else{
-            debug_i("application init (with spiffs) => failed to find config file");
-        }
-        */
-
-		/*
-        * now, app.cfg is the valid full configuration
-        * next step is to change the partition layout
-        */
+	
 		debug_i("application init => switching file systems - partition 1");
 		ota.switchPartitions();
 		debug_i("application init => saving config");
-		// ConfigDB - not needed
-		// cfg.save();
 	}
+
 #endif
 
 	//load settings
 	_uptimetimer.initializeMs(60000, TimerDelegate(&Application::uptimeCounter, this)).start();
-	_checkRamTimer.initializeMs(2000, TimerDelegate(&Application::checkRam, this)).start();
+	_checkRamTimer.initializeMs(10000, TimerDelegate(&Application::checkRam, this)).start();
 #ifdef ARCH_ESP8266
 	// load boot information
 	uint8 bootmode, bootslot;
@@ -245,6 +227,9 @@ void Application::init()
 	}
 #endif
 
+debug_i("Application::init - check running partition");
+auto part=app.ota.ota.getRunningPartition();
+debug_i("Application::init - running partition %s", part.name());
 // list spiffs partitions
 //listSpiffsPartitions();
 
@@ -253,7 +238,7 @@ void Application::init()
 
 //debug_i("Application::init - got rom partition %s @0x%#08x", romPartition.name(),romPartition.address());
 //auto spiffsPartition=app.ota.findSpiffsPartition(romPartition);
-#if defined(ARCH_ESP8266) || defined(ESP32)
+#if defined(ARCH_ESP8266) || defined(ARCH_ESP32)
 	mountfs(getRomSlot());
 	// ToDo - rework mounting filesystem
 	if(_fs_mounted) {
@@ -273,95 +258,136 @@ void Application::init()
 #endif
 
 	// initialize config and data
-	cfg = std::make_unique<AppConfig>(configDB_PATH);
+	cfg =  std::make_unique<AppConfig>(configDB_PATH);
 	data = std::make_unique<AppData>(dataDB_PATH);
+
+	// verify if there is a new version of the hardware config
+	
+
+	{
+		AppConfig::Hardware hardware(*cfg);
+		uint32_t currentVersion=hardware.getVersion();
+
+		debug_i("make pinconfig stream");
+		FSTR::Stream fs(fileMap["config/pinconfig.json"]);	
+		//Serial.println(fileMap["config/pinconfig.json"]);
+		debug_i("get file Version");
+		uint32_t fileVersion=getVersion(fs);
+		debug_i("fileVersion %i", fileVersion);	
+		if(fileVersion == -1){
+			debug_i("Application::init - no version found in pinconfig");
+		}
+		debug_i("Application::init - hardware version: %d, file version: %d", currentVersion, fileVersion);
+		if(fileVersion>currentVersion){
+			if(auto hardwareUpdate = hardware.update()){
+				hardwareUpdate.importFromStream(ConfigDB::Json::format, fs);
+			}
+		}
+	}
+	{
+		AppConfig::General general(*cfg);
+		clearPin=general.getClearPin();
+		debug_i("Application::init - clear pin %d", clearPin);
+		if(clearPin >= 0) {
+			pinMode(clearPin, INPUT);
+			debug_i("Application::init - clear pin set to input");
+		}
+	}
+	debug_i("Application::init - hardware config loaded");
+	
 
 // check if we need to reset settings
 #if !defined(ARCH_HOST)
-	if(digitalRead(CLEAR_PIN) < 1) {
+
+	if(clearPin >=0 && digitalRead(clearPin) < 1) {
 		debug_i("CLR button low - resetting settings");
-		// ConfigDB - decide i f to reload defaults or load a specific saved version
+		// ConfigDB - decide if to reload defaults or load a specific saved version
 		// perhaps by holding the clear pin low for a certain time along with blink codes?
 		// cfg.reset();
 		network.forgetWifi();
 	}
+
 #endif
 
 	// check ota
 #ifdef ARCH_ESP8266
 	ota.checkAtBoot();
 #endif
-
-	// load config
-	// ConfigDB obsoleted cfg.load(), either the config is defined by defaults or initially loaded from a default config.json
-	// once the database is initialized, the config is loaded from the database
+	
 	{
 		debug_i("application init => checking ConfigDB");
 		AppConfig::General general(*cfg);
+		debug_i("application init => config is %s", general.getIsInitialized()?"initialized":"not initialized");
 		if(!general.getIsInitialized()) {
 			debug_i("application init => reading config");
-			//cfg.load();
 
-			//Serial << "* reading default config flash string *" << endl << default_config << endl;
-
-			//Serial << "* reading default config flash string *" << endl << default_config << endl;
-			//auto configStream = new FSTR::Stream(CONTENT_default_config);
-			//cfg->importFromStream(ConfigDB::Json::format, *configStream);
-			debug_i("application init => config loaded, pin config %s", general.getPinConfig().c_str());
 			debug_i("Application::init - first run");
 			_first_run = true;
 
 			if(auto generalUpdate = general.update()) {
-				;
 				generalUpdate.setIsInitialized(true);
 			}
 
 		} else {
-			//cfg.save();
-			debug_i("ConfigDB already initialized. starting");
+			debug_i("ConfigDB already initialized. resetting hardware definition");
+			{
+			if (auto generalUpdate= general.update()){
+				generalUpdate.supportedColorModels.loadArrayDefaults();
+				}
+			}
+			{
+				AppConfig::Hardware hardware(*app.cfg);
+				if(auto hardwareUpdate=hardware.update()){
+					hardwareUpdate.availablePins.loadArrayDefaults();
+				}
+			}
 		}
 	}
 
+	// prepare active hosts list
+	{
+		// pre-allocate heap for the visible hosts vector. 
+		// this should adapt to the number of hosts detected in earlier boots
+		AppData::Root::Controllers controllers(*app.data);
+		size_t hostCount = 0;
+		for (auto it = controllers.begin(); it != controllers.end(); ++it) {
+			hostCount++;
+		}
+		if(hostCount > 0){
+			debug_i("found %i hosts in the list", hostCount);
+			visibleControllers.reserve(hostCount);
+		}else{
+			visibleControllers.reserve(10);
+		}
+	}
+
+	/*
 	Serial << endl << _F("** Stream **") << endl;
+	Serial << "#########################################################################################"<<endl;
 	cfg->exportToStream(ConfigDB::Json::format, Serial);
-
-	// initialize led ctrl
-	rgbwwctrl.init();
-
-	initButtons();
-
+	Serial <<endl;
+	Serial << "#########################################################################################"<<endl;
+	*/
+	debug_i("start network init");
 	// initialize networking
 	network.init();
+	debug_i("network initizalized, ssid: %s", WifiStation.getSSID().c_str());
+	
+	/// initialize led ctrl
+	rgbwwctrl.init();
+	debug_i("ledctrl initialized");
+
+	initButtons();
+	debug_i("buttons initialized");
 
 	// initialize webserver
-
 	app.webserver.init();
+	debug_i("webserver initialized");
 
-	// ConfigDB: temp only: create an example preset
-	{
-		AppData::Presets::OuterUpdater presets(*data);
+	debug_i("pin config string %s", fileMap["pin_config"]);
 
-		presets.clear();
 
-		auto preset = presets.addItem();
-		preset.setName("example-hsv");
-		preset.setFavorite(true);
-		auto hsvUpdater = preset.color.toHsv();
-		hsvUpdater.setH(0);
-		hsvUpdater.setS(100);
-		hsvUpdater.setV(100);
-	}
-	{
-		AppData::Presets::OuterUpdater presets(*data);
-		auto preset = presets.addItem();
-		preset.setName("example-raw");
-		auto rawUpdater = preset.color.toRaw();
-		rawUpdater.setR(255);
-		rawUpdater.setG(255);
-		rawUpdater.setB(255);
-		rawUpdater.setWw(255);
-		rawUpdater.setCw(255);
-	}
+	
 }
 void Application::initButtons()
 {
@@ -413,7 +439,7 @@ void Application::startServices()
 			eventserver.start(app.webserver);
 		}
 	} // end of ConfigDB root context
-
+	if(WifiStation.isConnected())
 	{
 		debug_i("Application::startServices - starting mqtt");
 		AppConfig::Network network(*cfg);
@@ -455,21 +481,31 @@ bool Application::delayedCMD(String cmd, int delay)
 {
 	debug_i("Application::delayedCMD cmd: %s - delay: %i", cmd.c_str(), delay);
 	if(cmd.equals(F("reset"))) {
+		wsBroadcast(F("notification"), F("Controller will reset and restart"));
+		wsBroadcast(F("webapp_cmd"), F("reload"));
 		_systimer.initializeMs(delay, TimerDelegate(&Application::reset, this)).startOnce();
 	} else if(cmd.equals(F("restart"))) {
+		wsBroadcast(F("notification"), F("Controller will restart"));
+		wsBroadcast(F("webapp_cmd"), F("reload"));
 		_systimer.initializeMs(delay, TimerDelegate(&Application::restart, this)).startOnce();
 	} else if(cmd.equals(F("stopap"))) {
+		wsBroadcast(F("notification"), F("Controller will disable the access point"));
 		network.stopAp(2000);
 	} else if(cmd.equals(F("forget_wifi"))) {
+		wsBroadcast(F("notification"), F("Controller will reset wifi settings"));
 		_systimer.initializeMs(delay, TimerDelegate(&AppWIFI::forgetWifi, &network)).startOnce();
 	} else if(cmd.equals(F("forget_wifi_and_restart"))) {
+		wsBroadcast(F("notification"), F("Controller will reset wifi settings and restart"));
 		network.forgetWifi();
+		wsBroadcast(F("webapp_cmd"), F("reload"));
 		_systimer.initializeMs(delay, TimerDelegate(&Application::forget_wifi_and_restart, this)).startOnce();
 	} else if(cmd.equals(F("umountfs"))) {
 		//umountfs();
 	} else if(cmd.equals(F("mountfs"))) {
 		//
 	} else if(cmd.equals(F("switch_rom"))) {
+		wsBroadcast(F("notification"), F("Controller will switch to other rom"));
+		wsBroadcast(F("webapp_cmd"), F("reload"));
 #if ARCH_ESP8266
 		switchRom();
 //_systimer.initializeMs(delay, TimerDelegate(&Application::restart, this)).startOnce();
@@ -493,9 +529,9 @@ bool Application::mountfs(int slot)
 {
 	/*
     *
-    * need a new mount method for the transitional time when the data file 
+    * need a new mount method for the transitional time when the data file
     * system could be spiffs or LitleFS
-    * 
+    *
     */
 
 #ifdef ARCH_HOST
@@ -504,6 +540,7 @@ bool Application::mountfs(int slot)
      */
 	debug_i("mounting host file system");
 	fileSetFileSystem(&IFS::Host::getFileSystem());
+	return true;
 #else
 	/*
      * on device file system
@@ -614,18 +651,43 @@ int Application::getRomSlot()
 }
 #endif
 
+/*
+*	send a jsonrpc message from a fully constructed JsonRpcMessage object string
+*/
 void Application::wsBroadcast(String message)
 {
-	debug_i("Application::wsBroadcast");
-	app.webserver.wsBroadcast(message);
+	static char buffer[MAX_LOG_LINE_SIZE];//max log line size for wsBroadcast
+	message.toCharArray(buffer, MAX_LOG_LINE_SIZE);
+	size_t length = message.length();
+	if(length>MAX_LOG_LINE_SIZE) length=MAX_LOG_LINE_SIZE;
+
+	app.webserver.wsSendBroadcast(buffer, length);
 }
 
+/*
+*	build a jsonrpc message from a command and a parameters string
+*/
 void Application::wsBroadcast(String cmd, String message)
 {
 	JsonRpcMessage msg(cmd);
+	msg.setId(jsonrpc_id++);
 	JsonObject root = msg.getParams();
 	root[F("message")] = message;
+
 	String jsonStr = Json::serialize(msg.getRoot());
+	wsBroadcast(jsonStr);
+}
+
+void Application::wsBroadcast(const String& cmd, const JsonObject& params)
+{
+	JsonRpcMessage msg(cmd);
+	msg.setId(jsonrpc_id++);
+	JsonObject root = msg.getParams();
+    for (JsonPair kv : params) {
+        root[kv.key()] = kv.value();
+    }
+	String jsonStr = Json::serialize(msg.getRoot());
+	//debug_i("Application::wsBroadcast: %s", jsonStr.c_str());
 	wsBroadcast(jsonStr);
 }
 
@@ -655,4 +717,27 @@ void Application::onButtonTogglePressed(int pin)
 uint32_t Application::getUptime()
 {
 	return _uptimeMinutes * 60u;
+}
+
+void Application::addOrUpdateVisibleController(unsigned int id, int ttl) {
+    for (auto& controller : visibleControllers) {
+        if (controller.id == id) {
+            controller.ttl = ttl;
+            return;
+        }
+    }
+    // Not found, add new
+    visibleControllers.push_back({id, ttl});
+}
+
+void Application::removeExpiredControllers(int elapsedSeconds) {
+    for (size_t i = 0; i < visibleControllers.size(); i++) {
+        visibleControllers[i].ttl -= elapsedSeconds;
+        if (visibleControllers[i].ttl <= 0) {
+            // Remove using swap and pop
+            visibleControllers[i] = visibleControllers.back();
+            visibleControllers.pop_back();
+            i--; // Adjust index
+        }
+    }
 }
