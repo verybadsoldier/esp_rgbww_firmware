@@ -1,5 +1,8 @@
 COMPONENT_SEARCH_DIRS := $(PROJECT_DIR)/Components
 COMPONENT_DEPENDS += MDNS RGBWWLed LittleFS ConfigDB ArduinoJson6 OtaNetwork 
+ifeq ($(SMING_ARCH), Esp32)
+    COMPONENT_DEPENDS += Esp32HardwarePwm
+endif 
 
 # Set default number of jobs to twice the number of available processors
 NUM_JOBS := $(shell echo $(($(nproc) * 2)))

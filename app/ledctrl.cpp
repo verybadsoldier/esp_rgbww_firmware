@@ -227,6 +227,8 @@ void APPLedCtrl::init()
 
 bool APPLedCtrl::isPinValid(int currentPin)
 {
+	if (currentPin==-1) return true; // if clear pin is not configured, it will be set to -1, the config is still valid
+			
 	AppConfig::Hardware hardware(*app.cfg);
 	for (auto pinconfig : hardware.availablePins){
 		if (strcmp(pinconfig.getSoc().c_str(),SOC)==0){

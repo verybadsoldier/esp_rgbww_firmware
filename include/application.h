@@ -99,6 +99,7 @@ public:
         }
         return false;
     }
+
     std::vector<VisibleController>& getVisibleControllers() { return visibleControllers; }
 
     String sanitizeName(const String& input){

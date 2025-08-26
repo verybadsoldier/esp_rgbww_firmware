@@ -401,7 +401,6 @@ void ApplicationWebserver::onConfig(HttpRequest& request, HttpResponse& response
 			oldDeviceName=general.getDeviceName();
 			oldCurrentPinConfigName=general.getCurrentPinConfigName();
 		}
-		
 
 		auto bodyStream = request.getBodyStream();
 		if(bodyStream) {
@@ -1191,98 +1190,39 @@ void ApplicationWebserver::onToggle(HttpRequest& request, HttpResponse& response
 	}
 }
 
-void ApplicationWebserver::onStorage(HttpRequest& request, HttpResponse& response)
-{
-	if(request.method != HTTP_POST && request.method != HTTP_GET && request.method != HTTP_OPTIONS) {
-		sendApiCode(response, API_CODES::API_BAD_REQUEST, "not POST, GET or OPTIONS request");
-		return;
-	}
-
-	/*
-    / axios sends a HTTP_OPTIONS request to check if server is CORS permissive (which this firmware 
-    / has been for years) this is just to reply to that request in order to pass the CORS test
-    */
-	if(request.method == HTTP_OPTIONS) {
-		// probably a CORS request
-		sendApiCode(response, API_CODES::API_SUCCESS, "");
-		debug_i("HTTP_OPTIONS Request, sent API_SUCCSSS");
-		return;
-	}
-
-	if(request.method == HTTP_POST) {
-		debug_i("======================\nHTTP POST request received, ");
-		String header = request.getHeader("Content-type");
-		if(header != "application/json") {
-			sendApiCode(response, API_BAD_REQUEST, "only json content allowed");
-		}
-		debug_i("got post with content type %s", header.c_str());
-		String body = request.getBody();
-		if(body == NULL || body.length() > FILE_MAX_SIZE) {
-			sendApiCode(response, API_CODES::API_BAD_REQUEST, "could not parse HTTP body");
-			return;
-		}
-
-		bool error = false;
-
-		debug_i("body length: %i", body.length());
-		// ConfigDB - CONFIG_MAX_LENGTH was no longer defined, what's the right size here?
-		StaticJsonDocument<512> doc;
-		Json::deserialize(doc, body);
-		String fileName = doc[F("filename")];
-
-		//DynamicJsonDocument data(body.length()+32);
-		//Json::deserialize(data, Json::serialize(doc[F("data")]));
-		//doc.clear(); //clearing the original document to save RAM
-		debug_i("will save to file %s", fileName.c_str());
-		debug_i("original document uses %i bytes", doc.memoryUsage());
-		String data = doc[F("data")];
-		debug_i("data: %s", data.c_str());
-
-		FileHandle file =
-			fileOpen(fileName.c_str(), IFS::OpenFlag::Write | IFS::OpenFlag::Create | IFS::OpenFlag::Truncate);
-		if(!fileWrite(file, data.c_str(), data.length())) {
-			debug_e("Saving config to file %s failed!", fileName.c_str());
-		}
-		fileClose(file);
-		setCorsHeaders(response);
-		sendApiCode(response, API_CODES::API_SUCCESS);
-		return;
-	}
-}
 
 void ApplicationWebserver::onHosts(HttpRequest& request, HttpResponse& response)
 {
-	if(request.method != HTTP_GET && request.method != HTTP_OPTIONS) {
-		sendApiCode(response, API_CODES::API_BAD_REQUEST, "not GET or OPTIONS request");
-		return;
-	}
+    if(request.method != HTTP_GET && request.method != HTTP_OPTIONS) {
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "nost GET or OPTIONS request");
+        return;
+    }
 
-	if(request.method == HTTP_OPTIONS) {
-		// probably a CORS request
-		sendApiCode(response, API_CODES::API_SUCCESS, "");
-		debug_i("HTTP_OPTIONS Request, sent API_SUCCSSS");
-		return;
-	}
+    if(request.method == HTTP_OPTIONS) {
+        sendApiCode(response, API_CODES::API_SUCCESS, "");
+        debug_i("HTTP_OPTIONS Request, sent API_SUCCSSS");
+        return;
+    }
+
+    bool showAll = request.getQueryParameter("all") == "1" || request.getQueryParameter("all") == "true";
 
     JsonObjectStream* stream = new JsonObjectStream();
     JsonObject json = stream->getRoot();
     JsonArray hostsArray = json.createNestedArray("hosts");
-	
-	AppData::Root::Controllers controllers(*app.data);
 
-	for (auto controller : controllers){
-		if (app.isVisibleController(controller.getId().toInt())){
+    AppData::Root::Controllers controllers(*app.data);
+
+    for (auto controller : controllers){
+        if (showAll || app.isVisibleController(controller.getId().toInt())){
             JsonObject hostObj = hostsArray.createNestedObject();
             hostObj[F("id")] = controller.getId();
             hostObj[F("hostname")] = controller.getName();
             hostObj[F("ip_address")] = controller.getIpAddress();
-		}
-	}
-	sendApiResponse(response, stream);
-	setCorsHeaders(response);
-	response.setContentType(F("application/json"));
-
-	return;
+        }
+    }
+    sendApiResponse(response, stream);
+    setCorsHeaders(response);
+    response.setContentType(F("application/json"));
 }
 
 void ApplicationWebserver::onData(HttpRequest& request, HttpResponse& response){

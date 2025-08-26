@@ -96,9 +96,9 @@ private:
     //void onUpload(HttpRequest &request, HttpResponse &response);
     bool checkHeap(HttpResponse &response);
 
+    String makeId();
+    
     static bool isPrintable(String& str);
-
-    void onStorage(HttpRequest &request, HttpResponse &response);
 
     void setCorsHeaders(HttpResponse &response);
 
