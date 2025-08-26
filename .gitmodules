@@ -3,3 +3,6 @@
 	path = Components/RGBWWLed
 	url = https://github.com/pljakobs/RGBWWled.git
 	branch = develop
+[submodule "Esp32HardwarePwm"]
+	path = Components/Esp32HardwarePwm
+	url = https://github.com/pljakobs/Esp32HardwarePwm.git
