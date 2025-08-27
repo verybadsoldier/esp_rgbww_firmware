@@ -917,10 +917,12 @@ void mdnsHandler::pingAllControllers() {
         }
         
         // Skip our own controller ID (no need to ping ourselves)
+        /* actually - we will ping ourselves, otherwise, we'll have to fudge the ttl 
+        
         if (id == system_get_chip_id()) {
             continue;
         }
-        
+        */
         // Ping the controller
         if (pingController(ipAddress, id)) {
             pingCount++;

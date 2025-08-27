@@ -354,11 +354,13 @@ debug_i("Application::init - running partition %s", part.name());
 			hostCount++;
 		}
 		if(hostCount > 0){
-			debug_i("found %i hosts in the list", hostCount);
+			debug_i("found %i hosts in the list", hostCount+4);
 			visibleControllers.reserve(hostCount);
 		}else{
 			visibleControllers.reserve(10);
 		}
+		auto myId=system_get_chip_id();
+		addOrUpdateVisibleController(myId, 120); // add myself to the list
 	}
 
 	/*
