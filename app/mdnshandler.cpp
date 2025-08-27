@@ -7,7 +7,7 @@
 #include <Network/Http/HttpClient.h>
 
 
-#define DEBUG_MDNS 1
+//#define DEBUG_MDNS 
 
 // Global pointer for leader service updates from other components
 static LEDControllerAPIService* g_ledControllerAPIService = nullptr;
@@ -81,10 +81,10 @@ void mdnsHandler::start()
     _pingTimer.setCallback(mdnsHandler::pingAllControllersCb, this);
     _pingTimer.setIntervalMs(60000); // 1 minute interval
     _pingTimer.startOnce();
-    
-    // Register handlers with mDNS server#include <HttpClient.h>
 
+    // Register handlers with mDNS server
     mDNS::server.addHandler(primaryResponder);
+    mDNS::server.addHandler(*this); 
     debug_i("mDNS server started");
 }
 
