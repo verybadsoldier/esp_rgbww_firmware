@@ -1218,6 +1218,7 @@ void ApplicationWebserver::onHosts(HttpRequest& request, HttpResponse& response)
             hostObj[F("id")] = controller.getId();
             hostObj[F("hostname")] = controller.getName();
             hostObj[F("ip_address")] = controller.getIpAddress();
+			app.istVisibleController(controller)? hostObj[F("visible")] = true : hostObj[F("visible")] = false;
         }
     }
     sendApiResponse(response, stream);
