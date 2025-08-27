@@ -214,8 +214,8 @@ class LEDControllerAPIService : public mDNS::Service {
                         txt.add(F("type=group"));
                         break;
                 }
-            }index.html#/ColorSettings
-            
+            }
+
         private:
             String _instance;
             HostType _hostType;
