@@ -221,9 +221,10 @@ bool mdnsHandler::processHostnameARecord(mDNS::Message& message, mDNS::Answer* a
     // Get IP address from A record
     String ipAddress = String(a_answer->getRecordString());
     unsigned int ttl = a_answer->getTtl();
-    
+    #ifdef DEBUG_MDNS
     debug_i("Got A record for hostname: %s, IP: %s", hostname.c_str(), ipAddress.c_str());
-    
+    #endif
+
     // Look up ID by hostname in our persistent controller database
     unsigned int controllerId = 0;
     AppData::Root::Controllers controllers(*app.data);
@@ -234,7 +235,9 @@ bool mdnsHandler::processHostnameARecord(mDNS::Message& message, mDNS::Answer* a
         // Case-insensitive comparison
         if (hostname.equalsIgnoreCase(storedName)) {
             controllerId = (*it).getId().toInt();
+            #ifdef DEBUG_MDNS
             debug_i("Found matching controller ID: %u", controllerId);
+            #endif
             break;
         }
     }
@@ -407,9 +410,11 @@ void mdnsHandler::queryKnownControllers(uint8_t batchIndex)
         // Also search for the API service
         String api_service = "esprgbwwAPI._http._tcp.local";
         mDNS::server.search(api_service, mDNS::ResourceType::PTR);
-        
+
+        #ifdef DEBUG_MDNS
         debug_i("Querying for controller: %s", hostname.c_str());
-        
+        #endif
+
         currentIdx++;
     }
 }
@@ -435,10 +440,13 @@ void mdnsHandler::addHost(const String& hostname, const String& ip_address, int 
         for (auto controllerItem : controllersUpdate) {
             if (controllerItem.getId() == String(id)) {
                 found = true;
+                #ifdef DEBUG_MDNS
                 debug_i("Hostname %s already in list", hostname.c_str());
-                
+                #endif
+
                 // Always update IP address
                 if (controllerItem.getIpAddress() != ip_address) {
+                    #ifdef DEBUG_MDNS
                     debug_i("IP address changed from %s to %s", 
                            controllerItem.getIpAddress().c_str(), ip_address.c_str());
                     controllerItem.setIpAddress(ip_address);
@@ -446,8 +454,10 @@ void mdnsHandler::addHost(const String& hostname, const String& ip_address, int 
                 
                 // Only update hostname if this is NOT a group or leader hostname
                 if (!isGroupOrLeaderHostname && controllerItem.getName() != hostname) {
+                    #ifdef DEBUG_MDNS
                     debug_i("Hostname changed from %s to %s", 
                            controllerItem.getName().c_str(), hostname.c_str());
+                    #endif
                     controllerItem.setName(hostname);
                 }
                 break;
@@ -458,8 +468,10 @@ void mdnsHandler::addHost(const String& hostname, const String& ip_address, int 
     }
 
     if(!found) {
+        #ifdef DEBUG_MDNS
         debug_i("Hostname %s not in list adding to hostname db", hostname.c_str());
-        
+        #endif
+
         if(auto controllersUpdate = controllers.update()) {
             auto newController = controllersUpdate.addItem();
             newController.setName(hostname);
@@ -474,7 +486,9 @@ void mdnsHandler::addHost(const String& hostname, const String& ip_address, int 
         // For mDNS discoveries, use the standard mDNS TTL
         app.addOrUpdateVisibleController(id, TTL_MDNS);
 
+        #ifdef DEBUG_MDNS
         debug_i("Controller %s with ID %i is now visible", hostname.c_str(), id);
+        #endif
         // Controller has just become visible, update the clients
         StaticJsonDocument<256> doc;
         JsonObject newHost = doc.to<JsonObject>();
@@ -496,12 +510,16 @@ void mdnsHandler::sendWsUpdate(const String& type, JsonObject host) {
 
 void mdnsHandler::checkForLeadership() {
     if (_leaderDetected) {
+        #ifdef DEBUG_MDNS
         debug_i("Leader already exists in network, not becoming leader");
+        #endif
         _leaderCheckCounter = 0;  // Reset counter when a leader is detected
         return;
     }
-    
+
+    #ifdef DEBUG_MDNS
     debug_i("No leader detected (check round %d)", _leaderCheckCounter + 1);
+    #endif
     
     // Increment leader check counter
     _leaderCheckCounter++;
@@ -521,17 +539,23 @@ void mdnsHandler::checkForLeadership() {
     // Become leader if we have highest ID OR we've checked max times with no leader
     if (hasHighestId || _leaderCheckCounter >= LEADERSHIP_MAX_FAIL_COUNT) {
         if (hasHighestId) {
+            #ifdef DEBUG_MDNS
             debug_i("No leader detected and we have highest ID, becoming leader");
+            #endif
         } else {
+            #ifdef DEBUG_MDNS
             debug_i("No leader detected after %d checks, becoming leader as a failsafe", LEADERSHIP_MAX_FAIL_COUNT);
+            #endif
         }
         
         becomeLeader();
         _leaderCheckCounter = 0;  // Reset counter
     } else {
+        #ifdef DEBUG_MDNS
         debug_i("Not becoming leader, another controller has higher ID (check %d/%d)", 
                 _leaderCheckCounter, LEADERSHIP_MAX_FAIL_COUNT);
-        
+        #endif
+
         // Start another check after a delay if we haven't reached the limit
         if (_leaderCheckCounter < LEADERSHIP_MAX_FAIL_COUNT) {
             _leaderElectionTimer.startOnce();
@@ -563,8 +587,10 @@ void mdnsHandler::becomeLeader() {
         
         // Register the leader responder with mDNS server
         mDNS::server.addHandler(*leaderResponder);
-        
+
+        #ifdef DEBUG_MDNS
         debug_i("This controller is now the global leader (lightinator.local)");
+        #endif
     }
 }
 
@@ -583,8 +609,9 @@ void mdnsHandler::relinquishLeadership() {
         
         // Clean up leader web service
         leaderWebService.reset();
-        
+        #ifdef DEBUG_MDNS
         debug_i("This controller is no longer the global leader");
+        #endif
     }
 }
 
@@ -646,7 +673,9 @@ void mdnsHandler::checkGroupLeadership() {
             // If we have the highest ID in this group, we should be the leader
             if (hasHighestId) {
                 groupsToLead.add(groupId);
+                #ifdef DEBUG_MDNS
                 debug_i("This device should be the leader for group: %s", groupName.c_str());
+                #endif
             }
         }
     }
@@ -708,18 +737,24 @@ void mdnsHandler::updateServiceTxtRecords() {
     ledControllerAPIService.setLeader(_isLeader);
     ledControllerAPIService.setGroups(memberGroups);
     ledControllerAPIService.setLeadingGroups(_leadingGroups);
-    
+
+    #ifdef DEBUG_MDNS
     debug_i("Updated service TXT records with %d group memberships and %d leading groups", 
             memberGroups.size(), _leadingGroups.size());
+    #endif
 }
 
 void mdnsHandler::becomeGroupLeader(const String& groupId, const String& groupName) {
+    #ifdef DEBUG_MDNS
     debug_i("Becoming leader for group: %s (ID: %s)", groupName.c_str(), groupId.c_str());
-    
+    #endif
+
     // Sanitize the group name for use as a hostname
     String sanitizedName = Util::sanitizeHostname(groupName);
+    #ifdef DEBUG_MDNS
     debug_i("Sanitized group name: %s", sanitizedName.c_str());
-    
+    #endif
+
     // Create responder for this group's hostname
     auto responder = std::make_unique<mDNS::Responder>();
     responder->begin(sanitizedName.c_str());
@@ -738,9 +773,11 @@ void mdnsHandler::becomeGroupLeader(const String& groupId, const String& groupNa
     
     // Track that we're now leading this group
     _leadingGroups.add(groupId);
-    
+
+    #ifdef DEBUG_MDNS
     debug_i("This controller is now leader for group: %s (%s.local)", 
            groupName.c_str(), sanitizedName.c_str());
+    #endif
 }
 
 void mdnsHandler::relinquishGroupLeadership(const String& groupId) {
@@ -754,10 +791,12 @@ void mdnsHandler::relinquishGroupLeadership(const String& groupId) {
             break;
         }
     }
-    
+
+    #ifdef DEBUG_MDNS
     debug_i("Relinquishing leadership for group: %s (ID: %s)", 
            groupName.c_str(), groupId.c_str());
-    
+    #endif
+
     // Remove the responder from mDNS server
     if (_groupResponders.find(groupId) != _groupResponders.end()) {
         mDNS::server.removeHandler(*_groupResponders[groupId]);
@@ -774,13 +813,17 @@ void mdnsHandler::relinquishGroupLeadership(const String& groupId) {
     if (idx >= 0) {
         _leadingGroups.remove(idx);
     }
-    
+
+    #ifdef DEBUG_MDNS
     debug_i("This controller is no longer leader for group: %s", groupName.c_str());
+    #endif
 }
 
 bool mdnsHandler::pingController(const String& ipAddress, unsigned int id) {
+    #ifdef DEBUG_MDNS
     debug_i("Pinging controller ID %u at %s", id, ipAddress.c_str());
-    
+    #endif
+
     // Skip invalid IPs
     if (ipAddress.length() == 0 || ipAddress == "0.0.0.0") {
         debug_w("Invalid IP for controller %u, skipping ping", id);
@@ -813,8 +856,10 @@ bool mdnsHandler::pingController(const String& ipAddress, unsigned int id) {
                 if (!error && doc.containsKey("ping") && doc["ping"] == "pong") {
                     // Successfully verified - update with long TTL
                     app.addOrUpdateVisibleController(id, TTL_HTTP_VERIFIED);
+                    #ifdef DEBUG_MDNS
                     debug_i("Controller %u HTTP ping successful - extended TTL to %d", id, TTL_HTTP_VERIFIED);
-                    
+                    #endif
+
                     // Notify if not already visible
                     if (!app.isVisibleController(id)) {
                         // Notify WebSocket clients about newly verified controller
@@ -849,8 +894,11 @@ bool mdnsHandler::pingController(const String& ipAddress, unsigned int id) {
 }
 
 void mdnsHandler::pingAllControllers() {
+
+    #ifdef DEBUG_MDNS
     debug_i("Starting HTTP ping verification of all known controllers");
-    
+    #endif
+
     // Access the controllers from persistent storage
     AppData::Root::Controllers controllers(*app.data);
     int pingCount = 0;
@@ -877,8 +925,10 @@ void mdnsHandler::pingAllControllers() {
             pingCount++;
         }
     }
-    
+
+    #ifdef DEBUG_MDNS
     debug_i("HTTP ping verification initiated for %d controllers", pingCount);
+    #endif
 }
 
 // Keep only ONE pingAllControllersCb method
