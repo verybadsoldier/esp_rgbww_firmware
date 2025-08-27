@@ -458,7 +458,7 @@ void mdnsHandler::addHost(const String& hostname, const String& ip_address, int 
     }
 
     if(!found) {
-        debug_i("Hostname %s not in list", hostname.c_str());
+        debug_i("Hostname %s not in list adding to hostname db", hostname.c_str());
         
         if(auto controllersUpdate = controllers.update()) {
             auto newController = controllersUpdate.addItem();

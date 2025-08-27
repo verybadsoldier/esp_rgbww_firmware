@@ -414,8 +414,18 @@ void AppWIFI::startAp()
 			}
 		} // end AppConfig network context
 	}
-	//start dns server for captive portal
-	dnsServer.start(DNS_PORT, "*", WifiAccessPoint.getIP());
+
+    // Wait for AP IP to be assigned before starting DNS server
+    Timer* dnsStartTimer = new Timer();
+    dnsStartTimer->initializeMs(500, [this, dnsStartTimer]() {
+        IpAddress apIP = WifiAccessPoint.getIP();
+        if (apIP.toString() != "0.0.0.0") {
+            dnsServer.start(DNS_PORT, "*", apIP);
+            debug_i("DNS server started: with address %s", apIP.toString().c_str());
+            dnsStartTimer->stop();
+            delete dnsStartTimer;
+        }
+    }).start();
 	broadcastWifiStatus(F("AP started"));
 }
 
