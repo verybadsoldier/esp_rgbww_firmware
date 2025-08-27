@@ -1209,12 +1209,18 @@ void ApplicationWebserver::onHosts(HttpRequest& request, HttpResponse& response)
 
     bool showAll = request.getQueryParameter("all") == "1" || request.getQueryParameter("all") == "true";
 
-    JsonObjectStream* stream = new JsonObjectStream();
-    JsonObject json = stream->getRoot();
-    JsonArray hostsArray = json.createNestedArray("hosts");
+	
+    debug_i("show all controllers %s", showAll ? "true" : "false");
 
     AppData::Root::Controllers controllers(*app.data);
+	int hostCount=0;
+		for(auto controller : controllers){
+			hostCount++;
+		}
 
+    DynamicJsonDocument doc(hostCount*100+60); // rough estimate of required size - <hostCount * 100 + 60>
+    JsonObject json = doc.to<JsonObject>();
+    JsonArray hostsArray = json.createNestedArray("hosts");
     for (auto controller : controllers){
         if (showAll || app.isVisibleController(controller.getId().toInt())){
             JsonObject hostObj = hostsArray.createNestedObject();
@@ -1224,9 +1230,11 @@ void ApplicationWebserver::onHosts(HttpRequest& request, HttpResponse& response)
 			app.isVisibleController(controller.getId().toInt())? hostObj[F("visible")] = true : hostObj[F("visible")] = false;
         }
     }
-    sendApiResponse(response, stream);
-    setCorsHeaders(response);
+	String jsonString;
+	serializeJson(doc, jsonString);
+	setCorsHeaders(response);
     response.setContentType(F("application/json"));
+	response.sendString(jsonString);
 }
 
 void ApplicationWebserver::onData(HttpRequest& request, HttpResponse& response){
@@ -1238,7 +1246,7 @@ void ApplicationWebserver::onData(HttpRequest& request, HttpResponse& response){
 	if(request.method == HTTP_OPTIONS) {
 		// probably a CORS request
 		sendApiCode(response, API_CODES::API_SUCCESS, "");
-		debug_i("HTTP_OPTIONS Request, sent API_SUCCSSS");
+		debug_i("HTTP_OPTIONS Request, sent API_SUCCESS");
 		return;
 	}
 

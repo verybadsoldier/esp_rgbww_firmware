@@ -449,6 +449,7 @@ void mdnsHandler::addHost(const String& hostname, const String& ip_address, int 
                     #ifdef DEBUG_MDNS
                     debug_i("IP address changed from %s to %s", 
                            controllerItem.getIpAddress().c_str(), ip_address.c_str());
+                    #endif
                     controllerItem.setIpAddress(ip_address);
                 }
                 
