@@ -509,10 +509,10 @@ bool Application::delayedCMD(String cmd, int delay)
 	} else if(cmd.equals(F("switch_rom"))) {
 		wsBroadcast(F("notification"), F("Controller will switch to other rom"));
 		wsBroadcast(F("webapp_cmd"), F("reload"));
-#if ARCH_ESP8266
+//#if ARCH_ESP8266
 		switchRom();
 //_systimer.initializeMs(delay, TimerDelegate(&Application::restart, this)).startOnce();
-#endif
+//#endif
 	} else {
 		return false;
 	}
