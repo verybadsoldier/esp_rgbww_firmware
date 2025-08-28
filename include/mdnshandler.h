@@ -284,10 +284,12 @@ private:
     std::unique_ptr<mDNS::Responder> leaderResponder;    // lightinator.local
         
     // Discovery
-    SimpleTimer _mdnsSearchTimer;        
+    SimpleTimer _mdnsSearchTimer;       
+    SimpleTimer _pingTimer; 
     String searchName;
     String service = "_http._tcp.local";
     int _mdnsTimerInterval = 60000;
+    int _mdnsPingInterval = 60000; // Ping every minute
 
     // Global leadership
     bool _isLeader = false;
@@ -330,5 +332,5 @@ private:
     bool pingController(const String& ipAddress, unsigned int id);
     void pingAllControllers();
     static void pingAllControllersCb(void* pTimerArg);
-    Timer _pingTimer;
+    
 };

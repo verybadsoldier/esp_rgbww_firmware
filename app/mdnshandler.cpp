@@ -56,8 +56,10 @@ void mdnsHandler::start()
     
     // Initialize primary responder with device hostname
     primaryResponder.begin(hostName.c_str());
+    #ifdef DEBUG_MDNS
     debug_i("Registered hostname: %s", hostName.c_str());
-    
+    #endif
+
     // Add services to the primary responder
     primaryResponder.addService(ledControllerAPIService);
     primaryResponder.addService(*deviceWebService);  // Note the * to dereference
@@ -66,6 +68,9 @@ void mdnsHandler::start()
     g_ledControllerAPIService = &ledControllerAPIService;
 
     // Set up leadership election with delay
+    #ifdef DEBUG_MDNS
+    debug_i("starting leader election timer timer");
+    #endif 
     _leaderElectionTimer.setCallback(mdnsHandler::checkForLeadershipCb, this);
     _leaderElectionTimer.setIntervalMs(_mdnsTimerInterval * LEADER_ELECTION_DELAY);
     _leaderElectionTimer.startOnce();
@@ -74,18 +79,26 @@ void mdnsHandler::start()
     setSearchName(F("esprgbwwAPI._http._tcp.local"));
     
     // Set up timer for periodic mDNS searches
+    #ifdef DEBUG_MDNS
+    debug_i("starting mDNS search timer");
+    #endif 
     _mdnsSearchTimer.setCallback(mdnsHandler::sendSearchCb, this);
     _mdnsSearchTimer.setIntervalMs(_mdnsTimerInterval);
     _mdnsSearchTimer.startOnce();
 
+    #ifdef DEBUG_MDNS
+    debug_i("starting ping timer");
+    #endif 
     _pingTimer.setCallback(mdnsHandler::pingAllControllersCb, this);
-    _pingTimer.setIntervalMs(60000); // 1 minute interval
+    _pingTimer.setIntervalMs(_mdnsPingInterval); 
     _pingTimer.startOnce();
 
     // Register handlers with mDNS server
     mDNS::server.addHandler(primaryResponder);
     mDNS::server.addHandler(*this); 
+    #ifdef DEBUG_MDNS
     debug_i("mDNS server started");
+    #endif
 }
 
 bool mdnsHandler::onMessage(mDNS::Message& message)
@@ -130,8 +143,10 @@ bool mdnsHandler::onMessage(mDNS::Message& message)
     } else if(answerName.endsWith("._http._tcp.local")) {
         // This is likely a hostname response
         String hostname = answerName.substring(0, answerName.indexOf("._http._tcp.local"));
+        #ifdef DEBUG_MDNS
         debug_i("Processing hostname response for: %s", hostname.c_str());
-        
+        #endif
+
         // Extract hostname data from the message
         return processHostnameResponse(message, hostname);
     }
@@ -183,21 +198,27 @@ bool mdnsHandler::processApiServiceResponse(mDNS::Message& message)
             String isLeaderTxt = txt["isLeader"];
             if (isLeaderTxt == "1") {
                 _leaderDetected = true;
+                #ifdef DEBUG_MDNS
                 debug_i("Detected leader: %s", info.hostName.c_str());
+                #endif
             }
             
             // Get hostname type
             String hostnameType = txt["type"];
             if (hostnameType=="") hostnameType="undefined";
+            #ifdef DEBUG_MDNS
             debug_i("Hostname %s, type: %s", info.hostName.c_str(), hostnameType.c_str());
-            
+            #endif
+
             // Only add to host table if this is a device hostname
             if (hostnameType == "host") {
                 addHost(info.hostName, info.ipAddr.toString(), info.ttl, info.ID);
             } else {
                 // For leader/group hostnames, just log them
+                #ifdef DEBUG_MDNS
                 debug_i("Detected %s hostname: %s (ID: %u)", 
                      hostnameType.c_str(), info.hostName.c_str(), info.ID);
+                #endif
             }
         }
         return true;
@@ -250,8 +271,11 @@ bool mdnsHandler::processHostnameARecord(mDNS::Message& message, mDNS::Answer* a
     
     // Save this information for later matching with TXT records
     _pendingHostnameResolutions[hostname] = ipAddress;
+
+    #ifdef DEBUG_MDNS
     debug_i("Hostname stored for later ID resolution: %s", hostname.c_str());
-    
+    #endif
+
     return false; // Not fully processed yet
 }
 
@@ -269,7 +293,9 @@ bool mdnsHandler::processHostnameResponse(mDNS::Message& message, const String& 
     if (a_answer != nullptr) {
         ipAddress = String(a_answer->getRecordString());
         ttl = a_answer->getTtl();
+        #ifdef DEBUG_MDNS
         debug_i("Hostname IP address: %s (TTL: %u)", ipAddress.c_str(), ttl);
+        #endif
     } else {
         // No A record, can't proceed
         return false;
@@ -283,16 +309,20 @@ bool mdnsHandler::processHostnameResponse(mDNS::Message& message, const String& 
         mDNS::Resource::TXT txt(*txt_answer);
         controllerId = txt["id"].toInt();
         controllerType = txt["type"];
+        #ifdef DEBUG_MDNS
         debug_i("Found controller ID: %u, type: %s", controllerId, controllerType.c_str());
-        
+        #endif
+
         // If we have an ID and it's a host type, add the host
         if (controllerId > 0 && controllerType == "host") {
             addHost(hostname, ipAddress, ttl, controllerId);
             return true;
         } else if (controllerId > 0) {
             // Log but don't add non-host entries
+            #ifdef DEBUG_MDNS
             debug_i("Ignoring non-host entry: %s (ID: %u, type: %s)",
                    hostname.c_str(), controllerId, controllerType.c_str());
+            #endif
         }
     }
     
@@ -934,9 +964,11 @@ void mdnsHandler::pingAllControllers() {
     #endif
 }
 
-// Keep only ONE pingAllControllersCb method
 void mdnsHandler::pingAllControllersCb(void* pTimerArg) {
     mdnsHandler* pThis = static_cast<mdnsHandler*>(pTimerArg);
+    #ifdef DEBUG_MDNS
+    debug_i("pingAllControllers");
+    #endif
     pThis->pingAllControllers();
     
     // Restart the timer
