@@ -748,3 +748,25 @@ void Application::removeExpiredControllers(int elapsedSeconds) {
         }
     }
 }
+
+int Application::getControllerIdforIpAddress(String ipAddress) {
+    AppData::Root::Controllers controllers(*app.data);
+
+    for (auto controller : controllers) {
+        if (controller.getIpAddress() == ipAddress) {
+            return controller.getId().toInt();
+        }
+    }
+    return -1; // Not found
+}
+
+String Application::getControllerAddressForId(int id) {
+    AppData::Root::Controllers controllers(*app.data);
+
+    for (auto controller : controllers) {
+        if (controller.getId().toInt() == id) {
+            return controller.getIpAddress();
+        }
+    }
+    return ""; // Not found
+}

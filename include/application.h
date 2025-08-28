@@ -100,6 +100,9 @@ public:
         }
         return false;
     }
+    int getControllerIdforIpAddress(String ipAddress);
+    String getControllerAddressForId(int id);
+
 
     std::vector<VisibleController>& getVisibleControllers() { return visibleControllers; }
 
