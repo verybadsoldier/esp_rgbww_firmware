@@ -285,49 +285,55 @@ bool mdnsHandler::processHostnameResponse(mDNS::Message& message, const String& 
     using namespace mDNS;
     String controllerType;
     
-    // Get A record if available
-    auto a_answer = message[mDNS::ResourceType::A];
     String ipAddress;
     unsigned int ttl = 60; // Default TTL
     
-    if (a_answer != nullptr) {
-        ipAddress = String(a_answer->getRecordString());
-        ttl = a_answer->getTtl();
-        #ifdef DEBUG_MDNS
-        debug_i("Hostname IP address: %s (TTL: %u)", ipAddress.c_str(), ttl);
-        #endif
-    } else {
-        // No A record, can't proceed
-        return false;
-    }
-    
-    // Try to get TXT record for ID
-    auto txt_answer = message[mDNS::ResourceType::TXT];
-    unsigned int controllerId = 0;
-    
-    if (txt_answer != nullptr) {
-        mDNS::Resource::TXT txt(*txt_answer);
-        controllerId = txt["id"].toInt();
-        controllerType = txt["type"];
-        #ifdef DEBUG_MDNS
-        debug_i("Found controller ID: %u, type: %s", controllerId, controllerType.c_str());
-        #endif
-
-        // If we have an ID and it's a host type, add the host
-        if (controllerId > 0 && controllerType == "host") {
-            addHost(hostname, ipAddress, ttl, controllerId);
-            return true;
-        } else if (controllerId > 0) {
-            // Log but don't add non-host entries
+    {
+        // Get A record if available
+        auto a_answer = message[mDNS::ResourceType::A];
+ 
+        if (a_answer != nullptr) {
+            ipAddress = String(a_answer->getRecordString());
+            ttl = a_answer->getTtl();
             #ifdef DEBUG_MDNS
-            debug_i("Ignoring non-host entry: %s (ID: %u, type: %s)",
-                   hostname.c_str(), controllerId, controllerType.c_str());
+            debug_i("Hostname IP address: %s (TTL: %u)", ipAddress.c_str(), ttl);
             #endif
+        } else {
+            // No A record, can't proceed
+            return false;
         }
     }
-    
+        
+    // Try to get TXT record for ID
+    {
+        auto txt_answer = message[mDNS::ResourceType::TXT];
+        unsigned int controllerId = 0;
+        
+        if (txt_answer != nullptr) {
+            mDNS::Resource::TXT txt(*txt_answer);
+            controllerId = txt["id"].toInt();
+            controllerType = txt["type"];
+            #ifdef DEBUG_MDNS
+            debug_i("Found controller ID: %u, type: %s", controllerId, controllerType.c_str());
+            #endif
+
+            // If we have an ID and it's a host type, add the host
+            if (controllerId > 0 && controllerType == "host") {
+                addHost(hostname, ipAddress, ttl, controllerId);
+                return true;
+            } else if (controllerId > 0) {
+                // Log but don't add non-host entries
+                #ifdef DEBUG_MDNS
+                debug_i("Ignoring non-host entry: %s (ID: %u, type: %s)",
+                    hostname.c_str(), controllerId, controllerType.c_str());
+                #endif
+            }
+        }
+    }
     // No valid TXT record or not a host type - don't fall back to hostname lookup
+    #ifdef DEBUG_MDNS
     debug_i("No valid host TXT record found for %s - ignoring", hostname.c_str());
+    #endif
     return false;
 }
 
@@ -909,7 +915,7 @@ bool mdnsHandler::pingController(const String& ipAddress, unsigned int id) {
                             }
                         }
                         
-                        app.wsBroadcast(F("new_host"), hostObj);
+                        app.wsBroadcast(F("updated_host"), hostObj);
                     }
                 } else {
                     debug_w("Controller %u ping response invalid: %s", id, body.c_str());
@@ -934,6 +940,7 @@ void mdnsHandler::pingAllControllers() {
     AppData::Root::Controllers controllers(*app.data);
     int pingCount = 0;
     
+    
     // Iterate through controllers and ping each one
     for (auto it = controllers.begin(); it != controllers.end(); ++it) {
         String hostname = (*it).getName();
@@ -954,9 +961,11 @@ void mdnsHandler::pingAllControllers() {
         }
         */
         // Ping the controller
+        /*
         if (pingController(ipAddress, id)) {
             pingCount++;
         }
+        */
     }
 
     #ifdef DEBUG_MDNS

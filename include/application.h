@@ -27,6 +27,7 @@ static const char* sming_git_version = SMING_VERSION;
 struct VisibleController {
     unsigned int id;
     int ttl;
+    bool pingPending;
 };
 
 // main forward declarations
