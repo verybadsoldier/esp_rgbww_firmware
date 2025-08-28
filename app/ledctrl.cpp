@@ -222,7 +222,7 @@ void APPLedCtrl::init()
 	// boot from off to startup color
 	HSVCT startupColorDark = startupColor;
 	startupColorDark.v = 0;
-	fadeHSV(startupColorDark, startupColor, 2000); //fade to color in 700ms
+	fadeHSV(startupColorDark, startupColor, 700); //fade to color in 700ms 
 }
 
 bool APPLedCtrl::isPinValid(int currentPin)
