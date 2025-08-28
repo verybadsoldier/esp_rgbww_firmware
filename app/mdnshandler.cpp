@@ -462,8 +462,7 @@ void mdnsHandler::queryKnownControllers(uint8_t batchIndex)
                 }
             }
             HttpClient* client = new HttpClient();
-client->downloadString("http://" + ipAddress + "/ping",
-    RequestCompletedDelegate(&mdnsHandler::pingCallback, this));
+            client->downloadString("http://" + ipAddress + "/ping", RequestCompletedDelegate(&mdnsHandler::pingCallback, this));
         }
 
 
