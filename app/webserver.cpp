@@ -199,7 +199,10 @@ String ApplicationWebserver::getApiCodeMsg(API_CODES code)
 void ApplicationWebserver::sendApiResponse(HttpResponse& response, JsonObjectStream* stream, HttpStatus code)
 {
 	if(!checkHeap(response)) {
-		delete stream;
+		if (stream) {
+			delete stream;
+			stream = nullptr;
+		}
 		return;
 	}
 
@@ -210,6 +213,7 @@ void ApplicationWebserver::sendApiResponse(HttpResponse& response, JsonObjectStr
 		response.code = HTTP_STATUS_BAD_REQUEST;
 	}
 	response.sendDataStream(stream, MIME_JSON);
+
 }
 
 void ApplicationWebserver::sendApiCode(HttpResponse& response, API_CODES code, String msg /* = "" */)
@@ -298,6 +302,7 @@ void ApplicationWebserver::onFile(HttpRequest& request, HttpResponse& response)
 	debug_i("found %s in fileMap", String(v.key()).c_str());
 	auto stream = new FSTR::Stream(v.content());
 	response.sendDataStream(stream, ContentType::fromFullFileName(fileName));
+
 }
 void ApplicationWebserver::onWebapp(HttpRequest& request, HttpResponse& response)
 {
@@ -604,6 +609,7 @@ void ApplicationWebserver::onInfo(HttpRequest& request, HttpResponse& response)
 	//con[F("mdnshostname")] = app.cfg.network.connection.mdnshostname.c_str();
 
 	sendApiResponse(response, stream);
+
 }
 
 /**
@@ -645,6 +651,7 @@ void ApplicationWebserver::onColorGet(HttpRequest& request, HttpResponse& respon
 	setCorsHeaders(response);
 
 	sendApiResponse(response, stream);
+
 }
 
 /**
@@ -821,6 +828,7 @@ void ApplicationWebserver::onNetworks(HttpRequest& request, HttpResponse& respon
 	}
 	setCorsHeaders(response);
 	sendApiResponse(response, stream);
+
 }
 
 /**
@@ -1075,6 +1083,7 @@ void ApplicationWebserver::onUpdate(HttpRequest& request, HttpResponse& response
 	JsonObject json = stream->getRoot();
 	json[F("status")] = int(app.ota.getStatus());
 	sendApiResponse(response, stream);
+
 #endif
 }
 

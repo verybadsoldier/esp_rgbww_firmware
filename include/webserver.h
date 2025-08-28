@@ -39,7 +39,9 @@ enum API_CODES {
 class ApplicationWebserver: private HttpServer {
 public:
     ApplicationWebserver();
-    virtual ~ApplicationWebserver() {};
+    virtual ~ApplicationWebserver() {
+        delete wsResource;
+    };
 
     void start();
     void stop();
@@ -49,8 +51,6 @@ public:
     void wsSendBroadcast(const char* buffer, size_t length);
 
     String getApiCodeMsg(API_CODES code);
-
-
 
 private:
 

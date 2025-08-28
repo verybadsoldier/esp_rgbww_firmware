@@ -27,6 +27,7 @@ static const char* sming_git_version = SMING_VERSION;
 struct VisibleController {
     unsigned int id;
     int ttl;
+    bool pingPending;
 };
 
 // main forward declarations
@@ -99,6 +100,9 @@ public:
         }
         return false;
     }
+    int getControllerIdforIpAddress(String ipAddress);
+    String getControllerAddressForId(int id);
+
 
     std::vector<VisibleController>& getVisibleControllers() { return visibleControllers; }
 

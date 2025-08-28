@@ -27,8 +27,6 @@ namespace Util {
         result.replace(' ', '-');
         result.replace('_', '-');
         
-
-        
         // Remove leading and trailing hyphens
         while (result.length() > 0 && result[0] == '-') {
             result.remove(0, 1);
@@ -48,7 +46,7 @@ namespace Util {
         }
 
 
-                // Common character mappings by language group
+        // Common character mappings by language group
         
         // German
         result.replace("ä", "ae");
@@ -329,8 +327,7 @@ private:
     bool processApiServiceResponse(mDNS::Message& message);
     bool processHostnameARecord(mDNS::Message& message, mDNS::Answer* a_answer);
     bool processHostnameResponse(mDNS::Message& message, const String& hostname);
-    bool pingController(const String& ipAddress, unsigned int id);
-    void pingAllControllers();
-    static void pingAllControllersCb(void* pTimerArg);
-    
+
+
+    int pingCallback(HttpConnection& connection, bool successful);
 };

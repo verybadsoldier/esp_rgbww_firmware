@@ -173,9 +173,8 @@ void Application::uptimeCounter()
 
 void Application::checkRam()
 {
-	
 	debug_i("Free heap: %d", system_get_free_heap_size());
-
+	debug_i("VisibleControllers: %d bytes", sizeof(VisibleController) * visibleControllers.size());
 }
 
 void Application::init()
@@ -638,6 +637,8 @@ void Application::switchRom()
     */
 	app.ota.doSwitch();
 }
+#else
+void Application::switchRom(){}
 #endif
 
 #if defined(ARCH_ESP8266) || defined(ESP32)
@@ -659,12 +660,15 @@ int Application::getRomSlot()
 */
 void Application::wsBroadcast(String message)
 {
-	static char buffer[MAX_LOG_LINE_SIZE];//max log line size for wsBroadcast
-	message.toCharArray(buffer, MAX_LOG_LINE_SIZE);
-	size_t length = message.length();
-	if(length>MAX_LOG_LINE_SIZE) length=MAX_LOG_LINE_SIZE;
+    size_t length = message.length();
+    if(length > MAX_LOG_LINE_SIZE) length = MAX_LOG_LINE_SIZE;
 
-	app.webserver.wsSendBroadcast(buffer, length);
+    char* buffer = new char[length + 1]; // +1 for null terminator
+    message.toCharArray(buffer, length + 1);
+
+    app.webserver.wsSendBroadcast(buffer, length);
+
+    delete[] buffer;
 }
 
 /*
@@ -743,4 +747,26 @@ void Application::removeExpiredControllers(int elapsedSeconds) {
             i--; // Adjust index
         }
     }
+}
+
+int Application::getControllerIdforIpAddress(String ipAddress) {
+    AppData::Root::Controllers controllers(*app.data);
+
+    for (auto controller : controllers) {
+        if (controller.getIpAddress() == ipAddress) {
+            return controller.getId().toInt();
+        }
+    }
+    return -1; // Not found
+}
+
+String Application::getControllerAddressForId(int id) {
+    AppData::Root::Controllers controllers(*app.data);
+
+    for (auto controller : controllers) {
+        if (controller.getId().toInt() == id) {
+            return controller.getIpAddress();
+        }
+    }
+    return ""; // Not found
 }
