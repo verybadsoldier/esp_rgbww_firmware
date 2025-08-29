@@ -350,7 +350,7 @@ void AppWIFI::_STAGotIP(IpAddress ip, IpAddress mask, IpAddress gateway)
 
 		ipAddress=ip.toString();
 		debug_i("adding mdns host %s with ip %s and id %s", network.mdns.getName().c_str(), ipAddress.c_str(), String(id).c_str());
-		mdnsHandler.addHost(network.mdns.getName(), ipAddress, -1, id);
+		app.controllers->addOrUpdate(id, network.mdns.getName(), ipAddress, -1);
 
 		broadcastWifiStatus();
 

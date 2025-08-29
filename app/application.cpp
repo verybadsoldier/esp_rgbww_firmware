@@ -174,8 +174,30 @@ void Application::uptimeCounter()
 void Application::checkRam()
 {
 	debug_i("Free heap: %d", system_get_free_heap_size());
-	debug_i("VisibleControllers: %d bytes", sizeof(VisibleController) * visibleControllers.size());
+	HttpClient client;
+	size_t activeConnections = client.getConnectionCount();
+	debug_i("pending http connections: %d", activeConnections);
+	    // Add debugging:
+    if (!controllers) {
+        debug_e("Controllers is NULL!");
+        return;
+    }
+    
+    debug_i("Controllers initialized - checking counts");
+    debug_i("Total controllers: %d", controllers->getTotalCount());
+    debug_i("Visible controllers: %d", controllers->getVisibleCount());
+    
+    Serial.println("=== Starting Controllers JSON ===");
+    
+    // NEW WAY: Direct streaming to Serial - no manual loop needed!
+    auto printer = controllers->printJson(Serial, Controllers::ALL_ENTRIES, true);
+    while (!printer.isDone()) {
+        printer(); // Still need this for direct Serial output
+    }
+    
+    Serial.println("\n=== End Controllers JSON ===");
 }
+
 
 void Application::init()
 {
@@ -259,6 +281,7 @@ debug_i("Application::init - running partition %s", part.name());
 	// initialize config and data
 	cfg =  std::make_unique<AppConfig>(configDB_PATH);
 	data = std::make_unique<AppData>(dataDB_PATH);
+	controllers = std::make_unique<Controllers>();
 
 	// verify if there is a new version of the hardware config
 	
@@ -348,18 +371,14 @@ debug_i("Application::init - running partition %s", part.name());
 		// pre-allocate heap for the visible hosts vector. 
 		// this should adapt to the number of hosts detected in earlier boots
 		AppData::Root::Controllers controllers(*app.data);
-		size_t hostCount = 0;
-		for (auto it = controllers.begin(); it != controllers.end(); ++it) {
-			hostCount++;
-		}
-		if(hostCount > 0){
-			debug_i("found %i hosts in the list", hostCount+4);
-			visibleControllers.reserve(hostCount);
-		}else{
-			visibleControllers.reserve(10);
-		}
+		
 		auto myId=system_get_chip_id();
-		addOrUpdateVisibleController(myId, 120); // add myself to the list
+		AppConfig::General general(*cfg);
+		String myName=general.getDeviceName();
+		if(myName.length()<=0){
+			myName=String("rgbww-")+String(myId, HEX);
+		}
+		app.controllers->addOrUpdate( myId,myName, WifiStation.getIP().toString(), 1200); // add myself to the list
 	}
 
 	/*
@@ -724,49 +743,4 @@ void Application::onButtonTogglePressed(int pin)
 uint32_t Application::getUptime()
 {
 	return _uptimeMinutes * 60u;
-}
-
-void Application::addOrUpdateVisibleController(unsigned int id, int ttl) {
-    for (auto& controller : visibleControllers) {
-        if (controller.id == id) {
-            controller.ttl = ttl;
-            return;
-        }
-    }
-    // Not found, add new
-    visibleControllers.push_back({id, ttl});
-}
-
-void Application::removeExpiredControllers(int elapsedSeconds) {
-    for (size_t i = 0; i < visibleControllers.size(); i++) {
-        visibleControllers[i].ttl -= elapsedSeconds;
-        if (visibleControllers[i].ttl <= 0) {
-            // Remove using swap and pop
-            visibleControllers[i] = visibleControllers.back();
-            visibleControllers.pop_back();
-            i--; // Adjust index
-        }
-    }
-}
-
-int Application::getControllerIdforIpAddress(String ipAddress) {
-    AppData::Root::Controllers controllers(*app.data);
-
-    for (auto controller : controllers) {
-        if (controller.getIpAddress() == ipAddress) {
-            return controller.getId().toInt();
-        }
-    }
-    return -1; // Not found
-}
-
-String Application::getControllerAddressForId(int id) {
-    AppData::Root::Controllers controllers(*app.data);
-
-    for (auto controller : controllers) {
-        if (controller.getId().toInt() == id) {
-            return controller.getIpAddress();
-        }
-    }
-    return ""; // Not found
 }
