@@ -347,7 +347,7 @@ void ApplicationOTA::afterOTA()
 		// save success to new rom
 		saveStatus(OTASTATUS::OTA_SUCCESS);
 
-// remount old filesystem
+// remount old filesystemv2
 // app.umountfs();
 // app.mountfs(app.getRomSlot());
 #endif
