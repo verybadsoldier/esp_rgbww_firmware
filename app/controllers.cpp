@@ -222,8 +222,9 @@ void Controllers::forgetControllers(){
     visibleControllers.clear();
     if (auto controllersUpdate = AppData::Root::Controllers(*app.data).update()) {
         controllersUpdate.clear();
+        debug_i("Cleared all controllers from ConfigDB");
     } else {
-        debug_e("error: failed to open hosts db for clearing");
+        debug_e("error: failed to open hosts db for clearing, now %i controllers known", getTotalCount());
     }
 }
 
