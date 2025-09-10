@@ -72,3 +72,4 @@ include/fileList.h
 flashloop.sh
 colgrep
 colgrep.cfg
+esp_rgbww_8266.log

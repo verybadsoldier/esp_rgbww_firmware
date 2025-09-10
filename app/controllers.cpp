@@ -28,7 +28,7 @@ Controllers::Controllers() : _pingInProgress(false), _pingIndex(0), _pingInterva
 
 // Destructor
 Controllers::~Controllers() {
-    _pingTimer.stop();
+    //_pingTimer.stop();
 }
 
 // Core methods
@@ -107,7 +107,7 @@ void Controllers::updateFromPing(unsigned int id, int ttl) {
 void Controllers::removeExpired(int elapsedSeconds) {
     for (auto& controller : visibleControllers) {
         controller.ttl = std::max(0, controller.ttl - elapsedSeconds);
-        if (controller.ttl <= 0) {
+        if (controller.ttl <= 0&&controller.id!=system_get_chip_id()) { // Never set self to OFFLINE
             controller.state = OFFLINE;
         }
     }
