@@ -34,7 +34,10 @@ Controllers::~Controllers() {
 // Core methods
 void Controllers::addOrUpdate(unsigned int id, const String& hostname, const String& ipAddress, int ttl) {
     debug_i("Controllers::addOrUpdate id=%u, hostname=%s, ip=%s, ttl=%d", id, hostname.c_str(), ipAddress.c_str(), ttl);
-    
+    if(hostname == "" || ipAddress == "") {
+        debug_w("Empty hostname or IP address provided, skipping addOrUpdate");
+        return;
+    }
     // Find existing visible controller
     size_t index = findVisibleControllerIndex(id);
 
@@ -106,9 +109,11 @@ void Controllers::updateFromPing(unsigned int id, int ttl) {
 
 void Controllers::removeExpired(int elapsedSeconds) {
     for (auto& controller : visibleControllers) {
-        controller.ttl = std::max(0, controller.ttl - elapsedSeconds);
-        if (controller.ttl <= 0&&controller.id!=system_get_chip_id()) { // Never set self to OFFLINE
-            controller.state = OFFLINE;
+        if (controller.id!=system_get_chip_id()){
+            controller.ttl = std::max(0, controller.ttl - elapsedSeconds);
+            if (controller.ttl <= 0) { // Never set self to OFFLINE
+                controller.state = OFFLINE;
+            }
         }
     }
     
@@ -211,6 +216,15 @@ void Controllers::init(int pingInterval) {
 
 void Controllers::update() {
     // Update logic if needed
+}
+
+void Controllers::forgetControllers(){
+    visibleControllers.clear();
+    if (auto controllersUpdate = AppData::Root::Controllers(*app.data).update()) {
+        controllersUpdate.clear();
+    } else {
+        debug_e("error: failed to open hosts db for clearing");
+    }
 }
 
 // Iterator implementation
