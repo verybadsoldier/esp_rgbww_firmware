@@ -174,28 +174,7 @@ void Application::uptimeCounter()
 void Application::checkRam()
 {
 	debug_i("Free heap: %d", system_get_free_heap_size());
-	HttpClient client;
-	size_t activeConnections = client.getConnectionCount();
-	debug_i("pending http connections: %d", activeConnections);
-	    // Add debugging:
-    if (!controllers) {
-        debug_e("Controllers is NULL!");
-        return;
-    }
-    
-    debug_i("Controllers initialized - checking counts");
-    debug_i("Total controllers: %d", controllers->getTotalCount());
-    debug_i("Visible controllers: %d", controllers->getVisibleCount());
-    
-    Serial.println("=== Starting Controllers JSON ===");
-    
-    // NEW WAY: Direct streaming to Serial - no manual loop needed!
-    auto printer = controllers->printJson(Serial, Controllers::ALL_ENTRIES, true);
-    while (!printer.isDone()) {
-        printer(); // Still need this for direct Serial output
-    }
-    
-    Serial.println("\n=== End Controllers JSON ===");
+	
 }
 
 
