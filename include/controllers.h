@@ -126,7 +126,8 @@ public:
     // Utility
     void init(int pingInterval = 10000);
     void update();
-    
+    void forgetControllers();
+
     // Iterator support
     Iterator begin();
     Iterator end();

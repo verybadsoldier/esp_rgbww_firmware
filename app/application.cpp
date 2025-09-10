@@ -510,7 +510,10 @@ bool Application::delayedCMD(String cmd, int delay)
 		switchRom();
 //_systimer.initializeMs(delay, TimerDelegate(&Application::restart, this)).startOnce();
 //#endif
-	} else {
+	} else if(cmd.equals(F("forget_controllers"))){
+		app.controllers->forgetControllers();
+		wsBroadcast(F("notification"), F("Controller list cleared"));
+	}else {
 		return false;
 	}
 	return true;
