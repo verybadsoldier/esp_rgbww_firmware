@@ -373,11 +373,13 @@
                   "type":"integer",
                   "default":1000
                 },
-                "resolution_bits":{
+                "resolution":{
                   "type":"integer",
-                  "default":10
+                  "default":10, 
+                  "minimum":1,
+                  "maximum":14
                 },
-                "timer_number":{
+                "number":{
                   "type":"integer",
                   "default":0,
                   "enum":[0,1,2,3]
