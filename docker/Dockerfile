@@ -32,6 +32,7 @@ RUN git clone $SMING_REPO -b $SMING_BRANCH /opt/Sming
 
 WORKDIR "/opt/Sming/Sming/Libraries/ConfigDB"
 RUN git rev-parse --abbrev-ref HEAD
+RUN git checkout develop
 
 SHELL ["/bin/bash", "-c"]
 WORKDIR "/opt/Sming"
