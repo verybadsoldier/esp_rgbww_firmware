@@ -33,6 +33,7 @@
 #include <FlashString/Stream.hpp>
 #include <fileMap.h>
 
+#include <Services/Profiling/CpuUsage.h>
 
 #if ARCH_ESP8266
 #define PART0 "lfs0"
@@ -41,6 +42,9 @@
 #endif
 
 //IMPORT_FSTR_LOCAL(default_config, PROJECT_DIR "/default_config.json");
+
+Profiling::CpuUsage cpuUsage;
+
 
 #ifdef ARCH_ESP8266
 #include <Platform/OsMessageInterceptor.h>
@@ -126,11 +130,9 @@ extern "C" void __wrap_user_pre_init(void)
 
 Application app;
 
-// Sming Framework INIT method - called during boot
-void init()
+void onReady()
 {
-	Serial.begin(SERIAL_BAUD_RATE); // 115200 by default
-	Serial.systemDebugOutput(true); // Debug output to serial
+	debug_i("CPU usage profiling ready");
 	//System.setCpuFrequencye(CF_160MHz);
 
 #ifdef ARCH_ESP8266
@@ -143,6 +145,22 @@ void init()
 
 	// Run Services on system ready
 	System.onReady(SystemReadyDelegate(&Application::startServices, &app));
+}
+
+// Sming Framework INIT method - called during boot
+void init(){	
+	Serial.setTxBufferSize(1024);
+	Serial.setTxWait(false); // Make sure debug output doesn't stall
+	Serial.begin(SERIAL_BAUD_RATE);
+	Serial.systemDebugOutput(true);
+
+	// System.setCpuFrequency(CpuCycleClockFast::cpuFrequency());
+
+	Serial.print(_F("Available heap: "));
+	Serial.println(system_get_free_heap_size());
+	Serial.println("===starting cpu profiling===");
+	//initialize cpuUsage profiling
+	cpuUsage.begin(onReady);
 }
 
 int32_t getVersion(IDataSourceStream& input)
@@ -174,8 +192,11 @@ void Application::uptimeCounter()
 void Application::checkRam()
 {
 	debug_i("Free heap: %d", system_get_free_heap_size());
-	
+	cpuPercent=cpuUsage.getUtilisation() /100;
+	debug_i("CPU usage: i%", cpuPercent);
+	cpuUsage.reset();
 }
+
 
 
 void Application::init()

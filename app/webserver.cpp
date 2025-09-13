@@ -582,6 +582,7 @@ void ApplicationWebserver::onInfo(HttpRequest& request, HttpResponse& response)
 	data[F("sming")] = SMING_VERSION;
 	data[F("event_num_clients")] = app.eventserver.activeClients;
 	data[F("uptime")] = app.getUptime();
+	data[F("cpu_usage_percent")] = app.getCpuPercent();
 	data[F("heap_free")] = system_get_free_heap_size();
 	data[F("soc")]=SOC;
 	

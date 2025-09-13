@@ -22,6 +22,8 @@
 #include <otaupdate.h>
 #include <controllers.h>
 
+
+
 static const char* fw_git_version = GITVERSION;
 static const char* fw_git_date = GITDATE;
 static const char* sming_git_version = SMING_VERSION;
@@ -98,6 +100,11 @@ public:
         return result;
     }
 
+    uint8_t getCpuPercent()
+    {
+        return cpuPercent;
+    }
+
 private:
     void loadbootinfo();
     void listFiles();
@@ -108,6 +115,8 @@ private:
     bool _first_run = false;
     bool _fs_mounted = false;
     bool _run_after_ota = false;
+
+    uint8_t cpuPercent=0;
 
     Timer _uptimetimer;
     Timer _checkRamTimer;
