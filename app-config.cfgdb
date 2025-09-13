@@ -358,6 +358,64 @@
           "type":"integer",
           "default":0
         },
+        "pwm":{
+          "type":"object",
+          "properties":{
+            "timer":{
+              "type":"object",
+              "properties":{
+                "speed_mode":{
+                  "type":"string",
+                  "default":"low_speed",
+                  "enum":[ "low_speed", "high_speed"]
+                },
+                "frequency":{
+                  "type":"integer",
+                  "default":1000
+                },
+                "resolution":{
+                  "type":"integer",
+                  "default":10, 
+                  "minimum":1,
+                  "maximum":14
+                },
+                "number":{
+                  "type":"integer",
+                  "default":0,
+                  "enum":[0,1,2,3]
+                }
+              }
+            },
+            "spreadSpectrum":{
+              "type":"object",
+              "properties":{
+                "mode":{
+                  "type":"string",
+                  "default":"auto",
+                  "enum":[ "off", "auto"]
+                },
+                "width":{
+                  "type":"integer",
+                  "default":15
+                },
+                "subsampling":{
+                  "type":"integer",
+                  "default":4
+                }
+              }
+            },
+            "phaseShift":{
+              "type":"object",
+              "properties":{
+                "mode":{ 
+                  "type":"string",
+                  "default":"auto",
+                  "enum":[ "off", "auto"]
+                }
+              }
+            }
+          }
+        },
         "available_pins":{
           "type":"array",
           "items":{

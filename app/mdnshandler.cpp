@@ -7,7 +7,7 @@
 #include <Network/Http/HttpClient.h>
 
 
-#define DEBUG_MDNS 
+//#define DEBUG_MDNS 
 
 // Global pointer for leader service updates from other components
 static LEDControllerAPIService* g_ledControllerAPIService = nullptr;

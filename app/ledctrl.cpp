@@ -195,7 +195,26 @@ void APPLedCtrl::init()
 
 	if(pins.isValid)
 		{
+		#ifdef ARCH_ESP32
+		{
+			AppConfig::Hardware::Pwm pwmconfig(*app.cfg);
+			Esp32HwPwmConfig config;
+			config.timer.frequency = pwmconfig.timer.getFrequency();
+			config.timer.resolution = (ledc_timer_bit_t)pwmconfig.timer.getResolution();
+			config.timer.speed_mode = (ledc_mode_t)pwmconfig.timer.getSpeedMode();
+			config.timer.timer_num = (ledc_timer_t)pwmconfig.timer.getNumber();
+
+			config.spreadSpectrum.mode = (SpreadSpectrumMode)pwmconfig.spreadSpectrum.getMode();
+			config.spreadSpectrum.WidthPercent = pwmconfig.spreadSpectrum.getWidth();
+			config.spreadSpectrum.Subsampling = pwmconfig.spreadSpectrum.getSubsampling();
+
+			config.phaseShift.mode = (PhaseShiftMode)pwmconfig.phaseShift.getMode();
+		
+			RGBWWLed::init(pins.red, pins.green, pins.blue, pins.warmwhite, pins.coldwhite, config);
+		}
+		#else
 		RGBWWLed::init(pins.red, pins.green, pins.blue, pins.warmwhite, pins.coldwhite, PWM_FREQUENCY);
+		#endif
 		debug_i("APPLedCtrl::init - finished setting up RGBWWLed");
 		setup();
 		}

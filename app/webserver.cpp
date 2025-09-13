@@ -1261,6 +1261,7 @@ void ApplicationWebserver::onData(HttpRequest& request, HttpResponse& response){
 
 	if(request.method == HTTP_OPTIONS) {
 		// probably a CORS request
+		setCorsHeaders(response);
 		sendApiCode(response, API_CODES::API_SUCCESS, "");
 		debug_i("HTTP_OPTIONS Request, sent API_SUCCESS");
 		return;
@@ -1300,5 +1301,5 @@ void ApplicationWebserver::onData(HttpRequest& request, HttpResponse& response){
 void ApplicationWebserver::setCorsHeaders(HttpResponse& response)
 {
 	response.setAllowCrossDomainOrigin("*");
-	response.setHeader(F("Access-Control-Allow-Headers"), F("Content-Type"));
+	response.setHeader(F("Access-Control-Allow-Headers"), F("Content-Type, Cache-Control"));
 }
