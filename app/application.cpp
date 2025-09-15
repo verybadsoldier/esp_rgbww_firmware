@@ -33,8 +33,6 @@
 #include <FlashString/Stream.hpp>
 #include <fileMap.h>
 
-#include <Services/Profiling/CpuUsage.h>
-
 #if ARCH_ESP8266
 #define PART0 "lfs0"
 #elif ARCH_ESP32
@@ -42,9 +40,6 @@
 #endif
 
 //IMPORT_FSTR_LOCAL(default_config, PROJECT_DIR "/default_config.json");
-
-Profiling::CpuUsage cpuUsage;
-
 
 #ifdef ARCH_ESP8266
 #include <Platform/OsMessageInterceptor.h>
@@ -132,7 +127,7 @@ Application app;
 
 void onReady()
 {
-	debug_i("CPU usage profiling ready");
+	
 	//System.setCpuFrequencye(CF_160MHz);
 
 #ifdef ARCH_ESP8266
@@ -159,8 +154,7 @@ void init(){
 	Serial.print(_F("Available heap: "));
 	Serial.println(system_get_free_heap_size());
 	Serial.println("===starting cpu profiling===");
-	//initialize cpuUsage profiling
-	cpuUsage.begin(onReady);
+	onReady(); // this is just in preparation for cpu profiling
 }
 
 int32_t getVersion(IDataSourceStream& input)
@@ -192,9 +186,6 @@ void Application::uptimeCounter()
 void Application::checkRam()
 {
 	debug_i("Free heap: %d", system_get_free_heap_size());
-	cpuPercent=cpuUsage.getUtilisation() /100;
-	debug_i("CPU usage: i%", cpuPercent);
-	cpuUsage.reset();
 }
 
 

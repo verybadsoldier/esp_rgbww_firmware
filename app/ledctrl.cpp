@@ -201,14 +201,38 @@ void APPLedCtrl::init()
 			Esp32HwPwmConfig config;
 			config.timer.frequency = pwmconfig.timer.getFrequency();
 			config.timer.resolution = (ledc_timer_bit_t)pwmconfig.timer.getResolution();
-			config.timer.speed_mode = (ledc_mode_t)pwmconfig.timer.getSpeedMode();
-			config.timer.timer_num = (ledc_timer_t)pwmconfig.timer.getNumber();
+					
+		auto speedMode = pwmconfig.timer.getSpeedMode();
+		#if defined(SOC_ESP32)
+		if(speedMode == AppConfig::ContainedHardware::ContainedPwm::TimerSpeedMode::HIGHSPEED && SOC=="esp32"){
+			config.timer.speed_mode = LEDC_HIGH_SPEED_MODE;
+		#endif
+		if(speedMode == AppConfig::ContainedHardware::ContainedPwm::TimerSpeedMode::LOWSPEED){
+			config.timer.speed_mode = LEDC_LOW_SPEED_MODE;
+		} else{
+			debug_e("APPLedCtrl::init - invalid speed mode for SoC %s, using default low_speed", SOC);
+			config.timer.speed_mode = LEDC_LOW_SPEED_MODE;
+		}
 
-			config.spreadSpectrum.mode = (SpreadSpectrumMode)pwmconfig.spreadSpectrum.getMode();
+		config.timer.timer_num = (ledc_timer_t)pwmconfig.timer.getNumber();
+
+		auto spreadMode = pwmconfig.spreadSpectrum.getMode();
+		if (spreadMode == AppConfig::ContainedHardware::ContainedPwm::SpreadSpectrumMode::ON) {
+			config.spreadSpectrum.mode = SpreadSpectrumMode::ON;
+		} else if (spreadMode == AppConfig::ContainedHardware::ContainedPwm::SpreadSpectrumMode::OFF) {
+			config.spreadSpectrum.mode = SpreadSpectrumMode::OFF;
+		}
+
 			config.spreadSpectrum.WidthPercent = pwmconfig.spreadSpectrum.getWidth();
 			config.spreadSpectrum.Subsampling = pwmconfig.spreadSpectrum.getSubsampling();
 
-			config.phaseShift.mode = (PhaseShiftMode)pwmconfig.phaseShift.getMode();
+			// ✅ Use PhaseShiftMode enum  
+		auto phaseShiftMode = pwmconfig.phaseShift.getMode();
+		if (phaseShiftMode == AppConfig::ContainedHardware::ContainedPwm::PhaseShiftMode::ON) {
+			config.phaseShift.mode = PhaseShiftMode::AUTO;
+		} else if (phaseShiftMode == AppConfig::ContainedHardware::ContainedPwm::PhaseShiftMode::OFF) {
+			config.phaseShift.mode = PhaseShiftMode::OFF;
+		}
 		
 			RGBWWLed::init(pins.red, pins.green, pins.blue, pins.warmwhite, pins.coldwhite, config);
 		}
