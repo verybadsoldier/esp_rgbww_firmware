@@ -203,10 +203,12 @@ void APPLedCtrl::init()
 			config.timer.resolution = (ledc_timer_bit_t)pwmconfig.timer.getResolution();
 				
 		auto speedMode = pwmconfig.timer.getSpeedMode();
+		
 		#ifdef SOC_ESP32 // a bit ugly, but LEDC_HIGH_SPEED_MODE is not defined for anything but the ESP32 so using the constant directly would throw an error at compile time
 		if(speedMode == AppConfig::ContainedHardware::ContainedPwm::TimerSpeedMode::HIGHSPEED)
 			config.timer.speed_mode = LEDC_HIGH_SPEED_MODE;
 		#endif
+		
 		if(speedMode == AppConfig::ContainedHardware::ContainedPwm::TimerSpeedMode::LOWSPEED){
 			config.timer.speed_mode = LEDC_LOW_SPEED_MODE;
 		} else{
@@ -235,6 +237,7 @@ void APPLedCtrl::init()
 		RGBWWLed::init(pins.red, pins.green, pins.blue, pins.warmwhite, pins.coldwhite, PWM_FREQUENCY);
 		debug_i("APPLedCtrl::init - finished setting up RGBWWLed");
 		setup();
+		#endif	
 		}
 
 	HSVCT startupColor;
