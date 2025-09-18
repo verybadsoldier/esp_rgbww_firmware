@@ -1,0 +1,565 @@
+
+esp_rgbww_firmware: Invoking 'flash' for Esp32/esp32c3 (debug) architecture
+COM_PORT is /dev/serial/by-id/usb-FTDI_Dual_RS232-HS-if01-port0@115200 for Esp32
+using firmware version pj-1-828-g97c5-dirty"-["feature/newPing"]"
+using WEBapp V5-pj-513-g47eea-dirty-[devel]
+using SMING 6.0.x-dev-52-g4884-dirty"-["HttpClientDebug"]"
+Executing action: reconfigure
+Running cmake in directory /opt/Sming/Sming/out/Esp32/esp32c3/debug/build/esp32/sdk
+Executing "cmake -G Ninja -DPYTHON_DEPS_CHECKED=1 -DPYTHON=/opt/esp32/python_env/idf5.2_py3.13_env/bin/python -DESP_PLATFORM=1 -DCCACHE_ENABLE=0 /opt/Sming/Sming/Arch/Esp32/Components/esp32/project/esp32c3/debug"...
+-- Building ESP-IDF components for target esp32c3
+-- Project sdkconfig file /opt/Sming/Sming/Arch/Esp32/Components/esp32/project/esp32c3/debug/sdkconfig
+Loading defaults file /opt/Sming/Sming/Arch/Esp32/Components/esp32/project/esp32c3/debug/sdkconfig.defaults...
+/opt/Sming/Sming/Arch/Esp32/Components/esp32/project/esp32c3/debug/sdkconfig.defaults:39 CONFIG_ESP32_WIFI_SW_COEXIST_ENABLE was replaced with CONFIG_ESP_COEX_SW_COEXIST_ENABLE
+/tmp/kconfgen_tmp14ly_ae8:68 line was updated to CONFIG_BOOTLOADER_LOG_LEVEL_NONE=n
+/tmp/kconfgen_tmp14ly_ae8:69 line was updated to CONFIG_BOOTLOADER_LOG_LEVEL_ERROR=n
+/tmp/kconfgen_tmp14ly_ae8:70 line was updated to CONFIG_BOOTLOADER_LOG_LEVEL_WARN=n
+/tmp/kconfgen_tmp14ly_ae8:72 line was updated to CONFIG_BOOTLOADER_LOG_LEVEL_DEBUG=n
+/tmp/kconfgen_tmp14ly_ae8:73 line was updated to CONFIG_BOOTLOADER_LOG_LEVEL_VERBOSE=n
+/tmp/kconfgen_tmp14ly_ae8:77 line was updated to CONFIG_LOG_DEFAULT_LEVEL_NONE=n
+/tmp/kconfgen_tmp14ly_ae8:78 line was updated to CONFIG_LOG_DEFAULT_LEVEL_ERROR=n
+/tmp/kconfgen_tmp14ly_ae8:79 line was updated to CONFIG_LOG_DEFAULT_LEVEL_WARN=n
+/tmp/kconfgen_tmp14ly_ae8:81 line was updated to CONFIG_LOG_DEFAULT_LEVEL_DEBUG=n
+/tmp/kconfgen_tmp14ly_ae8:82 line was updated to CONFIG_LOG_DEFAULT_LEVEL_VERBOSE=n
+-- App "Sming" version: 6.0.x-dev-52-g48843126-dirty
+-- Adding linker script /opt/Sming/Sming/out/Esp32/esp32c3/debug/build/esp32/sdk/esp-idf/esp_system/ld/memory.ld
+-- Adding linker script /opt/esp-idf-5.2/components/esp_system/ld/esp32c3/sections.ld.in
+-- Adding linker script /opt/esp-idf-5.2/components/esp_rom/esp32c3/ld/esp32c3.rom.ld
+-- Adding linker script /opt/esp-idf-5.2/components/esp_rom/esp32c3/ld/esp32c3.rom.api.ld
+-- Adding linker script /opt/esp-idf-5.2/components/esp_rom/esp32c3/ld/esp32c3.rom.libgcc.ld
+-- Adding linker script /opt/esp-idf-5.2/components/esp_rom/esp32c3/ld/esp32c3.rom.newlib.ld
+-- Adding linker script /opt/esp-idf-5.2/components/esp_rom/esp32c3/ld/esp32c3.rom.version.ld
+-- Adding linker script /opt/esp-idf-5.2/components/esp_rom/esp32c3/ld/esp32c3.rom.eco3.ld
+-- Adding linker script /opt/esp-idf-5.2/components/soc/esp32c3/ld/esp32c3.peripherals.ld
+-- Components: app_update bootloader bootloader_support bt console cxx driver efuse esp_adc esp_app_format esp_bootloader_format esp_coex esp_common esp_eth esp_event esp_gdbstub esp_http_server esp_hw_support esp_mm esp_netif esp_netif_stack esp_partition esp_phy esp_pm esp_ringbuf esp_rom esp_system esp_timer esp_wifi espcoredump esptool_py freertos hal heap http_parser json log lwip main mbedtls newlib nvs_flash partition_table protobuf-c protocomm pthread riscv soc spi_flash vfs wifi_provisioning wpa_supplicant
+-- Component paths: /opt/esp-idf-5.2/components/app_update /opt/esp-idf-5.2/components/bootloader /opt/esp-idf-5.2/components/bootloader_support /opt/esp-idf-5.2/components/bt /opt/esp-idf-5.2/components/console /opt/esp-idf-5.2/components/cxx /opt/esp-idf-5.2/components/driver /opt/esp-idf-5.2/components/efuse /opt/esp-idf-5.2/components/esp_adc /opt/esp-idf-5.2/components/esp_app_format /opt/esp-idf-5.2/components/esp_bootloader_format /opt/esp-idf-5.2/components/esp_coex /opt/esp-idf-5.2/components/esp_common /opt/esp-idf-5.2/components/esp_eth /opt/esp-idf-5.2/components/esp_event /opt/esp-idf-5.2/components/esp_gdbstub /opt/esp-idf-5.2/components/esp_http_server /opt/esp-idf-5.2/components/esp_hw_support /opt/esp-idf-5.2/components/esp_mm /opt/esp-idf-5.2/components/esp_netif /opt/esp-idf-5.2/components/esp_netif_stack /opt/esp-idf-5.2/components/esp_partition /opt/esp-idf-5.2/components/esp_phy /opt/esp-idf-5.2/components/esp_pm /opt/esp-idf-5.2/components/esp_ringbuf /opt/esp-idf-5.2/components/esp_rom /opt/esp-idf-5.2/components/esp_system /opt/esp-idf-5.2/components/esp_timer /opt/esp-idf-5.2/components/esp_wifi /opt/esp-idf-5.2/components/espcoredump /opt/esp-idf-5.2/components/esptool_py /opt/esp-idf-5.2/components/freertos /opt/esp-idf-5.2/components/hal /opt/esp-idf-5.2/components/heap /opt/esp-idf-5.2/components/http_parser /opt/esp-idf-5.2/components/json /opt/esp-idf-5.2/components/log /opt/esp-idf-5.2/components/lwip /opt/Sming/Sming/Arch/Esp32/Components/esp32/project/esp32c3/debug/main /opt/esp-idf-5.2/components/mbedtls /opt/esp-idf-5.2/components/newlib /opt/esp-idf-5.2/components/nvs_flash /opt/esp-idf-5.2/components/partition_table /opt/esp-idf-5.2/components/protobuf-c /opt/esp-idf-5.2/components/protocomm /opt/esp-idf-5.2/components/pthread /opt/esp-idf-5.2/components/riscv /opt/esp-idf-5.2/components/soc /opt/esp-idf-5.2/components/spi_flash /opt/esp-idf-5.2/components/vfs /opt/esp-idf-5.2/components/wifi_provisioning /opt/esp-idf-5.2/components/wpa_supplicant
+-- Configuring done (2.7s)
+-- Generating done (0.3s)
+-- Build files have been written to: /opt/Sming/Sming/out/Esp32/esp32c3/debug/build/esp32/sdk
+Executing action: reconfigure
+Running cmake in directory /opt/Sming/Sming/out/Esp32/esp32c3/debug/build/esp32/sdk
+Executing "cmake -G Ninja -DPYTHON_DEPS_CHECKED=1 -DPYTHON=/opt/esp32/python_env/idf5.2_py3.13_env/bin/python -DESP_PLATFORM=1 -DCCACHE_ENABLE=0 /opt/Sming/Sming/Arch/Esp32/Components/esp32/project/esp32c3/debug"...
+-- Building ESP-IDF components for target esp32c3
+-- Project sdkconfig file /opt/Sming/Sming/Arch/Esp32/Components/esp32/project/esp32c3/debug/sdkconfig
+Loading defaults file /opt/Sming/Sming/Arch/Esp32/Components/esp32/project/esp32c3/debug/sdkconfig.defaults...
+/opt/Sming/Sming/Arch/Esp32/Components/esp32/project/esp32c3/debug/sdkconfig.defaults:39 CONFIG_ESP32_WIFI_SW_COEXIST_ENABLE was replaced with CONFIG_ESP_COEX_SW_COEXIST_ENABLE
+/tmp/kconfgen_tmpbkw9_6lg:68 line was updated to CONFIG_BOOTLOADER_LOG_LEVEL_NONE=n
+/tmp/kconfgen_tmpbkw9_6lg:69 line was updated to CONFIG_BOOTLOADER_LOG_LEVEL_ERROR=n
+/tmp/kconfgen_tmpbkw9_6lg:70 line was updated to CONFIG_BOOTLOADER_LOG_LEVEL_WARN=n
+/tmp/kconfgen_tmpbkw9_6lg:72 line was updated to CONFIG_BOOTLOADER_LOG_LEVEL_DEBUG=n
+/tmp/kconfgen_tmpbkw9_6lg:73 line was updated to CONFIG_BOOTLOADER_LOG_LEVEL_VERBOSE=n
+/tmp/kconfgen_tmpbkw9_6lg:77 line was updated to CONFIG_LOG_DEFAULT_LEVEL_NONE=n
+/tmp/kconfgen_tmpbkw9_6lg:78 line was updated to CONFIG_LOG_DEFAULT_LEVEL_ERROR=n
+/tmp/kconfgen_tmpbkw9_6lg:79 line was updated to CONFIG_LOG_DEFAULT_LEVEL_WARN=n
+/tmp/kconfgen_tmpbkw9_6lg:81 line was updated to CONFIG_LOG_DEFAULT_LEVEL_DEBUG=n
+/tmp/kconfgen_tmpbkw9_6lg:82 line was updated to CONFIG_LOG_DEFAULT_LEVEL_VERBOSE=n
+-- App "Sming" version: 6.0.x-dev-52-g48843126-dirty
+-- Adding linker script /opt/Sming/Sming/out/Esp32/esp32c3/debug/build/esp32/sdk/esp-idf/esp_system/ld/memory.ld
+-- Adding linker script /opt/esp-idf-5.2/components/esp_system/ld/esp32c3/sections.ld.in
+-- Adding linker script /opt/esp-idf-5.2/components/esp_rom/esp32c3/ld/esp32c3.rom.ld
+-- Adding linker script /opt/esp-idf-5.2/components/esp_rom/esp32c3/ld/esp32c3.rom.api.ld
+-- Adding linker script /opt/esp-idf-5.2/components/esp_rom/esp32c3/ld/esp32c3.rom.libgcc.ld
+-- Adding linker script /opt/esp-idf-5.2/components/esp_rom/esp32c3/ld/esp32c3.rom.newlib.ld
+-- Adding linker script /opt/esp-idf-5.2/components/esp_rom/esp32c3/ld/esp32c3.rom.version.ld
+-- Adding linker script /opt/esp-idf-5.2/components/esp_rom/esp32c3/ld/esp32c3.rom.eco3.ld
+-- Adding linker script /opt/esp-idf-5.2/components/soc/esp32c3/ld/esp32c3.peripherals.ld
+-- Components: app_update bootloader bootloader_support bt console cxx driver efuse esp_adc esp_app_format esp_bootloader_format esp_coex esp_common esp_eth esp_event esp_gdbstub esp_http_server esp_hw_support esp_mm esp_netif esp_netif_stack esp_partition esp_phy esp_pm esp_ringbuf esp_rom esp_system esp_timer esp_wifi espcoredump esptool_py freertos hal heap http_parser json log lwip main mbedtls newlib nvs_flash partition_table protobuf-c protocomm pthread riscv soc spi_flash vfs wifi_provisioning wpa_supplicant
+-- Component paths: /opt/esp-idf-5.2/components/app_update /opt/esp-idf-5.2/components/bootloader /opt/esp-idf-5.2/components/bootloader_support /opt/esp-idf-5.2/components/bt /opt/esp-idf-5.2/components/console /opt/esp-idf-5.2/components/cxx /opt/esp-idf-5.2/components/driver /opt/esp-idf-5.2/components/efuse /opt/esp-idf-5.2/components/esp_adc /opt/esp-idf-5.2/components/esp_app_format /opt/esp-idf-5.2/components/esp_bootloader_format /opt/esp-idf-5.2/components/esp_coex /opt/esp-idf-5.2/components/esp_common /opt/esp-idf-5.2/components/esp_eth /opt/esp-idf-5.2/components/esp_event /opt/esp-idf-5.2/components/esp_gdbstub /opt/esp-idf-5.2/components/esp_http_server /opt/esp-idf-5.2/components/esp_hw_support /opt/esp-idf-5.2/components/esp_mm /opt/esp-idf-5.2/components/esp_netif /opt/esp-idf-5.2/components/esp_netif_stack /opt/esp-idf-5.2/components/esp_partition /opt/esp-idf-5.2/components/esp_phy /opt/esp-idf-5.2/components/esp_pm /opt/esp-idf-5.2/components/esp_ringbuf /opt/esp-idf-5.2/components/esp_rom /opt/esp-idf-5.2/components/esp_system /opt/esp-idf-5.2/components/esp_timer /opt/esp-idf-5.2/components/esp_wifi /opt/esp-idf-5.2/components/espcoredump /opt/esp-idf-5.2/components/esptool_py /opt/esp-idf-5.2/components/freertos /opt/esp-idf-5.2/components/hal /opt/esp-idf-5.2/components/heap /opt/esp-idf-5.2/components/http_parser /opt/esp-idf-5.2/components/json /opt/esp-idf-5.2/components/log /opt/esp-idf-5.2/components/lwip /opt/Sming/Sming/Arch/Esp32/Components/esp32/project/esp32c3/debug/main /opt/esp-idf-5.2/components/mbedtls /opt/esp-idf-5.2/components/newlib /opt/esp-idf-5.2/components/nvs_flash /opt/esp-idf-5.2/components/partition_table /opt/esp-idf-5.2/components/protobuf-c /opt/esp-idf-5.2/components/protocomm /opt/esp-idf-5.2/components/pthread /opt/esp-idf-5.2/components/riscv /opt/esp-idf-5.2/components/soc /opt/esp-idf-5.2/components/spi_flash /opt/esp-idf-5.2/components/vfs /opt/esp-idf-5.2/components/wifi_provisioning /opt/esp-idf-5.2/components/wpa_supplicant
+-- Configuring done (2.7s)
+-- Generating done (0.3s)
+-- Build files have been written to: /opt/Sming/Sming/out/Esp32/esp32c3/debug/build/esp32/sdk
+ninja: Entering directory `/opt/Sming/Sming/out/Esp32/esp32c3/debug/build/esp32/sdk'
+[1/4] cd /opt/Sming/Sming/out/Esp32/esp32c3/debug/build/esp32/sdk/esp-idf/esptool_py && /opt/esp32/python_env/idf5.2_py3.13_env/bin/python /opt/esp-idf-5.2/components/partition_table/check_sizes.py --offset 0x8000 partition --type app /opt/Sming/Sming/out/Esp32/esp32c3/debug/build/esp32/sdk/partition_table/partition-table.bin /opt/Sming/Sming/out/Esp32/esp32c3/debug/build/esp32/sdk/Sming.bin
+Sming.bin binary size 0x20ea0 bytes. Smallest app partition is 0x100000 bytes. 0xdf160 bytes (87%) free.
+[2/4] Performing build step for 'bootloader'
+[1/1] cd /opt/Sming/Sming/out/Esp32/esp32c3/debug/build/esp32/sdk/bootloader/esp-idf/esptool_py && /opt/esp32/python_env/idf5.2_py3.13_env/bin/python /opt/esp-idf-5.2/components/partition_table/check_sizes.py --offset 0x8000 bootloader 0x0 /opt/Sming/Sming/out/Esp32/esp32c3/debug/build/esp32/sdk/bootloader/bootloader.bin
+Bootloader binary size 0x5170 bytes. 0x2e90 bytes (36%) free.
+[3/4] No install step for 'bootloader'
+[4/4] Completed 'bootloader'
+Copying generated SDK libraries
+make[1]: Verzeichnis „/home/pjakobs/devel/esp_rgbww_firmware“ wird betreten
+COM_PORT is /dev/serial/by-id/usb-FTDI_Dual_RS232-HS-if01-port0@115200 for Esp32
+using firmware version pj-1-828-g97c5-dirty"-["feature/newPing"]"
+using WEBapp V5-pj-513-g47eea-dirty-[devel]
+using SMING 6.0.x-dev-52-g4884-dirty"-["HttpClientDebug"]"
+Executing action: reconfigure
+Running cmake in directory /opt/Sming/Sming/out/Esp32/esp32c3/debug/build/esp32/sdk
+Executing "cmake -G Ninja -DPYTHON_DEPS_CHECKED=1 -DPYTHON=/opt/esp32/python_env/idf5.2_py3.13_env/bin/python -DESP_PLATFORM=1 -DCCACHE_ENABLE=0 /opt/Sming/Sming/Arch/Esp32/Components/esp32/project/esp32c3/debug"...
+-- Building ESP-IDF components for target esp32c3
+-- Project sdkconfig file /opt/Sming/Sming/Arch/Esp32/Components/esp32/project/esp32c3/debug/sdkconfig
+Loading defaults file /opt/Sming/Sming/Arch/Esp32/Components/esp32/project/esp32c3/debug/sdkconfig.defaults...
+/opt/Sming/Sming/Arch/Esp32/Components/esp32/project/esp32c3/debug/sdkconfig.defaults:39 CONFIG_ESP32_WIFI_SW_COEXIST_ENABLE was replaced with CONFIG_ESP_COEX_SW_COEXIST_ENABLE
+/tmp/kconfgen_tmpo78hrj68:68 line was updated to CONFIG_BOOTLOADER_LOG_LEVEL_NONE=n
+/tmp/kconfgen_tmpo78hrj68:69 line was updated to CONFIG_BOOTLOADER_LOG_LEVEL_ERROR=n
+/tmp/kconfgen_tmpo78hrj68:70 line was updated to CONFIG_BOOTLOADER_LOG_LEVEL_WARN=n
+/tmp/kconfgen_tmpo78hrj68:72 line was updated to CONFIG_BOOTLOADER_LOG_LEVEL_DEBUG=n
+/tmp/kconfgen_tmpo78hrj68:73 line was updated to CONFIG_BOOTLOADER_LOG_LEVEL_VERBOSE=n
+/tmp/kconfgen_tmpo78hrj68:77 line was updated to CONFIG_LOG_DEFAULT_LEVEL_NONE=n
+/tmp/kconfgen_tmpo78hrj68:78 line was updated to CONFIG_LOG_DEFAULT_LEVEL_ERROR=n
+/tmp/kconfgen_tmpo78hrj68:79 line was updated to CONFIG_LOG_DEFAULT_LEVEL_WARN=n
+/tmp/kconfgen_tmpo78hrj68:81 line was updated to CONFIG_LOG_DEFAULT_LEVEL_DEBUG=n
+/tmp/kconfgen_tmpo78hrj68:82 line was updated to CONFIG_LOG_DEFAULT_LEVEL_VERBOSE=n
+-- App "Sming" version: 6.0.x-dev-52-g48843126-dirty
+-- Adding linker script /opt/Sming/Sming/out/Esp32/esp32c3/debug/build/esp32/sdk/esp-idf/esp_system/ld/memory.ld
+-- Adding linker script /opt/esp-idf-5.2/components/esp_system/ld/esp32c3/sections.ld.in
+-- Adding linker script /opt/esp-idf-5.2/components/esp_rom/esp32c3/ld/esp32c3.rom.ld
+-- Adding linker script /opt/esp-idf-5.2/components/esp_rom/esp32c3/ld/esp32c3.rom.api.ld
+-- Adding linker script /opt/esp-idf-5.2/components/esp_rom/esp32c3/ld/esp32c3.rom.libgcc.ld
+-- Adding linker script /opt/esp-idf-5.2/components/esp_rom/esp32c3/ld/esp32c3.rom.newlib.ld
+-- Adding linker script /opt/esp-idf-5.2/components/esp_rom/esp32c3/ld/esp32c3.rom.version.ld
+-- Adding linker script /opt/esp-idf-5.2/components/esp_rom/esp32c3/ld/esp32c3.rom.eco3.ld
+-- Adding linker script /opt/esp-idf-5.2/components/soc/esp32c3/ld/esp32c3.peripherals.ld
+-- Components: app_update bootloader bootloader_support bt console cxx driver efuse esp_adc esp_app_format esp_bootloader_format esp_coex esp_common esp_eth esp_event esp_gdbstub esp_http_server esp_hw_support esp_mm esp_netif esp_netif_stack esp_partition esp_phy esp_pm esp_ringbuf esp_rom esp_system esp_timer esp_wifi espcoredump esptool_py freertos hal heap http_parser json log lwip main mbedtls newlib nvs_flash partition_table protobuf-c protocomm pthread riscv soc spi_flash vfs wifi_provisioning wpa_supplicant
+-- Component paths: /opt/esp-idf-5.2/components/app_update /opt/esp-idf-5.2/components/bootloader /opt/esp-idf-5.2/components/bootloader_support /opt/esp-idf-5.2/components/bt /opt/esp-idf-5.2/components/console /opt/esp-idf-5.2/components/cxx /opt/esp-idf-5.2/components/driver /opt/esp-idf-5.2/components/efuse /opt/esp-idf-5.2/components/esp_adc /opt/esp-idf-5.2/components/esp_app_format /opt/esp-idf-5.2/components/esp_bootloader_format /opt/esp-idf-5.2/components/esp_coex /opt/esp-idf-5.2/components/esp_common /opt/esp-idf-5.2/components/esp_eth /opt/esp-idf-5.2/components/esp_event /opt/esp-idf-5.2/components/esp_gdbstub /opt/esp-idf-5.2/components/esp_http_server /opt/esp-idf-5.2/components/esp_hw_support /opt/esp-idf-5.2/components/esp_mm /opt/esp-idf-5.2/components/esp_netif /opt/esp-idf-5.2/components/esp_netif_stack /opt/esp-idf-5.2/components/esp_partition /opt/esp-idf-5.2/components/esp_phy /opt/esp-idf-5.2/components/esp_pm /opt/esp-idf-5.2/components/esp_ringbuf /opt/esp-idf-5.2/components/esp_rom /opt/esp-idf-5.2/components/esp_system /opt/esp-idf-5.2/components/esp_timer /opt/esp-idf-5.2/components/esp_wifi /opt/esp-idf-5.2/components/espcoredump /opt/esp-idf-5.2/components/esptool_py /opt/esp-idf-5.2/components/freertos /opt/esp-idf-5.2/components/hal /opt/esp-idf-5.2/components/heap /opt/esp-idf-5.2/components/http_parser /opt/esp-idf-5.2/components/json /opt/esp-idf-5.2/components/log /opt/esp-idf-5.2/components/lwip /opt/Sming/Sming/Arch/Esp32/Components/esp32/project/esp32c3/debug/main /opt/esp-idf-5.2/components/mbedtls /opt/esp-idf-5.2/components/newlib /opt/esp-idf-5.2/components/nvs_flash /opt/esp-idf-5.2/components/partition_table /opt/esp-idf-5.2/components/protobuf-c /opt/esp-idf-5.2/components/protocomm /opt/esp-idf-5.2/components/pthread /opt/esp-idf-5.2/components/riscv /opt/esp-idf-5.2/components/soc /opt/esp-idf-5.2/components/spi_flash /opt/esp-idf-5.2/components/vfs /opt/esp-idf-5.2/components/wifi_provisioning /opt/esp-idf-5.2/components/wpa_supplicant
+-- Configuring done (2.6s)
+-- Generating done (0.3s)
+-- Build files have been written to: /opt/Sming/Sming/out/Esp32/esp32c3/debug/build/esp32/sdk
+
+Building /opt/Sming/Sming/out/Esp32/esp32c3/debug/lib/clib-MDNS.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp32/esp32c3/debug/lib/clib-RGBWWLed.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp32/esp32c3/debug/lib/clib-Storage-83e323e1a871ac5420c8f165c564c44e.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp32/esp32c3/debug/lib/clib-IFS-7d6afb2743ff8456f9ff05b2029f5067.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp32/esp32c3/debug/lib/clib-LittleFS-b80663a2c17ca3bf3d776b50198f1b3e.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp32/esp32c3/debug/lib/clib-JsonStreamingParser.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp32/esp32c3/debug/lib/clib-ConfigDB-60a683a864ae92be880d263f15aa80e3.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp32/esp32c3/debug/lib/clib-crypto.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp32/esp32c3/debug/lib/clib-ssl-305ccbea31851ff9c0e9c7d5dbc67390.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp32/esp32c3/debug/lib/clib-http-parser.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp32/esp32c3/debug/lib/clib-libb64.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp32/esp32c3/debug/lib/clib-ws_parser.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp32/esp32c3/debug/lib/clib-mqtt-codec.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp32/esp32c3/debug/lib/clib-libyuarel.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp32/esp32c3/debug/lib/clib-Network-8c4c5504cec3998e443619eccbb38c72.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp32/esp32c3/debug/lib/clib-Ota-bcb8c4703eae71d5d05c0a6eec1f7daa.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp32/esp32c3/debug/lib/clib-OtaNetwork-8c4c5504cec3998e443619eccbb38c72.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /opt/Sming/Sming/out/Esp32/esp32c3/debug/lib/clib-Esp32HardwarePwm.a
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+
+Building /home/pjakobs/devel/esp_rgbww_firmware/out/Esp32/esp32c3/debug/lib/clib-App-1c97092b37ee8ce17a27fff04731781a.a
+COM_PORT is /dev/serial/by-id/usb-FTDI_Dual_RS232-HS-if01-port0@115200 for Esp32
+using firmware version pj-1-828-g97c5-dirty"-["feature/newPing"]"
+using WEBapp V5-pj-513-g47eea-dirty-[devel]
+using SMING 6.0.x-dev-52-g4884-dirty"-["HttpClientDebug"]"
+make[2]: Für das Ziel „build“ ist nichts zu tun.
+COM_PORT is /dev/serial/by-id/usb-FTDI_Dual_RS232-HS-if01-port0@115200 for Esp32
+using firmware version pj-1-828-g97c5-dirty"-["feature/newPing"]"
+using WEBapp V5-pj-513-g47eea-dirty-[devel]
+using SMING 6.0.x-dev-52-g4884-dirty"-["HttpClientDebug"]"
+Executing action: reconfigure
+Running cmake in directory /opt/Sming/Sming/out/Esp32/esp32c3/debug/build/esp32/sdk
+Executing "cmake -G Ninja -DPYTHON_DEPS_CHECKED=1 -DPYTHON=/opt/esp32/python_env/idf5.2_py3.13_env/bin/python -DESP_PLATFORM=1 -DCCACHE_ENABLE=0 /opt/Sming/Sming/Arch/Esp32/Components/esp32/project/esp32c3/debug"...
+-- Building ESP-IDF components for target esp32c3
+-- Project sdkconfig file /opt/Sming/Sming/Arch/Esp32/Components/esp32/project/esp32c3/debug/sdkconfig
+Loading defaults file /opt/Sming/Sming/Arch/Esp32/Components/esp32/project/esp32c3/debug/sdkconfig.defaults...
+/opt/Sming/Sming/Arch/Esp32/Components/esp32/project/esp32c3/debug/sdkconfig.defaults:39 CONFIG_ESP32_WIFI_SW_COEXIST_ENABLE was replaced with CONFIG_ESP_COEX_SW_COEXIST_ENABLE
+/tmp/kconfgen_tmpq46rh9gk:68 line was updated to CONFIG_BOOTLOADER_LOG_LEVEL_NONE=n
+/tmp/kconfgen_tmpq46rh9gk:69 line was updated to CONFIG_BOOTLOADER_LOG_LEVEL_ERROR=n
+/tmp/kconfgen_tmpq46rh9gk:70 line was updated to CONFIG_BOOTLOADER_LOG_LEVEL_WARN=n
+/tmp/kconfgen_tmpq46rh9gk:72 line was updated to CONFIG_BOOTLOADER_LOG_LEVEL_DEBUG=n
+/tmp/kconfgen_tmpq46rh9gk:73 line was updated to CONFIG_BOOTLOADER_LOG_LEVEL_VERBOSE=n
+/tmp/kconfgen_tmpq46rh9gk:77 line was updated to CONFIG_LOG_DEFAULT_LEVEL_NONE=n
+/tmp/kconfgen_tmpq46rh9gk:78 line was updated to CONFIG_LOG_DEFAULT_LEVEL_ERROR=n
+/tmp/kconfgen_tmpq46rh9gk:79 line was updated to CONFIG_LOG_DEFAULT_LEVEL_WARN=n
+/tmp/kconfgen_tmpq46rh9gk:81 line was updated to CONFIG_LOG_DEFAULT_LEVEL_DEBUG=n
+/tmp/kconfgen_tmpq46rh9gk:82 line was updated to CONFIG_LOG_DEFAULT_LEVEL_VERBOSE=n
+-- App "Sming" version: 6.0.x-dev-52-g48843126-dirty
+-- Adding linker script /opt/Sming/Sming/out/Esp32/esp32c3/debug/build/esp32/sdk/esp-idf/esp_system/ld/memory.ld
+-- Adding linker script /opt/esp-idf-5.2/components/esp_system/ld/esp32c3/sections.ld.in
+-- Adding linker script /opt/esp-idf-5.2/components/esp_rom/esp32c3/ld/esp32c3.rom.ld
+-- Adding linker script /opt/esp-idf-5.2/components/esp_rom/esp32c3/ld/esp32c3.rom.api.ld
+-- Adding linker script /opt/esp-idf-5.2/components/esp_rom/esp32c3/ld/esp32c3.rom.libgcc.ld
+-- Adding linker script /opt/esp-idf-5.2/components/esp_rom/esp32c3/ld/esp32c3.rom.newlib.ld
+-- Adding linker script /opt/esp-idf-5.2/components/esp_rom/esp32c3/ld/esp32c3.rom.version.ld
+-- Adding linker script /opt/esp-idf-5.2/components/esp_rom/esp32c3/ld/esp32c3.rom.eco3.ld
+-- Adding linker script /opt/esp-idf-5.2/components/soc/esp32c3/ld/esp32c3.peripherals.ld
+-- Components: app_update bootloader bootloader_support bt console cxx driver efuse esp_adc esp_app_format esp_bootloader_format esp_coex esp_common esp_eth esp_event esp_gdbstub esp_http_server esp_hw_support esp_mm esp_netif esp_netif_stack esp_partition esp_phy esp_pm esp_ringbuf esp_rom esp_system esp_timer esp_wifi espcoredump esptool_py freertos hal heap http_parser json log lwip main mbedtls newlib nvs_flash partition_table protobuf-c protocomm pthread riscv soc spi_flash vfs wifi_provisioning wpa_supplicant
+-- Component paths: /opt/esp-idf-5.2/components/app_update /opt/esp-idf-5.2/components/bootloader /opt/esp-idf-5.2/components/bootloader_support /opt/esp-idf-5.2/components/bt /opt/esp-idf-5.2/components/console /opt/esp-idf-5.2/components/cxx /opt/esp-idf-5.2/components/driver /opt/esp-idf-5.2/components/efuse /opt/esp-idf-5.2/components/esp_adc /opt/esp-idf-5.2/components/esp_app_format /opt/esp-idf-5.2/components/esp_bootloader_format /opt/esp-idf-5.2/components/esp_coex /opt/esp-idf-5.2/components/esp_common /opt/esp-idf-5.2/components/esp_eth /opt/esp-idf-5.2/components/esp_event /opt/esp-idf-5.2/components/esp_gdbstub /opt/esp-idf-5.2/components/esp_http_server /opt/esp-idf-5.2/components/esp_hw_support /opt/esp-idf-5.2/components/esp_mm /opt/esp-idf-5.2/components/esp_netif /opt/esp-idf-5.2/components/esp_netif_stack /opt/esp-idf-5.2/components/esp_partition /opt/esp-idf-5.2/components/esp_phy /opt/esp-idf-5.2/components/esp_pm /opt/esp-idf-5.2/components/esp_ringbuf /opt/esp-idf-5.2/components/esp_rom /opt/esp-idf-5.2/components/esp_system /opt/esp-idf-5.2/components/esp_timer /opt/esp-idf-5.2/components/esp_wifi /opt/esp-idf-5.2/components/espcoredump /opt/esp-idf-5.2/components/esptool_py /opt/esp-idf-5.2/components/freertos /opt/esp-idf-5.2/components/hal /opt/esp-idf-5.2/components/heap /opt/esp-idf-5.2/components/http_parser /opt/esp-idf-5.2/components/json /opt/esp-idf-5.2/components/log /opt/esp-idf-5.2/components/lwip /opt/Sming/Sming/Arch/Esp32/Components/esp32/project/esp32c3/debug/main /opt/esp-idf-5.2/components/mbedtls /opt/esp-idf-5.2/components/newlib /opt/esp-idf-5.2/components/nvs_flash /opt/esp-idf-5.2/components/partition_table /opt/esp-idf-5.2/components/protobuf-c /opt/esp-idf-5.2/components/protocomm /opt/esp-idf-5.2/components/pthread /opt/esp-idf-5.2/components/riscv /opt/esp-idf-5.2/components/soc /opt/esp-idf-5.2/components/spi_flash /opt/esp-idf-5.2/components/vfs /opt/esp-idf-5.2/components/wifi_provisioning /opt/esp-idf-5.2/components/wpa_supplicant
+-- Configuring done (2.7s)
+-- Generating done (0.4s)
+-- Build files have been written to: /opt/Sming/Sming/out/Esp32/esp32c3/debug/build/esp32/sdk
+Validating hardware config 'two_roms_two_lfs_Esp32'
+SSL support disabled
+esp_rgbww_firmware: Linking out/Esp32/esp32c3/debug/build/app.out
+   Section|                   Description| Start (hex)|   End (hex)|Used space
+------------------------------------------------------------------------------
+      data|        Initialized Data (RAM)|    3FC90000|    3FC92918|   10520
+    rodata|           ReadOnly Data (SPI)|    3C0C0020|    3C1383FC|  492508
+       bss|      Uninitialized Data (RAM)|    3FC92920|    3FC97C80|   21344
+ iram_text|            Cached Code (IRAM)|    40380250|    40390000|   64944
+      text|           Uncached Code (SPI)|    42000020|    420B5F74|  745300
+Total Used RAM : 31864
+Free RAM : 361352
+Free IRam : 344656
+esptool.py v4.6.2
+Creating esp32c3 image...
+Merged 2 ELF sections
+Successfully created esp32c3 image.
+make[1]: Verzeichnis „/home/pjakobs/devel/esp_rgbww_firmware“ wird verlassen
+Killing Terminal to free /dev/serial/by-id/usb-FTDI_Dual_RS232-HS-if01-port0
+WriteFlash 0x0=/opt/Sming/Sming/out/Esp32/esp32c3/debug/build/esp32/sdk/bootloader/bootloader.bin 0x00008000=out/Esp32/esp32c3/debug/firmware/partitions.bin   0x00010000=out/Esp32/esp32c3/debug/firmware/app.bin    
+/home/pjakobs/.venvs/Sming/bin/python3 /opt/Sming/Sming/Components/esptool/esptool/esptool.py -p /dev/serial/by-id/usb-FTDI_Dual_RS232-HS-if01-port0 -b 115200 --chip esp32c3 --before default_reset --after hard_reset write_flash -z -fs 4MB -ff 40m -fm dio 0x0 /opt/Sming/Sming/out/Esp32/esp32c3/debug/build/esp32/sdk/bootloader/bootloader.bin 0x00008000 out/Esp32/esp32c3/debug/firmware/partitions.bin   0x00010000 out/Esp32/esp32c3/debug/firmware/app.bin     
+esptool.py v4.6.2
+Serial port /dev/serial/by-id/usb-FTDI_Dual_RS232-HS-if01-port0
+Connecting....
+Chip is ESP32-C3 (revision v0.4)
+Features: WiFi, BLE
+Crystal is 40MHz
+MAC: b0:81:84:af:1c:e8
+Uploading stub...
+Running stub...
+Stub running...
+Configuring flash size...
+Flash will be erased from 0x00000000 to 0x00005fff...
+Flash will be erased from 0x00008000 to 0x00008fff...
+Flash will be erased from 0x00010000 to 0x00151fff...
+Compressed 20848 bytes to 12758...
+Writing at 0x00000000... (100 %)
+Wrote 20848 bytes (12758 compressed) at 0x00000000 in 1.5 seconds (effective 113.3 kbit/s)...
+Hash of data verified.
+Compressed 3072 bytes to 162...
+Writing at 0x00008000... (100 %)
+Wrote 3072 bytes (162 compressed) at 0x00008000 in 0.1 seconds (effective 307.7 kbit/s)...
+Hash of data verified.
+Compressed 1317392 bytes to 930058...
+Writing at 0x00010000... (1 %)
+Writing at 0x0001c515... (3 %)
+Writing at 0x00026d50... (5 %)
+Writing at 0x0002acc2... (7 %)
+Writing at 0x0002ecbd... (8 %)
+Writing at 0x00032c89... (10 %)
+Writing at 0x00036d36... (12 %)
+Writing at 0x0003ad31... (14 %)
+Writing at 0x0003ed2c... (15 %)
+Writing at 0x00042d27... (17 %)
+Writing at 0x00046d22... (19 %)
+Writing at 0x0004ad1d... (21 %)
+Writing at 0x0004ed18... (22 %)
+Writing at 0x00052d13... (24 %)
+Writing at 0x00056d0e... (26 %)
+Writing at 0x0005ad09... (28 %)
+Writing at 0x0005ed04... (29 %)
+Writing at 0x00062cff... (31 %)
+Writing at 0x00066cfa... (33 %)
+Writing at 0x0006acf5... (35 %)
+Writing at 0x0006ecb0... (36 %)
+Writing at 0x000732bb... (38 %)
+Writing at 0x00077bbd... (40 %)
+Writing at 0x0007f18a... (42 %)
+Writing at 0x000886e1... (43 %)
+Writing at 0x0008f7c3... (45 %)
+Writing at 0x00095aad... (47 %)
+Writing at 0x0009c46c... (49 %)
+Writing at 0x000a2df5... (50 %)
+Writing at 0x000a95c3... (52 %)
+Writing at 0x000b011c... (54 %)
+Writing at 0x000b63f7... (56 %)
+Writing at 0x000bc4bf... (57 %)
+Writing at 0x000c2846... (59 %)
+Writing at 0x000c8576... (61 %)
+Writing at 0x000ce4f9... (63 %)
+Writing at 0x000d49c0... (64 %)
+Writing at 0x000da275... (66 %)
+Writing at 0x000e03bd... (68 %)
+Writing at 0x000e6098... (70 %)
+Writing at 0x000ec161... (71 %)
+Writing at 0x000f25c1... (73 %)
+Writing at 0x000f8be7... (75 %)
+Writing at 0x000feebb... (77 %)
+Writing at 0x001050e3... (78 %)
+Writing at 0x0010ab85... (80 %)
+Writing at 0x00110d66... (82 %)
+Writing at 0x00116a60... (84 %)
+Writing at 0x0011cb15... (85 %)
+Writing at 0x00122c27... (87 %)
+Writing at 0x00128fc6... (89 %)
+Writing at 0x0012efd9... (91 %)
+Writing at 0x00135122... (92 %)
+Writing at 0x0013b12c... (94 %)
+Writing at 0x00140ad7... (96 %)
+Writing at 0x00146dce... (98 %)
+Writing at 0x0014d283... (100 %)
+Wrote 1317392 bytes (930058 compressed) at 0x00010000 in 82.9 seconds (effective 127.1 kbit/s)...
+Hash of data verified.
+
+Leaving...
+Hard resetting via RTS pin...
+make terminal
+make[1]: Verzeichnis „/home/pjakobs/devel/esp_rgbww_firmware“ wird betreten
+COM_PORT is /dev/serial/by-id/usb-FTDI_Dual_RS232-HS-if01-port0@115200 for Esp32
+using firmware version pj-1-828-g97c5-dirty"-["feature/newPing"]"
+using WEBapp V5-pj-513-g47eea-dirty-[devel]
+using SMING 6.0.x-dev-52-g4884-dirty"-["HttpClientDebug"]"
+Executing action: reconfigure
+Running cmake in directory /opt/Sming/Sming/out/Esp32/esp32c3/debug/build/esp32/sdk
+Executing "cmake -G Ninja -DPYTHON_DEPS_CHECKED=1 -DPYTHON=/opt/esp32/python_env/idf5.2_py3.13_env/bin/python -DESP_PLATFORM=1 -DCCACHE_ENABLE=0 /opt/Sming/Sming/Arch/Esp32/Components/esp32/project/esp32c3/debug"...
+-- Building ESP-IDF components for target esp32c3
+-- Project sdkconfig file /opt/Sming/Sming/Arch/Esp32/Components/esp32/project/esp32c3/debug/sdkconfig
+Loading defaults file /opt/Sming/Sming/Arch/Esp32/Components/esp32/project/esp32c3/debug/sdkconfig.defaults...
+/opt/Sming/Sming/Arch/Esp32/Components/esp32/project/esp32c3/debug/sdkconfig.defaults:39 CONFIG_ESP32_WIFI_SW_COEXIST_ENABLE was replaced with CONFIG_ESP_COEX_SW_COEXIST_ENABLE
+/tmp/kconfgen_tmpxm00ex52:68 line was updated to CONFIG_BOOTLOADER_LOG_LEVEL_NONE=n
+/tmp/kconfgen_tmpxm00ex52:69 line was updated to CONFIG_BOOTLOADER_LOG_LEVEL_ERROR=n
+/tmp/kconfgen_tmpxm00ex52:70 line was updated to CONFIG_BOOTLOADER_LOG_LEVEL_WARN=n
+/tmp/kconfgen_tmpxm00ex52:72 line was updated to CONFIG_BOOTLOADER_LOG_LEVEL_DEBUG=n
+/tmp/kconfgen_tmpxm00ex52:73 line was updated to CONFIG_BOOTLOADER_LOG_LEVEL_VERBOSE=n
+/tmp/kconfgen_tmpxm00ex52:77 line was updated to CONFIG_LOG_DEFAULT_LEVEL_NONE=n
+/tmp/kconfgen_tmpxm00ex52:78 line was updated to CONFIG_LOG_DEFAULT_LEVEL_ERROR=n
+/tmp/kconfgen_tmpxm00ex52:79 line was updated to CONFIG_LOG_DEFAULT_LEVEL_WARN=n
+/tmp/kconfgen_tmpxm00ex52:81 line was updated to CONFIG_LOG_DEFAULT_LEVEL_DEBUG=n
+/tmp/kconfgen_tmpxm00ex52:82 line was updated to CONFIG_LOG_DEFAULT_LEVEL_VERBOSE=n
+-- App "Sming" version: 6.0.x-dev-52-g48843126-dirty
+-- Adding linker script /opt/Sming/Sming/out/Esp32/esp32c3/debug/build/esp32/sdk/esp-idf/esp_system/ld/memory.ld
+-- Adding linker script /opt/esp-idf-5.2/components/esp_system/ld/esp32c3/sections.ld.in
+-- Adding linker script /opt/esp-idf-5.2/components/esp_rom/esp32c3/ld/esp32c3.rom.ld
+-- Adding linker script /opt/esp-idf-5.2/components/esp_rom/esp32c3/ld/esp32c3.rom.api.ld
+-- Adding linker script /opt/esp-idf-5.2/components/esp_rom/esp32c3/ld/esp32c3.rom.libgcc.ld
+-- Adding linker script /opt/esp-idf-5.2/components/esp_rom/esp32c3/ld/esp32c3.rom.newlib.ld
+-- Adding linker script /opt/esp-idf-5.2/components/esp_rom/esp32c3/ld/esp32c3.rom.version.ld
+-- Adding linker script /opt/esp-idf-5.2/components/esp_rom/esp32c3/ld/esp32c3.rom.eco3.ld
+-- Adding linker script /opt/esp-idf-5.2/components/soc/esp32c3/ld/esp32c3.peripherals.ld
+-- Components: app_update bootloader bootloader_support bt console cxx driver efuse esp_adc esp_app_format esp_bootloader_format esp_coex esp_common esp_eth esp_event esp_gdbstub esp_http_server esp_hw_support esp_mm esp_netif esp_netif_stack esp_partition esp_phy esp_pm esp_ringbuf esp_rom esp_system esp_timer esp_wifi espcoredump esptool_py freertos hal heap http_parser json log lwip main mbedtls newlib nvs_flash partition_table protobuf-c protocomm pthread riscv soc spi_flash vfs wifi_provisioning wpa_supplicant
+-- Component paths: /opt/esp-idf-5.2/components/app_update /opt/esp-idf-5.2/components/bootloader /opt/esp-idf-5.2/components/bootloader_support /opt/esp-idf-5.2/components/bt /opt/esp-idf-5.2/components/console /opt/esp-idf-5.2/components/cxx /opt/esp-idf-5.2/components/driver /opt/esp-idf-5.2/components/efuse /opt/esp-idf-5.2/components/esp_adc /opt/esp-idf-5.2/components/esp_app_format /opt/esp-idf-5.2/components/esp_bootloader_format /opt/esp-idf-5.2/components/esp_coex /opt/esp-idf-5.2/components/esp_common /opt/esp-idf-5.2/components/esp_eth /opt/esp-idf-5.2/components/esp_event /opt/esp-idf-5.2/components/esp_gdbstub /opt/esp-idf-5.2/components/esp_http_server /opt/esp-idf-5.2/components/esp_hw_support /opt/esp-idf-5.2/components/esp_mm /opt/esp-idf-5.2/components/esp_netif /opt/esp-idf-5.2/components/esp_netif_stack /opt/esp-idf-5.2/components/esp_partition /opt/esp-idf-5.2/components/esp_phy /opt/esp-idf-5.2/components/esp_pm /opt/esp-idf-5.2/components/esp_ringbuf /opt/esp-idf-5.2/components/esp_rom /opt/esp-idf-5.2/components/esp_system /opt/esp-idf-5.2/components/esp_timer /opt/esp-idf-5.2/components/esp_wifi /opt/esp-idf-5.2/components/espcoredump /opt/esp-idf-5.2/components/esptool_py /opt/esp-idf-5.2/components/freertos /opt/esp-idf-5.2/components/hal /opt/esp-idf-5.2/components/heap /opt/esp-idf-5.2/components/http_parser /opt/esp-idf-5.2/components/json /opt/esp-idf-5.2/components/log /opt/esp-idf-5.2/components/lwip /opt/Sming/Sming/Arch/Esp32/Components/esp32/project/esp32c3/debug/main /opt/esp-idf-5.2/components/mbedtls /opt/esp-idf-5.2/components/newlib /opt/esp-idf-5.2/components/nvs_flash /opt/esp-idf-5.2/components/partition_table /opt/esp-idf-5.2/components/protobuf-c /opt/esp-idf-5.2/components/protocomm /opt/esp-idf-5.2/components/pthread /opt/esp-idf-5.2/components/riscv /opt/esp-idf-5.2/components/soc /opt/esp-idf-5.2/components/spi_flash /opt/esp-idf-5.2/components/vfs /opt/esp-idf-5.2/components/wifi_provisioning /opt/esp-idf-5.2/components/wpa_supplicant
+-- Configuring done (3.7s)
+-- Generating done (0.4s)
+-- Build files have been written to: /opt/Sming/Sming/out/Esp32/esp32c3/debug/build/esp32/sdk
+Killing Terminal to free /dev/serial/by-id/usb-FTDI_Dual_RS232-HS-if01-port0
+/home/pjakobs/.venvs/Sming/bin/python3 -m serial.tools.miniterm --raw --encoding ascii --rts 0 --dtr 0 /dev/serial/by-id/usb-FTDI_Dual_RS232-HS-if01-port0 115200
+ 
+ESP-ROM:esp32c3-api1-20210207
+Build:Feb  7 2021
+rst:0x1 (POWERON),boot:0xd (SPI_FAST_FLASH_BOOT)
+SPIWP:0xee
+mode:DIO, clock div:2
+load:0x3fcd5820,len:0x1738
+load:0x403cc710,len:0xb9c
+load:0x403ce710,len:0x2e40
+entry 0x403cc71a
+[0;32mI (32) boot: ESP-IDF v5.2.1-sming-1 2nd stage bootloader[0m
+[0;32mI (32) boot: compile time Sep  9 2025 19:15:09[0m
+[0;32mI (32) boot: chip revision: v0.4[0m
+[0;32mI (36) boot.esp32c3: SPI Speed      : 40MHz[0m
+[0;32mI (40) boot.esp32c3: SPI Mode       : DIO[0m
+[0;32mI (45) boot.esp32c3: SPI Flash Size : 4MB[0m
+[0;32mI (50) boot: Enabling RNG early entropy source...[0m
+[0;32mI (55) boot: Partition Table:[0m
+[0;32mI (59) boot: ## Label            Usage          Type ST Offset   Length[0m
+[0;32mI (66) boot:  0 spiFlash         unknown          02 01 00000000 00400000[0m
+[0;32mI (74) boot:  1 nvs              WiFi data        01 02 00009000 00006000[0m
+[0;32mI (81) boot:  2 phy_init         RF data          01 01 0000f000 00001000[0m
+[0;32mI (88) boot:  3 rom0             OTA app          00 10 00010000 00160000[0m
+[0;32mI (96) boot:  4 lfs0             Unknown data     01 f2 00170000 00090000[0m
+[0;32mI (103) boot:  5 rom1             OTA app          00 11 00200000 00160000[0m
+[0;32mI (111) boot:  6 lfs1             Unknown data     01 f2 00360000 0009e000[0m
+[0;32mI (118) boot:  7 otadata          OTA data         01 00 003fe000 00002000[0m
+[0;32mI (126) boot: End of partition table[0m
+[0;32mI (130) esp_image: segment 0: paddr=00010020 vaddr=3c0c0020 size=79208h (496136) map[0m
+[0;32mI (246) esp_image: segment 1: paddr=00089230 vaddr=3fc90000 size=02918h ( 10520) load[0m
+[0;32mI (249) esp_image: segment 2: paddr=0008bb50 vaddr=40380000 size=044c8h ( 17608) load[0m
+[0;32mI (256) esp_image: segment 3: paddr=00090020 vaddr=42000020 size=b5f54h (745300) map[0m
+[0;32mI (421) esp_image: segment 4: paddr=00145f7c vaddr=403844c8 size=0ba6ch ( 47724) load[0m
+[0;32mI (438) boot: Loaded app from partition at offset 0x10000[0m
+[0;32mI (438) boot: Disabling RNG early entropy source...[0m
+[0;32mI (449) cpu_start: Unicore app[0m
+[0;32mI (458) cpu_start: Pro cpu start user code[0m
+[0;32mI (458) cpu_start: cpu freq: 160000000 Hz[0m
+[0;32mI (458) cpu_start: Application information:[0m
+[0;32mI (461) cpu_start: Project name:     Sming[0m
+[0;32mI (466) cpu_start: App version:      6.0.x-dev-52-g48843126-dirty[0m
+[0;32mI (473) cpu_start: Compile time:     Sep  9 2025 19:14:54[0m
+[0;32mI (479) cpu_start: ELF file SHA256:  c6c13301c...[0m
+[0;32mI (484) cpu_start: ESP-IDF:          v5.2.1-sming-1[0m
+[0;32mI (490) cpu_start: Min chip rev:     v0.3[0m
+[0;32mI (494) cpu_start: Max chip rev:     v1.99 [0m
+[0;32mI (499) cpu_start: Chip rev:         v0.4[0m
+[0;32mI (504) heap_init: Initializing. RAM available for dynamic allocation:[0m
+[0;32mI (511) heap_init: At 3FC97C80 len 00028380 (160 KiB): RAM[0m
+[0;32mI (517) heap_init: At 3FCC0000 len 0001C710 (113 KiB): Retention RAM[0m
+[0;32mI (524) heap_init: At 3FCDC710 len 00002950 (10 KiB): Retention RAM[0m
+[0;32mI (531) heap_init: At 50000010 len 00001FD8 (7 KiB): RTCRAM[0m
+[0;32mI (538) spi_flash: detected chip: generic[0m
+[0;32mI (542) spi_flash: flash io: dio[0m
+[0;32mI (549) sleep: Configure to isolate all GPIO pins in sleep state[0m
+[0;32mI (553) sleep: Enable automatic switching of GPIO sleep configuration[0m
+ �138918 ESP RGBWW Controller Version pj-1-828-g97c5-dirty-[feature/newPing]
+
+139171 Sming Version: 6.1.0
+
+139199 Platform: esp32c3
+
+139893 ApplicationOTA::checkAtBoot
+143017 ApplicationOTA::loadStatus
+146421 ApplicationOTA::checkAtBoot status: 0
+150037 after reboot, checking partition layout
+154204 current active rom is: 0
+
+Registered storage devices:
+  spiFlash: type flash, size 0x400000. Partitions:
+    spiFlash/nvs, data/nvs @ 0x9000, size 0x6000
+    spiFlash/phy_init, data/phy @ 0xf000, size 0x1000
+    spiFlash/rom0, app/ota0 @ 0x10000, size 0x160000
+    spiFlash/lfs0, data/littlefs @ 0x170000, size 0x90000
+    spiFlash/rom1, app/ota1 @ 0x200000, size 0x160000
+    spiFlash/lfs1, data/littlefs @ 0x360000, size 0x9e000
+    spiFlash/otadata, data/ota @ 0x3fe000, size 0x2000
+
+
+198316 ApplicationOTA::saveStatus 3 to rom partition rom0
+
+203871 Application::init - check running partition
+208075 Application::init - running partition rom0
+212554 mouting primary littlefs partition at 170000, length 589824
+223151 mount() returned 0 (Success)
+223398 File system initialised
+224503 Controllers constructor called
+227745 Controllers constructor: accessing ConfigDB...
+236690 Found controller ID: 3894194052
+237041 Controllers constructor: found 1 controllers in DB
+241139 Controllers constructor completed
+253325 make pinconfig stream
+253631 get file Version
+253841 startElement: 
+253955 startElement: version
+254185 fileVersion 8
+256039 Application::init - hardware version: 8, file version: 8
+266788 Application::init - clear pin -1
+267038 Application::init - hardware config loaded
+269662 application init => checking ConfigDB
+273706 application init => config is initialized
+278012 ConfigDB already initialized. resetting hardware definition
+363725 Controllers::addOrUpdate id=3894194052, hostname=rgbww-e81caf84, ip=0.0.0.0, ttl=1200
+368604 start network init
+368803 AppWIFI::init
+368840 AppWIFI::init
+    station enabled
+    AP      disabled
+[0;32mI (820) phy_init: phy_version 1150,7c3c08f,Jan 24 2024,17:32:21[0m
+I (860) wifi:mode : sta (b0:81:84:af:1c:e8)
+I (860) wifi:enable tsf
+412650 event WIFI_EVENT|40
+
+412722 event WIFI_EVENT|2
+
+414092 AppWIFI::init register callbacks
+415504 AppWIFI::init no AP to connect to - start own AP
+420126 AppWIFI::startAp
+422283 Enabling AP
+424034 AppWIFI:: WifiAP enable
+I (880) wifi:mode : sta (b0:81:84:af:1c:e8) + softAP (b0:81:84:af:1c:e9)
+I (890) wifi:Total power save buffer number: 16
+I (890) wifi:Init max length of beacon: 752/752
+I (890) wifi:Init max length of beacon: 752/752
+446031 event WIFI_EVENT|40
+
+448183 event WIFI_EVENT|12
+
+[0;32mI (910) esp_netif_lwip: DHCP server started on interface WIFI_AP_DEF with IP: 192.168.4.1[0m
+459670 AP enabled
+I (1190) wifi:Total power save buffer number: 16
+740752 event WIFI_EVENT|13
+
+741383 event WIFI_EVENT|40
+
+741437 event WIFI_EVENT|12
+
+[0;32mI (1200) esp_netif_lwip: DHCP server started on interface WIFI_AP_DEF with IP: 192.168.4.1[0m
+751516 SSID: RGBWW3894194052
+752437 rpc: root ={"message":"AP started","station":{"connected":false,"ssid":"","dhcp":false,"ip":"0.0.0.0","netmask":"0.0.0.0","gateway":"0.0.0.0","mac":"b08184af1ce8"},"ap":{"enabled":true,"ssid":"RGBWW3894194052","ip":"192.168.4.1"}}
+773085 rpc: msg ={"jsonrpc":"2.0","method":"wifi_status","params":{"message":"AP started","station":{"connected":false,"ssid":"","dhcp":false,"ip":"0.0.0.0","netmask":"0.0.0.0","gateway":"0.0.0.0","mac":"b08184af1ce8"},"ap":{"enabled":true,"ssid":"RGBWW38 797265 network initizalized, ssid: 
+798529 APPLedCtrl::init
+800718 APPLedCtrl::reconfigure
+806017 [CFGDB] open 'app-config/sync.json' failed
+810073 [CFGDB] open 'app-config/_root.json' failed
+814628 [CFGDB] open 'app-config/color.json' failed
+817339 APPLedCtrl::init - reading pin config
+825496 APPLedCtrl::init - no channels array configured and no pin config string available
+828819 APPLedCtrl::init - initializing RGBWWLed
+   red: 13 | green: 12 | blue: 14 | warmwhite: 5 | coldwhite: 4| clear: -1, valid: [false]
+840975 APPLedCtrl::init - reading startup color
+847554 [CFGDB] open 'app-config/color.json' failed
+850302 H: 0 | s: 0 | v: 0 | ct: 0
+853180 ledctrl initialized
+855217 Application::initButtons
+862788 buttons initialized
+863103 '*' registered
+863297 '/' registered
+864557 '/webapp' registered
+867026 '/config' registered
+869544 '/info' registered
+871889 '/color' registered
+874344 '/networks' registered
+877017 '/scan_networks' registered
+880146 '/system' registered
+882655 '/update' registered
+885174 '/connect' registered
+887802 '/ping' registered
+890123 '/hosts' registered
+892559 '/data' registered
+894901 '/canonical.html' registered
+898121 '/generate_204' registered
+901162 '/static/hotspot.txt' registered
+904716 '/connecttest.txt' registered
+908019 '/hotspot-detect.html' registered
+911667 '/nmcheck.gnome.org' registered
+915132 '/stop' registered
+917477 '/skip' registered
+919815 '/pause' registered
+922251 '/continue' registered
+924938 '/blink' registered
+927365 '/toggle' registered
+930007 webserver initialized
+932446 pin config string (null)
+[0;32mI (1390) main_task: Returned from app_main()[0m
+1252247 Application::startServices
+1252489 APPLedCtrl::start
+1252586 _timerInterval
+1253238 Application::startServices - starting NTP
+1255907 [CFGDB] open 'app-config/_root.json' failed
+1258380 Starting event server with webserver referal
+
+1263475 DNS server started: with address 192.168.4.1
+3634911 event WIFI_EVENT|1
+
+3635895 AppWIFI::scanCompleted
+3636072 scan completed: 6 found
+10203932 Free heap: 203752
+20203960 Free heap: 203412
+30203924 Free heap: 203752
+40203924 Free heap: 203752
+50203924 Free heap: 203752
+60203902 Free heap: 203752
+61263640 EventServer::sendToClients: {"jsonrpc":"2.0","method":"keep_alive","id":1}
+
+make[1]: Verzeichnis „/home/pjakobs/devel/esp_rgbww_firmware“ wird verlassen

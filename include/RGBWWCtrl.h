@@ -57,6 +57,7 @@
 #define DEFAULT_AP_SECURED false
 #define DEFAULT_AP_PASSWORD "rgbwwctrl"
 #define DEFAULT_AP_SSIDPREFIX "Lightinator_"
+
 #define DEFAULT_API_SECURED false
 #define DEFAULT_API_PASSWORD "rgbwwctrl"
 #define DEFAULT_CONNECTION_RETRIES 10
@@ -94,5 +95,7 @@
 #include <application.h>
 #include <stepsync.h>
 #include <arduinojson.h>
+#include <controllers.h>
+
 
 

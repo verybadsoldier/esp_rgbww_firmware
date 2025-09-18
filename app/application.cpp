@@ -176,10 +176,10 @@ void Application::uptimeCounter()
 
 void Application::checkRam()
 {
-	
 	debug_i("Free heap: %d", system_get_free_heap_size());
-
+	
 }
+
 
 void Application::init()
 {
@@ -263,6 +263,7 @@ debug_i("Application::init - running partition %s", part.name());
 	// initialize config and data
 	cfg =  std::make_unique<AppConfig>(configDB_PATH);
 	data = std::make_unique<AppData>(dataDB_PATH);
+	controllers = std::make_unique<Controllers>();
 
 	// verify if there is a new version of the hardware config
 	
@@ -352,16 +353,14 @@ debug_i("Application::init - running partition %s", part.name());
 		// pre-allocate heap for the visible hosts vector. 
 		// this should adapt to the number of hosts detected in earlier boots
 		AppData::Root::Controllers controllers(*app.data);
-		size_t hostCount = 0;
-		for (auto it = controllers.begin(); it != controllers.end(); ++it) {
-			hostCount++;
+		
+		auto myId=system_get_chip_id();
+		AppConfig::General general(*cfg);
+		String myName=general.getDeviceName();
+		if(myName.length()<=0){
+			myName=String("rgbww-")+String(myId, HEX);
 		}
-		if(hostCount > 0){
-			debug_i("found %i hosts in the list", hostCount);
-			visibleControllers.reserve(hostCount);
-		}else{
-			visibleControllers.reserve(10);
-		}
+		app.controllers->addOrUpdate( myId,myName, WifiStation.getIP().toString(), 1200); // add myself to the list
 	}
 
 	/*
@@ -431,6 +430,7 @@ void Application::initButtons()
 void Application::startServices()
 {
 	debug_i("Application::startServices");
+
 	rgbwwctrl.start();
 	webserver.start();
 
@@ -509,11 +509,14 @@ bool Application::delayedCMD(String cmd, int delay)
 	} else if(cmd.equals(F("switch_rom"))) {
 		wsBroadcast(F("notification"), F("Controller will switch to other rom"));
 		wsBroadcast(F("webapp_cmd"), F("reload"));
-#if ARCH_ESP8266
+//#if ARCH_ESP8266
 		switchRom();
 //_systimer.initializeMs(delay, TimerDelegate(&Application::restart, this)).startOnce();
-#endif
-	} else {
+//#endif
+	} else if(cmd.equals(F("forget_controllers"))){
+		app.controllers->forgetControllers();
+		wsBroadcast(F("notification"), F("Controller list cleared"));
+	}else {
 		return false;
 	}
 	return true;
@@ -638,6 +641,8 @@ void Application::switchRom()
     */
 	app.ota.doSwitch();
 }
+#else
+void Application::switchRom(){}
 #endif
 
 #if defined(ARCH_ESP8266) || defined(ESP32)
@@ -659,12 +664,15 @@ int Application::getRomSlot()
 */
 void Application::wsBroadcast(String message)
 {
-	static char buffer[MAX_LOG_LINE_SIZE];//max log line size for wsBroadcast
-	message.toCharArray(buffer, MAX_LOG_LINE_SIZE);
-	size_t length = message.length();
-	if(length>MAX_LOG_LINE_SIZE) length=MAX_LOG_LINE_SIZE;
+    size_t length = message.length();
+    if(length > MAX_LOG_LINE_SIZE) length = MAX_LOG_LINE_SIZE;
 
-	app.webserver.wsSendBroadcast(buffer, length);
+    char* buffer = new char[length + 1]; // +1 for null terminator
+    message.toCharArray(buffer, length + 1);
+
+    app.webserver.wsSendBroadcast(buffer, length);
+
+    delete[] buffer;
 }
 
 /*
@@ -720,27 +728,4 @@ void Application::onButtonTogglePressed(int pin)
 uint32_t Application::getUptime()
 {
 	return _uptimeMinutes * 60u;
-}
-
-void Application::addOrUpdateVisibleController(unsigned int id, int ttl) {
-    for (auto& controller : visibleControllers) {
-        if (controller.id == id) {
-            controller.ttl = ttl;
-            return;
-        }
-    }
-    // Not found, add new
-    visibleControllers.push_back({id, ttl});
-}
-
-void Application::removeExpiredControllers(int elapsedSeconds) {
-    for (size_t i = 0; i < visibleControllers.size(); i++) {
-        visibleControllers[i].ttl -= elapsedSeconds;
-        if (visibleControllers[i].ttl <= 0) {
-            // Remove using swap and pop
-            visibleControllers[i] = visibleControllers.back();
-            visibleControllers.pop_back();
-            i--; // Adjust index
-        }
-    }
 }

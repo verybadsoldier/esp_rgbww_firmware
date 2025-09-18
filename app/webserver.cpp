@@ -66,9 +66,12 @@ void ApplicationWebserver::init()
 	paths.set(F("/data"), HttpPathDelegate(&ApplicationWebserver::onData, this));
 
 	// redirectors for initial configuration
-	paths.set(F("/canonical.html"), HttpPathDelegate(&ApplicationWebserver::onIndex, this));
-	paths.set(F("/generate_204"), HttpPathDelegate(&ApplicationWebserver::onIndex, this));
+	paths.set(F("/canonical.html"), HttpPathDelegate(&ApplicationWebserver::onIndex, this)); 
+	paths.set(F("/generate_204"), HttpPathDelegate(&ApplicationWebserver::onIndex, this)); //android
 	paths.set(F("/static/hotspot.txt"), HttpPathDelegate(&ApplicationWebserver::onIndex, this));
+	paths.set(F("/connecttest.txt"), HttpPathDelegate(&ApplicationWebserver::onIndex, this)); //Windows
+	paths.set(F("/hotspot-detect.html"), HttpPathDelegate(&ApplicationWebserver::onIndex, this)); //iOS/macOS
+	paths.set(F("/nmcheck.gnome.org"), HttpPathDelegate(&ApplicationWebserver::onIndex, this)); //Linux (NetworkManager)
 
 	// animation controls
 	paths.set(F("/stop"), HttpPathDelegate(&ApplicationWebserver::onStop, this));
@@ -196,7 +199,10 @@ String ApplicationWebserver::getApiCodeMsg(API_CODES code)
 void ApplicationWebserver::sendApiResponse(HttpResponse& response, JsonObjectStream* stream, HttpStatus code)
 {
 	if(!checkHeap(response)) {
-		delete stream;
+		if (stream) {
+			delete stream;
+			stream = nullptr;
+		}
 		return;
 	}
 
@@ -207,6 +213,7 @@ void ApplicationWebserver::sendApiResponse(HttpResponse& response, JsonObjectStr
 		response.code = HTTP_STATUS_BAD_REQUEST;
 	}
 	response.sendDataStream(stream, MIME_JSON);
+
 }
 
 void ApplicationWebserver::sendApiCode(HttpResponse& response, API_CODES code, String msg /* = "" */)
@@ -295,6 +302,7 @@ void ApplicationWebserver::onFile(HttpRequest& request, HttpResponse& response)
 	debug_i("found %s in fileMap", String(v.key()).c_str());
 	auto stream = new FSTR::Stream(v.content());
 	response.sendDataStream(stream, ContentType::fromFullFileName(fileName));
+
 }
 void ApplicationWebserver::onWebapp(HttpRequest& request, HttpResponse& response)
 {
@@ -601,6 +609,7 @@ void ApplicationWebserver::onInfo(HttpRequest& request, HttpResponse& response)
 	//con[F("mdnshostname")] = app.cfg.network.connection.mdnshostname.c_str();
 
 	sendApiResponse(response, stream);
+
 }
 
 /**
@@ -642,6 +651,7 @@ void ApplicationWebserver::onColorGet(HttpRequest& request, HttpResponse& respon
 	setCorsHeaders(response);
 
 	sendApiResponse(response, stream);
+
 }
 
 /**
@@ -818,6 +828,7 @@ void ApplicationWebserver::onNetworks(HttpRequest& request, HttpResponse& respon
 	}
 	setCorsHeaders(response);
 	sendApiResponse(response, stream);
+
 }
 
 /**
@@ -1072,6 +1083,7 @@ void ApplicationWebserver::onUpdate(HttpRequest& request, HttpResponse& response
 	JsonObject json = stream->getRoot();
 	json[F("status")] = int(app.ota.getStatus());
 	sendApiResponse(response, stream);
+
 #endif
 }
 
@@ -1193,36 +1205,52 @@ void ApplicationWebserver::onToggle(HttpRequest& request, HttpResponse& response
 
 void ApplicationWebserver::onHosts(HttpRequest& request, HttpResponse& response)
 {
+    if(!authenticated(request, response)) {
+        return;
+    }
+
+    if(!checkHeap(response)) {
+        return;
+    }
+
     if(request.method != HTTP_GET && request.method != HTTP_OPTIONS) {
+        setCorsHeaders(response);
         sendApiCode(response, API_CODES::API_BAD_REQUEST, "nost GET or OPTIONS request");
         return;
     }
 
     if(request.method == HTTP_OPTIONS) {
+        setCorsHeaders(response);
         sendApiCode(response, API_CODES::API_SUCCESS, "");
         debug_i("HTTP_OPTIONS Request, sent API_SUCCSSS");
         return;
     }
 
-    bool showAll = request.getQueryParameter("all") == "1" || request.getQueryParameter("all") == "true";
-
-    JsonObjectStream* stream = new JsonObjectStream();
-    JsonObject json = stream->getRoot();
-    JsonArray hostsArray = json.createNestedArray("hosts");
-
-    AppData::Root::Controllers controllers(*app.data);
-
-    for (auto controller : controllers){
-        if (showAll || app.isVisibleController(controller.getId().toInt())){
-            JsonObject hostObj = hostsArray.createNestedObject();
-            hostObj[F("id")] = controller.getId();
-            hostObj[F("hostname")] = controller.getName();
-            hostObj[F("ip_address")] = controller.getIpAddress();
-        }
+    if(!app.controllers) {
+        setCorsHeaders(response);
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "Controllers not initialized");
+        return;
     }
-    sendApiResponse(response, stream);
+    bool showAll = request.getQueryParameter("all") == "1" || request.getQueryParameter("all") == "true";
+	  bool showDebug= request.getQueryParameter("debug")== "1" || request.getQueryParameter("debug") == "true";
+
+    Controllers::JsonFilter filter;
+    if (showAll || showDebug) {
+        filter = Controllers::ALL_ENTRIES;  // Show all controllers including incomplete ones
+    } else {
+        filter = Controllers::VISIBLE_ONLY; // Show only visible/online controllers
+    }
+
+    debug_i("show all controllers %s", showAll ? "true" : "false");
+
     setCorsHeaders(response);
-    response.setContentType(F("application/json"));
+    response.setContentType(MIME_JSON);
+
+    // Use the JsonStream for automatic streaming
+    auto stream = app.controllers->createJsonStream(filter, false); // Compact format for HTTP
+    response.sendDataStream(stream, MIME_JSON);
+
+//todo 
 }
 
 void ApplicationWebserver::onData(HttpRequest& request, HttpResponse& response){
@@ -1233,8 +1261,9 @@ void ApplicationWebserver::onData(HttpRequest& request, HttpResponse& response){
 
 	if(request.method == HTTP_OPTIONS) {
 		// probably a CORS request
+		setCorsHeaders(response);
 		sendApiCode(response, API_CODES::API_SUCCESS, "");
-		debug_i("HTTP_OPTIONS Request, sent API_SUCCSSS");
+		debug_i("HTTP_OPTIONS Request, sent API_SUCCESS");
 		return;
 	}
 
@@ -1272,5 +1301,5 @@ void ApplicationWebserver::onData(HttpRequest& request, HttpResponse& response){
 void ApplicationWebserver::setCorsHeaders(HttpResponse& response)
 {
 	response.setAllowCrossDomainOrigin("*");
-	response.setHeader(F("Access-Control-Allow-Headers"), F("Content-Type"));
+	response.setHeader(F("Access-Control-Allow-Headers"), F("Content-Type, Cache-Control"));
 }

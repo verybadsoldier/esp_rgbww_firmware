@@ -15,6 +15,7 @@
 	XX(arrow_forward_svg, "icons/arrow_forward.svg.gz") \
 	XX(article_svg, "icons/article.svg.gz") \
 	XX(badge_outlined_svg, "icons/badge_outlined.svg.gz") \
+	XX(blur_svg, "icons/blur.svg.gz") \
 	XX(bulkhead_light_svg, "icons/bulkhead-light.svg.gz") \
 	XX(ceiling_fan_light_svg, "icons/ceiling-fan-light.svg.gz") \
 	XX(ceiling_light_multiple_outline_svg, "icons/ceiling-light-multiple-outline.svg.gz") \
@@ -82,6 +83,7 @@
 	XX(settings_outlined_svg, "icons/settings_outlined.svg.gz") \
 	XX(signal_wifi_statusbar_null_FILL0_wght400_GRAD0_opsz24_svg, "icons/signal_wifi_statusbar_null_FILL0_wght400_GRAD0_opsz24.svg.gz") \
 	XX(star_outlined_svg, "icons/star_outlined.svg.gz") \
+	XX(swap_horiz_svg, "icons/swap_horiz.svg.gz") \
 	XX(systemsecurityupdate_outlined_svg, "icons/systemsecurityupdate_outlined.svg.gz") \
 	XX(television_ambient_light_svg, "icons/television-ambient-light.svg.gz") \
 	XX(timer_svg, "icons/timer.svg.gz") \

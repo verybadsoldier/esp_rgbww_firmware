@@ -201,6 +201,7 @@ void APPLedCtrl::init()
 			Esp32HwPwmConfig config;
 			config.timer.frequency = pwmconfig.timer.getFrequency();
 			config.timer.resolution = (ledc_timer_bit_t)pwmconfig.timer.getResolution();
+
 				
 		auto speedMode = pwmconfig.timer.getSpeedMode();
 		
@@ -230,11 +231,13 @@ void APPLedCtrl::init()
 
 		// ✅ Use PhaseShiftMode enum  directly
 		(pwmconfig.phaseShift.getMode()==AppConfig::ContainedHardware::ContainedPwm::PhaseShiftMode::ON)?config.phaseShift.mode=PhaseShiftMode::AUTO:config.phaseShift.mode=PhaseShiftMode::OFF;
+
 		
 			RGBWWLed::init(pins.red, pins.green, pins.blue, pins.warmwhite, pins.coldwhite, config);
 		}
 		#else
 		RGBWWLed::init(pins.red, pins.green, pins.blue, pins.warmwhite, pins.coldwhite, PWM_FREQUENCY);
+		#endif
 		debug_i("APPLedCtrl::init - finished setting up RGBWWLed");
 		setup();
 		#endif	
@@ -262,7 +265,7 @@ void APPLedCtrl::init()
 	// boot from off to startup color
 	HSVCT startupColorDark = startupColor;
 	startupColorDark.v = 0;
-	fadeHSV(startupColorDark, startupColor, 2000); //fade to color in 700ms
+	fadeHSV(startupColorDark, startupColor, 700); //fade to color in 700ms 
 }
 
 bool APPLedCtrl::isPinValid(int currentPin)

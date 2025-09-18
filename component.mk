@@ -43,10 +43,10 @@ ifeq ($(SMING_ARCH), Esp8266)
     $(info COM_PORT is $(COM_PORT)@$(COM_SPEED) for $(SMING_ARCH))
 else ifeq ($(SMING_ARCH), Esp32)
     ifeq ($(strip $(COM_PORT)),)
-        override COM_PORT=/dev/serial/by-id/usb-1a86_USB_Single_Serial_5647022450-if00
+        override COM_PORT=/dev/serial/by-id/usb-1a86_USB_Serial-if00-port0
     endif
     ifeq ($(strip $(COM_SPEED)),)
-        override COM_SPEED=115200
+        override COM_SPEED=460800
     endif
     $(info COM_PORT is $(COM_PORT)@$(COM_SPEED) for $(SMING_ARCH))
 endif
@@ -64,6 +64,10 @@ GIT_DATE = $(firstword $(shell git --no-pager show --date=short --format="%ad" -
 SMING_GITVERSION =	$(shell git -C $(SMING_HOME)/.. describe --abbrev=4 --dirty --always --tags)"-["$(shell git -C $(SMING_HOME)/.. rev-parse --abbrev-ref HEAD)"]"
 WEBAPP_VERSION = $(shell cat $(PROJECT_DIR)/webapp/VERSION)
 USER_CFLAGS = -DGITVERSION=\"$(GIT_VERSION)\" -DGITDATE=\"$(GIT_DATE)\" -DWEBAPP_VERSION=\"$(WEBAPP_VERSION)\" -DSMING_GITVERSION=\"$(SMING_GITVERSION)\"
+
+#ifdef MDNS_DEBUG
+#    USER_CFLAGS += -DMDNS_DEBUG
+#endif
 
 $(info using firmware version $(GIT_VERSION))
 $(info using WEBapp $(WEBAPP_VERSION))
