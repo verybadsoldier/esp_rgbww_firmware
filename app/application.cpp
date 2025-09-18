@@ -138,6 +138,9 @@ void init()
 	debug_i("starting os message interceptor");
 #endif
 
+#ifdef ARCH_ESP32
+	esp_wifi_set_ps (WIFI_PS_NONE);
+#endif
 	// seperated application init
 	app.init();
 
