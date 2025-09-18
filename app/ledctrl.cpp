@@ -240,7 +240,6 @@ void APPLedCtrl::init()
 		#endif
 		debug_i("APPLedCtrl::init - finished setting up RGBWWLed");
 		setup();
-		#endif	
 		}
 
 	HSVCT startupColor;
