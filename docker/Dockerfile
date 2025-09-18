@@ -30,8 +30,13 @@ RUN apt-get -y update \
 
 RUN git clone $SMING_REPO -b $SMING_BRANCH /opt/Sming 
 
+WORKDIR "/opt/Sming"
+RUN git submodule update --init Sming/Libraries/ConfigDB
 WORKDIR "/opt/Sming/Sming/Libraries/ConfigDB"
-RUN git rev-parse --abbrev-ref HEAD
+RUN git remote add upstream https://github.com/mikee47/ConfigDB || true
+RUN git fetch upstream
+RUN git checkout upstream/develop
+RUN echo "Updated ConfigDB to upstream HEAD: $(git rev-parse --short HEAD)"
 
 SHELL ["/bin/bash", "-c"]
 WORKDIR "/opt/Sming"

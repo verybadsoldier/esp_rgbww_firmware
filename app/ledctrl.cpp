@@ -201,14 +201,37 @@ void APPLedCtrl::init()
 			Esp32HwPwmConfig config;
 			config.timer.frequency = pwmconfig.timer.getFrequency();
 			config.timer.resolution = (ledc_timer_bit_t)pwmconfig.timer.getResolution();
-			config.timer.speed_mode = (ledc_mode_t)pwmconfig.timer.getSpeedMode();
-			config.timer.timer_num = (ledc_timer_t)pwmconfig.timer.getNumber();
 
-			config.spreadSpectrum.mode = (SpreadSpectrumMode)pwmconfig.spreadSpectrum.getMode();
-			config.spreadSpectrum.WidthPercent = pwmconfig.spreadSpectrum.getWidth();
-			config.spreadSpectrum.Subsampling = pwmconfig.spreadSpectrum.getSubsampling();
+				
+		auto speedMode = pwmconfig.timer.getSpeedMode();
+		
+		#ifdef SOC_ESP32 // a bit ugly, but LEDC_HIGH_SPEED_MODE is not defined for anything but the ESP32 so using the constant directly would throw an error at compile time
+		if(speedMode == AppConfig::ContainedHardware::ContainedPwm::TimerSpeedMode::HIGHSPEED)
+			config.timer.speed_mode = LEDC_HIGH_SPEED_MODE;
+		#endif
+		
+		if(speedMode == AppConfig::ContainedHardware::ContainedPwm::TimerSpeedMode::LOWSPEED){
+			config.timer.speed_mode = LEDC_LOW_SPEED_MODE;
+		} else{
+			debug_e("APPLedCtrl::init - invalid speed mode for SoC %s, using default low_speed", SOC);
+			config.timer.speed_mode = LEDC_LOW_SPEED_MODE;
+		}
 
-			config.phaseShift.mode = (PhaseShiftMode)pwmconfig.phaseShift.getMode();
+		config.timer.timer_num = (ledc_timer_t)pwmconfig.timer.getNumber();
+
+		auto spreadMode = pwmconfig.spreadSpectrum.getMode();
+		if (spreadMode == AppConfig::ContainedHardware::ContainedPwm::SpreadSpectrumMode::ON) {
+			config.spreadSpectrum.mode = SpreadSpectrumMode::ON;
+		} else if (spreadMode == AppConfig::ContainedHardware::ContainedPwm::SpreadSpectrumMode::OFF) {
+			config.spreadSpectrum.mode = SpreadSpectrumMode::OFF;
+		}
+
+		config.spreadSpectrum.WidthPercent = pwmconfig.spreadSpectrum.getWidth();
+		config.spreadSpectrum.Subsampling = pwmconfig.spreadSpectrum.getSubsampling();
+
+		// ✅ Use PhaseShiftMode enum  directly
+		(pwmconfig.phaseShift.getMode()==AppConfig::ContainedHardware::ContainedPwm::PhaseShiftMode::ON)?config.phaseShift.mode=PhaseShiftMode::AUTO:config.phaseShift.mode=PhaseShiftMode::OFF;
+
 		
 			RGBWWLed::init(pins.red, pins.green, pins.blue, pins.warmwhite, pins.coldwhite, config);
 		}

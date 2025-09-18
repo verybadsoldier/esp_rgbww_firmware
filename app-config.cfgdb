@@ -366,8 +366,9 @@
               "properties":{
                 "speed_mode":{
                   "type":"string",
-                  "default":"low_speed",
-                  "enum":[ "low_speed", "high_speed"]
+                  "default":"LOWSPEED",
+                  "ctype":"TimerSpeedMode",
+                  "enum":[ "LOWSPEED", "HIGHSPEED"]
                 },
                 "frequency":{
                   "type":"integer",
@@ -382,7 +383,8 @@
                 "number":{
                   "type":"integer",
                   "default":0,
-                  "enum":[0,1,2,3]
+                  "minimum":0,
+                  "maximum":3
                 }
               }
             },
@@ -391,8 +393,9 @@
               "properties":{
                 "mode":{
                   "type":"string",
-                  "default":"auto",
-                  "enum":[ "off", "auto"]
+                  "default":"ON",
+                  "ctype":"SpreadSpectrumMode",
+                  "enum":[ "OFF", "ON"]
                 },
                 "width":{
                   "type":"integer",
@@ -409,8 +412,9 @@
               "properties":{
                 "mode":{ 
                   "type":"string",
-                  "default":"auto",
-                  "enum":[ "off", "auto"]
+                  "ctype":"PhaseShiftMode",
+                  "default":"ON",
+                  "enum":[ "OFF", "ON"]
                 }
               }
             }
