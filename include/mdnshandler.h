@@ -7,14 +7,14 @@
 #include <app-config.h>
 #include <map>
 #include <memory>
-
+#include <controllers.h>
 
 #define JSON_SIZE 2048
 #define LEADERSHIP_MAX_FAIL_COUNT 4
 #define LEADER_ELECTION_DELAY 2
 
 #define TTL_MDNS 60
-#define TTL_HTTP_VERIFIED 300
+#define TTL_HTTP_VERIFIED 600
 
 namespace Util {
     String sanitizeHostname(const String& input) {
@@ -26,8 +26,6 @@ namespace Util {
         // Replace spaces and underscores with hyphens
         result.replace(' ', '-');
         result.replace('_', '-');
-        
-
         
         // Remove leading and trailing hyphens
         while (result.length() > 0 && result[0] == '-') {
@@ -48,7 +46,7 @@ namespace Util {
         }
 
 
-                // Common character mappings by language group
+        // Common character mappings by language group
         
         // German
         result.replace("ä", "ae");
@@ -177,6 +175,7 @@ class LEDControllerAPIService : public mDNS::Service {
         Vector<String> _leadingGroups;
     };
 
+
     class LEDControllerWebService : public mDNS::Service {
         public:
             enum class HostType {
@@ -238,6 +237,7 @@ public:
     
     /**
      * @brief Initialize and start mDNS services
+
      */
     void start();
     
@@ -288,9 +288,11 @@ private:
     SimpleTimer _pingTimer; 
     String searchName;
     String service = "_http._tcp.local";
-    int _mdnsTimerInterval = 60000;
-    int _mdnsPingInterval = 60000; // Ping every minute
+    int _mdnsTimerInterval = 10000;
+    int _mdnsPingInterval = 10000; // Ping every minute
+    int conntrack=0;
 
+    
     // Global leadership
     bool _isLeader = false;
     bool _leaderDetected = false;
@@ -316,7 +318,7 @@ private:
     // Discovery methods
     static void sendSearchCb(void* pTimerArg);
     void sendSearch();
-    void queryKnownControllers(uint8_t batchIndex);
+    //void queryKnownControllers(uint8_t batchIndex);
 
     // Service instances
     LEDControllerAPIService ledControllerAPIService;     // For API discovery
@@ -329,8 +331,10 @@ private:
     bool processApiServiceResponse(mDNS::Message& message);
     bool processHostnameARecord(mDNS::Message& message, mDNS::Answer* a_answer);
     bool processHostnameResponse(mDNS::Message& message, const String& hostname);
-    bool pingController(const String& ipAddress, unsigned int id);
-    void pingAllControllers();
-    static void pingAllControllersCb(void* pTimerArg);
-    
+
+    void pingController(const String& ipAddress);
+    int pingCallback(HttpConnection& connection, bool successful);
+
 };
+
+

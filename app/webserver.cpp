@@ -1205,45 +1205,52 @@ void ApplicationWebserver::onToggle(HttpRequest& request, HttpResponse& response
 
 void ApplicationWebserver::onHosts(HttpRequest& request, HttpResponse& response)
 {
+    if(!authenticated(request, response)) {
+        return;
+    }
+
+    if(!checkHeap(response)) {
+        return;
+    }
+
     if(request.method != HTTP_GET && request.method != HTTP_OPTIONS) {
+        setCorsHeaders(response);
         sendApiCode(response, API_CODES::API_BAD_REQUEST, "nost GET or OPTIONS request");
         return;
     }
 
     if(request.method == HTTP_OPTIONS) {
+        setCorsHeaders(response);
         sendApiCode(response, API_CODES::API_SUCCESS, "");
         debug_i("HTTP_OPTIONS Request, sent API_SUCCSSS");
         return;
     }
 
+    if(!app.controllers) {
+        setCorsHeaders(response);
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, "Controllers not initialized");
+        return;
+    }
     bool showAll = request.getQueryParameter("all") == "1" || request.getQueryParameter("all") == "true";
+	  bool showDebug= request.getQueryParameter("debug")== "1" || request.getQueryParameter("debug") == "true";
 
-	
+    Controllers::JsonFilter filter;
+    if (showAll || showDebug) {
+        filter = Controllers::ALL_ENTRIES;  // Show all controllers including incomplete ones
+    } else {
+        filter = Controllers::VISIBLE_ONLY; // Show only visible/online controllers
+    }
+
     debug_i("show all controllers %s", showAll ? "true" : "false");
 
-    AppData::Root::Controllers controllers(*app.data);
-	int hostCount=0;
-		for(auto controller : controllers){
-			hostCount++;
-		}
+    setCorsHeaders(response);
+    response.setContentType(MIME_JSON);
 
-    DynamicJsonDocument doc(hostCount*100+60); // rough estimate of required size - <hostCount * 100 + 60>
-    JsonObject json = doc.to<JsonObject>();
-    JsonArray hostsArray = json.createNestedArray("hosts");
-    for (auto controller : controllers){
-        if (showAll || app.isVisibleController(controller.getId().toInt())){
-            JsonObject hostObj = hostsArray.createNestedObject();
-            hostObj[F("id")] = controller.getId();
-            hostObj[F("hostname")] = controller.getName();
-            hostObj[F("ip_address")] = controller.getIpAddress();
-			app.isVisibleController(controller.getId().toInt())? hostObj[F("visible")] = true : hostObj[F("visible")] = false;
-        }
-    }
-	String jsonString;
-	serializeJson(doc, jsonString);
-	setCorsHeaders(response);
-    response.setContentType(F("application/json"));
-	response.sendString(jsonString);
+    // Use the JsonStream for automatic streaming
+    auto stream = app.controllers->createJsonStream(filter, false); // Compact format for HTTP
+    response.sendDataStream(stream, MIME_JSON);
+
+//todo 
 }
 
 void ApplicationWebserver::onData(HttpRequest& request, HttpResponse& response){
@@ -1254,6 +1261,7 @@ void ApplicationWebserver::onData(HttpRequest& request, HttpResponse& response){
 
 	if(request.method == HTTP_OPTIONS) {
 		// probably a CORS request
+		setCorsHeaders(response);
 		sendApiCode(response, API_CODES::API_SUCCESS, "");
 		debug_i("HTTP_OPTIONS Request, sent API_SUCCESS");
 		return;
@@ -1293,5 +1301,5 @@ void ApplicationWebserver::onData(HttpRequest& request, HttpResponse& response){
 void ApplicationWebserver::setCorsHeaders(HttpResponse& response)
 {
 	response.setAllowCrossDomainOrigin("*");
-	response.setHeader(F("Access-Control-Allow-Headers"), F("Content-Type"));
+	response.setHeader(F("Access-Control-Allow-Headers"), F("Content-Type, Cache-Control"));
 }

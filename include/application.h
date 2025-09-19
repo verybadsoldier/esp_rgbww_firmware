@@ -20,15 +20,12 @@
  */
 #pragma once
 #include <otaupdate.h>
+#include <controllers.h>
 
 static const char* fw_git_version = GITVERSION;
 static const char* fw_git_date = GITDATE;
 static const char* sming_git_version = SMING_VERSION;
-struct VisibleController {
-    unsigned int id;
-    int ttl;
-    bool pingPending;
-};
+
 
 // main forward declarations
 class Application {
@@ -81,6 +78,8 @@ public:
     AppWIFI network;
     ApplicationWebserver webserver;
     APPLedCtrl rgbwwctrl;
+    std::unique_ptr<Controllers> controllers;
+    
     ApplicationOTA ota;
     std::unique_ptr<AppConfig> cfg;
     std::unique_ptr<AppData> data;
@@ -88,29 +87,15 @@ public:
     AppMqttClient mqttclient;
     JsonProcessor jsonproc;
     NtpClient* pNtpclient = nullptr;
-
-    std::vector<VisibleController> visibleControllers; // vector of currently visible controllers to be used for mdns
-    void addOrUpdateVisibleController(unsigned int id, int ttl);
-    void removeExpiredControllers(int elapsedSeconds);
-    bool isVisibleController(unsigned int id) {
-        for (const auto& controller : visibleControllers) {
-            if (controller.id == id) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    std::vector<VisibleController>& getVisibleControllers() { return visibleControllers; }
-
+    
     String sanitizeName(const String& input){
         String result = input;
-    for (int i = 0; i < result.length(); i++) {
-        if (result[i] == '_') {
-            result[i] = '-';
+        for (int i = 0; i < result.length(); i++) {
+            if (result[i] == '_') {
+                result[i] = '-';
+            }
         }
-    }
-    return result;
+        return result;
     }
 
 private:
