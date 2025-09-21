@@ -33,7 +33,9 @@ Controllers::~Controllers() {
 
 // Core methods
 void Controllers::addOrUpdate(unsigned int id, const String& hostname, const String& ipAddress, int ttl) {
-    debug_i("Controllers::addOrUpdate id=%u, hostname=%s, ip=%s, ttl=%d", id, hostname.c_str(), ipAddress.c_str(), ttl);
+    #ifdef DEBUG_MDNS
+        debug_i("Controllers::addOrUpdate id=%u, hostname=%s, ip=%s, ttl=%d", id, hostname.c_str(), ipAddress.c_str(), ttl);
+    #endif
     if(hostname == "" || ipAddress == "") {
         debug_w("Empty hostname or IP address provided, skipping addOrUpdate");
         return;
