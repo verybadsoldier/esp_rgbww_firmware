@@ -76,7 +76,9 @@
 	XX(photo_svg, "icons/photo.svg.gz") \
 	XX(play_arrow_svg, "icons/play_arrow.svg.gz") \
 	XX(post_lamp_svg, "icons/post-lamp.svg.gz") \
+	XX(refresh_svg, "icons/refresh.svg.gz") \
 	XX(report_problem_outlined_svg, "icons/report_problem_outlined.svg.gz") \
+	XX(restart_alt_svg, "icons/restart_alt.svg.gz") \
 	XX(save_outlined_svg, "icons/save_outlined.svg.gz") \
 	XX(scene_svg, "icons/scene.svg.gz") \
 	XX(security_outlined_svg, "icons/security_outlined.svg.gz") \

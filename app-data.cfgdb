@@ -78,8 +78,11 @@
           },
           "icon":{
             "type":"string",
-            "default":"led-strip-variant"
-          }
+            "default":"lights/led-strip-variant"
+          }, 
+          "ts":{
+            "type":"integer"
+          },
         }
       }
     },
