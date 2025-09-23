@@ -614,7 +614,7 @@ void AppMqttClient::publishChannelState(const String& channelName, const Channel
         channelValue = raw.b;
     } else if (channelName == "warmwhite" || channelName == "warm_white") {
         channelValue = raw.ww;
-    } else if (channelName == "coldwhite" || channelName == "cool_white") {
+    } else if (channelName == "coldwhite" || channelName == "cool_white" || channelName=="cold_white") {
         channelValue = raw.cw;
     }
     
