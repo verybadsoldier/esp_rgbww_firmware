@@ -48,7 +48,6 @@ private:
     
     // Home Assistant methods
     void publishHomeAssistantConfig();
-<<<<<<< HEAD
     void publishHAState(const ChannelOutput& raw, const HSVCT* pHsv);
     void processHACommand(const String& message);
     void publishChannelConfig(const String& channelName);
@@ -59,12 +58,6 @@ private:
     int getCurrentColorMode();
     void getActiveChannelNames(Vector<String>& channels);
     void getSupportedColorModes(Vector<String>& modes);
-=======
-    String buildHATopic(const String& component, const String& entityId, const String& suffix);
-    void publishHAState(const ChannelOutput& raw, const HSVCT* pHsv);
-    void processHACommand(const String& message);
->>>>>>> 096ab0dcc17959ad7633eb9446ade58ef9f62df6
-
 
     MqttClient* mqtt = nullptr;
     bool _running = false;
