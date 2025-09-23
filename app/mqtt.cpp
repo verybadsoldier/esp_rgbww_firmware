@@ -168,10 +168,14 @@ int AppMqttClient::onMessageReceived(MqttClient& client, mqtt_message_t* msg)
 
     String message = MqttBuffer(msg->publish.content);
     
+    debug_i("MQTT: Received message on topic: %s", topic.c_str());
+    debug_i("MQTT: Message content: %s", message.c_str());
+    
     // Check if this is a Home Assistant command
     if (_haEnabled) {
         String haCommandTopic = _haDiscoveryPrefix + "/light/" + _haNodeId + "/" + _haObjectId + "/set";
         if (topic == haCommandTopic) {
+            debug_i("HA: Main light command received on topic: %s", topic.c_str());
             handleHomeAssistantCommand(message);
             return 0;
         }
@@ -182,6 +186,7 @@ int AppMqttClient::onMessageReceived(MqttClient& client, mqtt_message_t* msg)
         for (unsigned i = 0; i < activeChannels.count(); i++) {
             String channelCommandTopic = _haDiscoveryPrefix + "/light/" + _haNodeId + "/" + activeChannels[i] + "/set";
             if (topic == channelCommandTopic) {
+                debug_i("HA: Channel command received for '%s' on topic: %s", activeChannels[i].c_str(), topic.c_str());
                 handleChannelCommand(activeChannels[i], message);
                 return 0;
             }
@@ -533,6 +538,9 @@ void AppMqttClient::publishHAState(const ChannelOutput& raw, const HSVCT* pHsv) 
         return;
     }
     
+    debug_i("HA: Publishing main light state");
+    debug_i("HA: Raw values - R:%d G:%d B:%d WW:%d CW:%d", raw.r, raw.g, raw.b, raw.ww, raw.cw);
+    
     StaticJsonDocument<256> doc;
     
     // Get HSV values
@@ -541,13 +549,18 @@ void AppMqttClient::publishHAState(const ChannelOutput& raw, const HSVCT* pHsv) 
     int ct;
     color.asRadian(h, s, v, ct);
     
-    // Convert radians to degrees for HA (HA expects 0-360°)
-    float hue_degrees = h * 180.0f / PI;  // Convert from radians to degrees
-    float sat_percent = s * 100.0f;       // Convert to percentage (HA expects 0-100%)
+    debug_i("HA: HSV values - H:%.3f deg, S:%.1f%%, V:%.1f%%, CT:%d", h, s, v, ct);
+    
+    // asRadian() actually returns H in degrees (0-360°) and S,V in percentages (0-100%)
+    float hue_degrees = h;      // Already in degrees
+    float sat_percent = s;      // Already in percent  
+    float val_percent = v;      // Already in percent
+    
+    debug_i("HA: Converted for HA - H:%.1f°, S:%.1f%%, V:%.1f%%", hue_degrees, sat_percent, val_percent);
     
     // State and brightness - Use 0-100 scale as configured in discovery
     doc["state"] = v > 0 ? "ON" : "OFF";
-    doc["brightness"] = (uint8_t)(v * 100.0f);  // V is 0-1, scale to 0-100%
+    doc["brightness"] = (uint8_t)val_percent;  // V is already 0-100%, use directly
     doc["color_mode"] = "hs";  // Always include color_mode
     
     // Only include color if light is on
@@ -558,7 +571,9 @@ void AppMqttClient::publishHAState(const ChannelOutput& raw, const HSVCT* pHsv) 
     }
     
     String stateTopic = _haDiscoveryPrefix + "/light/" + _haNodeId + "/" + _haObjectId + "/state";
-    publish(stateTopic, Json::serialize(doc), true);
+    String statePayload = Json::serialize(doc);
+    debug_i("HA: Publishing to topic '%s': %s", stateTopic.c_str(), statePayload.c_str());
+    publish(stateTopic, statePayload, true);
     
     // Publish individual channel states
     Vector<String> activeChannels;
@@ -578,55 +593,68 @@ void AppMqttClient::publishChannelState(const String& channelName, const Channel
     int channelValue = 0;
     
     // Map channel name to raw channel value (0-1023)
+    // Check both configured names and standard fallback names
     if (channelName == "red") {
         channelValue = raw.r;
     } else if (channelName == "green") {
         channelValue = raw.g;
     } else if (channelName == "blue") {
         channelValue = raw.b;
-    } else if (channelName == "warm_white") {
+    } else if (channelName == "warmwhite" || channelName == "warm_white") {
         channelValue = raw.ww;
-    } else if (channelName == "cool_white") {
+    } else if (channelName == "coldwhite" || channelName == "cool_white") {
         channelValue = raw.cw;
     }
+    
+    debug_i("HA: Publishing channel '%s' state: %d (0-1023 scale)", channelName.c_str(), channelValue);
     
     // Use raw 0-1023 scaling as configured in discovery
     doc["state"] = channelValue > 0 ? "ON" : "OFF";
     doc["brightness"] = channelValue;  // Direct 0-1023 value
     
     String stateTopic = _haDiscoveryPrefix + "/light/" + _haNodeId + "/" + channelName + "/state";
-    publish(stateTopic, Json::serialize(doc), true);
+    String statePayload = Json::serialize(doc);
+    debug_i("HA: Publishing to topic '%s': %s", stateTopic.c_str(), statePayload.c_str());
+    publish(stateTopic, statePayload, true);
 }
 
 void AppMqttClient::handleChannelCommand(const String& channelName, const String& message) {
-    debug_i("HA Channel Command for %s: %s", channelName.c_str(), message.c_str());
+    debug_i("HA: Processing channel command for '%s': %s", channelName.c_str(), message.c_str());
     
     // Parse JSON command
     DynamicJsonDocument root(256);
     auto error = deserializeJson(root, message);
     if (error) {
-        debug_w("Failed to parse channel command JSON: %s", error.c_str());
+        debug_e("HA: Failed to parse channel command JSON: %s", error.c_str());
         return;
     }
     
     // Get current raw values
     ChannelOutput currentRaw = app.rgbwwctrl.getCurrentOutput();
+    debug_i("HA: Current raw values - R:%d G:%d B:%d WW:%d CW:%d", 
+            currentRaw.r, currentRaw.g, currentRaw.b, currentRaw.ww, currentRaw.cw);
     
     // Handle state command
     if (root.containsKey("state")) {
         String state = root["state"].as<String>();
+        debug_i("HA: Channel state command: %s", state.c_str());
         if (state == "OFF") {
             // Turn off this channel
             if (channelName == "red") {
                 currentRaw.r = 0;
+                debug_i("HA: Setting red channel to 0");
             } else if (channelName == "green") {
                 currentRaw.g = 0;
+                debug_i("HA: Setting green channel to 0");
             } else if (channelName == "blue") {
                 currentRaw.b = 0;
-            } else if (channelName == "warm_white") {
+                debug_i("HA: Setting blue channel to 0");
+            } else if (channelName == "warmwhite" || channelName == "warm_white") {
                 currentRaw.ww = 0;
-            } else if (channelName == "cool_white") {
+                debug_i("HA: Setting warm white channel to 0");
+            } else if (channelName == "coldwhite" || channelName == "cool_white") {
                 currentRaw.cw = 0;
+                debug_i("HA: Setting cool white channel to 0");
             }
         }
     }
@@ -634,29 +662,46 @@ void AppMqttClient::handleChannelCommand(const String& channelName, const String
     // Handle brightness command (0-1023 scale as configured in discovery)
     if (root.containsKey("brightness")) {
         int brightness = root["brightness"].as<int>();
+        debug_i("HA: Channel brightness command: %d (0-1023 scale)", brightness);
+        
         // Clamp to valid range 0-1023
+        int originalBrightness = brightness;
         brightness = (brightness < 0) ? 0 : ((brightness > 1023) ? 1023 : brightness);
+        if (brightness != originalBrightness) {
+            debug_w("HA: Clamped brightness from %d to %d", originalBrightness, brightness);
+        }
         
         if (channelName == "red") {
             currentRaw.r = brightness;
+            debug_i("HA: Setting red channel to %d", brightness);
         } else if (channelName == "green") {
             currentRaw.g = brightness;
+            debug_i("HA: Setting green channel to %d", brightness);
         } else if (channelName == "blue") {
             currentRaw.b = brightness;
-        } else if (channelName == "warm_white") {
+            debug_i("HA: Setting blue channel to %d", brightness);
+        } else if (channelName == "warmwhite" || channelName == "warm_white") {
             currentRaw.ww = brightness;
-        } else if (channelName == "cool_white") {
+            debug_i("HA: Setting warm white channel to %d", brightness);
+        } else if (channelName == "coldwhite" || channelName == "cool_white") {
             currentRaw.cw = brightness;
+            debug_i("HA: Setting cool white channel to %d", brightness);
         }
     }
     
+    debug_i("HA: New raw values - R:%d G:%d B:%d WW:%d CW:%d", 
+            currentRaw.r, currentRaw.g, currentRaw.b, currentRaw.ww, currentRaw.cw);
+    
     // Apply the changes
+    debug_i("HA: Applying changes to LED controller");
     app.rgbwwctrl.setRAW(currentRaw);
     
     // Publish state update for this channel only
+    debug_i("HA: Publishing state update for channel '%s'", channelName.c_str());
     publishChannelState(channelName, currentRaw);
-    
+
     // Also publish the main light state to keep them in sync
+    debug_i("HA: Publishing main light state update");
     publishHAState(currentRaw, nullptr);
 }
 
@@ -665,14 +710,17 @@ void AppMqttClient::handleHomeAssistantCommand(const String& message) {
         return;
     }
     
+    debug_i("HA: Processing main light command: %s", message.c_str());
+    
     StaticJsonDocument<256> doc;
     DeserializationError parseError = deserializeJson(doc, message);
     if (parseError) {
-        debug_e("Failed to parse HA command: %s", parseError.c_str());
+        debug_e("HA: Failed to parse command JSON: %s", parseError.c_str());
         return;
     }
     
     String state = doc["state"];
+    debug_i("HA: Command state: %s", state.c_str());
     
     // Create a JSON command that works with your existing system
     StaticJsonDocument<256> cmdDoc;
@@ -683,7 +731,9 @@ void AppMqttClient::handleHomeAssistantCommand(const String& message) {
         // Handle brightness
         float brightness = 100.0f;  // Default to 100%
         if (doc.containsKey("brightness")) {
-            brightness = (doc["brightness"].as<float>() / 255.0f) * 100.0f;  // Convert 0-255 to 0-100
+            float brightness_raw = doc["brightness"].as<float>();
+            brightness = brightness_raw;  // Now using 0-100 scale directly
+            debug_i("HA: Brightness from HA: %.1f (0-100 scale)", brightness);
         }
         
         // Handle color
@@ -691,10 +741,15 @@ void AppMqttClient::handleHomeAssistantCommand(const String& message) {
             float h = doc["color"]["h"];  // HA sends 0-360 degrees
             float s = doc["color"]["s"];  // HA sends 0-100 percent
             
-            // Convert to radians and 0-1 scale for internal use
-            hsv["h"] = h * PI / 180.0f;   // Convert degrees to radians
-            hsv["s"] = s / 100.0f;        // Convert percentage to 0-1 scale
-            hsv["v"] = brightness / 100.0f;  // Convert percentage to 0-1 scale
+            debug_i("HA: Color from HA - H: %.1f°, S: %.1f%%", h, s);
+            
+            // LED controller expects H: 0-360°, S: 0-100%, V: 0-100%
+            hsv["h"] = h;                 // Keep as 0-360 degrees
+            hsv["s"] = s;                 // Keep as 0-100 percentage
+            hsv["v"] = brightness;        // Keep as 0-100 percentage
+            
+            debug_i("HA: Converted to internal - H: %.1f°, S: %.1f%%, V: %.1f%%", 
+                    hsv["h"].as<float>(), hsv["s"].as<float>(), hsv["v"].as<float>());
         } else {
             // Just brightness change - keep current color
             HSVCT currentColor = app.rgbwwctrl.getCurrentColor();
@@ -702,9 +757,11 @@ void AppMqttClient::handleHomeAssistantCommand(const String& message) {
             int cur_ct;
             currentColor.asRadian(cur_h, cur_s, cur_v, cur_ct);
             
-            hsv["h"] = cur_h;
-            hsv["s"] = cur_s;
-            hsv["v"] = brightness / 100.0f;
+            hsv["h"] = cur_h;             // Keep as 0-360 degrees
+            hsv["s"] = cur_s;             // Keep as 0-100 percentage  
+            hsv["v"] = brightness;        // Use brightness as 0-100 percentage
+            
+            debug_i("HA: Brightness only change - keeping current color, new V: %.1f%%", brightness);
         }
     } else {
         // Turn off - keep current color but set brightness to 0
@@ -713,9 +770,11 @@ void AppMqttClient::handleHomeAssistantCommand(const String& message) {
         int cur_ct;
         currentColor.asRadian(cur_h, cur_s, cur_v, cur_ct);
         
-        hsv["h"] = cur_h;
-        hsv["s"] = cur_s;
-        hsv["v"] = 0;
+        hsv["h"] = cur_h;             // Keep as 0-360 degrees
+        hsv["s"] = cur_s;             // Keep as 0-100 percentage
+        hsv["v"] = 0;                 // Turn off (0%)
+        
+        debug_i("HA: Turning OFF - keeping current color, setting V to 0%%");
     }
     
     root["cmd"] = "fade";
@@ -724,12 +783,22 @@ void AppMqttClient::handleHomeAssistantCommand(const String& message) {
     int transition_ms = 500;  // Default 500ms
     if (doc.containsKey("transition")) {
         transition_ms = doc["transition"].as<int>() * 1000;  // Convert seconds to milliseconds
+        debug_i("HA: Transition time: %d ms", transition_ms);
     }
     root["t"] = transition_ms;
     
+    String ledCommand = Json::serialize(root);
+    debug_i("HA: Sending to LED controller: %s", ledCommand.c_str());
+    
     // Process the command through your existing system
     String errorMsg;
-    app.jsonproc.onColor(Json::serialize(root), errorMsg, false);
+    app.jsonproc.onColor(ledCommand, errorMsg, false);
+    
+    if (errorMsg.length() > 0) {
+        debug_e("HA: LED controller error: %s", errorMsg.c_str());
+    } else {
+        debug_i("HA: LED controller command processed successfully");
+    }
     
     // Publish state update after processing
     publishHAState(app.rgbwwctrl.getCurrentOutput(), nullptr);
@@ -743,27 +812,41 @@ int AppMqttClient::getCurrentColorMode() {
 
 void AppMqttClient::getActiveChannelNames(Vector<String>& channels) {
     channels.clear();
-    int colorMode = getCurrentColorMode();
     
-    // All modes have RGB
-    channels.addElement("red");
-    channels.addElement("green"); 
-    channels.addElement("blue");
-    
-    // Add white channels based on mode
-    switch(colorMode) {
-        case 1: // RGBWW
-            channels.addElement("warm_white");
-            break;
-        case 2: // RGBCW  
-            channels.addElement("cool_white");
-            break;
-        case 3: // RGBWWCW
-            channels.addElement("warm_white");
-            channels.addElement("cool_white");
-            break;
-        default: // RGB
-            break;
+    // Get configured channel names from AppConfig
+    AppConfig::General general(*app.cfg);
+    if (general.channels.getItemCount() != 0) {
+        // Use configured channel names
+        for (auto channel : general.channels) {
+            String channelName = channel.getName();
+            if (channelName.length() > 0) {
+                channels.addElement(channelName);
+            }
+        }
+    } else {
+        // Fallback to default names based on color mode
+        int colorMode = getCurrentColorMode();
+        
+        // All modes have RGB
+        channels.addElement("red");
+        channels.addElement("green"); 
+        channels.addElement("blue");
+        
+        // Add white channels based on mode
+        switch(colorMode) {
+            case 1: // RGBWW
+                channels.addElement("warm_white");
+                break;
+            case 2: // RGBCW  
+                channels.addElement("cool_white");
+                break;
+            case 3: // RGBWWCW
+                channels.addElement("warm_white");
+                channels.addElement("cool_white");
+                break;
+            default: // RGB
+                break;
+        }
     }
 }
 
