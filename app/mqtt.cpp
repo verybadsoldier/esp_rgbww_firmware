@@ -45,6 +45,12 @@ void AppMqttClient::connectDelayed(int delay)
 {
 	debug_d("MQTT::connectDelayed");
 	_procTimer.initializeMs(delay, TimerDelegate(&AppMqttClient::connect, this)).startOnce();
+/*
+	if (mqtt->getConnectionState() == TcpClientState::eTCS_Connected) {
+        initHomeAssistant();
+        publishHomeAssistantConfig();
+    }
+*/
 }
 
 void AppMqttClient::connect()
@@ -225,6 +231,12 @@ void AppMqttClient::publish(const String& topic, const String& data, bool retain
 	} else {
 		debug_w("ApplicationMQTTClient::publish: not connected.\n");
 	}
+
+	/*
+	if (_haEnabled) {
+        publishHAState(app.rgbwwctrl.getCurrentOutput(), &color);
+    }
+	*/	
 
 	/*
 	if (_haEnabled) {
