@@ -458,7 +458,7 @@ void Application::startServices()
 				mqttClientId = String("rgbww_") + WifiStation.getMAC();
 			}
 		}
-		mqttclient.init(mqttClientId); // initialize mqtt client with node name
+		mqttclient.init(); // initialize mqtt client with node name
 		debug_i("Application::startServices - mqtt client initialized");
 		if(network.mqtt.getEnabled()) {
 			mqttclient.start();
