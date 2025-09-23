@@ -865,9 +865,8 @@ void AppMqttClient::getActiveChannelNames(Vector<String>& channels) {
 void AppMqttClient::getSupportedColorModes(Vector<String>& modes) {
     modes.clear();
     
-    // All modes support HSV and RGB
+    // Primary mode is HSV (hue + saturation)
     modes.addElement("hs");
-    modes.addElement("rgb");
     
     int colorMode = getCurrentColorMode();
     
