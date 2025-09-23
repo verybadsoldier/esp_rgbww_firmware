@@ -32,6 +32,7 @@ private:
     void connectDelayed(int delay = 2000);
     void connect();
     void onComplete(TcpClient& client, bool success);
+    int onConnected(MqttClient& client, mqtt_message_t* message);
     int onMessageReceived(MqttClient& client, mqtt_message_t* message);
     void publish(const String& topic, const String& data, bool retain);
 
@@ -41,14 +42,22 @@ private:
     bool _haEnabled = false;
     String _haDiscoveryPrefix;
     String _haNodeId;
+    String _haUniqueId;
+    String _haObjectId;
     bool _haConfigPublished = false;
     
     // Home Assistant methods
     void publishHomeAssistantConfig();
-    String buildHATopic(const String& component, const String& entityId, const String& suffix);
     void publishHAState(const ChannelOutput& raw, const HSVCT* pHsv);
     void processHACommand(const String& message);
-
+    void publishChannelConfig(const String& channelName);
+    void publishChannelState(const String& channelName, const ChannelOutput& raw);
+    void handleChannelCommand(const String& channelName, const String& message);
+    
+    // Helper methods for dynamic color mode support
+    int getCurrentColorMode();
+    void getActiveChannelNames(Vector<String>& channels);
+    void getSupportedColorModes(Vector<String>& modes);
 
     MqttClient* mqtt = nullptr;
     bool _running = false;

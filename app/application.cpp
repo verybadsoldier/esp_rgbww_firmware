@@ -446,7 +446,20 @@ void Application::startServices()
 	{
 		debug_i("Application::startServices - starting mqtt");
 		AppConfig::Network network(*cfg);
+		AppConfig::General general(*cfg);
+		debug_i("Application::startServices - mqtt enabled: %s", network.mqtt.getEnabled() ? "true" : "false");
+		String mqttClientId = network.mqtt.homeassistant.getNodeId();
+		if(mqttClientId.length() > 0) {
+			debug_i("Application::startServices - mqtt client id: %s", mqttClientId.c_str());
+		} else {
+			if(general.getDeviceName().length() > 0) {
+				mqttClientId = general.getDeviceName();
+			} else {
+				mqttClientId = String("rgbww_") + WifiStation.getMAC();
+			}
+		}
 		mqttclient.init(); // initialize mqtt client with node name
+		debug_i("Application::startServices - mqtt client initialized");
 		if(network.mqtt.getEnabled()) {
 			mqttclient.start();
 		}
