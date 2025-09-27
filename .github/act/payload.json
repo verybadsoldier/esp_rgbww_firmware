@@ -1,0 +1,10 @@
+{
+  "ref": "refs/tags/5.5.66",
+  "ref_type": "tag",
+  "repository": {
+    "name": "esp_rgbww_firmware",
+    "owner": {
+      "login": "verybadsoldier"
+    }
+  }
+}
