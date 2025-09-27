@@ -1,0 +1,37 @@
+#
+name: Create and publish a Docker image
+
+on:
+  push:
+    tags:
+      - "*.*.*"
+
+# Defines two custom environment variables for the workflow. These are used for the Container registry domain, and a name for the Docker image that this workflow builds.
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+# There is a single job in this workflow. It's configured to run on the latest available version of Ubuntu.
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+    # Sets the permissions granted to the `GITHUB_TOKEN` for the actions in this job.
+    permissions:
+      contents: read
+      packages: write
+      # 
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+            submodules: 'true' 
+      - name: Build
+        id: build
+        run: |
+          tar xvf ${{ github.workspace }}/.devcontainer/esp-open-sdk.tar.xz -C /opt
+          make -j$(nproc)
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.event.repository.name }}-esp8266-${{ github.ref_name }}.zip
+          path: out/Esp8266/release/firmware

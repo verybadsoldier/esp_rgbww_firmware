@@ -1,0 +1,2 @@
+Source:
+https://raw.githubusercontent.com/nodemcu/nodemcu-firmware/2d958750b56fc60297f564b4ec303e47928b5927/tools/esp-open-sdk.tar.xz
