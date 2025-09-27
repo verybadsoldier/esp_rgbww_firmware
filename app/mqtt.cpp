@@ -824,32 +824,45 @@ int AppMqttClient::getCurrentColorMode() {
 
 void AppMqttClient::getActiveChannelNames(Vector<String>& channels) {
     channels.clear();
-    
-    // Get configured channel names from AppConfig
+
+    // Use pin config logic from ledctrl.cpp
     AppConfig::General general(*app.cfg);
-    if (general.channels.getItemCount() != 0) {
-        // Use configured channel names
-        for (auto channel : general.channels) {
-            String channelName = channel.getName();
-            if (channelName.length() > 0) {
-                channels.addElement(channelName);
+    AppConfig::Hardware hardware(*app.cfg);
+
+    String pinConfigName = general.getCurrentPinConfigName();
+    String SoC = SOC;
+    bool found = false;
+
+    if (hardware.pinconfigs.getItemCount() > 0) {
+        for (auto pinconfig : hardware.pinconfigs) {
+            if (pinconfig.getName() == pinConfigName && pinconfig.getSoc() == SoC) {
+                found = true;
+                for (auto channel : pinconfig.channels) {
+                    String channelName = channel.getName();
+                    if (channelName.length() > 0) {
+                        channels.addElement(channelName);
+                    }
+                }
+                break;
             }
         }
-    } else {
-        // Fallback to default names based on color mode
+    }
+
+    // Fallback to default names if not found
+    if (!found || channels.count() == 0) {
         int colorMode = getCurrentColorMode();
-        
+
         // All modes have RGB
         channels.addElement("red");
-        channels.addElement("green"); 
+        channels.addElement("green");
         channels.addElement("blue");
-        
+
         // Add white channels based on mode
-        switch(colorMode) {
+        switch (colorMode) {
             case 1: // RGBWW
                 channels.addElement("warm_white");
                 break;
-            case 2: // RGBCW  
+            case 2: // RGBCW
                 channels.addElement("cool_white");
                 break;
             case 3: // RGBWWCW

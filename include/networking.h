@@ -54,6 +54,10 @@ public:
     
     void forgetWifi();
 
+    std::vector<int> getLedGroups(){
+      std::vector<int> groups;  
+      return groups;
+    };
 private:
     int _con_ctr;
     bool _scanning;

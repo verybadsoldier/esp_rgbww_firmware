@@ -269,6 +269,8 @@ debug_i("Application::init - running partition %s", part.name());
 	
 
 	{
+		// check if the pinconfig json provided with the frontend is newer than the pinconfig array in the configdb
+		// this allows to simply add new pin configs to running controllers
 		AppConfig::Hardware hardware(*cfg);
 		uint32_t currentVersion=hardware.getVersion();
 
@@ -289,29 +291,45 @@ debug_i("Application::init - running partition %s", part.name());
 		}
 	}
 	{
-		AppConfig::General general(*cfg);
-		clearPin=general.getClearPin();
+    int clearPin = -1;
+		{
+			AppConfig::General general(*cfg);
+			AppConfig::Hardware hardware(*cfg);
+
+			String pinConfigName = general.getCurrentPinConfigName();
+			String SoC = SOC;
+
+			if (hardware.pinconfigs.getItemCount() > 0) {
+				for (auto pinconfig : hardware.pinconfigs) {
+					if (pinconfig.getName() == pinConfigName && pinconfig.getSoc() == SoC) {
+						clearPin = pinconfig.getClearPin();
+						break;
+					}
+				}
+			}
+		}
 		debug_i("Application::init - clear pin %d", clearPin);
 		if(clearPin >= 0) {
 			pinMode(clearPin, INPUT);
 			debug_i("Application::init - clear pin set to input");
 		}
+		#if !defined(ARCH_HOST)
+
+			if(clearPin >=0 && digitalRead(clearPin) < 1) {
+				debug_i("CLR button low - resetting settings");
+				// ConfigDB - decide if to reload defaults or load a specific saved version
+				// perhaps by holding the clear pin low for a certain time along with blink codes?
+				// cfg.reset();
+				network.forgetWifi();
+			}
+
+		#endif
 	}
 	debug_i("Application::init - hardware config loaded");
 	
 
 // check if we need to reset settings
-#if !defined(ARCH_HOST)
 
-	if(clearPin >=0 && digitalRead(clearPin) < 1) {
-		debug_i("CLR button low - resetting settings");
-		// ConfigDB - decide if to reload defaults or load a specific saved version
-		// perhaps by holding the clear pin low for a certain time along with blink codes?
-		// cfg.reset();
-		network.forgetWifi();
-	}
-
-#endif
 
 	// check ota
 #ifdef ARCH_ESP8266

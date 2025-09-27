@@ -19,26 +19,12 @@
           "type": "integer",
           "default":50
         },
-        "pin_config": {
-          "type": "string",
-          "default":"13,12,14,5,4"
-        },
         "buttons_config": {
           "type": "string"
         },
         "pin_config_url":{
             "type":"string",
             "default":"https://raw.githubusercontent.com/pljakobs/esp_rgb_webapp2/devel/public/config/pinconfig.json"
-        },
-        "channels":{
-            "type":"array",
-            "items":{
-                "$ref":"defs/$defs/channel"
-            }
-        },
-        "clear_pin":{
-          "type":"integer",
-          "default":-1
         },
         "supported_color_models":{
             "type": "array",
