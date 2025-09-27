@@ -39,4 +39,4 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ${{ github.event.repository.name }}-esp8266-${{ github.ref_name }}.zip
+            out/Esp8266/release/firmware/*
