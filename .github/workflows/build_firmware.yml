@@ -37,7 +37,7 @@ jobs:
           path: out/Esp8266/release/firmware
       - name: Release
         uses: softprops/action-gh-release@v2
-        token: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
         with:
+          token: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
           files: |
             out/Esp8266/release/firmware/*
