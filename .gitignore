@@ -35,3 +35,5 @@ out/
 .settings/
 
 .cproject
+/act_artifacts_tmp
+/.github/act/.secrets

@@ -62,6 +62,29 @@ Make sure to only use `HTTPS` protocol!
 Most information about installation (flashing), setup and usage guides are provided via the Wiki
 https://github.com/verybadsoldier/esp_rgbww_firmware/wiki
 
+## Local Testing with `act`
+
+This project can be tested locally using [act](https://github.com/nektos/act).
+
+### Prerequisites
+* [Docker Desktop](https://www.docker.com/products/docker-desktop/) must be installed and running. (Windows only)
+* `act` must be installed.
+
+### Setup
+
+1.  Create a local secrets file by copying the example:
+    ```bash
+    cp .github/act/.secrets.example .github/act/.secrets
+    ```
+2.  Create a [GitHub Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) with the **`content`** scope with write access.
+3.  Open the new `.secrets` file and replace the placeholder with your copied PAT.
+
+### Running the Test
+
+Once set up, you can run the entire workflow simulation with a single command from the project root:
+```bash
+act
+```
 
 ## Links
 
