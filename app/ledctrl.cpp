@@ -374,7 +374,7 @@ void APPLedCtrl::updateLed()
 	}
 
 	checkStableColorState();
-
+	
 	if(transFinInterval >= 0) {
 		if(transFinInterval == 0 || ((stepLenMs * _stepCounter) % transFinInterval) < stepLenMs) {
 			publishFinishedStepAnimations();
@@ -488,6 +488,8 @@ void APPLedCtrl::colorSave()
 	{
 		auto update = data.update();
 		auto current = getCurrentColor();
+		debug_i("APPLedCtrl::colorSave - saving color H: %i | S: %i | V: %i | CT: %i", current.h, current.s,
+				current.v, current.ct);
 		update.lastColor.setH(current.h);
 		update.lastColor.setS(current.s);
 		update.lastColor.setV(current.v);
