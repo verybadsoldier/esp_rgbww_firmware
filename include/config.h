@@ -358,4 +358,8 @@ struct ApplicationSettings {
     void sanitizeValues() {
         sync.clock_master_interval = max(sync.clock_master_interval, 1);
     }
+
+    bool isColortempInRange(int ct) const {
+        return (ct >= color.colortemp.ww && ct <= color.colortemp.cw);
+    }   
 };

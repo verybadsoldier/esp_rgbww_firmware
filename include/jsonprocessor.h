@@ -5,6 +5,8 @@
 
 class JsonProcessor {
 public:
+    JsonProcessor(const ApplicationSettings& settings) : _settings(settings) {}
+
     bool onColor(const String& json, String& msg, bool relay = true);
     bool onColor(JsonObject root, String& msg, bool relay = true);
 
@@ -32,6 +34,7 @@ public:
     bool onJsonRpc(const String& json);
 
 private:
+    const ApplicationSettings& _settings;
 
     struct RequestParameters {
         String target;
@@ -65,7 +68,7 @@ private:
 
         QueuePolicy queue = QueuePolicy::Single;
 
-        int checkParams(String& errorMsg) const;
+        int checkParams(String& errorMsg, const ApplicationSettings& settings) const;
     };
 
     void parseRequestParams(JsonObject root, RequestParameters& params);

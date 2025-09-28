@@ -28,6 +28,7 @@ static const char* fw_git_date = GITDATE;
 class Application {
 
 public:
+    Application();
     ~Application();
 
     void init();

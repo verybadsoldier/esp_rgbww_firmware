@@ -41,6 +41,8 @@ void GDB_IRAM_ATTR init() {
     System.onReady(SystemReadyDelegate(&Application::startServices, &app));
 }
 
+Application::Application() : jsonproc(cfg) {}
+
 Application::~Application() {
     if (pNtpclient != nullptr) {
         delete pNtpclient;

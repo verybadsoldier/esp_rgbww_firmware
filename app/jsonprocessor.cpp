@@ -162,7 +162,7 @@ bool JsonProcessor::onToggle(JsonObject root, String& msg, bool relay) {
 bool JsonProcessor::onSingleColorCommand(JsonObject root, String& errorMsg) {
     RequestParameters params;
     parseRequestParams(root, params);
-    if (params.checkParams(errorMsg) != 0) {
+    if (params.checkParams(errorMsg, _settings) != 0) {
         return false;
     }
 
@@ -347,13 +347,11 @@ void JsonProcessor::parseRequestParams(JsonObject root, RequestParameters& param
     }
 }
 
-int JsonProcessor::RequestParameters::checkParams(String& errorMsg) const {
+int JsonProcessor::RequestParameters::checkParams(String& errorMsg, const ApplicationSettings& settings) const {
     if (mode == Mode::Hsv) {
-        if (hsv.ct.hasValue()) {
-            if (hsv.ct != 0 && (hsv.ct < 100 || hsv.ct > 10000 || (hsv.ct > 500 && hsv.ct < 2000))) {
-                errorMsg = "bad param for ct";
-                return 1;
-            }
+        if (hsv.ct.hasValue() && !settings.isColortempInRange(hsv.ct.getValue())) {
+            errorMsg = "bad param for ct";
+            return 1;
         }
 
         if (!hsv.h.hasValue() && !hsv.s.hasValue() && !hsv.v.hasValue() && !hsv.ct.hasValue()) {
