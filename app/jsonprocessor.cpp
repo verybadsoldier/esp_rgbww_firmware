@@ -417,6 +417,9 @@ bool JsonProcessor::onJsonRpc(const String& json) {
     }
     else if (method == "direct") {
         return onDirect(rpc.getParams(), msg, false);
+    }
+    else if (method == "toggle") {
+        return onToggle(rpc.getParams(), msg, false);
     } else {
     	return false;
     }
