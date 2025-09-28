@@ -118,7 +118,7 @@ struct ApplicationSettings {
         brightness brightness;
         colortemp colortemp;
         int outputmode = 0;
-        String startup_color = "last";
+        String startup_color = "0,0,0";
     };
 
     struct general {
