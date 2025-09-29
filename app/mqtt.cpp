@@ -21,6 +21,11 @@
  */
 #include <RGBWWCtrl.h>
 
+#ifdef ENABLE_SSL
+#include <ssl/private_key.h>
+#include <ssl/cert.h>
+#endif
+
 AppMqttClient::AppMqttClient() {
 }
 
@@ -56,15 +61,14 @@ void AppMqttClient::connect() {
     //debug_i("MqttClient: Server: %s Port: %d\n", app.cfg.network.mqtt.server.c_str(), app.cfg.network.mqtt.port);
 
     Url url = "mqtt://" + app.cfg.network.mqtt.username + ":" + app.cfg.network.mqtt.password + "@" + app.cfg.network.mqtt.server + ":" + String(app.cfg.network.mqtt.port);
-    mqtt->connect(url, _id, 0);
+    mqtt->connect(url, _id);
 #ifdef ENABLE_SSL
     // not need i guess? mqtt->addSslOptions(SSL_SERVER_VERIFY_LATER);
-
-#include <ssl/private_key.h>
-#include <ssl/cert.h>
-
-    mqtt->setSslKeyCert(default_private_key, default_private_key_len, default_certificate, default_certificate_len, NULL, true);
-
+    mqtt->setSslInitHandler([](Ssl::Session& session) {
+		session.options.verifyLater = true;
+		session.keyCert.assign(default_private_key, sizeof(default_private_key), default_certificate,
+							   sizeof(default_certificate), nullptr);
+	});
 #endif
     // Assign a disconnect callback function
     mqtt->setCompleteDelegate(TcpClientCompleteDelegate(&AppMqttClient::onComplete, this));

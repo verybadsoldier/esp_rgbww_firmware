@@ -23,6 +23,9 @@
 #define OTAUPDATE_H_
 #define OTA_STATUS_FILE ".ota"
 
+#include <Network/RbootHttpUpdater.h>
+
+
 enum class OTASTATUS {
     OTA_NOT_UPDATING = 0,
     OTA_PROCESSING = 1,
