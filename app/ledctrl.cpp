@@ -113,7 +113,7 @@ void APPLedCtrl::publishToEventServer() {
     if (_mode == ColorMode::Hsv)
         pHsv = &getCurrentColor();
 
-    app.eventserver.publishCurrentState(getCurrentOutput(), pHsv);
+    app.eventserver.publishColorEvent(getCurrentOutput(), pHsv);
 }
 
 void APPLedCtrl::publishToMqtt() {

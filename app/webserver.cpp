@@ -516,7 +516,13 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
                 app.rgbwwctrl.refresh();
 
             }
+            
+            auto doc = app.cfg.getConfig();
+            app.mqttclient.publishConfigEvent(doc);
+            app.eventserver.publishConfigEvent(doc);
+
             app.cfg.save();
+            
             sendApiCode(response, API_CODES::API_SUCCESS);
         } else {
             sendApiCode(response, API_CODES::API_MISSING_PARAM, error_msg);

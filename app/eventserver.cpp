@@ -39,7 +39,7 @@ void EventServer::onClientComplete(TcpClient& client, bool succesfull) {
     debug_d("Client removed: %x\n", &client);
 }
 
-void EventServer::publishCurrentState(const ChannelOutput& raw, const HSVCT* pHsv) {
+void EventServer::publishColorEvent(const ChannelOutput& raw, const HSVCT* pHsv) {
     if (raw == _lastRaw)
         return;
     _lastRaw = raw;
@@ -68,7 +68,18 @@ void EventServer::publishCurrentState(const ChannelOutput& raw, const HSVCT* pHs
         hsvJson["ct"] = ct;
     }
 
-    debug_d("EventServer::publishCurrentHsv\n");
+    debug_d("EventServer::publishColorEvent\n");
+
+    sendToClients(msg);
+}
+
+void EventServer::publishConfigEvent(const DynamicJsonDocument& config) {
+    JsonRpcMessage msg("config_event");
+    JsonObject root = msg.getParams();
+
+    root.set(config.as<JsonObject>());
+
+    debug_d("EventServer::publishConfigEvent\n");
 
     sendToClients(msg);
 }

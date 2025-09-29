@@ -10,10 +10,11 @@ public:
 	void start();
 	void stop();
 
-	void publishCurrentState(const ChannelOutput& raw, const HSVCT* pColor = NULL);
+	void publishColorEvent(const ChannelOutput& raw, const HSVCT* pColor = NULL);
 	void publishTransitionFinished(const String& name, bool requeued = false);
 	void publishKeepAlive();
 	void publishClockSlaveStatus(int offset, uint32_t interval);
+	void publishConfigEvent(const DynamicJsonDocument& config);
 
 private:
 	virtual void onClient(TcpClient *client) override;

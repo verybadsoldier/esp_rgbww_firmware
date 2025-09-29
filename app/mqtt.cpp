@@ -133,7 +133,7 @@ void AppMqttClient::publish(const String& topic, const String& data, bool retain
     //Serial.printf("AppMqttClient::publish: Topic: %s | Data: %s\n", topic.c_str(), data.c_str());
 
     if (!mqtt) {
-        debug_w("ApplicationMQTTClient::publish: no MQTT object\n");
+        debug_w("AppMqttClient::publish: no MQTT object\n");
         return;
     }
 
@@ -142,7 +142,7 @@ void AppMqttClient::publish(const String& topic, const String& data, bool retain
         mqtt->publish(topic, data, retain);
     }
     else {
-        debug_w("ApplicationMQTTClient::publish: not connected.\n");
+        debug_w("AppMqttClient::publish: not connected.\n");
     }
 }
 
@@ -151,7 +151,7 @@ void AppMqttClient::publishCurrentRaw(const ChannelOutput& raw) {
         return;
     _lastRaw = raw;
 
-    debug_d("ApplicationMQTTClient::publishCurrentRaw\n");
+    debug_d("AppMqttClient::publishCurrentRaw\n");
 
     StaticJsonDocument<200> doc;
     JsonObject root = doc.to<JsonObject>();
@@ -174,7 +174,7 @@ void AppMqttClient::publishCurrentHsv(const HSVCT& color) {
         return;
     _lastHsv = color;
 
-    debug_d("ApplicationMQTTClient::publishCurrentHsv\n");
+    debug_d("AppMqttClient::publishCurrentHsv\n");
 
     float h, s, v;
     int ct;
@@ -233,7 +233,7 @@ void AppMqttClient::publishClockSlaveOffset(int offset) {
 }
 
 void AppMqttClient::publishCommand(const String& method, const JsonObject& params) {
-    debug_d("ApplicationMQTTClient::publishCommand: %s\n", method.c_str());
+    debug_d("AppMqttClient::publishCommand: %s\n", method.c_str());
 
     JsonRpcMessage msg(method);
 
@@ -245,7 +245,7 @@ void AppMqttClient::publishCommand(const String& method, const JsonObject& param
 }
 
 void AppMqttClient::publishTransitionFinished(const String& name, bool requeued) {
-    debug_d("ApplicationMQTTClient::publishTransitionFinished: %s\n", name.c_str());
+    debug_d("AppMqttClient::publishTransitionFinished: %s\n", name.c_str());
 
     StaticJsonDocument<200> doc;
     JsonObject root = doc.to<JsonObject>();
@@ -254,4 +254,18 @@ void AppMqttClient::publishTransitionFinished(const String& name, bool requeued)
 
     String jsonMsg = Json::serialize(root);
     publish(buildTopic("transition_finished"), jsonMsg, true);
+}
+
+void AppMqttClient::publishConfigEvent(const DynamicJsonDocument& config) {
+    debug_d("AppMqttClient::publishConfigEvent");
+
+    JsonRpcMessage msg("config_event");
+    JsonObject root = msg.getParams();
+
+    root.set(config.as<JsonObject>());
+
+    debug_d("EventServer::publishConfigEvent\n");
+
+    String jsonMsg = Json::serialize(root);
+    publish(buildTopic("config_event"), jsonMsg, true);
 }

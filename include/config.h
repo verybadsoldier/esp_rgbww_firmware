@@ -252,7 +252,7 @@ struct ApplicationSettings {
         sanitizeValues();
     }
 
-    void save(bool print = false) {
+    DynamicJsonDocument getConfig() {
         DynamicJsonDocument doc(CONFIG_MAX_LENGTH);
         JsonObject root = doc.to<JsonObject>();
 
@@ -336,6 +336,13 @@ struct ApplicationSettings {
         g["buttons_debounce_ms"] = general.buttons_debounce_ms;
         g["settings_ver"] = APP_SETTINGS_VERSION;
 
+        return doc;
+    }
+
+    void save(bool print = false) {
+        auto doc = getConfig();
+
+        JsonObject root = doc.as<JsonObject>();
         if (print) {
         	Json::serialize(root, Serial, Json::Pretty);
         }
