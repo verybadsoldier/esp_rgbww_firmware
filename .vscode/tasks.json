@@ -1,0 +1,15 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Compile Firmware",
+      "type": "shell",
+      "command": "make V=1 -j$(nproc)",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": [],
+    }
+]
+}
