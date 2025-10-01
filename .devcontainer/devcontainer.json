@@ -13,7 +13,8 @@
 	// "forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	// "postCreateCommand": "sudo chown -R $(whoami) /workspaces",
+	"postStartCommand": "git config --global --add safe.directory \"${containerWorkspaceFolder}/*\""
+ 	//"postCreateCommand": "sudo chown -R $(whoami) /workspaces",
 
 
 	// Configure tool-specific properties.
