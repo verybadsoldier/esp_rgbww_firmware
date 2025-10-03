@@ -90,10 +90,10 @@ public:
     void onMasterClock(uint32_t steps);
     void onMasterClockReset();
     virtual void onAnimationFinished(const String& name, bool requeued);
+    void publishToEventServer();
 private:
     static PinConfig parsePinConfigString(String& pinStr);
     static void updateLedCb(void* pTimerArg);
-    void publishToEventServer();
     void publishToMqtt();
     void publishFinishedStepAnimations();
     void publishColorStayedCmds();

@@ -638,33 +638,7 @@ void ApplicationWebserver::onInfo(HttpRequest &request, HttpResponse &response) 
         return;
     }
 
-    JsonObjectStream* stream = new JsonObjectStream();
-    JsonObject data = stream->getRoot();
-    data["deviceid"] = String(system_get_chip_id());
-    data["current_rom"] = String(app.getRomSlot());
-    data["git_version"] = fw_git_version;
-    data["git_date"] = fw_git_date;
-    data["webapp_version"] = WEBAPP_VERSION;
-    data["sming"] = SMING_VERSION;
-    data["event_num_clients"] = app.eventserver.activeClients;
-    data["uptime"] = app.getUptime();
-    data["heap_free"] = system_get_free_heap_size();
-
-    JsonObject rgbww = data.createNestedObject("rgbww");
-    rgbww["version"] = RGBWW_VERSION;
-    rgbww["queuesize"] = RGBWW_ANIMATIONQSIZE;
-
-    JsonObject con = data.createNestedObject("connection");
-    con["connected"] = WifiStation.isConnected();
-    con["ssid"] = WifiStation.getSSID();
-    con["dhcp"] = WifiStation.isEnabledDHCP();
-    con["ip"] = WifiStation.getIP().toString();
-    con["netmask"] = WifiStation.getNetworkMask().toString();
-    con["gateway"] = WifiStation.getNetworkGateway().toString();
-    con["mac"] = WifiStation.getMAC();
-    //con["mdnshostname"] = app.cfg.network.connection.mdnshostname.c_str();
-
-    sendApiResponse(response, stream);
+    sendApiResponse(response, app.getInfo());
 }
 
 

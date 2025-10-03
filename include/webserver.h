@@ -81,6 +81,7 @@ private:
     void sendApiCode(HttpResponse &response, API_CODES code, String msg = "");
 
     bool checkHeap(HttpResponse &response);
+    JsonObjectStream* getInfo();
 
     static bool isPrintable(String& str);
 

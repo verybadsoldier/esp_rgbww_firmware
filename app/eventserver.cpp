@@ -6,6 +6,7 @@
  */
 #include <RGBWWCtrl.h>
 
+EventServer::EventServer(std::function<void()> connectCallback) : _connectCallback(connectCallback) {}
 
 EventServer::~EventServer() {
     stop();
@@ -31,7 +32,8 @@ void EventServer::stop() {
 
 void EventServer::onClient(TcpClient *client) {
     TcpServer::onClient(client);
-    debug_d("Client connected from: %s\n", client->getRemoteIp().toString().c_str());
+    debug_e("Client connected from: %s\n", client->getRemoteIp().toString().c_str());
+    this->_connectCallback();
 }
 
 void EventServer::onClientComplete(TcpClient& client, bool succesfull) {
@@ -74,7 +76,7 @@ void EventServer::publishColorEvent(const ChannelOutput& raw, const HSVCT* pHsv)
 }
 
 void EventServer::publishConfigEvent(const DynamicJsonDocument& config) {
-    JsonRpcMessage msg("config_event");
+    JsonRpcMessage msg("config");
     JsonObject root = msg.getParams();
 
     root.set(config.as<JsonObject>());
@@ -83,6 +85,26 @@ void EventServer::publishConfigEvent(const DynamicJsonDocument& config) {
 
     sendToClients(msg);
 }
+
+void EventServer::publishInfo(std::shared_ptr<JsonObjectStream> pInfo) {
+    JsonRpcMessage msg("info");
+    JsonObject root = msg.getParams();
+
+    root.set(pInfo->getRoot());
+
+    debug_d("EventServer::publishInfo\n");
+
+    sendToClients(msg);
+}
+
+void EventServer::publishStateCompleted() {
+    JsonRpcMessage msg("state_completed");
+
+    debug_d("EventServer::publishStateCompleted\n");
+
+    sendToClients(msg);    
+}
+
 
 void EventServer::publishClockSlaveStatus(int offset, uint32_t interval) {
     debug_d("EventServer::publishClockSlaveStatus: offset: %d | interval :%d\n", offset, interval);

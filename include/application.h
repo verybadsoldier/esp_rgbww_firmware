@@ -44,6 +44,8 @@ public:
     void mountfs(int slot);
     void umountfs();
 
+    JsonObjectStream* getInfo();
+
     inline bool isFilesystemMounted() { return _fs_mounted; };
     inline bool isFirstRun() { return _first_run; };
 #ifdef ARCH_ESP8266
@@ -76,6 +78,8 @@ public:
     NtpClient* pNtpclient = nullptr;
 
 private:
+    void onEventServerConnection();
+
     void loadbootinfo();
 
     Timer _systimer;
