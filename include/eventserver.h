@@ -37,4 +37,5 @@ private:
 	int _nextId = 1;
 
 	ChannelOutput _lastRaw;
+	HSVCT _lastHsv;
 };

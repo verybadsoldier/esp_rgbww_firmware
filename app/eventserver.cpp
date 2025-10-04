@@ -42,9 +42,14 @@ void EventServer::onClientComplete(TcpClient& client, bool succesfull) {
 }
 
 void EventServer::publishColorEvent(const ChannelOutput& raw, const HSVCT* pHsv) {
-    if (raw == _lastRaw)
+    if (raw == _lastRaw && (pHsv == nullptr || *pHsv == _lastHsv))
         return;
+
     _lastRaw = raw;
+        
+    if (pHsv != nullptr) {
+        _lastHsv = *pHsv;
+    }
 
     JsonRpcMessage msg("color_event");
     JsonObject root = msg.getParams();
