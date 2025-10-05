@@ -13,7 +13,7 @@ public:
 	void start();
 	void stop();
 
-	void publishColorEvent(const ChannelOutput& raw, const HSVCT* pColor = NULL);
+	void publishColorEvent(const ChannelOutput& raw, const HSVCT* pColor = NULL, bool force=false);
 	void publishTransitionFinished(const String& name, bool requeued = false);
 	void publishKeepAlive();
 	void publishClockSlaveStatus(int offset, uint32_t interval);

@@ -90,7 +90,7 @@ public:
     void onMasterClock(uint32_t steps);
     void onMasterClockReset();
     virtual void onAnimationFinished(const String& name, bool requeued);
-    void publishToEventServer();
+    void publishToEventServer(bool force = false);
 private:
     static PinConfig parsePinConfigString(String& pinStr);
     static void updateLedCb(void* pTimerArg);

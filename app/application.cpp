@@ -294,6 +294,6 @@ uint32_t Application::getUptime() {
 void Application::onEventServerConnection() {
     eventserver.publishInfo(std::shared_ptr<JsonObjectStream>(getInfo()));
     eventserver.publishConfigEvent(cfg.getConfig());
-    rgbwwctrl.publishToEventServer();
+    rgbwwctrl.publishToEventServer(true);
     eventserver.publishStateCompleted();
 }

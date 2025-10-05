@@ -105,7 +105,7 @@ void APPLedCtrl::setup() {
     colorutils.setWhiteTemperature(app.cfg.color.colortemp.ww, app.cfg.color.colortemp.cw);
 }
 
-void APPLedCtrl::publishToEventServer() {
+void APPLedCtrl::publishToEventServer(bool force) {
     if (!app.cfg.events.server_enabled)
         return;
 
@@ -113,7 +113,7 @@ void APPLedCtrl::publishToEventServer() {
     if (_mode == ColorMode::Hsv)
         pHsv = &getCurrentColor();
 
-    app.eventserver.publishColorEvent(getCurrentOutput(), pHsv);
+    app.eventserver.publishColorEvent(getCurrentOutput(), pHsv, force);
 }
 
 void APPLedCtrl::publishToMqtt() {

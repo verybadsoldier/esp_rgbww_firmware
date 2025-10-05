@@ -41,8 +41,8 @@ void EventServer::onClientComplete(TcpClient& client, bool succesfull) {
     debug_d("Client removed: %x\n", &client);
 }
 
-void EventServer::publishColorEvent(const ChannelOutput& raw, const HSVCT* pHsv) {
-    if (raw == _lastRaw && (pHsv == nullptr || *pHsv == _lastHsv))
+void EventServer::publishColorEvent(const ChannelOutput& raw, const HSVCT* pHsv, bool force) {
+    if (!force && (raw == _lastRaw && (pHsv == nullptr || *pHsv == _lastHsv)))
         return;
 
     _lastRaw = raw;
@@ -78,7 +78,7 @@ void EventServer::publishColorEvent(const ChannelOutput& raw, const HSVCT* pHsv)
     debug_d("EventServer::publishColorEvent\n");
 
     sendToClients(msg);
-}
+ }
 
 void EventServer::publishConfigEvent(const DynamicJsonDocument& config) {
     JsonRpcMessage msg("config");
