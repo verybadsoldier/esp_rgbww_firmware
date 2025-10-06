@@ -59,8 +59,6 @@ bool JsonProcessor::onStop(JsonObject root, String& errorMsg) {
     app.rgbwwctrl.clearAnimationQueue(params.channels);
     app.rgbwwctrl.skipAnimation(params.channels);  // also stops current animation
 
-    onDirect(root, errorMsg);
-
     return true;
 }
 
@@ -78,8 +76,6 @@ bool JsonProcessor::onSkip(JsonObject root, String& errorMsg) {
     if (!JsonProcessor::parseRequestParams(root, params, errorMsg))
         return false;
     app.rgbwwctrl.skipAnimation(params.channels);
-
-    onDirect(root, errorMsg);
 
     return true;
 }
@@ -99,8 +95,6 @@ bool JsonProcessor::onPause(JsonObject root, String& errorMsg) {
         return false;
 
     app.rgbwwctrl.pauseAnimation(params.channels);
-
-    onDirect(root, errorMsg);
 
     return true;
 }
@@ -191,37 +185,10 @@ bool JsonProcessor::onSingleColorCommand(JsonObject root, String& errorMsg) {
     return queueOk;
 }
 
-bool JsonProcessor::onDirect(const String& json, String& errorMsg) {
-	StaticJsonDocument<_jsonDocumentMaxSize> doc;
-    if (!Json::deserialize(doc, json)) {
-        errorMsg = "JSON deserialization error";
-        return false;
-    }
-    return onDirect(doc.as<JsonObject>(), errorMsg);
-}
-
-bool JsonProcessor::onDirect(JsonObject root, String& errorMsg) {
-    RequestParameters params;
-    if (!JsonProcessor::parseRequestParams(root, params, errorMsg))
-        return false;
-
-    if (params.mode == RequestParameters::Mode::Hsv) {
-        app.rgbwwctrl.colorDirectHSV(params.hsv);
-    } else if (params.mode == RequestParameters::Mode::Raw) {
-        app.rgbwwctrl.colorDirectRAW(params.raw);
-    } else {
-        errorMsg = "No color object!";
-    }
-
-    return true;
-}
-
-#include <set>
-
 /*
 * Check for unsupported parameters in the JSON object, by list of allowed fields. Raise an expection if any unsupported field is found.
 */
-bool checkUnsupportedParams(JsonObject obj, const String& rootName, const std::set<String>& allowed, String& errorMsg) {
+bool JsonProcessor::checkUnsupportedParams(JsonObject obj, const String& rootName, const std::set<String>& allowed, String& errorMsg) {
     for (JsonObject::iterator it = obj.begin(); it != obj.end(); ++it) {
         if (allowed.find(it->key().c_str()) == allowed.end()) {
             debug_w("JsonProcessor::checkUnsupportedParams - unsupported param: %s in node %s\n", it->key().c_str(), rootName.c_str());
@@ -235,12 +202,12 @@ bool checkUnsupportedParams(JsonObject obj, const String& rootName, const std::s
 bool JsonProcessor::parseRequestParams(JsonObject root, RequestParameters& params, String& errorMsg) {
 	String value;
 
-    if (!checkUnsupportedParams(root, "root", {"hsv", "raw", "t", "s", "stay", "r", "d", "name", "q", "channels"}, errorMsg))
+    if (!JsonProcessor::checkUnsupportedParams(root, "root", {"hsv", "raw", "t", "s", "stay", "r", "d", "name", "q"}, errorMsg))
         return false;
 
 	JsonObject hsv = root["hsv"];
 	if (!hsv.isNull()) {
-        if (!checkUnsupportedParams(hsv, "hsv", {"h", "s", "v", "ct", "from"}, errorMsg))
+        if (!JsonProcessor::JsonProcessor::checkUnsupportedParams(hsv, "hsv", {"h", "s", "v", "ct", "from"}, errorMsg))
             return false;
         
     	params.mode = RequestParameters::Mode::Hsv;
@@ -254,7 +221,7 @@ bool JsonProcessor::parseRequestParams(JsonObject root, RequestParameters& param
             params.hsv.ct = AbsOrRelValue(value, AbsOrRelValue::Type::Ct);
 
         JsonObject from = hsv["from"];
-        if (!checkUnsupportedParams(from, "hsv.from", {"h", "s", "v", "ct"}, errorMsg))
+        if (!JsonProcessor::checkUnsupportedParams(from, "hsv.from", {"h", "s", "v", "ct"}, errorMsg))
             return false;
 
         if (!from.isNull()) {
@@ -270,7 +237,7 @@ bool JsonProcessor::parseRequestParams(JsonObject root, RequestParameters& param
         }
     }
     else if (!root["raw"].isNull()) {
-        if (!checkUnsupportedParams(root["raw"], "raw", {"r", "g", "b", "ww", "cw", "from"}, errorMsg))
+        if (!JsonProcessor::checkUnsupportedParams(root["raw"], "raw", {"r", "g", "b", "ww", "cw", "from"}, errorMsg))
             return false;
 
     	JsonObject raw = root["raw"];
@@ -289,7 +256,7 @@ bool JsonProcessor::parseRequestParams(JsonObject root, RequestParameters& param
         JsonObject from = raw["from"];
         
         if (!from.isNull()) {
-            if (!checkUnsupportedParams(from, "raw.from", {"r", "g", "b", "ww", "cw"}, errorMsg))
+            if (!JsonProcessor::checkUnsupportedParams(from, "raw.from", {"r", "g", "b", "ww", "cw"}, errorMsg))
                 return false;
 
             params.hasRawFrom = true;
@@ -443,9 +410,6 @@ bool JsonProcessor::onJsonRpc(const String& json, String& errorMsg) {
     }
     else if (method == "continue") {
         return onContinue(rpc.getParams(), errorMsg);
-    }
-    else if (method == "direct") {
-        return onDirect(rpc.getParams(), errorMsg);
     }
     else if (method == "toggle") {
         return onToggle(rpc.getParams(), errorMsg);

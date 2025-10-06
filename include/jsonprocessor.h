@@ -2,6 +2,8 @@
 
 #include <RGBWWLed/RGBWWLedColor.h>
 
+#include <set>
+
 
 class JsonProcessor {
 public:
@@ -28,12 +30,11 @@ public:
     bool onToggle(const String& json, String& msg);
     bool onToggle(JsonObject root, String& msg);
 
-    bool onDirect(const String& json, String& msg);
-    bool onDirect(JsonObject root, String& msg);
-
     bool onJsonRpc(const String& json, String& errorMsg);
 
 private:
+    static bool checkUnsupportedParams(JsonObject obj, const String& rootName, const std::set<String>& allowed, String& errorMsg);
+
     const ApplicationSettings& _settings;
     static const int _jsonDocumentMaxSize = 1024;
 
