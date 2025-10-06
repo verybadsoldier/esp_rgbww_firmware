@@ -121,11 +121,13 @@ void AppMqttClient::onMessageReceived(String topic, String message) {
         }
     }
     else if (app.cfg.sync.cmd_slave_enabled && topic == app.cfg.sync.cmd_slave_topic) {
-        app.jsonproc.onJsonRpc(message);
+        String errorMsg;
+        app.jsonproc.onJsonRpc(message, errorMsg);
+        // todo: handle errorMsg
     }
     else if (app.cfg.sync.color_slave_enabled && (topic == app.cfg.sync.color_slave_topic)) {
         String error;
-        app.jsonproc.onColor(message, error, false);
+        app.jsonproc.onColor(message, error);
     }
 }
 

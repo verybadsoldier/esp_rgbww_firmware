@@ -10,6 +10,16 @@
         "panel": "new"
       },
       "problemMatcher": [],
+    },
+    {
+      "label": "Distclean",
+      "type": "shell",
+      "command": "make V=1 dist-clean",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": [],
     }
 ]
 }

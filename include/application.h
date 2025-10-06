@@ -57,7 +57,6 @@ public:
     inline int getBootMode() { return _bootmode; };
     void switchRom();
 
-    void onCommandRelay(const String& method, const JsonObject& json);
     void onWifiConnected(const String& ssid);
     void onButtonTogglePressed(int pin);
 

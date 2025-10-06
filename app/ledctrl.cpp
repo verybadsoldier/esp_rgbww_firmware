@@ -86,7 +86,7 @@ void APPLedCtrl::init() {
     // boot from off to startup color
     HSVCT startupColorDark = startupColor;
     startupColorDark.v = 0;
-    fadeHSV(startupColorDark, startupColor, 2000); //fade to color in 700ms
+    fadeHSV(startupColorDark, startupColor, 700, 0); //fade to color in 700ms
 }
 
 void APPLedCtrl::setup() {
@@ -270,12 +270,12 @@ void APPLedCtrl::toggle() {
             debug_d("APPLedCtrl::toggle - off");
             _lastHsvct = current;
             current.v = 0;
-            fadeHSV(_lastHsvct, current, toggleFadeTime);
+            fadeHSV(_lastHsvct, current, toggleFadeTime, 0);
         } else {
             debug_d("APPLedCtrl::toggle - on");
             if (_lastHsvct.v == 0)
                 _lastHsvct.v = 100; // we were off before but force some light
-            fadeHSV(current, _lastHsvct, toggleFadeTime);
+            fadeHSV(current, _lastHsvct, toggleFadeTime, 0);
         }
         break;
     }
@@ -286,13 +286,13 @@ void APPLedCtrl::toggle() {
             _lastOutput = current;
             current.r = current.g = current.b = 0;
             current.ww = current.cw = 0;
-            fadeRAW(_lastOutput, current, toggleFadeTime);
+            fadeRAW(_lastOutput, current, toggleFadeTime, 0);
         } else {
             debug_d("APPLedCtrl::toggle - on");
             if (!_lastOutput.isOn())
                 _lastOutput.r = _lastOutput.g = _lastOutput.b = _lastOutput.cw = _lastOutput.ww = 255; // was off before but force light
 
-            fadeRAW(current, _lastOutput, toggleFadeTime);
+            fadeRAW(current, _lastOutput, toggleFadeTime, 0);
         }
     }
     }

@@ -267,13 +267,6 @@ void Application::onWifiConnected(const String& ssid) {
     debug_i("Application::onWifiConnected");
 }
 
-void Application::onCommandRelay(const String& method, const JsonObject& params) {
-    if (!cfg.sync.cmd_master_enabled)
-        return;
-
-    mqttclient.publishCommand(method, params);
-}
-
 void Application::onButtonTogglePressed(int pin) {
     unsigned long now = millis();
     unsigned long diff = now - _lastToggles[pin];

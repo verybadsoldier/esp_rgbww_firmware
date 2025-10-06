@@ -50,6 +50,7 @@ private:
     bool _running = false;
     unsigned _minimumHeap = 8000;
     unsigned _minimumHeapAccept = 8000;
+    static const uint16_t _maxHttpRequestSize = 2048;
 
     bool authenticated(HttpRequest &request, HttpResponse &response);
     bool authenticateExec(HttpRequest &request, HttpResponse &response);

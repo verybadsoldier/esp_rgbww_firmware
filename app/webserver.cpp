@@ -300,7 +300,10 @@ void ApplicationWebserver::onConfig(HttpRequest &request, HttpResponse &response
         bool error = false;
         String error_msg = getApiCodeMsg(API_CODES::API_BAD_REQUEST);
         DynamicJsonDocument doc(CONFIG_MAX_LENGTH);
-        Json::deserialize(doc, body);
+        if (!Json::deserialize(doc, body)) {
+            sendApiCode(response, API_CODES::API_BAD_REQUEST, "JSON deserialization error");
+            return;
+        }
 
         // remove comment for debugging
         //Json::serialize(doc, Serial, Json::Pretty);
@@ -678,9 +681,10 @@ void ApplicationWebserver::onColorPost(HttpRequest &request, HttpResponse &respo
 
     }
 
-    String msg;
-    if (!app.jsonproc.onColor(body, msg)) {
-        sendApiCode(response, API_CODES::API_BAD_REQUEST, msg);
+    String erroMsg;
+    if (!app.jsonproc.onColor(body, erroMsg)) {
+        debug_w("ApplicationWebserver::onColorPost error processing json: %s", erroMsg.c_str());
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, erroMsg);
     }
     else {
 
@@ -828,8 +832,11 @@ void ApplicationWebserver::onConnect(HttpRequest &request, HttpResponse &respons
             return;
 
         }
-        DynamicJsonDocument doc(1024);
-        Json::deserialize(doc, body);
+        DynamicJsonDocument doc(_maxHttpRequestSize);
+        if (!Json::deserialize(doc, body)) {
+            sendApiCode(response, API_CODES::API_BAD_REQUEST, "JSON deserialization error");
+            return;
+        }
         String ssid;
         String password;
         if (Json::getValue(doc["ssid"], ssid)) {
@@ -891,8 +898,11 @@ void ApplicationWebserver::onSystemReq(HttpRequest &request, HttpResponse &respo
         return;
     } else {
         debug_i("ApplicationWebserver::onSystemReq: %s", body.c_str());
-        DynamicJsonDocument doc(1024);
-        Json::deserialize(doc, body);
+        DynamicJsonDocument doc(_maxHttpRequestSize);
+        if (!Json::deserialize(doc, body)) {
+            sendApiCode(response, API_CODES::API_BAD_REQUEST, "JSON deserialization error");
+            return;
+        }
 
         String cmd = doc["cmd"].as<const char*>();
         if (cmd) {
@@ -945,8 +955,11 @@ void ApplicationWebserver::onUpdate(HttpRequest &request, HttpResponse &response
             sendApiCode(response, API_CODES::API_BAD_REQUEST, "could not parse HTTP body");
             return;
         }
-        DynamicJsonDocument doc(1024);
-        Json::deserialize(doc, body);
+        DynamicJsonDocument doc(_maxHttpRequestSize);
+        if (!Json::deserialize(doc, body)) {
+            sendApiCode(response, API_CODES::API_BAD_REQUEST, "JSON deserialization error");
+            return;
+        }
 
         String romurl, spiffsurl;
         if (!Json::getValue(doc["rom"]["url"], romurl) || !Json::getValue(doc["spiffs"]["url"], spiffsurl)) {
@@ -983,7 +996,7 @@ void ApplicationWebserver::onStop(HttpRequest &request, HttpResponse &response) 
     }
 
     String msg;
-    if (app.jsonproc.onStop(request.getBody(), msg, true)) {
+    if (app.jsonproc.onStop(request.getBody(), msg)) {
         sendApiCode(response, API_CODES::API_SUCCESS);
     }
     else {
@@ -1013,7 +1026,7 @@ void ApplicationWebserver::onPause(HttpRequest &request, HttpResponse &response)
     }
 
     String msg;
-    if (app.jsonproc.onPause(request.getBody(), msg, true)) {
+    if (app.jsonproc.onPause(request.getBody(), msg)) {
         sendApiCode(response, API_CODES::API_SUCCESS);
     }
     else {
