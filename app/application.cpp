@@ -29,7 +29,7 @@ void GDB_IRAM_ATTR init() {
 
     Serial.begin(SERIAL_BAUD_RATE); // 115200 by default
     Serial.systemDebugOutput(true); // Debug output to serial
-    //System.setCpuFrequencye(CF_160MHz);
+    // System.setCpuFrequencye(CF_160MHz);
 
     // set CLR pin to input
     pinMode(CLEAR_PIN, INPUT);
@@ -57,7 +57,7 @@ void Application::uptimeCounter() {
 void Application::init() {
     debug_i("RGBWW Controller v %s\r\n", fw_git_version);
 
-    //load settings
+    // load settings
     _uptimetimer.initializeMs(60000, TimerDelegate(&Application::uptimeCounter, this)).start();
 
 #ifdef ARCH_ESP8266
@@ -119,12 +119,10 @@ void Application::init() {
         unsigned interval = cfg.ntp.interval > 0 ? cfg.ntp.interval : NTP_DEFAULT_AUTOQUERY_SECONDS;
         debug_i("Enabling NTP server '%s' with interval %d s", server.c_str(), interval);
         pNtpclient = new NtpClient(server, interval);
-    }
-    else {
+    } else {
         debug_i("Disabling NTP server");
     }
 }
-
 
 JsonObjectStream* Application::getInfo() {
     JsonObjectStream* stream = new JsonObjectStream();
@@ -151,7 +149,7 @@ JsonObjectStream* Application::getInfo() {
     con["netmask"] = WifiStation.getNetworkMask().toString();
     con["gateway"] = WifiStation.getNetworkGateway().toString();
     con["mac"] = WifiStation.getMAC();
-    //con["mdnshostname"] = app.cfg.network.connection.mdnshostname.c_str();
+    // con["mdnshostname"] = app.cfg.network.connection.mdnshostname.c_str();
 
     return stream;
 }
@@ -165,7 +163,7 @@ void Application::initButtons() {
     Vector<String> buttons;
     splitString(cfg.general.buttons_config, ',', buttons);
 
-    for(int i=0; i < buttons.count(); ++i) {
+    for (int i = 0; i < buttons.count(); ++i) {
         if (buttons[i].length() == 0)
             continue;
 
@@ -178,7 +176,7 @@ void Application::initButtons() {
 
         _lastToggles[pin] = 0ul;
 
-        attachInterrupt(pin,  std::bind(&Application::onButtonTogglePressed, this, pin), FALLING);
+        attachInterrupt(pin, std::bind(&Application::onButtonTogglePressed, this, pin), FALLING);
         pinMode(pin, INPUT_PULLUP);
     }
 }
@@ -233,12 +231,10 @@ bool Application::delayedCMD(String cmd, int delay) {
 void Application::mountfs(int slot) {
     debug_i("Application::mountfs rom slot: %i", slot);
     if (slot == 0) {
-        debug_i("Application::mountfs trying to mount spiffs at %x, length %d",
-                RBOOT_SPIFFS_0, SPIFF_SIZE);
+        debug_i("Application::mountfs trying to mount spiffs at %x, length %d", RBOOT_SPIFFS_0, SPIFF_SIZE);
         spiffs_mount_manual(RBOOT_SPIFFS_0, SPIFF_SIZE);
     } else {
-        debug_i("Application::mountfs trying to mount spiffs at %x, length %d",
-                RBOOT_SPIFFS_1, SPIFF_SIZE);
+        debug_i("Application::mountfs trying to mount spiffs at %x, length %d", RBOOT_SPIFFS_1, SPIFF_SIZE);
         spiffs_mount_manual(RBOOT_SPIFFS_1, SPIFF_SIZE);
     }
     _fs_mounted = true;
@@ -270,12 +266,11 @@ void Application::onWifiConnected(const String& ssid) {
 void Application::onButtonTogglePressed(int pin) {
     unsigned long now = millis();
     unsigned long diff = now - _lastToggles[pin];
-    if (diff > cfg.general.buttons_debounce_ms) {  // debounce
+    if (diff > cfg.general.buttons_debounce_ms) { // debounce
         debug_i("Button %d pressed - toggle", pin);
         rgbwwctrl.toggle();
         _lastToggles[pin] = now;
-    }
-    else {
+    } else {
         debug_d("Button press ignored by debounce. Diff: %d Debounce: %d", diff, cfg.general.buttons_debounce_ms);
     }
 }

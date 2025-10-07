@@ -34,19 +34,22 @@ enum class OTASTATUS {
 class Application;
 
 class ApplicationOTA {
-public:
-
+  public:
     void start(String romurl, String spiffsurl);
     void checkAtBoot();
-    inline OTASTATUS getStatus() { return status; };
-    inline bool isProccessing() { return status == OTASTATUS::OTA_PROCESSING; };
+    inline OTASTATUS getStatus() {
+        return status;
+    };
+    inline bool isProccessing() {
+        return status == OTASTATUS::OTA_PROCESSING;
+    };
 
-protected:
+  protected:
     RbootHttpUpdater* otaUpdater;
     uint8 rom_slot;
     OTASTATUS status = OTASTATUS::OTA_NOT_UPDATING;
 
-protected:
+  protected:
     void rBootCallback(RbootHttpUpdater& rbHttpUp, bool result);
     void reset();
     void beforeOTA();

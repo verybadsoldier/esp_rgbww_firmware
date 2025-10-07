@@ -32,60 +32,60 @@ enum API_CODES {
     API_UPDATE_IN_PROGRESS = 4,
 };
 
-class ApplicationWebserver: private HttpServer {
-public:
+class ApplicationWebserver : private HttpServer {
+  public:
     ApplicationWebserver();
-    virtual ~ApplicationWebserver() {};
+    virtual ~ApplicationWebserver(){};
 
     void start();
     void stop();
     void init();
-    inline bool isRunning() { return _running; };
+    inline bool isRunning() {
+        return _running;
+    };
 
     String getApiCodeMsg(API_CODES code);
 
-private:
-
+  private:
     bool _init = false;
     bool _running = false;
     unsigned _minimumHeap = 8000;
     unsigned _minimumHeapAccept = 8000;
     static const uint16_t _maxHttpRequestSize = 2048;
 
-    bool authenticated(HttpRequest &request, HttpResponse &response);
-    bool authenticateExec(HttpRequest &request, HttpResponse &response);
+    bool authenticated(HttpRequest& request, HttpResponse& response);
+    bool authenticateExec(HttpRequest& request, HttpResponse& response);
 
-    void onFile(HttpRequest &request, HttpResponse &response);
-    void onIndex(HttpRequest &request, HttpResponse &response);
-    void onWebapp(HttpRequest &request, HttpResponse &response);
-    void onConfig(HttpRequest &request, HttpResponse &response);
-    void onInfo(HttpRequest &request, HttpResponse &response);
-    void onColor(HttpRequest &request, HttpResponse &response);
-    void onNetworks(HttpRequest &request, HttpResponse &response);
-    void onScanNetworks(HttpRequest &request, HttpResponse &response);
-    void onSystemReq(HttpRequest &request, HttpResponse &response);
-    void onUpdate(HttpRequest &request, HttpResponse &response);
-    void onConnect(HttpRequest &request, HttpResponse &response);
-    void onPing(HttpRequest &request, HttpResponse &response);
-    void onStop(HttpRequest &request, HttpResponse &response);
-    void onSkip(HttpRequest &request, HttpResponse &response);
-    void onPause(HttpRequest &request, HttpResponse &response);
-    void onContinue(HttpRequest &request, HttpResponse &response);
-    void onBlink(HttpRequest &request, HttpResponse &response);
-    void onToggle(HttpRequest &request, HttpResponse &response);
+    void onFile(HttpRequest& request, HttpResponse& response);
+    void onIndex(HttpRequest& request, HttpResponse& response);
+    void onWebapp(HttpRequest& request, HttpResponse& response);
+    void onConfig(HttpRequest& request, HttpResponse& response);
+    void onInfo(HttpRequest& request, HttpResponse& response);
+    void onColor(HttpRequest& request, HttpResponse& response);
+    void onNetworks(HttpRequest& request, HttpResponse& response);
+    void onScanNetworks(HttpRequest& request, HttpResponse& response);
+    void onSystemReq(HttpRequest& request, HttpResponse& response);
+    void onUpdate(HttpRequest& request, HttpResponse& response);
+    void onConnect(HttpRequest& request, HttpResponse& response);
+    void onPing(HttpRequest& request, HttpResponse& response);
+    void onStop(HttpRequest& request, HttpResponse& response);
+    void onSkip(HttpRequest& request, HttpResponse& response);
+    void onPause(HttpRequest& request, HttpResponse& response);
+    void onContinue(HttpRequest& request, HttpResponse& response);
+    void onBlink(HttpRequest& request, HttpResponse& response);
+    void onToggle(HttpRequest& request, HttpResponse& response);
 
-    void onColorGet(HttpRequest &request, HttpResponse &response);
-    void onColorPost(HttpRequest &request, HttpResponse &response);
+    void onColorGet(HttpRequest& request, HttpResponse& response);
+    void onColorPost(HttpRequest& request, HttpResponse& response);
     bool onColorPostCmd(JsonObject& root, String& errorMsg);
 
-    void sendApiResponse(HttpResponse &response, JsonObjectStream* stream, int code = 200);
-    void sendApiCode(HttpResponse &response, API_CODES code, String msg = "");
+    void sendApiResponse(HttpResponse& response, JsonObjectStream* stream, int code = 200);
+    void sendApiCode(HttpResponse& response, API_CODES code, String msg = "");
 
-    bool checkHeap(HttpResponse &response);
+    bool checkHeap(HttpResponse& response);
     JsonObjectStream* getInfo();
 
     static bool isPrintable(String& str);
-
 };
 
 #endif // APP_WEBSERVER_H_

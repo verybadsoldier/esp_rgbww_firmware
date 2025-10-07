@@ -4,9 +4,8 @@
 
 #include <set>
 
-
 class JsonProcessor {
-public:
+  public:
     JsonProcessor(const ApplicationSettings& settings) : _settings(settings) {}
 
     bool onColor(const String& json, String& msg);
@@ -32,8 +31,9 @@ public:
 
     bool onJsonRpc(const String& json, String& errorMsg);
 
-private:
-    static bool checkUnsupportedParams(JsonObject obj, const String& rootName, const std::set<String>& allowed, String& errorMsg);
+  private:
+    static bool checkUnsupportedParams(JsonObject obj, const String& rootName, const std::set<String>& allowed,
+                                       String& errorMsg);
 
     const ApplicationSettings& _settings;
     static const int _jsonDocumentMaxSize = 1024;
