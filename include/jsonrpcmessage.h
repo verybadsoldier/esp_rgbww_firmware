@@ -1,31 +1,29 @@
 #pragma once
 
-#include <RGBWWLed/RGBWWLed.h>
 #include <JsonObjectStream.h>
-
+#include <RGBWWLed/RGBWWLed.h>
 
 class JsonRpcMessage {
-public:
+  public:
     JsonRpcMessage(const String& name);
     JsonObjectStream& getStream();
     void setId(int id);
     JsonObject getParams();
     JsonObject getRoot();
 
-private:
+  private:
     JsonObjectStream _stream;
     JsonObject _pParams;
 };
 
 class JsonRpcMessageIn {
-public:
+  public:
     JsonRpcMessageIn(const String& json);
     JsonObject getParams();
 
     JsonObject getRoot();
     String getMethod();
 
-private:
+  private:
     DynamicJsonDocument _doc;
 };
-

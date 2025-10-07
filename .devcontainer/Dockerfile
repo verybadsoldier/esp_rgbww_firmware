@@ -14,7 +14,7 @@ RUN if [ "${REINSTALL_CMAKE_VERSION_FROM_SOURCE}" != "none" ]; then \
 # RUN su vscode -c "${VCPKG_ROOT}/vcpkg install <your-port-name-here>"
 COPY ./esp-open-sdk.tar.xz /tmp
 
-RUN apt update && apt install -y python
+RUN apt update && apt install -y python clang-format
 
 RUN mkdir -p /opt && \
     cd /opt && \

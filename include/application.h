@@ -27,7 +27,7 @@ static const char* fw_git_date = GITDATE;
 // main forward declarations
 class Application {
 
-public:
+  public:
     Application();
     ~Application();
 
@@ -46,15 +46,27 @@ public:
 
     JsonObjectStream* getInfo();
 
-    inline bool isFilesystemMounted() { return _fs_mounted; };
-    inline bool isFirstRun() { return _first_run; };
+    inline bool isFilesystemMounted() {
+        return _fs_mounted;
+    };
+    inline bool isFirstRun() {
+        return _first_run;
+    };
 #ifdef ARCH_ESP8266
-    inline bool isTempBoot() { return _bootmode == MODE_TEMP_ROM; };
+    inline bool isTempBoot() {
+        return _bootmode == MODE_TEMP_ROM;
+    };
 #else
-    bool isTempBoot() { return false; };
+    bool isTempBoot() {
+        return false;
+    };
 #endif
-    inline int getRomSlot() { return _romslot; };
-    inline int getBootMode() { return _bootmode; };
+    inline int getRomSlot() {
+        return _romslot;
+    };
+    inline int getBootMode() {
+        return _bootmode;
+    };
     void switchRom();
 
     void onWifiConnected(const String& ssid);
@@ -63,7 +75,7 @@ public:
     uint32_t getUptime();
     void uptimeCounter();
 
-public:
+  public:
     AppWIFI network;
     ApplicationWebserver webserver;
     APPLedCtrl rgbwwctrl;
@@ -76,7 +88,7 @@ public:
     JsonProcessor jsonproc;
     NtpClient* pNtpclient = nullptr;
 
-private:
+  private:
     void onEventServerConnection();
 
     void loadbootinfo();

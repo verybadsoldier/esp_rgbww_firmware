@@ -1,6 +1,5 @@
 #include "jsonrpcmessage.h"
 
-
 JsonRpcMessage::JsonRpcMessage(const String& name) {
     JsonObject json = _stream.getRoot();
     json["jsonrpc"] = "2.0";
@@ -30,7 +29,7 @@ void JsonRpcMessage::setId(int id) {
 ////////////////////////////////////////
 
 JsonRpcMessageIn::JsonRpcMessageIn(const String& json) : _doc(1024) {
-	Json::deserialize(_doc, json);
+    Json::deserialize(_doc, json);
 }
 
 JsonObject JsonRpcMessageIn::getParams() {

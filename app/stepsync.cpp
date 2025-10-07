@@ -16,11 +16,12 @@ uint32_t StepSync::onMasterClock(uint32_t stepsCurrent, uint32_t stepsMaster) {
 
         int curOffset = masterDiff - diff;
         _catchupOffset += curOffset;
-        debug_i("Diff: %d | Master Diff: %d | CurOffset: %d | Catchup Offset: %d\n", diff, masterDiff, curOffset, _catchupOffset);
+        debug_i("Diff: %d | Master Diff: %d | CurOffset: %d | Catchup Offset: %d\n", diff, masterDiff, curOffset,
+                _catchupOffset);
 
         float curSteering = 1.0 - static_cast<float>(_catchupOffset) / masterDiff;
         curSteering = std::min(std::max(curSteering, 0.5f), 1.5f);
-        _steering = 0.5f *_steering + 0.5f * curSteering;
+        _steering = 0.5f * _steering + 0.5f * curSteering;
         nextInt *= _steering;
         debug_i("New Int: %d | CurSteering: %f | Steering: %f\n", nextInt, curSteering, _steering);
     }
@@ -35,4 +36,3 @@ uint32_t StepSync::onMasterClock(uint32_t stepsCurrent, uint32_t stepsMaster) {
 int StepSync::getCatchupOffset() const {
     return _catchupOffset;
 }
-

@@ -4,10 +4,9 @@
 
 class IMasterClockSink;
 
+class AppMqttClient {
 
-class AppMqttClient{
-
-public:
+  public:
     AppMqttClient();
     virtual ~AppMqttClient();
 
@@ -26,7 +25,7 @@ public:
     void publishTransitionFinished(const String& name, bool requeued);
     void publishConfigEvent(const DynamicJsonDocument& config);
 
-private:
+  private:
     void connectDelayed(int delay = 2000);
     void connect();
     void onComplete(TcpClient& client, bool success);

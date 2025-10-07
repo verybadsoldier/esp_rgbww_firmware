@@ -50,7 +50,7 @@ void AppWIFI::scanCompleted(bool succeeded, BssList& list) {
             }
         }
     }
-    _networks.sort([](const BssInfo& a, const BssInfo& b) {return b.rssi - a.rssi;});
+    _networks.sort([](const BssInfo& a, const BssInfo& b) { return b.rssi - a.rssi; });
     _scanning = false;
 
     // make sure to trigger connect again cause otherwise the Wifi reconnect attempts may come to a stop
@@ -70,7 +70,7 @@ void AppWIFI::init() {
     // ESP SDK function to disable wifi sleep
     wifi_set_sleep_type(NONE_SLEEP_T);
 
-    //don`t enable/disable again to save eeprom cycles
+    // don`t enable/disable again to save eeprom cycles
     if (!WifiStation.isEnabled()) {
         debug_i("AppWIFI::init enable WifiStation");
         WifiStation.enable(true, true);
@@ -96,7 +96,6 @@ void AppWIFI::init() {
     WifiEvents.onStationConnect(StationConnectDelegate(&AppWIFI::_STAConnected, this));
     WifiEvents.onStationGotIP(StationGotIPDelegate(&AppWIFI::_STAGotIP, this));
 
-
     if (WifiStation.getSSID() == "") {
 
         debug_i("AppWIFI::init no AP to connect to - start own AP");
@@ -108,18 +107,19 @@ void AppWIFI::init() {
 
     } else {
 
-        //configure WifiClient
+        // configure WifiClient
         if (!app.cfg.network.connection.dhcp && !app.cfg.network.connection.ip.isNull()) {
             debug_i("AppWIFI::init setting static ip");
             if (WifiStation.isEnabledDHCP()) {
                 debug_i("AppWIFI::init disabled dhcp");
                 WifiStation.enableDHCP(false);
             }
-            if (!(WifiStation.getIP() == app.cfg.network.connection.ip)
-                    || !(WifiStation.getNetworkGateway() == app.cfg.network.connection.gateway)
-                    || !(WifiStation.getNetworkMask() == app.cfg.network.connection.netmask)) {
+            if (!(WifiStation.getIP() == app.cfg.network.connection.ip) ||
+                !(WifiStation.getNetworkGateway() == app.cfg.network.connection.gateway) ||
+                !(WifiStation.getNetworkMask() == app.cfg.network.connection.netmask)) {
                 debug_i("AppWIFI::init updating ip configuration");
-                WifiStation.setIP(app.cfg.network.connection.ip,app.cfg.network.connection.netmask,app.cfg.network.connection.gateway);
+                WifiStation.setIP(app.cfg.network.connection.ip, app.cfg.network.connection.netmask,
+                                  app.cfg.network.connection.gateway);
             }
         } else {
             debug_i("AppWIFI::init dhcp");
@@ -177,24 +177,24 @@ void AppWIFI::_STAGotIP(IpAddress ip, IpAddress mask, IpAddress gateway) {
 
     // if we have a new connection, wait 90 seconds oterhwise
     // disable the accesspoint mode directly
-    if(_new_connection) {
+    if (_new_connection) {
         stopAp(90000);
     } else {
         stopAp(1000);
     }
 
-    if(app.cfg.network.mqtt.enabled) {
+    if (app.cfg.network.mqtt.enabled) {
         app.mqttclient.start();
     }
 }
 
 void AppWIFI::stopAp(int delay) {
     if (!WifiAccessPoint.isEnabled()) {
-    	return;
+        return;
     }
 
     if (delay > 0) {
-    	debug_i("AppWIFI::stopAp delay %i", delay);
+        debug_i("AppWIFI::stopAp delay %i", delay);
         _timer.initializeMs(delay, std::bind(&AppWIFI::stopAp, this, 0)).startOnce();
         return;
     }

@@ -23,7 +23,7 @@
 #ifndef RGBWWCTRL_H_
 #define RGBWWCTRL_H_
 
-//default defines
+// default defines
 
 #define CLEAR_PIN 16
 #define DEFAULT_AP_IP "192.168.4.1"
@@ -45,20 +45,20 @@
 // Debugging
 #define DEBUG_APP 1
 
-//includes
+// includes
 #include <RGBWWLed/RGBWWLed.h>
 #ifdef ARCH_ESP8266
 #include <otaupdate.h>
 #endif
+#include <application.h>
+#include <arduinojson.h>
 #include <config.h>
-#include <ledctrl.h>
-#include <networking.h>
-#include <webserver.h>
-#include <mqtt.h>
 #include <eventserver.h>
 #include <jsonprocessor.h>
-#include <application.h>
+#include <ledctrl.h>
+#include <mqtt.h>
+#include <networking.h>
 #include <stepsync.h>
-#include <arduinojson.h>
+#include <webserver.h>
 
 #endif /* RGBWWCTRL_H_ */

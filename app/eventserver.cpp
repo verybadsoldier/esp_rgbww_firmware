@@ -30,7 +30,7 @@ void EventServer::stop() {
     shutdown();
 }
 
-void EventServer::onClient(TcpClient *client) {
+void EventServer::onClient(TcpClient* client) {
     TcpServer::onClient(client);
     debug_e("Client connected from: %s\n", client->getRemoteIp().toString().c_str());
     this->_connectCallback();
@@ -46,7 +46,7 @@ void EventServer::publishColorEvent(const ChannelOutput& raw, const HSVCT* pHsv,
         return;
 
     _lastRaw = raw;
-        
+
     if (pHsv != nullptr) {
         _lastHsv = *pHsv;
     }
@@ -78,7 +78,7 @@ void EventServer::publishColorEvent(const ChannelOutput& raw, const HSVCT* pHsv,
     debug_d("EventServer::publishColorEvent\n");
 
     sendToClients(msg);
- }
+}
 
 void EventServer::publishConfigEvent(const DynamicJsonDocument& config) {
     JsonRpcMessage msg("config");
@@ -107,9 +107,8 @@ void EventServer::publishStateCompleted() {
 
     debug_d("EventServer::publishStateCompleted\n");
 
-    sendToClients(msg);    
+    sendToClients(msg);
 }
-
 
 void EventServer::publishClockSlaveStatus(int offset, uint32_t interval) {
     debug_d("EventServer::publishClockSlaveStatus: offset: %d | interval :%d\n", offset, interval);
@@ -140,12 +139,13 @@ void EventServer::publishTransitionFinished(const String& name, bool requeued) {
 }
 
 void EventServer::sendToClients(JsonRpcMessage& rpcMsg) {
-    //Serial.printf("EventServer: sendToClient: %x, Vector: %x Tests: %d\n", _client, _clients.elementAt(0), _tests[0]);
+    // Serial.printf("EventServer: sendToClient: %x, Vector: %x Tests: %d\n", _client, _clients.elementAt(0),
+    // _tests[0]);
     rpcMsg.setId(_nextId++);
 
     String jsonStr = Json::serialize(rpcMsg.getRoot());
 
-    for(unsigned i=0; i < connections.size(); ++i) {
+    for (unsigned i = 0; i < connections.size(); ++i) {
         auto pClient = reinterpret_cast<TcpClient*>(connections[i]);
         pClient->sendString(jsonStr);
     }

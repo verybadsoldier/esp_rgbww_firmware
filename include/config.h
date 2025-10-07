@@ -21,14 +21,13 @@
  */
 #pragma once
 
-#include <RGBWWCtrl.h>
 #include <JsonObjectStream.h>
+#include <RGBWWCtrl.h>
 
 #define APP_SETTINGS_FILE ".cfg"
 #define APP_SETTINGS_VERSION 1
 
 #define CONFIG_MAX_LENGTH 2048
-
 
 struct ApplicationSettings {
     struct network {
@@ -65,7 +64,7 @@ struct ApplicationSettings {
         int clock_master_interval = 30;
 
         bool clock_slave_enabled = false;
-        String clock_slave_topic= "home/led1/clock";
+        String clock_slave_topic = "home/led1/clock";
 
         bool cmd_master_enabled = false;
         bool cmd_slave_enabled = false;
@@ -142,11 +141,11 @@ struct ApplicationSettings {
         // 1024 is too small and leads to load error
         DynamicJsonDocument doc(CONFIG_MAX_LENGTH);
         if (Json::loadFromFile(doc, APP_SETTINGS_FILE)) {
-        	auto root = doc.as<JsonObject>();
-        	auto net = root["network"];
+            auto root = doc.as<JsonObject>();
+            auto net = root["network"];
 
             // connection
-        	JsonObject con = net["connection"];
+            JsonObject con = net["connection"];
             network.connection.mdnshostname = con["hostname"].as<const char*>();
             network.connection.dhcp = con["dhcp"];
             network.connection.ip = con["ip"].as<String>();
@@ -231,7 +230,6 @@ struct ApplicationSettings {
                 Json::getValue(jsync["color_slave_topic"], sync.color_slave_topic);
             }
 
-
             // events
             auto jevents = root["events"];
             if (!jevents.isNull()) {
@@ -242,10 +240,9 @@ struct ApplicationSettings {
 
             if (print) {
                 debug_i("Loaded config file with following contents:");
-            	Json::serialize(doc, Serial, Json::Pretty);
+                Json::serialize(doc, Serial, Json::Pretty);
             }
-        }
-        else {
+        } else {
             debug_e("Could not load config file: %s", APP_SETTINGS_FILE);
         }
 
@@ -344,7 +341,7 @@ struct ApplicationSettings {
 
         JsonObject root = doc.as<JsonObject>();
         if (print) {
-        	Json::serialize(root, Serial, Json::Pretty);
+            Json::serialize(root, Serial, Json::Pretty);
         }
 
         debug_i("Saving config to file: %s", APP_SETTINGS_FILE);
@@ -368,5 +365,5 @@ struct ApplicationSettings {
 
     bool isColortempInRange(int ct) const {
         return (ct >= color.colortemp.ww && ct <= color.colortemp.cw);
-    }   
+    }
 };
