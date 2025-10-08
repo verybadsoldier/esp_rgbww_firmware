@@ -59,7 +59,7 @@ class JsonProcessor {
         RequestChannelOutput raw;
         RequestChannelOutput rawFrom;
 
-        int direction = 1;
+        HueTransitionDirection direction = HueTransitionDirection::dir_short;
         bool requeue = false;
         RampTimeOrSpeed ramp = 0;
         int stay = 0;

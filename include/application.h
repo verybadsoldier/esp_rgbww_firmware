@@ -21,6 +21,16 @@
  */
 #pragma once
 
+#include "config.h"
+#include "eventserver.h"
+#include "jsonprocessor.h"
+#include "ledctrl.h"
+#include "mqtt.h"
+#include "networking.h"
+#include "webserver.h"
+
+#include <arduinojson.h>
+
 static const char* fw_git_version = GITVERSION;
 static const char* fw_git_date = GITDATE;
 
