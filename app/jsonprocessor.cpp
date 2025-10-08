@@ -295,7 +295,19 @@ bool JsonProcessor::parseRequestParams(JsonObject root, RequestParameters& param
         params.requeue = root["r"].as<bool>();
     }
 
-    Json::getValue(root["d"], params.direction);
+    String direction;
+    Json::getValue(root["d"], direction);
+
+    if (direction == "short") {
+        params.direction = HueTransitionDirection::dir_short;
+    }
+    else if (direction == "long") {
+        params.direction = HueTransitionDirection::dir_long;
+    }
+    else {
+        errorMsg = "Invalid hue direction";
+        return false;
+    }
 
     Json::getValue(root["name"], params.name);
 
@@ -366,11 +378,6 @@ bool JsonProcessor::RequestParameters::checkParams(String& errorMsg, const Appli
 
     if (queue == QueuePolicy::Invalid) {
         errorMsg = "Invalid queue policy";
-        return false;
-    }
-
-    if (direction < 0 || direction > 1) {
-        errorMsg = "Invalid direction";
         return false;
     }
 
