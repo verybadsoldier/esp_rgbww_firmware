@@ -296,17 +296,17 @@ bool JsonProcessor::parseRequestParams(JsonObject root, RequestParameters& param
     }
 
     String direction;
-    Json::getValue(root["d"], direction);
-
-    if (direction == "short") {
-        params.direction = HueTransitionDirection::dir_short;
-    }
-    else if (direction == "long") {
-        params.direction = HueTransitionDirection::dir_long;
-    }
-    else {
-        errorMsg = "Invalid hue direction";
-        return false;
+    if (Json::getValue(root["d"], direction)) {
+        if (direction == "short") {
+            params.direction = HueTransitionDirection::dir_short;
+        }
+        else if (direction == "long") {
+            params.direction = HueTransitionDirection::dir_long;
+        }
+        else {
+            errorMsg = "Invalid hue direction";
+            return false;
+        }
     }
 
     Json::getValue(root["name"], params.name);
