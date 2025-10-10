@@ -79,6 +79,7 @@ class Application {
     };
     void switchRom();
 
+    void onCommandRelay(const String& method, const JsonObject& json);
     void onWifiConnected(const String& ssid);
     void onButtonTogglePressed(int pin);
 

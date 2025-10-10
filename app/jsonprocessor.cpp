@@ -1,16 +1,16 @@
 #include <RGBWWCtrl.h>
 
-bool JsonProcessor::onColor(const String& json, String& errorMsg) {
+bool JsonProcessor::onColor(const String& json, String& errorMsg, bool relay) {
     debug_e("JsonProcessor::onColor: %s", json.c_str());
     StaticJsonDocument<_jsonDocumentMaxSize> doc;
     if (!Json::deserialize(doc, json)) {
         errorMsg = "JSON deserialization error";
         return false;
     }
-    return onColor(doc.as<JsonObject>(), errorMsg);
+    return onColor(doc.as<JsonObject>(), errorMsg, relay);
 }
 
-bool JsonProcessor::onColor(JsonObject root, String& errorMsg) {
+bool JsonProcessor::onColor(JsonObject root, String& errorMsg, bool relay) {
     bool result = false;
     auto cmds = root["cmds"].as<JsonArray>();
     if (!cmds.isNull()) {
@@ -37,19 +37,22 @@ bool JsonProcessor::onColor(JsonObject root, String& errorMsg) {
             result = false;
     }
 
+   if (relay)
+        app.onCommandRelay("color", root);
+
     return result;
 }
 
-bool JsonProcessor::onStop(const String& json, String& errorMsg) {
+bool JsonProcessor::onStop(const String& json, String& errorMsg, bool relay) {
     StaticJsonDocument<_jsonDocumentMaxSize> doc;
     if (!Json::deserialize(doc, json)) {
         errorMsg = "JSON deserialization error";
         return false;
     }
-    return onStop(doc.as<JsonObject>(), errorMsg);
+    return onStop(doc.as<JsonObject>(), errorMsg, relay);
 }
 
-bool JsonProcessor::onStop(JsonObject root, String& errorMsg) {
+bool JsonProcessor::onStop(JsonObject root, String& errorMsg, bool relay) {
     RequestParameters params;
     if (!JsonProcessor::parseRequestParams(root, params, errorMsg))
         return false;
@@ -57,28 +60,38 @@ bool JsonProcessor::onStop(JsonObject root, String& errorMsg) {
     app.rgbwwctrl.clearAnimationQueue(params.channels);
     app.rgbwwctrl.skipAnimation(params.channels); // also stops current animation
 
+    if (relay) {
+        addChannelStatesToCmd(root, params.channels);
+        app.onCommandRelay("stop", root);
+    }
+
     return true;
 }
 
-bool JsonProcessor::onSkip(const String& json, String& errorMsg) {
+bool JsonProcessor::onSkip(const String& json, String& errorMsg, bool relay) {
     StaticJsonDocument<_jsonDocumentMaxSize> doc;
     if (!Json::deserialize(doc, json)) {
         errorMsg = "JSON deserialization error";
         return false;
     }
-    return onSkip(doc.as<JsonObject>(), errorMsg);
+    return onSkip(doc.as<JsonObject>(), errorMsg, relay);
 }
 
-bool JsonProcessor::onSkip(JsonObject root, String& errorMsg) {
+bool JsonProcessor::onSkip(JsonObject root, String& errorMsg, bool relay) {
     RequestParameters params;
     if (!JsonProcessor::parseRequestParams(root, params, errorMsg))
         return false;
     app.rgbwwctrl.skipAnimation(params.channels);
 
+    if (relay) {
+        addChannelStatesToCmd(root, params.channels);
+        app.onCommandRelay("skip", root);
+    }
+
     return true;
 }
 
-bool JsonProcessor::onPause(const String& json, String& errorMsg) {
+bool JsonProcessor::onPause(const String& json, String& errorMsg, bool relay) {
     StaticJsonDocument<_jsonDocumentMaxSize> doc;
     if (!Json::deserialize(doc, json)) {
         errorMsg = "JSON deserialization error";
@@ -87,44 +100,52 @@ bool JsonProcessor::onPause(const String& json, String& errorMsg) {
     return onPause(doc.as<JsonObject>(), errorMsg);
 }
 
-bool JsonProcessor::onPause(JsonObject root, String& errorMsg) {
+bool JsonProcessor::onPause(JsonObject root, String& errorMsg, bool relay) {
     RequestParameters params;
     if (!JsonProcessor::parseRequestParams(root, params, errorMsg))
         return false;
 
     app.rgbwwctrl.pauseAnimation(params.channels);
 
+    if (relay) {
+        addChannelStatesToCmd(root, params.channels);
+        app.onCommandRelay("pause", root);
+    }
+
     return true;
 }
 
-bool JsonProcessor::onContinue(const String& json, String& errorMsg) {
+bool JsonProcessor::onContinue(const String& json, String& errorMsg, bool relay) {
     StaticJsonDocument<_jsonDocumentMaxSize> doc;
     if (!Json::deserialize(doc, json)) {
         errorMsg = "JSON deserialization error";
         return false;
     }
-    return onContinue(doc.as<JsonObject>(), errorMsg);
+    return onContinue(doc.as<JsonObject>(), errorMsg, relay);
 }
 
-bool JsonProcessor::onContinue(JsonObject root, String& errorMsg) {
+bool JsonProcessor::onContinue(JsonObject root, String& errorMsg, bool relay) {
     RequestParameters params;
     if (!JsonProcessor::parseRequestParams(root, params, errorMsg))
         return false;
     app.rgbwwctrl.continueAnimation(params.channels);
 
+    if (relay)
+        app.onCommandRelay("continue", root);
+
     return true;
 }
 
-bool JsonProcessor::onBlink(const String& json, String& errorMsg) {
+bool JsonProcessor::onBlink(const String& json, String& errorMsg, bool relay) {
     StaticJsonDocument<_jsonDocumentMaxSize> doc;
     if (!Json::deserialize(doc, json)) {
         errorMsg = "JSON deserialization error";
         return false;
     }
-    return onBlink(doc.as<JsonObject>(), errorMsg);
+    return onBlink(doc.as<JsonObject>(), errorMsg, relay);
 }
 
-bool JsonProcessor::onBlink(JsonObject root, String& errorMsg) {
+bool JsonProcessor::onBlink(JsonObject root, String& errorMsg, bool relay) {
     RequestParameters params;
     params.ramp.value = 500; // default
 
@@ -133,20 +154,26 @@ bool JsonProcessor::onBlink(JsonObject root, String& errorMsg) {
 
     app.rgbwwctrl.blink(params.channels, params.ramp.value, params.queue, params.requeue, params.name);
 
+    if (relay)
+        app.onCommandRelay("blink", root);
+
     return true;
 }
 
-bool JsonProcessor::onToggle(const String& json, String& errorMsg) {
+bool JsonProcessor::onToggle(const String& json, String& errorMsg, bool relay) {
     StaticJsonDocument<_jsonDocumentMaxSize> doc;
     if (!Json::deserialize(doc, json)) {
         errorMsg = "JSON deserialization error";
         return false;
     }
-    return onToggle(doc.as<JsonObject>(), errorMsg);
+    return onToggle(doc.as<JsonObject>(), errorMsg, relay);
 }
 
-bool JsonProcessor::onToggle(JsonObject root, String& errorMsg) {
+bool JsonProcessor::onToggle(JsonObject root, String& errorMsg, bool relay) {
     app.rgbwwctrl.toggle();
+
+    if (relay)
+        app.onCommandRelay("toggle", root);
 
     return true;
 }
