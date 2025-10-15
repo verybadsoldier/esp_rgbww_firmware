@@ -72,7 +72,7 @@ class JsonProcessor {
         bool checkParams(String& errorMsg, const ApplicationSettings& settings) const;
     };
 
-    bool parseRequestParams(JsonObject root, RequestParameters& params, String& errorMsg);
+    bool parseRequestParams(JsonObject root, RequestParameters& params, bool allowChannelsParam, String& errorMsg);
     void addChannelStatesToCmd(JsonObject root, const RGBWWLed::ChannelList& channels);
 
     bool onSingleColorCommand(JsonObject root, String& errorMsg);

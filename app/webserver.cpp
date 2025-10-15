@@ -976,11 +976,12 @@ void ApplicationWebserver::onStop(HttpRequest& request, HttpResponse& response) 
         return;
     }
 
-    String msg;
-    if (app.jsonproc.onStop(request.getBody(), msg)) {
+    String errorMsg;
+    if (app.jsonproc.onStop(request.getBody(), errorMsg)) {
         sendApiCode(response, API_CODES::API_SUCCESS);
     } else {
-        sendApiCode(response, API_CODES::API_BAD_REQUEST);
+        debug_w("ApplicationWebserver::onStop error processing json: %s", errorMsg.c_str());
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, errorMsg);
     }
 }
 
@@ -990,11 +991,12 @@ void ApplicationWebserver::onSkip(HttpRequest& request, HttpResponse& response) 
         return;
     }
 
-    String msg;
-    if (app.jsonproc.onSkip(request.getBody(), msg)) {
+    String errorMsg;
+    if (app.jsonproc.onSkip(request.getBody(), errorMsg)) {
         sendApiCode(response, API_CODES::API_SUCCESS);
     } else {
-        sendApiCode(response, API_CODES::API_BAD_REQUEST);
+        debug_w("ApplicationWebserver::onSkip error processing json: %s", errorMsg.c_str());
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, errorMsg);
     }
 }
 
@@ -1004,11 +1006,12 @@ void ApplicationWebserver::onPause(HttpRequest& request, HttpResponse& response)
         return;
     }
 
-    String msg;
-    if (app.jsonproc.onPause(request.getBody(), msg)) {
+    String errorMsg;
+    if (app.jsonproc.onPause(request.getBody(), errorMsg)) {
         sendApiCode(response, API_CODES::API_SUCCESS);
     } else {
-        sendApiCode(response, API_CODES::API_BAD_REQUEST);
+        debug_w("ApplicationWebserver::onPause error processing json: %s", errorMsg.c_str());
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, errorMsg);
     }
 }
 
@@ -1018,11 +1021,12 @@ void ApplicationWebserver::onContinue(HttpRequest& request, HttpResponse& respon
         return;
     }
 
-    String msg;
-    if (app.jsonproc.onContinue(request.getBody(), msg)) {
+    String errorMsg;
+    if (app.jsonproc.onContinue(request.getBody(), errorMsg)) {
         sendApiCode(response, API_CODES::API_SUCCESS);
     } else {
-        sendApiCode(response, API_CODES::API_BAD_REQUEST);
+        debug_w("ApplicationWebserver::onContinue error processing json: %s", errorMsg.c_str());
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, errorMsg);
     }
 }
 
@@ -1032,11 +1036,12 @@ void ApplicationWebserver::onBlink(HttpRequest& request, HttpResponse& response)
         return;
     }
 
-    String msg;
-    if (app.jsonproc.onBlink(request.getBody(), msg)) {
+    String errorMsg;
+    if (app.jsonproc.onBlink(request.getBody(), errorMsg)) {
         sendApiCode(response, API_CODES::API_SUCCESS);
     } else {
-        sendApiCode(response, API_CODES::API_BAD_REQUEST);
+        debug_w("ApplicationWebserver::onBlink error processing json: %s", errorMsg.c_str());
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, errorMsg);
     }
 }
 
@@ -1046,10 +1051,11 @@ void ApplicationWebserver::onToggle(HttpRequest& request, HttpResponse& response
         return;
     }
 
-    String msg;
-    if (app.jsonproc.onToggle(request.getBody(), msg)) {
+    String errorMsg;
+    if (app.jsonproc.onToggle(request.getBody(), errorMsg)) {
         sendApiCode(response, API_CODES::API_SUCCESS);
     } else {
-        sendApiCode(response, API_CODES::API_BAD_REQUEST);
+        debug_w("ApplicationWebserver::onToggle error processing json: %s", errorMsg.c_str());
+        sendApiCode(response, API_CODES::API_BAD_REQUEST, errorMsg);
     }
 }

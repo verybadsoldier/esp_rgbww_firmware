@@ -54,7 +54,7 @@ bool JsonProcessor::onStop(const String& json, String& errorMsg, bool relay) {
 
 bool JsonProcessor::onStop(JsonObject root, String& errorMsg, bool relay) {
     RequestParameters params;
-    if (!JsonProcessor::parseRequestParams(root, params, errorMsg))
+    if (!JsonProcessor::parseRequestParams(root, params, true, errorMsg))
         return false;
 
     app.rgbwwctrl.clearAnimationQueue(params.channels);
@@ -79,7 +79,7 @@ bool JsonProcessor::onSkip(const String& json, String& errorMsg, bool relay) {
 
 bool JsonProcessor::onSkip(JsonObject root, String& errorMsg, bool relay) {
     RequestParameters params;
-    if (!JsonProcessor::parseRequestParams(root, params, errorMsg))
+    if (!JsonProcessor::parseRequestParams(root, params, true, errorMsg))
         return false;
     app.rgbwwctrl.skipAnimation(params.channels);
 
@@ -102,7 +102,7 @@ bool JsonProcessor::onPause(const String& json, String& errorMsg, bool relay) {
 
 bool JsonProcessor::onPause(JsonObject root, String& errorMsg, bool relay) {
     RequestParameters params;
-    if (!JsonProcessor::parseRequestParams(root, params, errorMsg))
+    if (!JsonProcessor::parseRequestParams(root, params, true, errorMsg))
         return false;
 
     app.rgbwwctrl.pauseAnimation(params.channels);
@@ -126,7 +126,7 @@ bool JsonProcessor::onContinue(const String& json, String& errorMsg, bool relay)
 
 bool JsonProcessor::onContinue(JsonObject root, String& errorMsg, bool relay) {
     RequestParameters params;
-    if (!JsonProcessor::parseRequestParams(root, params, errorMsg))
+    if (!JsonProcessor::parseRequestParams(root, params, true, errorMsg))
         return false;
     app.rgbwwctrl.continueAnimation(params.channels);
 
@@ -149,7 +149,7 @@ bool JsonProcessor::onBlink(JsonObject root, String& errorMsg, bool relay) {
     RequestParameters params;
     params.ramp.value = 500; // default
 
-    if (!JsonProcessor::parseRequestParams(root, params, errorMsg))
+    if (!JsonProcessor::parseRequestParams(root, params, true, errorMsg))
         return false;
 
     app.rgbwwctrl.blink(params.channels, params.ramp.value, params.queue, params.requeue, params.name);
@@ -180,7 +180,7 @@ bool JsonProcessor::onToggle(JsonObject root, String& errorMsg, bool relay) {
 
 bool JsonProcessor::onSingleColorCommand(JsonObject root, String& errorMsg) {
     RequestParameters params;
-    if (!JsonProcessor::parseRequestParams(root, params, errorMsg))
+    if (!JsonProcessor::parseRequestParams(root, params, false, errorMsg))
         return false;
 
     if (!params.checkParams(errorMsg, _settings)) {
@@ -229,12 +229,19 @@ bool JsonProcessor::checkUnsupportedParams(JsonObject obj, const String& rootNam
     return true;
 }
 
-bool JsonProcessor::parseRequestParams(JsonObject root, RequestParameters& params, String& errorMsg) {
+bool JsonProcessor::parseRequestParams(JsonObject root, RequestParameters& params, bool allowChannelsParam, String& errorMsg) {
     String value;
 
-    if (!JsonProcessor::checkUnsupportedParams(root, "root", {"hsv", "raw", "t", "s", "stay", "r", "d", "name", "q"},
-                                               errorMsg))
-        return false;
+    if (allowChannelsParam) {
+        if (!JsonProcessor::checkUnsupportedParams(root, "root", {"hsv", "raw", "t", "s", "stay", "r", "d", "name", "q", "channels"},
+                                                errorMsg))
+            return false;
+    } else {
+        if (!JsonProcessor::checkUnsupportedParams(root, "root", {"hsv", "raw", "t", "s", "stay", "r", "d", "name", "q"},
+                                                errorMsg))
+            return false;
+    }
+
 
     JsonObject hsv = root["hsv"];
     if (!hsv.isNull()) {
