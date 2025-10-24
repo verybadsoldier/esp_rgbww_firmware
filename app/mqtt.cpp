@@ -21,8 +21,7 @@
  */
 #include <RGBWWCtrl.h>
 
-AppMqttClient::AppMqttClient() {
-}
+AppMqttClient::AppMqttClient() {}
 
 AppMqttClient::~AppMqttClient() {
     delete mqtt;
@@ -45,25 +44,28 @@ void AppMqttClient::connectDelayed(int delay) {
 }
 
 void AppMqttClient::connect() {
-    if (!mqtt || mqtt->getConnectionState() == TcpClientState::eTCS_Connected || mqtt->getConnectionState() == TcpClientState::eTCS_Connecting)
+    if (!mqtt || mqtt->getConnectionState() == TcpClientState::eTCS_Connected ||
+        mqtt->getConnectionState() == TcpClientState::eTCS_Connecting)
         return;
 
     debug_d("MQTT::connect ID: %s\n", _id.c_str());
-    if(!mqtt->setWill("last/will","The connection from this device is lost:(", 1, true)) {
+    if (!mqtt->setWill("last/will", "The connection from this device is lost:(", 1, true)) {
         debugf("Unable to set the last will and testament. Most probably there is not enough memory on the device.");
     }
-//    0);app.cfg.network.mqtt.username, app.cfg.network.mqtt.password);
-    //debug_i("MqttClient: Server: %s Port: %d\n", app.cfg.network.mqtt.server.c_str(), app.cfg.network.mqtt.port);
+    //    0);app.cfg.network.mqtt.username, app.cfg.network.mqtt.password);
+    // debug_i("MqttClient: Server: %s Port: %d\n", app.cfg.network.mqtt.server.c_str(), app.cfg.network.mqtt.port);
 
-    Url url = "mqtt://" + app.cfg.network.mqtt.username + ":" + app.cfg.network.mqtt.password + "@" + app.cfg.network.mqtt.server + ":" + String(app.cfg.network.mqtt.port);
+    Url url = "mqtt://" + app.cfg.network.mqtt.username + ":" + app.cfg.network.mqtt.password + "@" +
+              app.cfg.network.mqtt.server + ":" + String(app.cfg.network.mqtt.port);
     mqtt->connect(url, _id, 0);
 #ifdef ENABLE_SSL
     // not need i guess? mqtt->addSslOptions(SSL_SERVER_VERIFY_LATER);
 
-#include <ssl/private_key.h>
 #include <ssl/cert.h>
+#include <ssl/private_key.h>
 
-    mqtt->setSslKeyCert(default_private_key, default_private_key_len, default_certificate, default_certificate_len, NULL, true);
+    mqtt->setSslKeyCert(default_private_key, default_private_key_len, default_certificate, default_certificate_len,
+                        NULL, true);
 
 #endif
     // Assign a disconnect callback function
@@ -85,9 +87,9 @@ void AppMqttClient::init() {
     if (app.cfg.general.device_name.length() > 0) {
         debug_w("AppMqttClient::init: building MQTT ID from device name: '%s'\n", app.cfg.general.device_name.c_str());
         _id = app.cfg.general.device_name;
-    }
-    else {
-        debug_w("AppMqttClient::init: building MQTT ID from MAC (device name is: '%s')\n", app.cfg.general.device_name.c_str());
+    } else {
+        debug_w("AppMqttClient::init: building MQTT ID from MAC (device name is: '%s')\n",
+                app.cfg.general.device_name.c_str());
         _id = String("rgbww_") + WifiStation.getMAC();
     }
 }
@@ -114,35 +116,33 @@ void AppMqttClient::onMessageReceived(String topic, String message) {
     if (app.cfg.sync.clock_slave_enabled && (topic == app.cfg.sync.clock_slave_topic)) {
         if (message == "reset") {
             app.rgbwwctrl.onMasterClockReset();
-        }
-        else  {
+        } else {
             uint32_t clock = message.toInt();
             app.rgbwwctrl.onMasterClock(clock);
         }
-    }
-    else if (app.cfg.sync.cmd_slave_enabled && topic == app.cfg.sync.cmd_slave_topic) {
-        app.jsonproc.onJsonRpc(message);
-    }
-    else if (app.cfg.sync.color_slave_enabled && (topic == app.cfg.sync.color_slave_topic)) {
+    } else if (app.cfg.sync.cmd_slave_enabled && topic == app.cfg.sync.cmd_slave_topic) {
+        String errorMsg;
+        app.jsonproc.onJsonRpc(message, errorMsg);
+        // todo: handle errorMsg
+    } else if (app.cfg.sync.color_slave_enabled && (topic == app.cfg.sync.color_slave_topic)) {
         String error;
-        app.jsonproc.onColor(message, error, false);
+        app.jsonproc.onColor(message, error);
     }
 }
 
 void AppMqttClient::publish(const String& topic, const String& data, bool retain) {
-    //Serial.printf("AppMqttClient::publish: Topic: %s | Data: %s\n", topic.c_str(), data.c_str());
+    // Serial.printf("AppMqttClient::publish: Topic: %s | Data: %s\n", topic.c_str(), data.c_str());
 
     if (!mqtt) {
-        debug_w("ApplicationMQTTClient::publish: no MQTT object\n");
+        debug_w("AppMqttClient::publish: no MQTT object\n");
         return;
     }
 
     TcpClientState state = mqtt->getConnectionState();
     if (state == TcpClientState::eTCS_Connected) {
         mqtt->publish(topic, data, retain);
-    }
-    else {
-        debug_w("ApplicationMQTTClient::publish: not connected.\n");
+    } else {
+        debug_w("AppMqttClient::publish: not connected.\n");
     }
 }
 
@@ -151,7 +151,7 @@ void AppMqttClient::publishCurrentRaw(const ChannelOutput& raw) {
         return;
     _lastRaw = raw;
 
-    debug_d("ApplicationMQTTClient::publishCurrentRaw\n");
+    debug_d("AppMqttClient::publishCurrentRaw\n");
 
     StaticJsonDocument<200> doc;
     JsonObject root = doc.to<JsonObject>();
@@ -174,7 +174,7 @@ void AppMqttClient::publishCurrentHsv(const HSVCT& color) {
         return;
     _lastHsv = color;
 
-    debug_d("ApplicationMQTTClient::publishCurrentHsv\n");
+    debug_d("AppMqttClient::publishCurrentHsv\n");
 
     float h, s, v;
     int ct;
@@ -205,8 +205,7 @@ void AppMqttClient::publishClock(uint32_t steps) {
     if (_firstClock) {
         this->publishClockReset();
         _firstClock = false;
-    }
-    else {
+    } else {
         String msg;
         msg += steps;
 
@@ -233,7 +232,7 @@ void AppMqttClient::publishClockSlaveOffset(int offset) {
 }
 
 void AppMqttClient::publishCommand(const String& method, const JsonObject& params) {
-    debug_d("ApplicationMQTTClient::publishCommand: %s\n", method.c_str());
+    debug_d("AppMqttClient::publishCommand: %s\n", method.c_str());
 
     JsonRpcMessage msg(method);
 
@@ -245,7 +244,7 @@ void AppMqttClient::publishCommand(const String& method, const JsonObject& param
 }
 
 void AppMqttClient::publishTransitionFinished(const String& name, bool requeued) {
-    debug_d("ApplicationMQTTClient::publishTransitionFinished: %s\n", name.c_str());
+    debug_d("AppMqttClient::publishTransitionFinished: %s\n", name.c_str());
 
     StaticJsonDocument<200> doc;
     JsonObject root = doc.to<JsonObject>();
@@ -254,4 +253,18 @@ void AppMqttClient::publishTransitionFinished(const String& name, bool requeued)
 
     String jsonMsg = Json::serialize(root);
     publish(buildTopic("transition_finished"), jsonMsg, true);
+}
+
+void AppMqttClient::publishConfigEvent(const DynamicJsonDocument& config) {
+    debug_d("AppMqttClient::publishConfigEvent");
+
+    JsonRpcMessage msg("config_event");
+    JsonObject root = msg.getParams();
+
+    root.set(config.as<JsonObject>());
+
+    debug_d("EventServer::publishConfigEvent\n");
+
+    String jsonMsg = Json::serialize(root);
+    publish(buildTopic("config_event"), jsonMsg, true);
 }

@@ -22,39 +22,40 @@
 #ifndef APP_NETWORKING_H_
 #define APP_NETWORKING_H_
 
-enum CONNECTION_STATUS {
-    IDLE = 0,
-    CONNECTING = 1,
-    CONNECTED = 2,
-    ERROR = 3
-};
+enum CONNECTION_STATUS { IDLE = 0, CONNECTING = 1, CONNECTED = 2, ERROR = 3 };
 
 class AppWIFI {
 
-public:
+  public:
     AppWIFI();
-    virtual ~AppWIFI() {
-    }
-    ;
+    virtual ~AppWIFI(){};
 
     void init();
 
     void connect(String ssid, String pass, bool new_con = false);
     void connect(String ssid, bool new_con = false);
-    CONNECTION_STATUS get_con_status() { return _client_status; }	;
-    String get_con_err_msg() { return _client_err_msg; };
+    CONNECTION_STATUS get_con_status() {
+        return _client_status;
+    };
+    String get_con_err_msg() {
+        return _client_err_msg;
+    };
 
     void startAp();
     void stopAp(int delay = 0);
-    bool isApActive() { return WifiAccessPoint.isEnabled(); };
+    bool isApActive() {
+        return WifiAccessPoint.isEnabled();
+    };
 
     void scan(bool connectAfterScan);
-    bool isScanning() { return _scanning; };
+    bool isScanning() {
+        return _scanning;
+    };
     BssList getAvailableNetworks();
 
     void forgetWifi();
 
-private:
+  private:
     int _con_ctr;
     bool _scanning;
     bool _keepStaAfterScan = false;
@@ -68,11 +69,11 @@ private:
 
     CONNECTION_STATUS _client_status;
 
-private:
+  private:
     void _STADisconnect(const String& ssid, MacAddress bssid, WifiDisconnectReason reason);
     void _STAConnected(const String& ssid, MacAddress bssid, uint8_t channel);
     void _STAGotIP(IpAddress ip, IpAddress mask, IpAddress gateway);
     void scanCompleted(bool succeeded, BssList& list);
 };
 
-#endif //APP_NETWORKING_H_
+#endif // APP_NETWORKING_H_

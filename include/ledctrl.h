@@ -39,7 +39,7 @@ struct PinConfig {
 struct ColorStorage {
     HSVCT current;
     void load(bool print = false) {
-    	StaticJsonDocument<128> doc;
+        StaticJsonDocument<128> doc;
         if (Json::loadFromFile(doc, APP_COLOR_FILE)) {
             JsonObject root = doc.as<JsonObject>();
             current.h = root["h"];
@@ -47,7 +47,7 @@ struct ColorStorage {
             current.v = root["v"];
             current.ct = root["ct"];
             if (print) {
-            	Json::serialize(root, Serial, Json::Pretty);
+                Json::serialize(root, Serial, Json::Pretty);
             }
         }
     }
@@ -61,7 +61,7 @@ struct ColorStorage {
         root["v"] = current.v;
         root["ct"] = current.ct;
         if (print) {
-        	Json::serialize(root, Serial, Json::Pretty);
+            Json::serialize(root, Serial, Json::Pretty);
         }
         Json::saveToFile(root, APP_COLOR_FILE);
     }
@@ -71,9 +71,9 @@ struct ColorStorage {
     }
 };
 
-class APPLedCtrl: public RGBWWLed {
+class APPLedCtrl : public RGBWWLed {
 
-public:
+  public:
     virtual ~APPLedCtrl();
 
     void init();
@@ -90,10 +90,11 @@ public:
     void onMasterClock(uint32_t steps);
     void onMasterClockReset();
     virtual void onAnimationFinished(const String& name, bool requeued);
-private:
+    void publishToEventServer(bool force = false);
+
+  private:
     static PinConfig parsePinConfigString(String& pinStr);
     static void updateLedCb(void* pTimerArg);
-    void publishToEventServer();
     void publishToMqtt();
     void publishFinishedStepAnimations();
     void publishColorStayedCmds();

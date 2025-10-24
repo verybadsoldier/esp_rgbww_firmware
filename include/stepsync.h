@@ -2,28 +2,25 @@
 
 #include <limits>
 
-
 class StepSync {
-public:
+  public:
     uint32_t onMasterClock(uint32_t stepsCurrent, uint32_t stepsMaster);
     int getCatchupOffset() const;
     uint32_t reset();
 
-protected:
-    template<typename T>
-    static T calcOverflowVal(T prevValue, T curValue) {
+  protected:
+    template <typename T> static T calcOverflowVal(T prevValue, T curValue) {
         if (curValue < prevValue) {
-            //overflow
+            // overflow
             return std::numeric_limits<T>::max() - prevValue + curValue;
-        }
-        else {
+        } else {
             return curValue - prevValue;
         }
     }
 
     int _catchupOffset = 0;
 
-private:
+  private:
     uint32_t _stepsSyncMasterLast = 0;
     uint32_t _stepsSyncLast = 0;
     bool _firstMasterSync = true;

@@ -24,7 +24,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-            submodules: 'true' 
+            submodules: 'true'
       - name: Build
         id: build
         run: |
@@ -62,18 +62,18 @@ jobs:
           GH_PAGE_LINK="http://rgbww.dronezone.de/${{ env.FEED }}/"
           WEBAPP_VERSION="0.3.3" # Can also be a variable or input
           GIT_DEPLOY_REPO="github.com/verybadsoldier/esp_rgbww_firmware.git"
-          
+
           echo "Deploying tag ${{ github.ref_name }} to feed: ${{ env.FEED }}"
 
           # Clone the target repository's gh-pages branch
           git clone "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@${GIT_DEPLOY_REPO}" --branch gh-pages --single-branch --depth 1 deploy_release
           #git clone "https://{GITHUB_TOKEN}@${GIT_DEPLOY_REPO}" --branch gh-pages --single-branch --depth 1 deploy_release
-          
+
           # Configure Git for the commit
           cd deploy_release
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          
+
           ARTIFACTS_DIR="${{ github.workspace }}/out/Esp8266/release/firmware/"
 
           echo "Prepare folder and copy firmware files"
@@ -81,12 +81,12 @@ jobs:
           cd "${{ env.FEED }}"
           git rm *
           cp ${ARTIFACTS_DIR}/* .
-          
+
           echo "Create the version information JSON file"
           cat <<EOF > version.json
           {"rom":{"fw_version":"${{ github.ref_name }}","url":"${GH_PAGE_LINK}rom0.bin"},"spiffs":{"webapp_version":"${WEBAPP_VERSION}","url":"${GH_PAGE_LINK}spiff_rom.bin"}}
           EOF
-          
+
           echo "Commit and push the changes"
           git add .
           git commit -m "Feed ${{ env.FEED }}: Firmware v${{ github.ref_name }} webapp v${WEBAPP_VERSION}"

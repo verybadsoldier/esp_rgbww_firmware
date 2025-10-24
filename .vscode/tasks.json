@@ -1,0 +1,35 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Compile Firmware (Debug)",
+      "type": "shell",
+      "command": "make V=1 SMING_RELEASE=0 DEBUG_VERBOSE_LEVEL=2 -j$(nproc)",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": [],
+    },
+    {
+      "label": "Compile Firmware (Release)",
+      "type": "shell",
+      "command": "make V=1 SMING_RELEASE=1 -j$(nproc)",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": [],
+    },
+    {
+      "label": "Distclean",
+      "type": "shell",
+      "command": "make V=1 dist-clean",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": [],
+    }
+]
+}

@@ -2,9 +2,12 @@
 
 #include <RGBWWLed/RGBWWLedColor.h>
 
+#include <set>
 
 class JsonProcessor {
-public:
+  public:
+    JsonProcessor(const ApplicationSettings& settings) : _settings(settings) {}
+
     bool onColor(const String& json, String& msg, bool relay = true);
     bool onColor(JsonObject root, String& msg, bool relay = true);
 
@@ -26,12 +29,14 @@ public:
     bool onToggle(const String& json, String& msg, bool relay = true);
     bool onToggle(JsonObject root, String& msg, bool relay = true);
 
-    bool onDirect(const String& json, String& msg, bool relay);
-    bool onDirect(JsonObject root, String& msg, bool relay);
+    bool onJsonRpc(const String& json, String& errorMsg);
 
-    bool onJsonRpc(const String& json);
+  private:
+    static bool checkUnsupportedParams(JsonObject obj, const String& rootName, const std::set<String>& allowed,
+                                       String& errorMsg);
 
-private:
+    const ApplicationSettings& _settings;
+    static const int _jsonDocumentMaxSize = 1024;
 
     struct RequestParameters {
         String target;
@@ -54,21 +59,20 @@ private:
         RequestChannelOutput raw;
         RequestChannelOutput rawFrom;
 
-        int direction = 1;
+        HueTransitionDirection direction = HueTransitionDirection::dir_short;
         bool requeue = false;
         RampTimeOrSpeed ramp = 0;
+        int stay = 0;
         String name;
-
-        String cmd = "solid";
 
         RGBWWLed::ChannelList channels;
 
         QueuePolicy queue = QueuePolicy::Single;
 
-        int checkParams(String& errorMsg) const;
+        bool checkParams(String& errorMsg, const ApplicationSettings& settings) const;
     };
 
-    void parseRequestParams(JsonObject root, RequestParameters& params);
+    bool parseRequestParams(JsonObject root, RequestParameters& params, bool allowChannelsParam, String& errorMsg);
     void addChannelStatesToCmd(JsonObject root, const RGBWWLed::ChannelList& channels);
 
     bool onSingleColorCommand(JsonObject root, String& errorMsg);

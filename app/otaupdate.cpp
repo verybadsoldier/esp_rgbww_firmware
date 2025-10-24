@@ -87,7 +87,6 @@ void ApplicationOTA::afterOTA() {
         // remount old filesystem
         app.umountfs();
         app.mountfs(app.getRomSlot());
-
     }
 }
 
@@ -113,7 +112,6 @@ void ApplicationOTA::rBootCallback(RbootHttpUpdater& rbHttpUp, bool result) {
         debug_i("OTA failed");
     }
     afterOTA();
-
 }
 
 void ApplicationOTA::checkAtBoot() {
@@ -138,7 +136,7 @@ OTASTATUS ApplicationOTA::loadStatus() {
     debug_i("ApplicationOTA::loadStatus");
     StaticJsonDocument<128> doc;
     if (Json::loadFromFile(doc, OTA_STATUS_FILE)) {
-        OTASTATUS status = (OTASTATUS) doc["status"].as<int>();
+        OTASTATUS status = (OTASTATUS)doc["status"].as<int>();
         return status;
     } else {
         return OTASTATUS::OTA_NOT_UPDATING;
