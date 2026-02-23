@@ -390,6 +390,7 @@ void ApplicationWebserver::onConfig(HttpRequest& request, HttpResponse& response
                 Json::getValue(jmqtt["username"], app.cfg.network.mqtt.username);
                 Json::getValue(jmqtt["password"], app.cfg.network.mqtt.password);
                 Json::getValue(jmqtt["topic_base"], app.cfg.network.mqtt.topic_base);
+                Json::getBoolTolerant(jmqtt["homeassistant_discovery_enabled"], app.cfg.network.mqtt.homeassistant_discovery_enabled);
             }
         }
 
@@ -551,6 +552,7 @@ void ApplicationWebserver::onConfig(HttpRequest& request, HttpResponse& response
         mqtt["username"] = app.cfg.network.mqtt.username;
         mqtt["password"] = app.cfg.network.mqtt.password;
         mqtt["topic_base"] = app.cfg.network.mqtt.topic_base;
+        mqtt["homeassistant_discovery_enabled"] = app.cfg.network.mqtt.homeassistant_discovery_enabled;
 
         JsonObject color = json.createNestedObject("color");
         color["outputmode"] = app.cfg.color.outputmode;
@@ -612,6 +614,7 @@ void ApplicationWebserver::onConfig(HttpRequest& request, HttpResponse& response
         sendApiResponse(response, stream);
     }
 }
+
 
 void ApplicationWebserver::onInfo(HttpRequest& request, HttpResponse& response) {
     if (!checkHeap(response))

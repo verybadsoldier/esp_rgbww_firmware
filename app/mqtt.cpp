@@ -21,6 +21,8 @@
  */
 #include <RGBWWCtrl.h>
 
+#include "homeassistant.h"
+
 AppMqttClient::AppMqttClient() {}
 
 AppMqttClient::~AppMqttClient() {
@@ -81,6 +83,10 @@ void AppMqttClient::connect() {
         debug_d("Subscribe: %s\n", app.cfg.sync.color_slave_topic.c_str());
         mqtt->subscribe(app.cfg.sync.color_slave_topic);
     }
+
+    if (app.cfg.network.mqtt.homeassistant_discovery_enabled) {
+        mqtt->subscribe(HOMEASSISTANT_STATUS_TOPIC);
+    }
 }
 
 void AppMqttClient::init() {
@@ -100,7 +106,10 @@ void AppMqttClient::start() {
     delete mqtt;
     mqtt = new MqttClient();
     mqtt->setCallback(MqttStringSubscriptionCallback(&AppMqttClient::onMessageReceived, this));
+    mqtt->setConnectedHandler(MqttDelegate(&AppMqttClient::onMqttConnected, this));
+
     connectDelayed(2000);
+
 }
 
 void AppMqttClient::stop() {
@@ -108,8 +117,8 @@ void AppMqttClient::stop() {
     mqtt = nullptr;
 }
 
-bool AppMqttClient::isRunning() const {
-    return (mqtt != nullptr);
+bool AppMqttClient::isConnected() const {
+    return (mqtt != nullptr && mqtt->getConnectionState() == TcpClientState::eTCS_Connected);
 }
 
 void AppMqttClient::onMessageReceived(String topic, String message) {
@@ -127,7 +136,14 @@ void AppMqttClient::onMessageReceived(String topic, String message) {
     } else if (app.cfg.sync.color_slave_enabled && (topic == app.cfg.sync.color_slave_topic)) {
         String error;
         app.jsonproc.onColor(message, error);
+    } else if (topic == HOMEASSISTANT_STATUS_TOPIC) {
+        this->publishHomeAssistantDiscovery();
     }
+}
+
+int AppMqttClient::onMqttConnected(MqttClient& client, mqtt_message_t* message) {
+    debug_i("MQTT Connected\n");
+    return app.onMqttConnected(client, message);
 }
 
 void AppMqttClient::publish(const String& topic, const String& data, bool retain) {
@@ -201,6 +217,10 @@ String AppMqttClient::buildTopic(const String& suffix) {
     return topic + suffix;
 }
 
+String AppMqttClient::buildHaDiscoveryTopic(const String& deviceName) {
+    return "homeassistant/fhem_rgbwwcontroller/discovery/" + deviceName;
+}
+
 void AppMqttClient::publishClock(uint32_t steps) {
     if (_firstClock) {
         this->publishClockReset();
@@ -267,4 +287,18 @@ void AppMqttClient::publishConfigEvent(const DynamicJsonDocument& config) {
 
     String jsonMsg = Json::serialize(root);
     publish(buildTopic("config_event"), jsonMsg, true);
+}
+
+void AppMqttClient::publishHomeAssistantDiscovery() {
+    debug_d("AppMqttClient::publishHomeAssistantDiscovery");
+
+    JsonRpcMessage msg("ha_discovery");
+    StaticJsonDocument<200> doc;
+    JsonObject root = doc.to<JsonObject>();
+    root["device_name"] = app.cfg.general.device_name;
+    root["ip_address"] = WifiStation.getIP().toString();
+    root["mac_address"] = WifiStation.getMAC();
+
+    String jsonMsg = Json::serialize(root);
+    publish(buildHaDiscoveryTopic(app.cfg.general.device_name), jsonMsg, false);
 }

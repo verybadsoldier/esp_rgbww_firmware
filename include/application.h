@@ -82,6 +82,7 @@ class Application {
     void onCommandRelay(const String& method, const JsonObject& json);
     void onWifiConnected(const String& ssid);
     void onButtonTogglePressed(int pin);
+    int onMqttConnected(MqttClient& client, mqtt_message_t* message);
 
     uint32_t getUptime();
     void uptimeCounter();

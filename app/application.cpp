@@ -149,7 +149,10 @@ JsonObjectStream* Application::getInfo() {
     con["netmask"] = WifiStation.getNetworkMask().toString();
     con["gateway"] = WifiStation.getNetworkGateway().toString();
     con["mac"] = WifiStation.getMAC();
-    // con["mdnshostname"] = app.cfg.network.connection.mdnshostname.c_str();
+
+    JsonObject mqtt = con.createNestedObject("mqtt");
+    mqtt["connected"] = app.mqttclient.isConnected();
+    //con["mdnshostname"] = app.cfg.network.connection.mdnshostname.c_str();
 
     return stream;
 }
@@ -261,6 +264,14 @@ void Application::switchRom() {
 
 void Application::onWifiConnected(const String& ssid) {
     debug_i("Application::onWifiConnected");
+}
+
+int Application::onMqttConnected(MqttClient& client, mqtt_message_t* message) {
+    debug_i("Application::onMqttConnected");
+    if (app.cfg.network.mqtt.homeassistant_discovery_enabled) {
+        this->mqttclient.publishHomeAssistantDiscovery();
+    }
+    return 0;
 }
 
 void Application::onCommandRelay(const String& method, const JsonObject& params) {

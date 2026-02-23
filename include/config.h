@@ -46,6 +46,7 @@ struct ApplicationSettings {
             String username;
             String password;
             String topic_base = "home/";
+            bool homeassistant_discovery_enabled = true;
         };
 
         struct ap {
@@ -167,6 +168,7 @@ struct ApplicationSettings {
                 Json::getValue(jmqtt["username"], network.mqtt.username);
                 Json::getValue(jmqtt["password"], network.mqtt.password);
                 Json::getValue(jmqtt["topic_base"], network.mqtt.topic_base);
+                Json::getValue(jmqtt["homeassistant_discovery_enabled"], network.mqtt.homeassistant_discovery_enabled);
             }
 
             // color
@@ -273,6 +275,7 @@ struct ApplicationSettings {
         jmqtt["username"] = network.mqtt.username;
         jmqtt["password"] = network.mqtt.password;
         jmqtt["topic_base"] = network.mqtt.topic_base;
+        jmqtt["homeassistant_discovery_enabled"] = network.mqtt.homeassistant_discovery_enabled;
 
         JsonObject c = root.createNestedObject("color");
         c["outputmode"] = color.outputmode;
