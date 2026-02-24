@@ -137,7 +137,9 @@ void AppMqttClient::onMessageReceived(String topic, String message) {
         String error;
         app.jsonproc.onColor(message, error);
     } else if (topic == HOMEASSISTANT_STATUS_TOPIC) {
-        this->publishHomeAssistantDiscovery();
+        if (message == "online") {
+            this->publishHomeAssistantDiscovery();
+        }
     }
 }
 
