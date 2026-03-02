@@ -87,6 +87,15 @@ jobs:
           {"rom":{"fw_version":"${{ github.ref_name }}","url":"${GH_PAGE_LINK}rom0.bin"},"spiffs":{"webapp_version":"${WEBAPP_VERSION}","url":"${GH_PAGE_LINK}spiff_rom.bin"}}
           EOF
 
+          cd ..  # back to repo root
+          # Pad the version string to 12 characters to maintain Markdown table formatting
+          PADDED_VERSION=$(printf "%-12s" "${{ github.ref_name }}")
+
+          # Update the markdown file in-place using GNU sed
+          # \1 captures the first column (Channel)
+          # \2 captures the third column (OTA-URL) and beyond
+          sed -i -E "s/^(\| *${{ env.FEED }} *\|)[^|]+(\|.*)$/\1 ${PADDED_VERSION} \2/" index.md
+
           echo "Commit and push the changes"
           git add .
           git commit -m "Feed ${{ env.FEED }}: Firmware v${{ github.ref_name }} webapp v${WEBAPP_VERSION}"
