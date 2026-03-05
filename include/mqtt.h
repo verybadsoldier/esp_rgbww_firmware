@@ -23,7 +23,7 @@ class AppMqttClient {
     void publishClockSlaveOffset(int offset);
     void publishCommand(const String& method, const JsonObject& params);
     void publishTransitionFinished(const String& name, bool requeued);
-    void publishConfigEvent(const DynamicJsonDocument& config);
+    void publishConfigEvent(const JsonObject& jsonObj);
     void publishHomeAssistantDiscovery();
 
   private:

@@ -17,7 +17,7 @@ class EventServer : public TcpServer {
     void publishTransitionFinished(const String& name, bool requeued = false);
     void publishKeepAlive();
     void publishClockSlaveStatus(int offset, uint32_t interval);
-    void publishConfigEvent(const DynamicJsonDocument& config);
+    void publishConfigEvent(const JsonObject& jsonObj);
     void publishInfo(std::shared_ptr<JsonObjectStream> pInfo);
     void publishStateCompleted();
 

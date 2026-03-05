@@ -390,7 +390,8 @@ void ApplicationWebserver::onConfig(HttpRequest& request, HttpResponse& response
                 Json::getValue(jmqtt["username"], app.cfg.network.mqtt.username);
                 Json::getValue(jmqtt["password"], app.cfg.network.mqtt.password);
                 Json::getValue(jmqtt["topic_base"], app.cfg.network.mqtt.topic_base);
-                Json::getBoolTolerant(jmqtt["homeassistant_discovery_enabled"], app.cfg.network.mqtt.homeassistant_discovery_enabled);
+                Json::getBoolTolerant(jmqtt["homeassistant_discovery_enabled"],
+                                      app.cfg.network.mqtt.homeassistant_discovery_enabled);
             }
         }
 
@@ -514,9 +515,9 @@ void ApplicationWebserver::onConfig(HttpRequest& request, HttpResponse& response
                 app.rgbwwctrl.refresh();
             }
 
-            auto doc = app.cfg.getConfig();
-            app.mqttclient.publishConfigEvent(doc);
-            app.eventserver.publishConfigEvent(doc);
+            app.cfg.getConfig(root);
+            app.mqttclient.publishConfigEvent(root);
+            app.eventserver.publishConfigEvent(root);
 
             app.cfg.save();
 
@@ -527,94 +528,12 @@ void ApplicationWebserver::onConfig(HttpRequest& request, HttpResponse& response
     } else {
         JsonObjectStream* stream = new JsonObjectStream(CONFIG_MAX_LENGTH);
         JsonObject json = stream->getRoot();
-        // returning settings
-        JsonObject net = json.createNestedObject("network");
-        JsonObject con = net.createNestedObject("connection");
-        con["dhcp"] = WifiStation.isEnabledDHCP();
 
-        // con["ip"] = WifiStation.getIP().toString();
-        // con["netmask"] = WifiStation.getNetworkMask().toString();
-        // con["gateway"] = WifiStation.getNetworkGateway().toString();
-
-        con["ip"] = app.cfg.network.connection.ip.toString();
-        con["netmask"] = app.cfg.network.connection.netmask.toString();
-        con["gateway"] = app.cfg.network.connection.gateway.toString();
-
-        JsonObject ap = net.createNestedObject("ap");
-        ap["secured"] = app.cfg.network.ap.secured;
-        ap["password"] = app.cfg.network.ap.password;
-        ap["ssid"] = app.cfg.network.ap.ssid;
-
-        JsonObject mqtt = net.createNestedObject("mqtt");
-        mqtt["enabled"] = app.cfg.network.mqtt.enabled;
-        mqtt["server"] = app.cfg.network.mqtt.server;
-        mqtt["port"] = app.cfg.network.mqtt.port;
-        mqtt["username"] = app.cfg.network.mqtt.username;
-        mqtt["password"] = app.cfg.network.mqtt.password;
-        mqtt["topic_base"] = app.cfg.network.mqtt.topic_base;
-        mqtt["homeassistant_discovery_enabled"] = app.cfg.network.mqtt.homeassistant_discovery_enabled;
-
-        JsonObject color = json.createNestedObject("color");
-        color["outputmode"] = app.cfg.color.outputmode;
-        color["startup_color"] = app.cfg.color.startup_color;
-
-        JsonObject hsv = color.createNestedObject("hsv");
-        hsv["model"] = app.cfg.color.hsv.model;
-
-        hsv["red"] = app.cfg.color.hsv.red;
-        hsv["yellow"] = app.cfg.color.hsv.yellow;
-        hsv["green"] = app.cfg.color.hsv.green;
-        hsv["cyan"] = app.cfg.color.hsv.cyan;
-        hsv["blue"] = app.cfg.color.hsv.blue;
-        hsv["magenta"] = app.cfg.color.hsv.magenta;
-
-        JsonObject brighntess = color.createNestedObject("brightness");
-        brighntess["red"] = app.cfg.color.brightness.red;
-        brighntess["green"] = app.cfg.color.brightness.green;
-        brighntess["blue"] = app.cfg.color.brightness.blue;
-        brighntess["ww"] = app.cfg.color.brightness.ww;
-        brighntess["cw"] = app.cfg.color.brightness.cw;
-
-        JsonObject ctmp = color.createNestedObject("colortemp");
-        ctmp["ww"] = app.cfg.color.colortemp.ww;
-        ctmp["cw"] = app.cfg.color.colortemp.cw;
-
-        JsonObject s = json.createNestedObject("security");
-        s["api_secured"] = app.cfg.general.api_secured;
-
-        JsonObject ota = json.createNestedObject("ota");
-        ota["url"] = app.cfg.general.otaurl;
-
-        JsonObject sync = json.createNestedObject("sync");
-        sync["clock_master_enabled"] = app.cfg.sync.clock_master_enabled;
-        sync["clock_master_interval"] = app.cfg.sync.clock_master_interval;
-        sync["clock_slave_enabled"] = app.cfg.sync.clock_slave_enabled;
-        sync["clock_slave_topic"] = app.cfg.sync.clock_slave_topic;
-        sync["cmd_master_enabled"] = app.cfg.sync.cmd_master_enabled;
-        sync["cmd_slave_enabled"] = app.cfg.sync.cmd_slave_enabled;
-        sync["cmd_slave_topic"] = app.cfg.sync.cmd_slave_topic;
-
-        sync["color_master_enabled"] = app.cfg.sync.color_master_enabled;
-        sync["color_master_interval_ms"] = app.cfg.sync.color_master_interval_ms;
-        sync["color_slave_enabled"] = app.cfg.sync.color_slave_enabled;
-        sync["color_slave_topic"] = app.cfg.sync.color_slave_topic;
-
-        JsonObject events = json.createNestedObject("events");
-        events["color_interval_ms"] = app.cfg.events.color_interval_ms;
-        events["color_mininterval_ms"] = app.cfg.events.color_mininterval_ms;
-        events["server_enabled"] = app.cfg.events.server_enabled;
-        events["transfin_interval_ms"] = app.cfg.events.transfin_interval_ms;
-
-        JsonObject general = json.createNestedObject("general");
-        general["device_name"] = app.cfg.general.device_name;
-        general["pin_config"] = app.cfg.general.pin_config;
-        general["buttons_config"] = app.cfg.general.buttons_config;
-        general["buttons_debounce_ms"] = app.cfg.general.buttons_debounce_ms;
+        app.cfg.getConfig(json);
 
         sendApiResponse(response, stream);
     }
 }
-
 
 void ApplicationWebserver::onInfo(HttpRequest& request, HttpResponse& response) {
     if (!checkHeap(response))

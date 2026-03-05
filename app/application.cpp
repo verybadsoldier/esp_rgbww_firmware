@@ -41,7 +41,7 @@ void GDB_IRAM_ATTR init() {
     System.onReady(SystemReadyDelegate(&Application::startServices, &app));
 }
 
-Application::Application() : jsonproc(cfg), eventserver(std::bind(&Application::onEventServerConnection, this)) {}
+Application::Application() : jsonproc(cfg), eventserver(std::bind(&Application::onEventServerConnected, this)) {}
 
 Application::~Application() {
     if (pNtpclient != nullptr) {
@@ -152,7 +152,6 @@ JsonObjectStream* Application::getInfo() {
 
     JsonObject mqtt = con.createNestedObject("mqtt");
     mqtt["connected"] = app.mqttclient.isConnected();
-    //con["mdnshostname"] = app.cfg.network.connection.mdnshostname.c_str();
 
     return stream;
 }
@@ -274,6 +273,20 @@ int Application::onMqttConnected(MqttClient& client, mqtt_message_t* message) {
     return 0;
 }
 
+void Application::onEventServerConnected() {
+    eventserver.publishInfo(std::shared_ptr<JsonObjectStream>(getInfo()));
+
+    {
+        JsonObjectStream* stream = new JsonObjectStream(CONFIG_MAX_LENGTH);
+        JsonObject json = stream->getRoot();
+        cfg.getConfig(json);
+        eventserver.publishConfigEvent(json);
+    }
+
+    rgbwwctrl.publishToEventServer(true);
+    eventserver.publishStateCompleted();
+}
+
 void Application::onCommandRelay(const String& method, const JsonObject& params) {
     if (!cfg.sync.cmd_master_enabled)
         return;
@@ -295,11 +308,4 @@ void Application::onButtonTogglePressed(int pin) {
 
 uint32_t Application::getUptime() {
     return _uptimeMinutes * 60u;
-}
-
-void Application::onEventServerConnection() {
-    eventserver.publishInfo(std::shared_ptr<JsonObjectStream>(getInfo()));
-    eventserver.publishConfigEvent(cfg.getConfig());
-    rgbwwctrl.publishToEventServer(true);
-    eventserver.publishStateCompleted();
 }

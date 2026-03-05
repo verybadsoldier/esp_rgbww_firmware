@@ -5,7 +5,7 @@
 
 class JsonRpcMessage {
   public:
-    JsonRpcMessage(const String& name);
+    JsonRpcMessage(const String& name, size_t capacity = 1024);
     JsonObjectStream& getStream();
     void setId(int id);
     JsonObject getParams();
@@ -18,7 +18,7 @@ class JsonRpcMessage {
 
 class JsonRpcMessageIn {
   public:
-    JsonRpcMessageIn(const String& json);
+    JsonRpcMessageIn(const String& json, size_t capacity = 1024);
     JsonObject getParams();
 
     JsonObject getRoot();

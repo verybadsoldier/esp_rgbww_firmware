@@ -101,7 +101,7 @@ class Application {
     NtpClient* pNtpclient = nullptr;
 
   private:
-    void onEventServerConnection();
+    void onEventServerConnected();
 
     void loadbootinfo();
 

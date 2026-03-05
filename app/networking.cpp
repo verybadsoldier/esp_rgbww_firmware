@@ -85,7 +85,6 @@ void AppWIFI::init() {
 
     if (app.isFirstRun()) {
         debug_i("AppWIFI::init initial run - setting up AP");
-        app.cfg.network.connection.mdnshostname = String(DEFAULT_AP_SSIDPREFIX) + String(system_get_chip_id());
         app.cfg.network.ap.ssid = String(DEFAULT_AP_SSIDPREFIX) + String(system_get_chip_id());
         app.cfg.save();
         WifiAccessPoint.setIP(_ApIP);

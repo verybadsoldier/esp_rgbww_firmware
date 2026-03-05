@@ -80,11 +80,11 @@ void EventServer::publishColorEvent(const ChannelOutput& raw, const HSVCT* pHsv,
     sendToClients(msg);
 }
 
-void EventServer::publishConfigEvent(const DynamicJsonDocument& config) {
-    JsonRpcMessage msg("config");
+void EventServer::publishConfigEvent(const JsonObject& jsonObj) {
+    JsonRpcMessage msg("config", CONFIG_MAX_LENGTH);
     JsonObject root = msg.getParams();
 
-    root.set(config.as<JsonObject>());
+    root.set(jsonObj);
 
     debug_d("EventServer::publishConfigEvent\n");
 

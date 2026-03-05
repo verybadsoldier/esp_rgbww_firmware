@@ -32,7 +32,6 @@
 struct ApplicationSettings {
     struct network {
         struct connection {
-            String mdnshostname;
             bool dhcp = true;
             IpAddress ip;
             IpAddress netmask;
@@ -147,7 +146,6 @@ struct ApplicationSettings {
 
             // connection
             JsonObject con = net["connection"];
-            network.connection.mdnshostname = con["hostname"].as<const char*>();
             network.connection.dhcp = con["dhcp"];
             network.connection.ip = con["ip"].as<String>();
             network.connection.netmask = con["netmask"].as<String>();
@@ -251,17 +249,13 @@ struct ApplicationSettings {
         sanitizeValues();
     }
 
-    DynamicJsonDocument getConfig() {
-        DynamicJsonDocument doc(CONFIG_MAX_LENGTH);
-        JsonObject root = doc.to<JsonObject>();
-
+    void getConfig(JsonObject root) {
         JsonObject net = root.createNestedObject("network");
         JsonObject con = net.createNestedObject("connection");
         con["dhcp"] = network.connection.dhcp;
         con["ip"] = network.connection.ip.toString();
         con["netmask"] = network.connection.netmask.toString();
         con["gateway"] = network.connection.gateway.toString();
-        con["mdnhostname"] = network.connection.mdnshostname;
 
         JsonObject jap = net.createNestedObject("ap");
         jap["secured"] = network.ap.secured;
@@ -335,14 +329,14 @@ struct ApplicationSettings {
         g["buttons_config"] = general.buttons_config.c_str();
         g["buttons_debounce_ms"] = general.buttons_debounce_ms;
         g["settings_ver"] = APP_SETTINGS_VERSION;
-
-        return doc;
     }
 
     void save(bool print = false) {
-        auto doc = getConfig();
+        DynamicJsonDocument doc(CONFIG_MAX_LENGTH);
+        JsonObject root = doc.to<JsonObject>();
 
-        JsonObject root = doc.as<JsonObject>();
+        getConfig(root);
+
         if (print) {
             Json::serialize(root, Serial, Json::Pretty);
         }

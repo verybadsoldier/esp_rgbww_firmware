@@ -109,7 +109,6 @@ void AppMqttClient::start() {
     mqtt->setConnectedHandler(MqttDelegate(&AppMqttClient::onMqttConnected, this));
 
     connectDelayed(2000);
-
 }
 
 void AppMqttClient::stop() {
@@ -277,13 +276,13 @@ void AppMqttClient::publishTransitionFinished(const String& name, bool requeued)
     publish(buildTopic("transition_finished"), jsonMsg, true);
 }
 
-void AppMqttClient::publishConfigEvent(const DynamicJsonDocument& config) {
+void AppMqttClient::publishConfigEvent(const JsonObject& jsonObj) {
     debug_d("AppMqttClient::publishConfigEvent");
 
-    JsonRpcMessage msg("config_event");
+    JsonRpcMessage msg("config_event", CONFIG_MAX_LENGTH);
     JsonObject root = msg.getParams();
 
-    root.set(config.as<JsonObject>());
+    root.set(jsonObj);
 
     debug_d("EventServer::publishConfigEvent\n");
 
