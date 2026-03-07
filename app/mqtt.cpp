@@ -148,8 +148,6 @@ int AppMqttClient::onMqttConnected(MqttClient& client, mqtt_message_t* message) 
 }
 
 void AppMqttClient::publish(const String& topic, const String& data, bool retain) {
-    // Serial.printf("AppMqttClient::publish: Topic: %s | Data: %s\n", topic.c_str(), data.c_str());
-
     if (!mqtt) {
         debug_w("AppMqttClient::publish: no MQTT object\n");
         return;
@@ -164,6 +162,10 @@ void AppMqttClient::publish(const String& topic, const String& data, bool retain
 }
 
 void AppMqttClient::publishCurrentRaw(const ChannelOutput& raw) {
+    if (!mqtt) {
+        return;
+    }
+
     if (raw == _lastRaw)
         return;
     _lastRaw = raw;
@@ -187,6 +189,10 @@ void AppMqttClient::publishCurrentRaw(const ChannelOutput& raw) {
 }
 
 void AppMqttClient::publishCurrentHsv(const HSVCT& color) {
+    if (!mqtt) {
+        return;
+    }
+
     if (color == _lastHsv)
         return;
     _lastHsv = color;
@@ -235,10 +241,18 @@ void AppMqttClient::publishClock(uint32_t steps) {
 }
 
 void AppMqttClient::publishClockReset() {
+    if (!mqtt) {
+        return;
+    }
+
     publish(buildTopic("clock"), "reset", false);
 }
 
 void AppMqttClient::publishClockInterval(uint32_t curInterval) {
+    if (!mqtt) {
+        return;
+    }
+
     String msg;
     msg += curInterval;
 
@@ -246,6 +260,9 @@ void AppMqttClient::publishClockInterval(uint32_t curInterval) {
 }
 
 void AppMqttClient::publishClockSlaveOffset(int offset) {
+    if (!mqtt) {
+        return;
+    }
     String msg;
     msg += offset;
 
@@ -254,6 +271,10 @@ void AppMqttClient::publishClockSlaveOffset(int offset) {
 
 void AppMqttClient::publishCommand(const String& method, const JsonObject& params) {
     debug_d("AppMqttClient::publishCommand: %s\n", method.c_str());
+
+    if (!mqtt) {
+        return;
+    }
 
     JsonRpcMessage msg(method);
 
@@ -267,6 +288,10 @@ void AppMqttClient::publishCommand(const String& method, const JsonObject& param
 void AppMqttClient::publishTransitionFinished(const String& name, bool requeued) {
     debug_d("AppMqttClient::publishTransitionFinished: %s\n", name.c_str());
 
+    if (!mqtt) {
+        return;
+    }
+
     StaticJsonDocument<200> doc;
     JsonObject root = doc.to<JsonObject>();
     root["name"] = name;
@@ -278,6 +303,10 @@ void AppMqttClient::publishTransitionFinished(const String& name, bool requeued)
 
 void AppMqttClient::publishConfigEvent(const JsonObject& jsonObj) {
     debug_d("AppMqttClient::publishConfigEvent");
+
+    if (!mqtt) {
+        return;
+    }
 
     JsonRpcMessage msg("config_event", CONFIG_MAX_LENGTH);
     JsonObject root = msg.getParams();
@@ -292,6 +321,10 @@ void AppMqttClient::publishConfigEvent(const JsonObject& jsonObj) {
 
 void AppMqttClient::publishHomeAssistantDiscovery() {
     debug_d("AppMqttClient::publishHomeAssistantDiscovery");
+
+    if (!mqtt) {
+        return;
+    }
 
     JsonRpcMessage msg("ha_discovery");
     StaticJsonDocument<200> doc;
