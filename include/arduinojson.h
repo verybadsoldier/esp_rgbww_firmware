@@ -27,7 +27,7 @@ inline bool getBoolTolerantChanged(JsonVariant var, bool& value) {
     if (!getBoolTolerant(var, newVal))
         return false;
 
-    if (newVal != value)
+    if (newVal == value)
         return false;
 
     value = newVal;
