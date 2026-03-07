@@ -19,12 +19,12 @@ jobs:
     permissions:
       contents: write
       packages: write
-      # 
+      #
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-            submodules: 'true'
+          submodules: "true"
       - name: Build
         id: build
         run: |
@@ -36,7 +36,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ github.event.repository.name }}-esp8266-${{ github.ref_name }}  # will create a zip with this basename
+          name: ${{ github.event.repository.name }}-esp8266-${{ github.ref_name }} # will create a zip with this basename
           path: out/Esp8266/release/firmware/*
       - name: Publish Release
         uses: softprops/action-gh-release@v2
@@ -67,7 +67,6 @@ jobs:
 
           # Clone the target repository's gh-pages branch
           git clone "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@${GIT_DEPLOY_REPO}" --branch gh-pages --single-branch --depth 1 deploy_release
-          #git clone "https://{GITHUB_TOKEN}@${GIT_DEPLOY_REPO}" --branch gh-pages --single-branch --depth 1 deploy_release
 
           # Configure Git for the commit
           cd deploy_release
@@ -81,6 +80,7 @@ jobs:
           cd "${{ env.FEED }}"
           git rm *
           cp ${ARTIFACTS_DIR}/* .
+          cp "${{ github.workspace }}/Sming/Sming/Arch/Esp8266/Components/esp8266/ESP8266_NONOS_SDK/bin/esp_init_data_default.bin" .
 
           echo "Create the version information JSON file"
           cat <<EOF > version.json
