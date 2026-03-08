@@ -32,6 +32,8 @@ jobs:
           make -j$(nproc) SMING_RELEASE=1
       - name: Zip Firmware Files
         run: |
+          # Copy the init data binary to the firmware directory before zipping
+          cp Sming/Sming/Arch/Esp8266/Components/esp8266/ESP8266_NONOS_SDK/bin/esp_init_data_default.bin out/Esp8266/release/firmware/
           (cd out/Esp8266/release/firmware && zip -r ../../../../${{ github.event.repository.name }}-esp8266-${{ github.ref_name }}.zip .)
       - name: Upload artifact
         uses: actions/upload-artifact@v4
