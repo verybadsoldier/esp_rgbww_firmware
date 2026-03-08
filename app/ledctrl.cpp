@@ -72,22 +72,35 @@ void APPLedCtrl::init() {
 
     setup();
 
-    HSVCT startupColor;
-    if (app.cfg.color.startup_color == "last") {
-        colorStorage.load();
-        debug_i("H: %i | s: %i | v: %i | ct: %i", colorStorage.current.h, colorStorage.current.s,
-                colorStorage.current.v, colorStorage.current.ct);
+    const int STARUP_FADE_TIME = 700;
+    if (app.cfg.color.startup_color.startsWith("r:")) {
+        debug_i("APPLedCtrl::init - Setting startup raw color from config");
+        ChannelOutput startupColor;
+        String tmp = app.cfg.color.startup_color.substring(2); // remove "r:" prefix
+        startupColor = tmp;                                    // interpret as channel string
 
-        startupColor = colorStorage.current;
+        ChannelOutput startupColorDark(0, 0, 0, 0, 0);
+        fadeRAW(startupColorDark, startupColor, STARUP_FADE_TIME, 0); // fade to color in 700ms
     } else {
-        // interpret as color string
-        startupColor = app.cfg.color.startup_color;
-    }
+        HSVCT startupColor;
+        if (app.cfg.color.startup_color == "last") {
+            debug_i("APPLedCtrl::init - Loading last color from storage");
+            colorStorage.load();
+            debug_i("H: %i | s: %i | v: %i | ct: %i", colorStorage.current.h, colorStorage.current.s,
+                    colorStorage.current.v, colorStorage.current.ct);
 
-    // boot from off to startup color
-    HSVCT startupColorDark = startupColor;
-    startupColorDark.v = 0;
-    fadeHSV(startupColorDark, startupColor, 700, 0); // fade to color in 700ms
+            startupColor = colorStorage.current;
+        } else {
+            // interpret as color string
+            debug_i("APPLedCtrl::init - Setting startup HSV color from config");
+            startupColor = app.cfg.color.startup_color;
+        }
+
+        // boot from off to startup color
+        HSVCT startupColorDark = startupColor;
+        startupColorDark.v = 0;
+        fadeHSV(startupColorDark, startupColor, STARUP_FADE_TIME, 0); // fade to color in 700ms
+    }
 }
 
 void APPLedCtrl::setup() {
