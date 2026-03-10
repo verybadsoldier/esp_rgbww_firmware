@@ -740,7 +740,7 @@ void ApplicationWebserver::onConnect(HttpRequest& request, HttpResponse& respons
             sendApiCode(response, API_CODES::API_BAD_REQUEST, "could not get HTTP body");
             return;
         }
-        DynamicJsonDocument doc(_maxHttpRequestSize);
+        DynamicJsonDocument doc(_apiJsonBufferSize);
         if (!Json::deserialize(doc, body)) {
             sendApiCode(response, API_CODES::API_BAD_REQUEST, "JSON deserialization error");
             return;
@@ -804,7 +804,7 @@ void ApplicationWebserver::onSystemReq(HttpRequest& request, HttpResponse& respo
         return;
     } else {
         debug_i("ApplicationWebserver::onSystemReq: %s", body.c_str());
-        DynamicJsonDocument doc(_maxHttpRequestSize);
+        DynamicJsonDocument doc(_apiJsonBufferSize);
         if (!Json::deserialize(doc, body)) {
             sendApiCode(response, API_CODES::API_BAD_REQUEST, "JSON deserialization error");
             return;
@@ -858,7 +858,7 @@ void ApplicationWebserver::onUpdate(HttpRequest& request, HttpResponse& response
             sendApiCode(response, API_CODES::API_BAD_REQUEST, "could not parse HTTP body");
             return;
         }
-        DynamicJsonDocument doc(_maxHttpRequestSize);
+        DynamicJsonDocument doc(_apiJsonBufferSize);
         if (!Json::deserialize(doc, body)) {
             sendApiCode(response, API_CODES::API_BAD_REQUEST, "JSON deserialization error");
             return;
