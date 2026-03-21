@@ -26,7 +26,7 @@ These version are online right now:
 | -------- | ------------ | ------------------------------------------------ |
 | release  | 4.3.1-rc1    | http://rgbww.dronezone.de/release/version.json   |
 | testing  | 6.0.0-rc6    | http://rgbww.dronezone.de/testing/version.json   |
-| unstable | 6.0.0-alpha5 | http://rgbww.dronezone.de/unstable/version.json  |
+| unstable | 6.0.1-alpha1 | http://rgbww.dronezone.de/unstable/version.json  |
 
 # Flashing the Firmware
 ## Installation from FHEM
