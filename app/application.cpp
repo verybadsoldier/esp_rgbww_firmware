@@ -277,7 +277,7 @@ void Application::onEventServerConnected() {
     eventserver.publishInfo(std::shared_ptr<JsonObjectStream>(getInfo()));
 
     {
-        JsonObjectStream* stream = new JsonObjectStream(CONFIG_MAX_LENGTH);
+        std::unique_ptr<JsonObjectStream> stream(new JsonObjectStream(CONFIG_MAX_LENGTH));
         JsonObject json = stream->getRoot();
         cfg.getConfig(json);
         eventserver.publishConfigEvent(json);
