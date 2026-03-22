@@ -51,8 +51,30 @@ void ApplicationOTA::start(String romurl, String spiffsurl) {
     }
     otaUpdater->setCallback(OtaUpdateDelegate(&ApplicationOTA::rBootCallback, this));
     beforeOTA();
+
+    // Start timeout timer (5 minutes)
+    otaTimeoutTimer.initializeMs(300000, TimerDelegate(&ApplicationOTA::onTimeout, this)).startOnce();
+
     debug_i("Starting OTA ...");
     otaUpdater->start();
+}
+
+// Add the timeout handler implementation
+void ApplicationOTA::onTimeout() {
+    debug_e("ApplicationOTA::onTimeout - OTA hangs, aborting and restarting!");
+
+    // Forcefully destroy the HTTP client to close blocking sockets
+    if (otaUpdater) {
+        delete otaUpdater;
+        otaUpdater = nullptr;
+    }
+
+    // Set internal state and save it to file for the web interface after reboot
+    status = OTASTATUS::OTA_FAILED;
+    saveStatus(OTASTATUS::OTA_FAILED);
+
+    // Schedule a restart in 2 seconds to allow flash operations to finish
+    app.delayedCMD(F("restart"), 2000);
 }
 
 void ApplicationOTA::reset() {
@@ -92,8 +114,11 @@ void ApplicationOTA::afterOTA() {
 
 void ApplicationOTA::rBootCallback(RbootHttpUpdater& rbHttpUp, bool result) {
     debug_i("ApplicationOTA::rBootCallback");
-    if (result == true) {
 
+    // Stop the timer since we received a response
+    otaTimeoutTimer.stop();
+
+    if (result == true) {
         // set new temporary boot rom
         debug_i("ApplicationOTA::rBootCallback temp boot %i", rom_slot);
         if (rboot_set_temp_rom(rom_slot)) {

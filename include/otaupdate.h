@@ -47,6 +47,7 @@ class ApplicationOTA {
   protected:
     RbootHttpUpdater* otaUpdater;
     uint8 rom_slot;
+    Timer otaTimeoutTimer;
     OTASTATUS status = OTASTATUS::OTA_NOT_UPDATING;
 
   protected:
@@ -56,6 +57,8 @@ class ApplicationOTA {
     void afterOTA();
     void saveStatus(OTASTATUS status);
     OTASTATUS loadStatus();
+
+    void onTimeout();
 
     friend Application;
 };
