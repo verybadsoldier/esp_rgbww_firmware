@@ -73,7 +73,7 @@ void APPLedCtrl::init() {
     setup();
 
     const int STARUP_FADE_TIME = 700;
-    if (app.cfg.color.startup_color.startsWith("r:")) {
+    if (app.cfg.color.startup_color.startsWith(F("r:"))) {
         debug_i("APPLedCtrl::init - Setting startup raw color from config");
         ChannelOutput startupColor;
         String tmp = app.cfg.color.startup_color.substring(2); // remove "r:" prefix
@@ -83,7 +83,7 @@ void APPLedCtrl::init() {
         fadeRAW(startupColorDark, startupColor, STARUP_FADE_TIME, 0); // fade to color in 700ms
     } else {
         HSVCT startupColor;
-        if (app.cfg.color.startup_color == "last") {
+        if (app.cfg.color.startup_color == F("last")) {
             debug_i("APPLedCtrl::init - Loading last color from storage");
             colorStorage.load();
             debug_i("H: %i | s: %i | v: %i | ct: %i", colorStorage.current.h, colorStorage.current.s,
@@ -192,7 +192,7 @@ void APPLedCtrl::updateLed() {
 }
 
 void APPLedCtrl::checkStableColorState() {
-    if (app.cfg.color.startup_color != "last")
+    if (app.cfg.color.startup_color != F("last"))
         return;
 
     if (_prevColor == getCurrentColor()) {

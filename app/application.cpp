@@ -127,31 +127,31 @@ void Application::init() {
 JsonObjectStream* Application::getInfo() {
     JsonObjectStream* stream = new JsonObjectStream();
     JsonObject data = stream->getRoot();
-    data["deviceid"] = String(system_get_chip_id());
-    data["current_rom"] = String(app.getRomSlot());
-    data["git_version"] = fw_git_version;
-    data["git_date"] = fw_git_date;
-    data["webapp_version"] = WEBAPP_VERSION;
-    data["sming"] = SMING_VERSION;
-    data["event_num_clients"] = app.eventserver.activeClients;
-    data["uptime"] = app.getUptime();
-    data["heap_free"] = system_get_free_heap_size();
+    data[F("deviceid")] = String(system_get_chip_id());
+    data[F("current_rom")] = String(app.getRomSlot());
+    data[F("git_version")] = fw_git_version;
+    data[F("git_date")] = fw_git_date;
+    data[F("webapp_version")] = WEBAPP_VERSION;
+    data[F("sming")] = SMING_VERSION;
+    data[F("event_num_clients")] = app.eventserver.activeClients;
+    data[F("uptime")] = app.getUptime();
+    data[F("heap_free")] = system_get_free_heap_size();
 
-    JsonObject rgbww = data.createNestedObject("rgbww");
-    rgbww["version"] = RGBWW_VERSION;
-    rgbww["queuesize"] = RGBWW_ANIMATIONQSIZE;
+    JsonObject rgbww = data.createNestedObject(F("rgbww"));
+    rgbww[F("version")] = RGBWW_VERSION;
+    rgbww[F("queuesize")] = RGBWW_ANIMATIONQSIZE;
 
-    JsonObject con = data.createNestedObject("connection");
-    con["connected"] = WifiStation.isConnected();
-    con["ssid"] = WifiStation.getSSID();
-    con["dhcp"] = WifiStation.isEnabledDHCP();
-    con["ip"] = WifiStation.getIP().toString();
-    con["netmask"] = WifiStation.getNetworkMask().toString();
-    con["gateway"] = WifiStation.getNetworkGateway().toString();
-    con["mac"] = WifiStation.getMAC();
+    JsonObject con = data.createNestedObject(F("connection"));
+    con[F("connected")] = WifiStation.isConnected();
+    con[F("ssid")] = WifiStation.getSSID();
+    con[F("dhcp")] = WifiStation.isEnabledDHCP();
+    con[F("ip")] = WifiStation.getIP().toString();
+    con[F("netmask")] = WifiStation.getNetworkMask().toString();
+    con[F("gateway")] = WifiStation.getNetworkGateway().toString();
+    con[F("mac")] = WifiStation.getMAC();
 
-    JsonObject mqtt = con.createNestedObject("mqtt");
-    mqtt["connected"] = app.mqttclient.isConnected();
+    JsonObject mqtt = con.createNestedObject(F("mqtt"));
+    mqtt[F("connected")] = app.mqttclient.isConnected();
 
     return stream;
 }
@@ -213,15 +213,15 @@ void Application::reset() {
 
 bool Application::delayedCMD(String cmd, int delay) {
     debug_i("Application::delayedCMD cmd: %s - delay: %i", cmd.c_str(), delay);
-    if (cmd.equals("reset")) {
+    if (cmd.equals(F("reset"))) {
         _systimer.initializeMs(delay, TimerDelegate(&Application::reset, this)).startOnce();
-    } else if (cmd.equals("restart")) {
+    } else if (cmd.equals(F("restart"))) {
         _systimer.initializeMs(delay, TimerDelegate(&Application::restart, this)).startOnce();
-    } else if (cmd.equals("stopap")) {
+    } else if (cmd.equals(F("stopap"))) {
         network.stopAp(2000);
-    } else if (cmd.equals("forget_wifi")) {
+    } else if (cmd.equals(F("forget_wifi"))) {
         _systimer.initializeMs(delay, TimerDelegate(&AppWIFI::forgetWifi, &network)).startOnce();
-    } else if (cmd.equals("switch_rom")) {
+    } else if (cmd.equals(F("switch_rom"))) {
         switchRom();
         _systimer.initializeMs(delay, TimerDelegate(&Application::restart, this)).startOnce();
     } else {

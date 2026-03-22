@@ -51,28 +51,28 @@ void EventServer::publishColorEvent(const ChannelOutput& raw, const HSVCT* pHsv,
         _lastHsv = *pHsv;
     }
 
-    JsonRpcMessage msg("color_event");
+    JsonRpcMessage msg(F("color_event"));
     JsonObject root = msg.getParams();
 
-    root["mode"] = pHsv ? "hsv" : "raw";
+    root[F("mode")] = pHsv ? F("hsv") : F("raw");
 
-    JsonObject rawJson = root.createNestedObject("raw");
-    rawJson["r"] = raw.r;
-    rawJson["g"] = raw.g;
-    rawJson["b"] = raw.b;
-    rawJson["ww"] = raw.ww;
-    rawJson["cw"] = raw.cw;
+    JsonObject rawJson = root.createNestedObject(F("raw"));
+    rawJson[F("r")] = raw.r;
+    rawJson[F("g")] = raw.g;
+    rawJson[F("b")] = raw.b;
+    rawJson[F("ww")] = raw.ww;
+    rawJson[F("cw")] = raw.cw;
 
     if (pHsv) {
         float h, s, v;
         int ct;
         pHsv->asRadian(h, s, v, ct);
 
-        JsonObject hsvJson = root.createNestedObject("hsv");
-        hsvJson["h"] = h;
-        hsvJson["s"] = s;
-        hsvJson["v"] = v;
-        hsvJson["ct"] = ct;
+        JsonObject hsvJson = root.createNestedObject(F("hsv"));
+        hsvJson[F("h")] = h;
+        hsvJson[F("s")] = s;
+        hsvJson[F("v")] = v;
+        hsvJson[F("ct")] = ct;
     }
 
     debug_d("EventServer::publishColorEvent\n");
@@ -81,7 +81,7 @@ void EventServer::publishColorEvent(const ChannelOutput& raw, const HSVCT* pHsv,
 }
 
 void EventServer::publishConfigEvent(const JsonObject& jsonObj) {
-    JsonRpcMessage msg("config", CONFIG_MAX_LENGTH);
+    JsonRpcMessage msg(F("config"), CONFIG_MAX_LENGTH);
     JsonObject root = msg.getParams();
 
     root.set(jsonObj);
@@ -92,7 +92,7 @@ void EventServer::publishConfigEvent(const JsonObject& jsonObj) {
 }
 
 void EventServer::publishInfo(std::shared_ptr<JsonObjectStream> pInfo) {
-    JsonRpcMessage msg("info");
+    JsonRpcMessage msg(F("info"));
     JsonObject root = msg.getParams();
 
     root.set(pInfo->getRoot());
@@ -103,7 +103,7 @@ void EventServer::publishInfo(std::shared_ptr<JsonObjectStream> pInfo) {
 }
 
 void EventServer::publishStateCompleted() {
-    JsonRpcMessage msg("state_completed");
+    JsonRpcMessage msg(F("state_completed"));
 
     debug_d("EventServer::publishStateCompleted\n");
 
@@ -113,27 +113,27 @@ void EventServer::publishStateCompleted() {
 void EventServer::publishClockSlaveStatus(int offset, uint32_t interval) {
     debug_d("EventServer::publishClockSlaveStatus: offset: %d | interval :%d\n", offset, interval);
 
-    JsonRpcMessage msg("clock_slave_status");
+    JsonRpcMessage msg(F("clock_slave_status"));
     JsonObject root = msg.getParams();
-    root["offset"] = offset;
-    root["current_interval"] = interval;
+    root[F("offset")] = offset;
+    root[F("current_interval")] = interval;
     sendToClients(msg);
 }
 
 void EventServer::publishKeepAlive() {
     debug_d("EventServer::publishKeepAlive\n");
 
-    JsonRpcMessage msg("keep_alive");
+    JsonRpcMessage msg(F("keep_alive"));
     sendToClients(msg);
 }
 
 void EventServer::publishTransitionFinished(const String& name, bool requeued) {
     debug_d("EventServer::publishTransitionComplete: %s\n", name.c_str());
 
-    JsonRpcMessage msg("transition_finished");
+    JsonRpcMessage msg(F("transition_finished"));
     JsonObject root = msg.getParams();
-    root["name"] = name;
-    root["requeued"] = requeued;
+    root[F("name")] = name;
+    root[F("requeued")] = requeued;
 
     sendToClients(msg);
 }

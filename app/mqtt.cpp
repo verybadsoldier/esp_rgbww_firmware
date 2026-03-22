@@ -51,7 +51,7 @@ void AppMqttClient::connect() {
         return;
 
     debug_d("MQTT::connect ID: %s\n", _id.c_str());
-    if (!mqtt->setWill("last/will", "The connection from this device is lost:(", 1, true)) {
+    if (!mqtt->setWill(F("last/will"), F("The connection from this device is lost:("), 1, true)) {
         debugf("Unable to set the last will and testament. Most probably there is not enough memory on the device.");
     }
     //    0);app.cfg.network.mqtt.username, app.cfg.network.mqtt.password);
@@ -122,7 +122,7 @@ bool AppMqttClient::isConnected() const {
 
 void AppMqttClient::onMessageReceived(String topic, String message) {
     if (app.cfg.sync.clock_slave_enabled && (topic == app.cfg.sync.clock_slave_topic)) {
-        if (message == "reset") {
+        if (message == F("reset")) {
             app.rgbwwctrl.onMasterClockReset();
         } else {
             uint32_t clock = message.toInt();
@@ -136,7 +136,7 @@ void AppMqttClient::onMessageReceived(String topic, String message) {
         String error;
         app.jsonproc.onColor(message, error);
     } else if (topic == HOMEASSISTANT_STATUS_TOPIC) {
-        if (message == "online") {
+        if (message == F("online")) {
             this->publishHomeAssistantDiscovery();
         }
     }
@@ -174,18 +174,18 @@ void AppMqttClient::publishCurrentRaw(const ChannelOutput& raw) {
 
     StaticJsonDocument<200> doc;
     JsonObject root = doc.to<JsonObject>();
-    JsonObject rawJson = root.createNestedObject("raw");
-    rawJson["r"] = raw.r;
-    rawJson["g"] = raw.g;
-    rawJson["b"] = raw.b;
-    rawJson["cw"] = raw.cw;
-    rawJson["ww"] = raw.ww;
+    JsonObject rawJson = root.createNestedObject(F("raw"));
+    rawJson[F("r")] = raw.r;
+    rawJson[F("g")] = raw.g;
+    rawJson[F("b")] = raw.b;
+    rawJson[F("cw")] = raw.cw;
+    rawJson[F("ww")] = raw.ww;
 
-    root["t"] = 0;
-    root["cmd"] = "solid";
+    root[F("t")] = 0;
+    root[F("cmd")] = F("solid");
 
     String jsonMsg = Json::serialize(root);
-    publish(buildTopic("color"), jsonMsg, true);
+    publish(buildTopic(F("color")), jsonMsg, true);
 }
 
 void AppMqttClient::publishCurrentHsv(const HSVCT& color) {
@@ -205,17 +205,17 @@ void AppMqttClient::publishCurrentHsv(const HSVCT& color) {
 
     StaticJsonDocument<200> doc;
     JsonObject root = doc.to<JsonObject>();
-    JsonObject hsv = root.createNestedObject("hsv");
-    hsv["h"] = h;
-    hsv["s"] = s;
-    hsv["v"] = v;
-    hsv["ct"] = ct;
+    JsonObject hsv = root.createNestedObject(F("hsv"));
+    hsv[F("h")] = h;
+    hsv[F("s")] = s;
+    hsv[F("v")] = v;
+    hsv[F("ct")] = ct;
 
-    root["t"] = 0;
-    root["cmd"] = "solid";
+    root[F("t")] = 0;
+    root[F("cmd")] = F("solid");
 
     String jsonMsg = Json::serialize(root);
-    publish(buildTopic("color"), jsonMsg, true);
+    publish(buildTopic(F("color")), jsonMsg, true);
 }
 
 String AppMqttClient::buildTopic(const String& suffix) {
@@ -225,7 +225,7 @@ String AppMqttClient::buildTopic(const String& suffix) {
 }
 
 String AppMqttClient::buildHaDiscoveryTopic(const String& deviceName) {
-    return "homeassistant/fhem_rgbwwcontroller/discovery/" + deviceName;
+    return F("homeassistant/fhem_rgbwwcontroller/discovery/") + deviceName;
 }
 
 void AppMqttClient::publishClock(uint32_t steps) {
@@ -236,7 +236,7 @@ void AppMqttClient::publishClock(uint32_t steps) {
         String msg;
         msg += steps;
 
-        publish(buildTopic("clock"), msg, false);
+        publish(buildTopic(F("clock")), msg, false);
     }
 }
 
@@ -245,7 +245,7 @@ void AppMqttClient::publishClockReset() {
         return;
     }
 
-    publish(buildTopic("clock"), "reset", false);
+    publish(buildTopic(F("clock")), F("reset"), false);
 }
 
 void AppMqttClient::publishClockInterval(uint32_t curInterval) {
@@ -256,7 +256,7 @@ void AppMqttClient::publishClockInterval(uint32_t curInterval) {
     String msg;
     msg += curInterval;
 
-    publish(buildTopic("clock_interval"), msg, false);
+    publish(buildTopic(F("clock_interval")), msg, false);
 }
 
 void AppMqttClient::publishClockSlaveOffset(int offset) {
@@ -266,7 +266,7 @@ void AppMqttClient::publishClockSlaveOffset(int offset) {
     String msg;
     msg += offset;
 
-    publish(buildTopic("clock_slave_offset"), msg, false);
+    publish(buildTopic(F("clock_slave_offset")), msg, false);
 }
 
 void AppMqttClient::publishCommand(const String& method, const JsonObject& params) {
@@ -279,10 +279,10 @@ void AppMqttClient::publishCommand(const String& method, const JsonObject& param
     JsonRpcMessage msg(method);
 
     if (params.size() > 0)
-        msg.getRoot()["params"] = params;
+        msg.getRoot()[F("params")] = params;
 
     String msgStr = Json::serialize(msg.getRoot());
-    publish(buildTopic("command"), msgStr, false);
+    publish(buildTopic(F("command")), msgStr, false);
 }
 
 void AppMqttClient::publishTransitionFinished(const String& name, bool requeued) {
@@ -294,11 +294,11 @@ void AppMqttClient::publishTransitionFinished(const String& name, bool requeued)
 
     StaticJsonDocument<200> doc;
     JsonObject root = doc.to<JsonObject>();
-    root["name"] = name;
-    root["requequed"] = requeued;
+    root[F("name")] = name;
+    root[F("requeued")] = requeued;
 
     String jsonMsg = Json::serialize(root);
-    publish(buildTopic("transition_finished"), jsonMsg, true);
+    publish(buildTopic(F("transition_finished")), jsonMsg, true);
 }
 
 void AppMqttClient::publishConfigEvent(const JsonObject& jsonObj) {
@@ -308,7 +308,7 @@ void AppMqttClient::publishConfigEvent(const JsonObject& jsonObj) {
         return;
     }
 
-    JsonRpcMessage msg("config_event", CONFIG_MAX_LENGTH);
+    JsonRpcMessage msg(F("config_event"), CONFIG_MAX_LENGTH);
     JsonObject root = msg.getParams();
 
     root.set(jsonObj);
@@ -316,7 +316,7 @@ void AppMqttClient::publishConfigEvent(const JsonObject& jsonObj) {
     debug_d("EventServer::publishConfigEvent\n");
 
     String jsonMsg = Json::serialize(root);
-    publish(buildTopic("config_event"), jsonMsg, true);
+    publish(buildTopic(F("config_event")), jsonMsg, true);
 }
 
 void AppMqttClient::publishHomeAssistantDiscovery() {
@@ -326,12 +326,12 @@ void AppMqttClient::publishHomeAssistantDiscovery() {
         return;
     }
 
-    JsonRpcMessage msg("ha_discovery");
+    JsonRpcMessage msg(F("ha_discovery"));
     StaticJsonDocument<200> doc;
     JsonObject root = doc.to<JsonObject>();
-    root["device_name"] = app.cfg.general.device_name;
-    root["ip_address"] = WifiStation.getIP().toString();
-    root["mac_address"] = WifiStation.getMAC();
+    root[F("device_name")] = app.cfg.general.device_name;
+    root[F("ip_address")] = WifiStation.getIP().toString();
+    root[F("mac_address")] = WifiStation.getMAC();
 
     String jsonMsg = Json::serialize(root);
     publish(buildHaDiscoveryTopic(app.cfg.general.device_name), jsonMsg, false);

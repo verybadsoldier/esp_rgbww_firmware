@@ -4,7 +4,7 @@ bool JsonProcessor::onColor(const String& json, String& errorMsg, bool relay) {
     debug_e("JsonProcessor::onColor: %s", json.c_str());
     StaticJsonDocument<_jsonDocumentMaxSize> doc;
     if (!Json::deserialize(doc, json)) {
-        errorMsg = "JSON deserialization error";
+        errorMsg = F("JSON deserialization error");
         return false;
     }
     return onColor(doc.as<JsonObject>(), errorMsg, relay);
@@ -12,7 +12,7 @@ bool JsonProcessor::onColor(const String& json, String& errorMsg, bool relay) {
 
 bool JsonProcessor::onColor(JsonObject root, String& errorMsg, bool relay) {
     bool result = false;
-    auto cmds = root["cmds"].as<JsonArray>();
+    auto cmds = root[F("cmds")].as<JsonArray>();
     if (!cmds.isNull()) {
         Vector<String> errors;
         // multi command post (needs testing)
@@ -37,8 +37,8 @@ bool JsonProcessor::onColor(JsonObject root, String& errorMsg, bool relay) {
             result = false;
     }
 
-   if (relay)
-        app.onCommandRelay("color", root);
+    if (relay)
+        app.onCommandRelay(F("color"), root);
 
     return result;
 }
@@ -46,7 +46,7 @@ bool JsonProcessor::onColor(JsonObject root, String& errorMsg, bool relay) {
 bool JsonProcessor::onStop(const String& json, String& errorMsg, bool relay) {
     StaticJsonDocument<_jsonDocumentMaxSize> doc;
     if (!Json::deserialize(doc, json)) {
-        errorMsg = "JSON deserialization error";
+        errorMsg = F("JSON deserialization error");
         return false;
     }
     return onStop(doc.as<JsonObject>(), errorMsg, relay);
@@ -71,7 +71,7 @@ bool JsonProcessor::onStop(JsonObject root, String& errorMsg, bool relay) {
 bool JsonProcessor::onSkip(const String& json, String& errorMsg, bool relay) {
     StaticJsonDocument<_jsonDocumentMaxSize> doc;
     if (!Json::deserialize(doc, json)) {
-        errorMsg = "JSON deserialization error";
+        errorMsg = F("JSON deserialization error");
         return false;
     }
     return onSkip(doc.as<JsonObject>(), errorMsg, relay);
@@ -85,7 +85,7 @@ bool JsonProcessor::onSkip(JsonObject root, String& errorMsg, bool relay) {
 
     if (relay) {
         addChannelStatesToCmd(root, params.channels);
-        app.onCommandRelay("skip", root);
+        app.onCommandRelay(F("skip"), root);
     }
 
     return true;
@@ -94,7 +94,7 @@ bool JsonProcessor::onSkip(JsonObject root, String& errorMsg, bool relay) {
 bool JsonProcessor::onPause(const String& json, String& errorMsg, bool relay) {
     StaticJsonDocument<_jsonDocumentMaxSize> doc;
     if (!Json::deserialize(doc, json)) {
-        errorMsg = "JSON deserialization error";
+        errorMsg = F("JSON deserialization error");
         return false;
     }
     return onPause(doc.as<JsonObject>(), errorMsg);
@@ -109,7 +109,7 @@ bool JsonProcessor::onPause(JsonObject root, String& errorMsg, bool relay) {
 
     if (relay) {
         addChannelStatesToCmd(root, params.channels);
-        app.onCommandRelay("pause", root);
+        app.onCommandRelay(F("pause"), root);
     }
 
     return true;
@@ -118,7 +118,7 @@ bool JsonProcessor::onPause(JsonObject root, String& errorMsg, bool relay) {
 bool JsonProcessor::onContinue(const String& json, String& errorMsg, bool relay) {
     StaticJsonDocument<_jsonDocumentMaxSize> doc;
     if (!Json::deserialize(doc, json)) {
-        errorMsg = "JSON deserialization error";
+        errorMsg = F("JSON deserialization error");
         return false;
     }
     return onContinue(doc.as<JsonObject>(), errorMsg, relay);
@@ -131,7 +131,7 @@ bool JsonProcessor::onContinue(JsonObject root, String& errorMsg, bool relay) {
     app.rgbwwctrl.continueAnimation(params.channels);
 
     if (relay)
-        app.onCommandRelay("continue", root);
+        app.onCommandRelay(F("continue"), root);
 
     return true;
 }
@@ -139,7 +139,7 @@ bool JsonProcessor::onContinue(JsonObject root, String& errorMsg, bool relay) {
 bool JsonProcessor::onBlink(const String& json, String& errorMsg, bool relay) {
     StaticJsonDocument<_jsonDocumentMaxSize> doc;
     if (!Json::deserialize(doc, json)) {
-        errorMsg = "JSON deserialization error";
+        errorMsg = F("JSON deserialization error");
         return false;
     }
     return onBlink(doc.as<JsonObject>(), errorMsg, relay);
@@ -155,7 +155,7 @@ bool JsonProcessor::onBlink(JsonObject root, String& errorMsg, bool relay) {
     app.rgbwwctrl.blink(params.channels, params.ramp.value, params.queue, params.requeue, params.name);
 
     if (relay)
-        app.onCommandRelay("blink", root);
+        app.onCommandRelay(F("blink"), root);
 
     return true;
 }
@@ -163,7 +163,7 @@ bool JsonProcessor::onBlink(JsonObject root, String& errorMsg, bool relay) {
 bool JsonProcessor::onToggle(const String& json, String& errorMsg, bool relay) {
     StaticJsonDocument<_jsonDocumentMaxSize> doc;
     if (!Json::deserialize(doc, json)) {
-        errorMsg = "JSON deserialization error";
+        errorMsg = F("JSON deserialization error");
         return false;
     }
     return onToggle(doc.as<JsonObject>(), errorMsg, relay);
@@ -173,7 +173,7 @@ bool JsonProcessor::onToggle(JsonObject root, String& errorMsg, bool relay) {
     app.rgbwwctrl.toggle();
 
     if (relay)
-        app.onCommandRelay("toggle", root);
+        app.onCommandRelay(F("toggle"), root);
 
     return true;
 }
@@ -203,12 +203,12 @@ bool JsonProcessor::onSingleColorCommand(JsonObject root, String& errorMsg) {
             queueOk = app.rgbwwctrl.fadeRAW(params.rawFrom, params.raw, params.ramp, params.stay, params.queue);
         }
     } else {
-        errorMsg = "No color object!";
+        errorMsg = F("No color object!");
         return false;
     }
 
     if (!queueOk)
-        errorMsg = "Queue full";
+        errorMsg = F("Queue full");
     return queueOk;
 }
 
@@ -222,90 +222,96 @@ bool JsonProcessor::checkUnsupportedParams(JsonObject obj, const String& rootNam
         if (allowed.find(it->key().c_str()) == allowed.end()) {
             debug_w("JsonProcessor::checkUnsupportedParams - unsupported param: %s in node %s\n", it->key().c_str(),
                     rootName.c_str());
-            errorMsg = String("Unsupported param: ") + it->key().c_str() + " in node " + rootName;
+            errorMsg = F("Unsupported param: ") + it->key().c_str() + F(" in node ") + rootName;
             return false;
         }
     }
     return true;
 }
 
-bool JsonProcessor::parseRequestParams(JsonObject root, RequestParameters& params, bool allowChannelsParam, String& errorMsg) {
+bool JsonProcessor::parseRequestParams(JsonObject root, RequestParameters& params, bool allowChannelsParam,
+                                       String& errorMsg) {
     String value;
 
     if (allowChannelsParam) {
-        if (!JsonProcessor::checkUnsupportedParams(root, "root", {"hsv", "raw", "t", "s", "stay", "r", "d", "name", "q", "channels"},
-                                                errorMsg))
+        if (!JsonProcessor::checkUnsupportedParams(
+                root, F("root"),
+                {F("hsv"), F("raw"), F("t"), F("s"), F("stay"), F("r"), F("d"), F("name"), F("q"), F("channels")},
+                errorMsg))
             return false;
     } else {
-        if (!JsonProcessor::checkUnsupportedParams(root, "root", {"hsv", "raw", "t", "s", "stay", "r", "d", "name", "q"},
-                                                errorMsg))
+        if (!JsonProcessor::checkUnsupportedParams(
+                root, F("root"), {F("hsv"), F("raw"), F("t"), F("s"), F("stay"), F("r"), F("d"), F("name"), F("q")},
+                errorMsg))
             return false;
     }
 
-
     JsonObject hsv = root["hsv"];
     if (!hsv.isNull()) {
-        if (!JsonProcessor::JsonProcessor::checkUnsupportedParams(hsv, "hsv", {"h", "s", "v", "ct", "from"}, errorMsg))
+        if (!JsonProcessor::JsonProcessor::checkUnsupportedParams(
+                hsv, F("hsv"), {F("h"), F("s"), F("v"), F("ct"), F("from")}, errorMsg))
             return false;
 
         params.mode = RequestParameters::Mode::Hsv;
-        if (Json::getValue(hsv["h"], value))
+        if (Json::getValue(hsv[F("h")], value))
             params.hsv.h = AbsOrRelValue(value, AbsOrRelValue::Type::Hue);
-        if (Json::getValue(hsv["s"], value))
+        if (Json::getValue(hsv[F("s")], value))
             params.hsv.s = AbsOrRelValue(value);
-        if (Json::getValue(hsv["v"], value))
+        if (Json::getValue(hsv[F("v")], value))
             params.hsv.v = AbsOrRelValue(value);
-        if (Json::getValue(hsv["ct"], value))
+        if (Json::getValue(hsv[F("ct")], value))
             params.hsv.ct = AbsOrRelValue(value, AbsOrRelValue::Type::Ct);
 
-        JsonObject from = hsv["from"];
-        if (!JsonProcessor::checkUnsupportedParams(from, "hsv.from", {"h", "s", "v", "ct"}, errorMsg))
+        JsonObject from = hsv[F("from")];
+        if (!JsonProcessor::checkUnsupportedParams(from, F("hsv.from"), {F("h"), F("s"), F("v"), F("ct")}, errorMsg))
             return false;
 
         if (!from.isNull()) {
             params.hasHsvFrom = true;
-            if (Json::getValue(from["h"], value))
+            if (Json::getValue(from[F("h")], value))
                 params.hsv.h = AbsOrRelValue(value, AbsOrRelValue::Type::Hue);
-            if (Json::getValue(from["s"], value))
+            if (Json::getValue(from[F("s")], value))
                 params.hsv.s = AbsOrRelValue(value);
-            if (Json::getValue(from["v"], value))
+            if (Json::getValue(from[F("v")], value))
                 params.hsv.v = AbsOrRelValue(value);
-            if (Json::getValue(from["ct"], value))
+            if (Json::getValue(from[F("ct")], value))
                 params.hsv.ct = AbsOrRelValue(value, AbsOrRelValue::Type::Ct);
         }
     } else if (!root["raw"].isNull()) {
-        if (!JsonProcessor::checkUnsupportedParams(root["raw"], "raw", {"r", "g", "b", "ww", "cw", "from"}, errorMsg))
+        if (!JsonProcessor::checkUnsupportedParams(root["raw"], F("raw"),
+                                                   {F("r"), F("g"), F("b"), F("ww"), F("cw"), F("from")}, errorMsg))
             return false;
 
         JsonObject raw = root["raw"];
         params.mode = RequestParameters::Mode::Raw;
-        if (Json::getValue(raw["r"], value))
+        if (Json::getValue(raw[F("r")], value))
             params.raw.r = AbsOrRelValue(value, AbsOrRelValue::Type::Raw);
-        if (Json::getValue(raw["g"], value))
+        if (Json::getValue(raw[F("g")], value))
             params.raw.g = AbsOrRelValue(value, AbsOrRelValue::Type::Raw);
-        if (Json::getValue(raw["b"], value))
+        if (Json::getValue(raw[F("b")], value))
             params.raw.b = AbsOrRelValue(value, AbsOrRelValue::Type::Raw);
-        if (Json::getValue(raw["ww"], value))
+        if (Json::getValue(raw[F("ww")], value))
             params.raw.ww = AbsOrRelValue(value, AbsOrRelValue::Type::Raw);
-        if (Json::getValue(raw["cw"], value))
+        if (Json::getValue(raw[F("cw")], value))
             params.raw.cw = AbsOrRelValue(value, AbsOrRelValue::Type::Raw);
 
-        JsonObject from = raw["from"];
+        JsonObject from = raw[F("from")];
 
         if (!from.isNull()) {
-            if (!JsonProcessor::checkUnsupportedParams(from, "raw.from", {"r", "g", "b", "ww", "cw"}, errorMsg))
+            if (!JsonProcessor::checkUnsupportedParams(from, F("raw.from"), {F("r"), F("g"), F("b"), F("ww"), F("cw")},
+                                                       errorMsg))
                 return false;
 
             params.hasRawFrom = true;
-            if (Json::getValue(from["r"], value))
+            if (Json::getValue(from[F("r")], value))
                 params.rawFrom.r = AbsOrRelValue(value, AbsOrRelValue::Type::Raw);
-            if (Json::getValue(from["g"], value))
+            if (Json::getValue(from[F("g")], value))
                 params.rawFrom.g = AbsOrRelValue(value, AbsOrRelValue::Type::Raw);
-            if (Json::getValue(from["b"], value))
+            if (Json::getValue(from[F("b")], value))
                 params.rawFrom.b = AbsOrRelValue(value, AbsOrRelValue::Type::Raw);
-            if (Json::getValue(from["ww"], value))
+            if (Json::getValue(from[F("ww")], value))
                 params.rawFrom.ww = AbsOrRelValue(value, AbsOrRelValue::Type::Raw);
-            if (Json::getValue(from["cw"], value))
+            if (Json::getValue(from[F("cw")], value))
                 params.rawFrom.cw = AbsOrRelValue(value, AbsOrRelValue::Type::Raw);
         }
     }
@@ -315,45 +321,43 @@ bool JsonProcessor::parseRequestParams(JsonObject root, RequestParameters& param
         return false;
     }
 
-    if (Json::getValue(root["t"], params.ramp.value)) {
+    if (Json::getValue(root[F("t")], params.ramp.value)) {
         params.ramp.type = RampTimeOrSpeed::Type::Time;
     }
 
-    if (Json::getValue(root["s"], params.ramp.value)) {
+    if (Json::getValue(root[F("s")], params.ramp.value)) {
         params.ramp.type = RampTimeOrSpeed::Type::Speed;
     }
 
-    Json::getValue(root["stay"], params.stay);
+    Json::getValue(root[F("stay")], params.stay);
 
-    if (!root["r"].isNull()) {
-        params.requeue = root["r"].as<bool>();
+    if (!root[F("r")].isNull()) {
+        params.requeue = root[F("r")].as<bool>();
     }
 
     String direction;
-    if (Json::getValue(root["d"], direction)) {
-        if (direction == "short") {
+    if (Json::getValue(root[F("d")], direction)) {
+        if (direction == F("short")) {
             params.direction = HueTransitionDirection::dir_short;
-        }
-        else if (direction == "long") {
+        } else if (direction == F("long")) {
             params.direction = HueTransitionDirection::dir_long;
-        }
-        else {
-            errorMsg = "Invalid hue direction";
+        } else {
+            errorMsg = F("Invalid hue direction");
             return false;
         }
     }
 
-    Json::getValue(root["name"], params.name);
+    Json::getValue(root[F("name")], params.name);
 
-    if (!root["q"].isNull()) {
-        String q = root["q"];
-        if (q == "back")
+    if (!root[F("q")].isNull()) {
+        String q = root[F("q")];
+        if (q == F("back"))
             params.queue = QueuePolicy::Back;
-        else if (q == "front")
+        else if (q == F("front"))
             params.queue = QueuePolicy::Front;
-        else if (q == "front_reset")
+        else if (q == F("front_reset"))
             params.queue = QueuePolicy::FrontReset;
-        else if (q == "single")
+        else if (q == F("single"))
             params.queue = QueuePolicy::Single;
         else {
             params.queue = QueuePolicy::Invalid;
@@ -361,29 +365,29 @@ bool JsonProcessor::parseRequestParams(JsonObject root, RequestParameters& param
     }
 
     JsonArray arr;
-    if (Json::getValue(root["channels"], arr)) {
+    if (Json::getValue(root[F("channels")], arr)) {
         debug_w("JsonProcessor::parseRequestParams - channels specified: %d\n", arr.size());
         for (size_t i = 0; i < arr.size(); ++i) {
             // checkUnsupportedParams(arr, "channels", {"h", "s", "v", "ct", "r", "g", "b", "ww", "cw"});
 
             String str = arr[i];
-            if (str == "h") {
+            if (str == F("h")) {
                 params.channels.add(CtrlChannel::Hue);
-            } else if (str == "s") {
+            } else if (str == F("s")) {
                 params.channels.add(CtrlChannel::Sat);
-            } else if (str == "v") {
+            } else if (str == F("v")) {
                 params.channels.add(CtrlChannel::Val);
-            } else if (str == "ct") {
+            } else if (str == F("ct")) {
                 params.channels.add(CtrlChannel::ColorTemp);
-            } else if (str == "r") {
+            } else if (str == F("r")) {
                 params.channels.add(CtrlChannel::Red);
-            } else if (str == "g") {
+            } else if (str == F("g")) {
                 params.channels.add(CtrlChannel::Green);
-            } else if (str == "b") {
+            } else if (str == F("b")) {
                 params.channels.add(CtrlChannel::Blue);
-            } else if (str == "ww") {
+            } else if (str == F("ww")) {
                 params.channels.add(CtrlChannel::WarmWhite);
-            } else if (str == "cw") {
+            } else if (str == F("cw")) {
                 params.channels.add(CtrlChannel::ColdWhite);
             }
         }
@@ -394,29 +398,30 @@ bool JsonProcessor::parseRequestParams(JsonObject root, RequestParameters& param
 
 bool JsonProcessor::RequestParameters::checkParams(String& errorMsg, const ApplicationSettings& settings) const {
     if (mode == Mode::Hsv) {
-        if (hsv.ct.hasValue() && hsv.ct.getValue().getMode() == AbsOrRelValue::Mode::Absolute && !settings.isColortempInRange(hsv.ct.getValue())) {
-            errorMsg = "ct param out of range";
+        if (hsv.ct.hasValue() && hsv.ct.getValue().getMode() == AbsOrRelValue::Mode::Absolute &&
+            !settings.isColortempInRange(hsv.ct.getValue())) {
+            errorMsg = F("ct param out of range");
             return false;
         }
 
         if (!hsv.h.hasValue() && !hsv.s.hasValue() && !hsv.v.hasValue() && !hsv.ct.hasValue()) {
-            errorMsg = "Need at least one HSVCT component!";
+            errorMsg = F("Need at least one HSVCT component!");
             return false;
         }
     } else if (mode == Mode::Raw) {
         if (!raw.r.hasValue() && !raw.g.hasValue() && !raw.b.hasValue() && !raw.ww.hasValue() && !raw.cw.hasValue()) {
-            errorMsg = "Need at least one RAW component!";
+            errorMsg = F("Need at least one RAW component!");
             return false;
         }
     }
 
     if (queue == QueuePolicy::Invalid) {
-        errorMsg = "Invalid queue policy";
+        errorMsg = F("Invalid queue policy");
         return false;
     }
 
     if (ramp.type == RampTimeOrSpeed::Type::Speed && ramp.value == 0) {
-        errorMsg = "Speed cannot be 0!";
+        errorMsg = F("Speed cannot be 0!");
         return false;
     }
 
@@ -428,19 +433,19 @@ bool JsonProcessor::onJsonRpc(const String& json, String& errorMsg) {
     JsonRpcMessageIn rpc(json);
 
     String method = rpc.getMethod();
-    if (method == "color") {
+    if (method == F("color")) {
         return onColor(rpc.getParams(), errorMsg);
-    } else if (method == "stop") {
+    } else if (method == F("stop")) {
         return onStop(rpc.getParams(), errorMsg);
-    } else if (method == "blink") {
+    } else if (method == F("blink")) {
         return onBlink(rpc.getParams(), errorMsg);
-    } else if (method == "skip") {
+    } else if (method == F("skip")) {
         return onSkip(rpc.getParams(), errorMsg);
-    } else if (method == "pause") {
+    } else if (method == F("pause")) {
         return onPause(rpc.getParams(), errorMsg);
-    } else if (method == "continue") {
+    } else if (method == F("continue")) {
         return onContinue(rpc.getParams(), errorMsg);
-    } else if (method == "toggle") {
+    } else if (method == F("toggle")) {
         return onToggle(rpc.getParams(), errorMsg);
     } else {
         return false;
@@ -451,30 +456,30 @@ void JsonProcessor::addChannelStatesToCmd(JsonObject root, const RGBWWLed::Chann
     switch (app.rgbwwctrl.getMode()) {
     case RGBWWLed::ColorMode::Hsv: {
         const HSVCT& c = app.rgbwwctrl.getCurrentColor();
-        JsonObject obj = root.createNestedObject("hsv");
+        JsonObject obj = root.createNestedObject(F("hsv"));
         if (channels.count() == 0 || channels.contains(CtrlChannel::Hue))
-            obj["h"] = (float(c.h) / float(RGBWW_CALC_HUEWHEELMAX)) * 360.0;
+            obj[F("h")] = (float(c.h) / float(RGBWW_CALC_HUEWHEELMAX)) * 360.0;
         if (channels.count() == 0 || channels.contains(CtrlChannel::Sat))
-            obj["s"] = (float(c.s) / float(RGBWW_CALC_MAXVAL)) * 100.0;
+            obj[F("s")] = (float(c.s) / float(RGBWW_CALC_MAXVAL)) * 100.0;
         if (channels.count() == 0 || channels.contains(CtrlChannel::Val))
-            obj["v"] = (float(c.v) / float(RGBWW_CALC_MAXVAL)) * 100.0;
+            obj[F("v")] = (float(c.v) / float(RGBWW_CALC_MAXVAL)) * 100.0;
         if (channels.count() == 0 || channels.contains(CtrlChannel::ColorTemp))
-            obj["ct"] = c.ct;
+            obj[F("ct")] = c.ct;
         break;
     }
     case RGBWWLed::ColorMode::Raw: {
         const ChannelOutput& c = app.rgbwwctrl.getCurrentOutput();
-        JsonObject obj = root.createNestedObject("raw");
+        JsonObject obj = root.createNestedObject(F("raw"));
         if (channels.count() == 0 || channels.contains(CtrlChannel::Red))
-            obj["r"] = c.r;
+            obj[F("r")] = c.r;
         if (channels.count() == 0 || channels.contains(CtrlChannel::Green))
-            obj["g"] = c.g;
+            obj[F("g")] = c.g;
         if (channels.count() == 0 || channels.contains(CtrlChannel::Blue))
-            obj["b"] = c.b;
+            obj[F("b")] = c.b;
         if (channels.count() == 0 || channels.contains(CtrlChannel::WarmWhite))
-            obj["ww"] = c.ww;
+            obj[F("ww")] = c.ww;
         if (channels.count() == 0 || channels.contains(CtrlChannel::ColdWhite))
-            obj["cw"] = c.cw;
+            obj[F("cw")] = c.cw;
         break;
     }
     }
