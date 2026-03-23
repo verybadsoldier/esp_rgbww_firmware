@@ -4,12 +4,12 @@
     {
       "label": "Compile Firmware (Debug)",
       "type": "shell",
-      "command": "make V=1 SMING_RELEASE=0 DEBUG_VERBOSE_LEVEL=2 -j$(nproc)",
+      "command": "make V=1 SMING_RELEASE=0 DEBUG_VERBOSE_LEVEL=3 -j$(nproc)",
       "presentation": {
         "reveal": "always",
         "panel": "new"
       },
-      "problemMatcher": [],
+      "problemMatcher": []
     },
     {
       "label": "Compile Firmware (Release)",
@@ -19,7 +19,7 @@
         "reveal": "always",
         "panel": "new"
       },
-      "problemMatcher": [],
+      "problemMatcher": []
     },
     {
       "label": "Distclean",
@@ -29,7 +29,7 @@
         "reveal": "always",
         "panel": "new"
       },
-      "problemMatcher": [],
+      "problemMatcher": []
     }
-]
+  ]
 }
