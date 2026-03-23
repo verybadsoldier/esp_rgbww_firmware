@@ -25,6 +25,14 @@
 #include <RGBWWCtrl.h>
 
 void ApplicationOTA::start(String romurl, String spiffsurl) {
+    const uint32_t largestFreeBlock = getLargestFreeHeapBlock();
+    if (largestFreeBlock < 8000) {
+        debug_e("ApplicationOTA::start - Not enough non-fragmented free heap memory, not starting OTA");
+        return;
+    } else {
+        debug_i("ApplicationOTA::start - Largest free heap block: %u bytes", largestFreeBlock);
+    }
+
     debug_i("ApplicationOTA::start");
     reset();
     status = OTASTATUS::OTA_PROCESSING;

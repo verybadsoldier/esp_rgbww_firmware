@@ -59,6 +59,7 @@
 #include <mqtt.h>
 #include <networking.h>
 #include <stepsync.h>
+#include <system.h>
 #include <webserver.h>
 
 #endif /* RGBWWCTRL_H_ */

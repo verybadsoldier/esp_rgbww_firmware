@@ -123,7 +123,6 @@ void Application::init() {
         debug_i("Disabling NTP server");
     }
 }
-
 JsonObjectStream* Application::getInfo() {
     JsonObjectStream* stream = new JsonObjectStream();
     JsonObject data = stream->getRoot();
@@ -135,7 +134,9 @@ JsonObjectStream* Application::getInfo() {
     data[F("sming")] = SMING_VERSION;
     data[F("event_num_clients")] = app.eventserver.activeClients;
     data[F("uptime")] = app.getUptime();
+
     data[F("heap_free")] = system_get_free_heap_size();
+    data[F("heap_largest_free_block")] = getLargestFreeHeapBlock();
 
     JsonObject rgbww = data.createNestedObject(F("rgbww"));
     rgbww[F("version")] = RGBWW_VERSION;
