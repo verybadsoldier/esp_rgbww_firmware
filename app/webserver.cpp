@@ -655,7 +655,7 @@ void ApplicationWebserver::onNetworks(HttpRequest& request, HttpResponse& respon
         return;
     }
 
-    JsonObjectStream* stream = new JsonObjectStream();
+    JsonObjectStream* stream = new JsonObjectStream(3000);
     JsonObject json = stream->getRoot();
 
     bool error = false;
