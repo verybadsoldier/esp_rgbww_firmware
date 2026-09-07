@@ -56,7 +56,6 @@ class AppWIFI {
     void forgetWifi();
 
   private:
-    int _con_ctr;
     bool _scanning;
     bool _keepStaAfterScan = false;
     bool _new_connection; // this means we just received new user entered Wifi data and are trying them out
@@ -64,6 +63,9 @@ class AppWIFI {
     String _tmp_ssid;
     String _tmp_password;
     Timer _timer;
+    Timer _reconnectTimer;
+    Timer _dhcpTimer;
+    unsigned long _disconnectedAt;
     BssList _networks;
     IpAddress _ApIP;
 
@@ -74,6 +76,8 @@ class AppWIFI {
     void _STAConnected(const String& ssid, MacAddress bssid, uint8_t channel);
     void _STAGotIP(IpAddress ip, IpAddress mask, IpAddress gateway);
     void scanCompleted(bool succeeded, BssList& list);
+    void onReconnectTimer();
+    void onDhcpTimeout();
 };
 
 #endif // APP_NETWORKING_H_

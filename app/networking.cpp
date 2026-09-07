@@ -24,10 +24,10 @@
 AppWIFI::AppWIFI() {
     _ApIP = IPAddress(String(DEFAULT_AP_IP));
     _client_err_msg = "";
-    _con_ctr = 0;
     _scanning = false;
     _new_connection = false;
     _client_status = CONNECTION_STATUS::IDLE;
+    _disconnectedAt = 0;
 }
 
 BssList AppWIFI::getAvailableNetworks() {
@@ -41,7 +41,7 @@ void AppWIFI::scan(bool connectAfterScan) {
 }
 
 void AppWIFI::scanCompleted(bool succeeded, BssList& list) {
-    debug_i("AppWIFI::scanCompleted. Success: %d", succeeded);
+    debug_i("AppWIFI::scanCompleted: Success: %d, %d network(s) found", succeeded, list.count());
     if (succeeded) {
         _networks.clear();
         for (int i = 0; i < list.count(); i++) {
@@ -53,6 +53,24 @@ void AppWIFI::scanCompleted(bool succeeded, BssList& list) {
     _networks.sort([](const BssInfo& a, const BssInfo& b) { return b.rssi - a.rssi; });
     _scanning = false;
 
+    // Check if configured target SSID was found in the scan results
+    String targetSsid = WifiStation.getSSID();
+    if (targetSsid.length() > 0) {
+        bool foundTarget = false;
+        for (int i = 0; i < _networks.count(); i++) {
+            if (_networks[i].ssid.equals(targetSsid)) {
+                debug_i("AppWIFI::scanCompleted: Target SSID '%s' found! (BSSID: %s, Ch: %d, RSSI: %d dBm)",
+                        targetSsid.c_str(), _networks[i].bssid.toString().c_str(), _networks[i].channel,
+                        _networks[i].rssi);
+                foundTarget = true;
+                break;
+            }
+        }
+        if (!foundTarget && succeeded) {
+            debug_i("AppWIFI::scanCompleted: Target SSID '%s' not visible in scan", targetSsid.c_str());
+        }
+    }
+
     // make sure to trigger connect again cause otherwise the Wifi reconnect attempts may come to a stop
     if (_keepStaAfterScan)
         WifiStation.connect();
@@ -60,6 +78,9 @@ void AppWIFI::scanCompleted(bool succeeded, BssList& list) {
 
 void AppWIFI::forgetWifi() {
     debug_i("AppWIFI::forget_wifi");
+    _reconnectTimer.stop();
+    _dhcpTimer.stop();
+    _disconnectedAt = 0;
     WifiStation.config("", "");
     WifiStation.disconnect();
     _client_status = CONNECTION_STATUS::IDLE;
@@ -81,7 +102,7 @@ void AppWIFI::init() {
         WifiAccessPoint.enable(false, true);
     }
 
-    _con_ctr = 0;
+    _disconnectedAt = 0;
 
     if (app.isFirstRun()) {
         debug_i("AppWIFI::init initial run - setting up AP");
@@ -136,7 +157,9 @@ void AppWIFI::connect(String ssid, bool new_con /* = false */) {
 
 void AppWIFI::connect(String ssid, String pass, bool new_con /* = false */) {
     debug_i("AppWIFI::connect ssid %s newcon %d", ssid.c_str(), new_con);
-    _con_ctr = 0;
+    _disconnectedAt = millis();
+    _reconnectTimer.stop();
+    _dhcpTimer.stop();
     _new_connection = new_con;
     _client_status = CONNECTION_STATUS::CONNECTING;
     WifiStation.config(ssid, pass);
@@ -144,41 +167,107 @@ void AppWIFI::connect(String ssid, String pass, bool new_con /* = false */) {
 }
 
 void AppWIFI::_STADisconnect(const String& ssid, MacAddress bssid, WifiDisconnectReason reason) {
-    debug_i("AppWIFI::_STADisconnect reason - %i - counter %i", reason, _con_ctr);
+    debug_i("AppWIFI::_STADisconnect: SSID '%s', BSSID: %s, reason: %d (%s)", ssid.c_str(), bssid.toString().c_str(),
+            reason, WifiEvents.getDisconnectReasonDesc(reason).c_str());
 
-    if (_con_ctr == DEFAULT_CONNECTION_RETRIES || WifiStation.getConnectionStatus() == eSCS_WrongPassword) {
+    _dhcpTimer.stop();
+
+    if (_client_status != CONNECTION_STATUS::ERROR) {
+        _client_status = CONNECTION_STATUS::CONNECTING;
+    }
+
+    if (_disconnectedAt == 0) {
+        _disconnectedAt = millis();
+    }
+
+    // Start recurring reconnect timer (every 30s) if not already running
+    if (!_reconnectTimer.isStarted()) {
+        debug_i("AppWIFI::_STADisconnect starting reconnect timer (%d ms)", WIFI_RECONNECT_INTERVAL_MS);
+        _reconnectTimer.initializeMs(WIFI_RECONNECT_INTERVAL_MS, TimerDelegate(&AppWIFI::onReconnectTimer, this))
+            .start();
+    }
+
+    // If this was a new connection attempt and the disconnect reason was wrong password, set error state and restart AP
+    if (_new_connection && WifiStation.getConnectionStatus() == eSCS_WrongPassword) {
         _client_status = CONNECTION_STATUS::ERROR;
         _client_err_msg = WifiStation.getConnectionStatusName();
-        debug_i("AppWIFI::_STADisconnect err %s - new connection: %i", _client_err_msg.c_str(), _new_connection);
-        if (_new_connection) {
-            debug_i("AppWIFI::_STADisconnect - disconnecting station");
-            WifiStation.disconnect();
-            WifiStation.config("", "");
-        } else {
-            scan(true);
+        debug_i("AppWIFI::_STADisconnect wrong password on new connection - disconnecting station");
+        _reconnectTimer.stop();
+        _dhcpTimer.stop();
+        WifiStation.disconnect();
+        WifiStation.config("", "");
+        startAp();
+    }
+}
+
+void AppWIFI::onReconnectTimer() {
+    if (_client_status == CONNECTION_STATUS::CONNECTED) {
+        _reconnectTimer.stop();
+        _dhcpTimer.stop();
+        return;
+    }
+
+    // Check if we have been disconnected for longer than fallback delay (10 min)
+    if (_disconnectedAt > 0) {
+        unsigned long elapsed = millis() - _disconnectedAt;
+        if (elapsed >= WIFI_AP_FALLBACK_DELAY_MS && !WifiAccessPoint.isEnabled()) {
+            debug_w("AppWIFI::onReconnectTimer: Disconnected for %lu s (threshold: %lu s), activating fallback AP",
+                    elapsed / 1000, (unsigned long)(WIFI_AP_FALLBACK_DELAY_MS / 1000));
             startAp();
+        } else if (!WifiAccessPoint.isEnabled()) {
+            unsigned long remaining = (WIFI_AP_FALLBACK_DELAY_MS - elapsed) / 1000;
+            debug_i("AppWIFI::onReconnectTimer: Disconnected for %lu s (AP fallback in %lu s)", elapsed / 1000,
+                    remaining);
+        } else {
+            debug_i("AppWIFI::onReconnectTimer: Disconnected for %lu s (fallback AP active)", elapsed / 1000);
         }
     }
-    _con_ctr++;
+
+    // Trigger channel scan across all channels to find AP if not already scanning and not waiting for DHCP
+    if (!_scanning && !_dhcpTimer.isStarted()) {
+        debug_i("AppWIFI::onReconnectTimer: Triggering periodic WiFi scan");
+        scan(true);
+    }
 }
 
 void AppWIFI::_STAConnected(const String& ssid, MacAddress bssid, uint8_t channel) {
-    debug_i("AppWIFI::_STAConnected SSID - %s", ssid.c_str());
+    debug_i("AppWIFI::_STAConnected: Associated with SSID '%s' (BSSID: %s, Ch: %d)", ssid.c_str(),
+            bssid.toString().c_str(), channel);
 
-    _con_ctr = 0;
     app.onWifiConnected(ssid);
+
+    // If using DHCP and we don't have an IP yet, start DHCP timeout watchdog
+    if (WifiStation.isEnabledDHCP() && _client_status != CONNECTION_STATUS::CONNECTED) {
+        debug_i("AppWIFI::_STAConnected: Starting DHCP timeout watchdog (%d ms)", WIFI_DHCP_TIMEOUT_MS);
+        _dhcpTimer.initializeMs(WIFI_DHCP_TIMEOUT_MS, TimerDelegate(&AppWIFI::onDhcpTimeout, this)).startOnce();
+    }
+}
+
+void AppWIFI::onDhcpTimeout() {
+    if (_client_status == CONNECTION_STATUS::CONNECTED) {
+        return;
+    }
+    debug_w("AppWIFI::onDhcpTimeout: No IP received within %d ms after association! Resetting station to retry DHCP...",
+            WIFI_DHCP_TIMEOUT_MS);
+    WifiStation.disconnect();
+    WifiStation.connect();
 }
 
 void AppWIFI::_STAGotIP(IpAddress ip, IpAddress mask, IpAddress gateway) {
-    debug_i("AppWIFI::_STAGotIP");
-    _con_ctr = 0;
+    debug_i("AppWIFI::_STAGotIP: Connected! IP: %s, Mask: %s, GW: %s", ip.toString().c_str(), mask.toString().c_str(),
+            gateway.toString().c_str());
+    _disconnectedAt = 0;
+    _reconnectTimer.stop();
+    _dhcpTimer.stop();
     _client_status = CONNECTION_STATUS::CONNECTED;
 
-    // if we have a new connection, wait 90 seconds oterhwise
+    // if we have a new connection, wait 90 seconds otherwise
     // disable the accesspoint mode directly
     if (_new_connection) {
+        debug_i("AppWIFI::_STAGotIP: Disabling AP in 90 s (new connection)");
         stopAp(90000);
     } else {
+        debug_i("AppWIFI::_STAGotIP: Disabling AP in 1 s");
         stopAp(1000);
     }
 
@@ -193,25 +282,21 @@ void AppWIFI::stopAp(int delay) {
     }
 
     if (delay > 0) {
-        debug_i("AppWIFI::stopAp delay %i", delay);
+        debug_i("AppWIFI::stopAp: Scheduling AP disable in %d ms", delay);
         _timer.initializeMs(delay, std::bind(&AppWIFI::stopAp, this, 0)).startOnce();
         return;
     }
 
-    debug_i("AppWIFI::stopAp");
-    debug_i("Disabling AP");
+    debug_i("AppWIFI::stopAp: Disabling AP now");
     _timer.stop();
     if (WifiAccessPoint.isEnabled()) {
-        debug_i("AppWIFI::stopAp WifiAP disable");
         WifiAccessPoint.enable(false, false);
     }
 }
 
 void AppWIFI::startAp() {
-    debug_i("AppWIFI::startAp");
-    debug_i("Enabling AP");
+    debug_i("AppWIFI::startAp: Enabling fallback AP with SSID '%s'", app.cfg.network.ap.ssid.c_str());
     if (!WifiAccessPoint.isEnabled()) {
-        debug_i("AppWIFI:: WifiAP enable");
         WifiAccessPoint.enable(true, false);
         if (app.cfg.network.ap.secured) {
             WifiAccessPoint.config(app.cfg.network.ap.ssid, app.cfg.network.ap.password, AUTH_WPA2_PSK);
