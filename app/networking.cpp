@@ -55,8 +55,8 @@ void AppWIFI::scanCompleted(bool succeeded, BssList& list) {
 
     // Check if configured target SSID was found in the scan results
     String targetSsid = WifiStation.getSSID();
+    bool foundTarget = false;
     if (targetSsid.length() > 0) {
-        bool foundTarget = false;
         for (int i = 0; i < _networks.count(); i++) {
             if (_networks[i].ssid.equals(targetSsid)) {
                 debug_i("AppWIFI::scanCompleted: Target SSID '%s' found! (BSSID: %s, Ch: %d, RSSI: %d dBm)",
@@ -72,8 +72,10 @@ void AppWIFI::scanCompleted(bool succeeded, BssList& list) {
     }
 
     // make sure to trigger connect again cause otherwise the Wifi reconnect attempts may come to a stop
-    if (_keepStaAfterScan)
+    // If SoftAP is active, only trigger connect if target SSID was found in the scan results to avoid channel hopping
+    if (_keepStaAfterScan && (!WifiAccessPoint.isEnabled() || foundTarget)) {
         WifiStation.connect();
+    }
 }
 
 void AppWIFI::forgetWifi() {
@@ -104,11 +106,12 @@ void AppWIFI::init() {
 
     _disconnectedAt = 0;
 
+    WifiAccessPoint.setIP(_ApIP);
+
     if (app.isFirstRun()) {
         debug_i("AppWIFI::init initial run - setting up AP");
         app.cfg.network.ap.ssid = String(DEFAULT_AP_SSIDPREFIX) + String(system_get_chip_id());
         app.cfg.save();
-        WifiAccessPoint.setIP(_ApIP);
     }
 
     // register callbacks
@@ -208,27 +211,19 @@ void AppWIFI::onReconnectTimer() {
     }
 
     // Check if we have been disconnected for longer than fallback delay
-    if (_disconnectedAt > 0) {
+    if (_disconnectedAt > 0 && app.cfg.network.ap.fallback_delay > 0) {
         unsigned long elapsed = millis() - _disconnectedAt;
-        if (app.cfg.network.ap.fallback_delay > 0) {
-            unsigned long fallbackDelayMs = (unsigned long)app.cfg.network.ap.fallback_delay * 1000;
-            if (elapsed >= fallbackDelayMs && !WifiAccessPoint.isEnabled()) {
-                debug_w("AppWIFI::onReconnectTimer: Disconnected for %lu s (threshold: %d s), activating fallback AP",
-                        elapsed / 1000, app.cfg.network.ap.fallback_delay);
-                startAp();
-            } else if (!WifiAccessPoint.isEnabled()) {
-                unsigned long remaining = (fallbackDelayMs - elapsed) / 1000;
-                debug_i("AppWIFI::onReconnectTimer: Disconnected for %lu s (AP fallback in %lu s)", elapsed / 1000,
-                        remaining);
-            } else {
-                debug_i("AppWIFI::onReconnectTimer: Disconnected for %lu s (fallback AP active)", elapsed / 1000);
-            }
+        unsigned long fallbackDelayMs = (unsigned long)app.cfg.network.ap.fallback_delay * 1000;
+        if (elapsed >= fallbackDelayMs && !WifiAccessPoint.isEnabled()) {
+            debug_w("AppWIFI::onReconnectTimer: Disconnected for %lu s (threshold: %d s), activating fallback AP",
+                    elapsed / 1000, app.cfg.network.ap.fallback_delay);
+            startAp();
+        } else if (!WifiAccessPoint.isEnabled()) {
+            unsigned long remaining = (fallbackDelayMs - elapsed) / 1000;
+            debug_i("AppWIFI::onReconnectTimer: Disconnected for %lu s (AP fallback in %lu s)", elapsed / 1000,
+                    remaining);
         } else {
-            if (WifiAccessPoint.isEnabled()) {
-                debug_i("AppWIFI::onReconnectTimer: Disconnected for %lu s (fallback AP active)", elapsed / 1000);
-            } else {
-                debug_i("AppWIFI::onReconnectTimer: Disconnected for %lu s (AP fallback disabled)", elapsed / 1000);
-            }
+            debug_i("AppWIFI::onReconnectTimer: Disconnected for %lu s (fallback AP active)", elapsed / 1000);
         }
     }
 
@@ -315,6 +310,8 @@ void AppWIFI::stopAp(int delay) {
 void AppWIFI::startAp() {
     debug_i("AppWIFI::startAp: Enabling fallback AP with SSID '%s'", app.cfg.network.ap.ssid.c_str());
     if (!WifiAccessPoint.isEnabled()) {
+        // Disconnect station so background auto-reconnect does not hop channels and disrupt SoftAP clients
+        WifiStation.disconnect();
         WifiAccessPoint.enable(true, false);
         if (app.cfg.network.ap.secured) {
             WifiAccessPoint.config(app.cfg.network.ap.ssid, app.cfg.network.ap.password, AUTH_WPA2_PSK);
