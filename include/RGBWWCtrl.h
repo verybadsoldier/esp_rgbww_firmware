@@ -34,7 +34,6 @@
 #define DEFAULT_API_PASSWORD "rgbwwctrl"
 #define DEFAULT_CONNECTION_RETRIES 10
 #define WIFI_RECONNECT_INTERVAL_MS 30000
-#define WIFI_AP_FALLBACK_DELAY_MS (10 * 60 * 1000)
 #define WIFI_DHCP_TIMEOUT_MS 15000
 #define DEFAULT_OTA_URL "http://rgbww.dronezone.de/release/version.json"
 

@@ -379,6 +379,8 @@ void ApplicationWebserver::onConfig(HttpRequest& request, HttpResponse& response
                         ap_updated = true;
                     }
                 }
+
+                Json::getValue(jnet[F("ap")][F("fallback_delay")], app.cfg.network.ap.fallback_delay);
             }
 
             JsonObject jmqtt = jnet[F("mqtt")];

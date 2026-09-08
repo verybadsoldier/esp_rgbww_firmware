@@ -52,6 +52,7 @@ struct ApplicationSettings {
             bool secured = DEFAULT_AP_SECURED;
             String ssid;
             String password = DEFAULT_AP_PASSWORD;
+            int fallback_delay = 600;
         };
 
         connection connection;
@@ -156,6 +157,7 @@ struct ApplicationSettings {
             network.ap.secured = jap["secured"];
             network.ap.ssid = jap["ssid"].as<const char*>();
             network.ap.password = jap["password"].as<String>();
+            Json::getValue(jap["fallback_delay"], network.ap.fallback_delay);
 
             // mqtt
             JsonObject jmqtt = net["mqtt"];
@@ -261,6 +263,7 @@ struct ApplicationSettings {
         jap["secured"] = network.ap.secured;
         jap["ssid"] = network.ap.ssid;
         jap["password"] = network.ap.password;
+        jap["fallback_delay"] = network.ap.fallback_delay;
 
         JsonObject jmqtt = net.createNestedObject("mqtt");
         jmqtt["enabled"] = network.mqtt.enabled;
@@ -361,6 +364,7 @@ struct ApplicationSettings {
 
     void sanitizeValues() {
         sync.clock_master_interval = max(sync.clock_master_interval, 1);
+        network.ap.fallback_delay = max(network.ap.fallback_delay, 0);
     }
 
     bool isColortempInRange(int ct) const {

@@ -207,19 +207,28 @@ void AppWIFI::onReconnectTimer() {
         return;
     }
 
-    // Check if we have been disconnected for longer than fallback delay (10 min)
+    // Check if we have been disconnected for longer than fallback delay
     if (_disconnectedAt > 0) {
         unsigned long elapsed = millis() - _disconnectedAt;
-        if (elapsed >= WIFI_AP_FALLBACK_DELAY_MS && !WifiAccessPoint.isEnabled()) {
-            debug_w("AppWIFI::onReconnectTimer: Disconnected for %lu s (threshold: %lu s), activating fallback AP",
-                    elapsed / 1000, (unsigned long)(WIFI_AP_FALLBACK_DELAY_MS / 1000));
-            startAp();
-        } else if (!WifiAccessPoint.isEnabled()) {
-            unsigned long remaining = (WIFI_AP_FALLBACK_DELAY_MS - elapsed) / 1000;
-            debug_i("AppWIFI::onReconnectTimer: Disconnected for %lu s (AP fallback in %lu s)", elapsed / 1000,
-                    remaining);
+        if (app.cfg.network.ap.fallback_delay > 0) {
+            unsigned long fallbackDelayMs = (unsigned long)app.cfg.network.ap.fallback_delay * 1000;
+            if (elapsed >= fallbackDelayMs && !WifiAccessPoint.isEnabled()) {
+                debug_w("AppWIFI::onReconnectTimer: Disconnected for %lu s (threshold: %d s), activating fallback AP",
+                        elapsed / 1000, app.cfg.network.ap.fallback_delay);
+                startAp();
+            } else if (!WifiAccessPoint.isEnabled()) {
+                unsigned long remaining = (fallbackDelayMs - elapsed) / 1000;
+                debug_i("AppWIFI::onReconnectTimer: Disconnected for %lu s (AP fallback in %lu s)", elapsed / 1000,
+                        remaining);
+            } else {
+                debug_i("AppWIFI::onReconnectTimer: Disconnected for %lu s (fallback AP active)", elapsed / 1000);
+            }
         } else {
-            debug_i("AppWIFI::onReconnectTimer: Disconnected for %lu s (fallback AP active)", elapsed / 1000);
+            if (WifiAccessPoint.isEnabled()) {
+                debug_i("AppWIFI::onReconnectTimer: Disconnected for %lu s (fallback AP active)", elapsed / 1000);
+            } else {
+                debug_i("AppWIFI::onReconnectTimer: Disconnected for %lu s (AP fallback disabled)", elapsed / 1000);
+            }
         }
     }
 
