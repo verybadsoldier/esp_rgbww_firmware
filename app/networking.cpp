@@ -223,6 +223,15 @@ void AppWIFI::onReconnectTimer() {
         }
     }
 
+    // If clients are connected to our SoftAP, skip scanning to avoid channel hopping that disconnects clients
+    if (WifiAccessPoint.isEnabled()) {
+        uint8_t clients = wifi_softap_get_station_num();
+        if (clients > 0) {
+            debug_i("AppWIFI::onReconnectTimer: Skipping periodic WiFi scan (%u client(s) connected to AP)", clients);
+            return;
+        }
+    }
+
     // Trigger channel scan across all channels to find AP if not already scanning and not waiting for DHCP
     if (!_scanning && !_dhcpTimer.isStarted()) {
         debug_i("AppWIFI::onReconnectTimer: Triggering periodic WiFi scan");
