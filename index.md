@@ -25,7 +25,7 @@ These version are online right now:
 | Channel  | Version      | OTA-URL                                          |
 | -------- | ------------ | ------------------------------------------------ |
 | release  | 4.3.1-rc1    | http://rgbww.dronezone.de/release/version.json   |
-| testing  | 6.0.3-rc1    | http://rgbww.dronezone.de/testing/version.json   |
+| testing  | 6.1.0-rc1    | http://rgbww.dronezone.de/testing/version.json   |
 | unstable | 6.1.0-alpha3 | http://rgbww.dronezone.de/unstable/version.json  |
 
 # Flashing the Firmware
